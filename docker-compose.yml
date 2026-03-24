@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - toolbox_pgdata:/var/lib/postgresql/data
+    networks:
+      - toolbox_net
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    depends_on:
+      - db
+    env_file:
+      - ./backend/.env
+    networks:
+      - toolbox_net
+    ports:
+      - "3020:3000"
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    networks:
+      - toolbox_net
+    ports:
+      - "3021:3000"
+    restart: unless-stopped
+
+volumes:
+  toolbox_pgdata:
+
+networks:
+  toolbox_net:
+    external: true
