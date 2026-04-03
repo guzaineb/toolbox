@@ -9,11 +9,28 @@ import { UsersModule } from './users/users.module';
 import { ExpertModule } from './expert/expert.module';
 import { ProjectOwnerModule } from './project-owner/project-owner.module';
 import { ProfilesModule } from './profiles/profiles.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 
 
 @Module({
-  imports: [IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB_HOST'),
+        port: +config.get('DB_PORT'),
+        username: config.get('DB_USER'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: true,
+      }),
+      inject: [ConfigService],
+    }),
+    IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule],
   controllers: [AppController],
   providers: [AppService],
 })

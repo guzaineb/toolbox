@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Incubator } from './incubator.entity';
 import { CreateIncubatorDto } from './dto/create-incubator.dto';
 import { IncubatorMember } from '../incubator-members/incubator-member.entity';
-import { User } from 'src/users/user.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class IncubatorsService {
