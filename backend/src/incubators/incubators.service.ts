@@ -46,4 +46,5 @@ export class IncubatorsService {
   async findOne(id: string) {
     return this.incubatorRepo.findOne({ where: { id }, relations: ['members.user', 'documents'] });
   }
+  
 }

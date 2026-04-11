@@ -1,26 +1,105 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+import { User } from '../users/user.entity';
+import { MailService } from '../mail/mail.service';
+import { UsersService } from '../users/users.service';
+import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private mailService: MailService,
     private usersService: UsersService,
     private jwtService: JwtService,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
-      const { password_hash, ...result } = user;
-      return result;
+  // ✅ REGISTER
+  async register(registerDto: CreateUserDto) {
+    const verificationToken = uuidv4();
+
+    const user = await this.usersService.create(registerDto, verificationToken);
+
+    if (!user) {
+      throw new BadRequestException("Erreur lors de la création de l'utilisateur");
     }
-    throw new UnauthorizedException('Invalid credentials');
+
+    try {
+      await this.mailService.sendVerificationEmail(user.email, verificationToken);
+    } catch (error) {
+      console.error('Erreur envoi email:', error);
+      // option : laisser l'utilisateur et proposer "resend email"
+    }
+
+    return {
+      message: 'Inscription réussie. Veuillez vérifier votre email.',
+    };
   }
 
-  async login(user: any) {
+  // ✅ VALIDATE USER
+  async validateUser(email: string, password: string): Promise<Partial<User>> {
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      throw new UnauthorizedException('Identifiants invalides');
+    }
+
+    if (!user.is_verified) {
+      throw new UnauthorizedException(
+        'Veuillez vérifier votre adresse email avant de vous connecter.',
+      );
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+
+    if (!isMatch) {
+      throw new UnauthorizedException('Identifiants invalides');
+    }
+
+    const { password_hash, verification_token, ...result } = user;
+
+    return result;
+  }
+
+  // ✅ LOGIN
+  async login(user: Partial<User>) {
     const payload = { sub: user.id, email: user.email };
-    return { access_token: this.jwtService.sign(payload) };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
+
+  // ✅ VERIFY EMAIL
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    if (!token) {
+      throw new BadRequestException('Token manquant');
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { verification_token: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        'Token de vérification invalide ou expiré.',
+      );
+    }
+
+    user.is_verified = true;
+    user.verification_token = null;
+
+    await this.usersRepository.save(user);
+
+    return { message: 'Email vérifié avec succès.' };
   }
 }

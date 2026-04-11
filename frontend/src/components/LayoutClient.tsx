@@ -13,7 +13,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         <div>
           {user ? (
             <>
-              <span className="mr-4">Bonjour {user.profile?.first_name}</span>
+            
               <button onClick={logout} className="text-red-500">Déconnexion</button>
             </>
           ) : (

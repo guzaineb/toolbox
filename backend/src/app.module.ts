@@ -11,6 +11,7 @@ import { ProjectOwnerModule } from './project-owner/project-owner.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MailService } from './mail/mail.service';
 
 
 
@@ -32,6 +33,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
     IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MailService],
 })
 export class AppModule { }

@@ -15,33 +15,59 @@ export class UsersService {
     private profileRepository: Repository<UserProfile>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+ async create(createUserDto: CreateUserDto, verificationToken: string): Promise<User> {
     const existing = await this.userRepository.findOneBy({ email: createUserDto.email });
-    if (existing) throw new ConflictException('Email already exists');
+    if (existing) throw new ConflictException('Cet email est déjà utilisé.');
 
     const hashed = await bcrypt.hash(createUserDto.password, 10);
+    
     const user = this.userRepository.create({
       email: createUserDto.email,
       password_hash: hashed,
+      verification_token: verificationToken,
+      is_verified: false,
+       profile: {
+first_name: createUserDto.profile.first_name,
+      last_name: createUserDto.profile.last_name,
+      phone: createUserDto.profile.phone,
+      birth_date: createUserDto.profile.birthDate, // Attention au mapping birthDate -> birth_date
+      country: createUserDto.profile.country,
+      city: createUserDto.profile.city,
+      address: createUserDto.profile.address,
+      preferred_language: createUserDto.profile.preferredLanguage,
+    },
     });
-    const savedUser = await this.userRepository.save(user);
 
-    // Create associated user profile
-    const profile = this.profileRepository.create({
-      user: savedUser,
-      first_name: createUserDto.first_name,
-      last_name: createUserDto.last_name,
-    });
-    await this.profileRepository.save(profile);
+    return this.userRepository.save(user);
+  }
+  async markAsVerified(token: string) {
+    const user = await this.userRepository.findOneBy({ verification_token: token });
+    if (!user) return null;
 
-    return savedUser;
+    user.is_verified = true;
+    user.verification_token = null;
+    return this.userRepository.save(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email }, relations: ['profile'] });
   }
 
-  async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id }, relations: ['profile'] });
-  }
+async findById(id: string) {
+  return this.userRepository.findOne({
+    where: { id },
+    relations: ['profile', 'projectOwnerProfile', 'expertProfile', 'incubatorMembers'],
+  });
+}
+async getUsers(options: any = {}) {
+  const [users, total] = await this.userRepository.findAndCount({
+    ...options,
+    // On peut forcer l'exclusion des mots de passe par sécurité ici si besoin
+    relations: ['profile'], // Exemple : inclure les profils par défaut
+  });
+
+  return {
+    data: users,
+    total,
+  };}
 }

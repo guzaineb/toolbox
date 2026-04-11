@@ -1,8 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany, JoinColumn } from 'typeorm';
 import { UserProfile } from '../profiles/user-profile.entity';
 import { ProjectOwnerProfile } from '../project-owner/project-owner-profile.entity';
 import { ExpertProfile } from '../expert/expert-profile.entity';
 import { IncubatorMember } from '../incubator-members/incubator-member.entity';
+
+export enum UserRole {
+  ADMIN = 'admin',
+  EXPERT = 'expert',
+  PROJECT_OWNER = 'project_owner',
+  INCUBATORMEMBRE='incubator_membre'
+}
 
 @Entity('users')
 export class User {
@@ -21,6 +28,9 @@ export class User {
   @Column({ default: false })
   is_verified: boolean;
 
+ @Column({ name: 'verification_token', nullable: true, type: 'varchar' })
+  verification_token: string | null;
+
   @Column({ nullable: true })
   last_login_at: Date;
 
@@ -30,15 +40,22 @@ export class User {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @OneToOne(() => UserProfile, profile => profile.user, { cascade: true })
+  @OneToOne(() => UserProfile, profile => profile.user, { cascade: true,eager: true})
+  @JoinColumn({ name: 'profile_id' })
   profile: UserProfile;
 
   @OneToOne(() => ProjectOwnerProfile, po => po.user, { cascade: true })
+ @JoinColumn({ name: 'projectOwnerProfile_id' })
   projectOwnerProfile: ProjectOwnerProfile;
 
   @OneToOne(() => ExpertProfile, expert => expert.user, { cascade: true })
+  @JoinColumn()
   expertProfile: ExpertProfile;
 
   @OneToMany(() => IncubatorMember, member => member.user)
+  @JoinColumn()
   incubatorMembers: IncubatorMember[];
+@Column({ type: 'enum', enum: UserRole, default: UserRole.PROJECT_OWNER })
+role: UserRole;
+
 }

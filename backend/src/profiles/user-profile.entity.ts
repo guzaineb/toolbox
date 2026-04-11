@@ -37,6 +37,5 @@ export class UserProfile {
   preferred_language: string;
 
   @OneToOne(() => User, user => user.profile)
-  @JoinColumn({ name: 'user_id' })
   user: User;
 }
