@@ -1,30 +1,60 @@
+/* Import des polices Google */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Import de Tailwind CSS v4 */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Définition du thème personnalisé */
+@theme {
+  /* Couleurs */
+  --color-accent: #1D9E75;
+  --color-accent-mid: #0F6E56;
+  --color-accent-light: #E1F5EE;
+  --color-surface: #ffffff;
+  --color-bg: #F8F9FA;
+  --color-border: rgba(0,0,0,0.1);
+  --color-text: #1a1a1a;
+  --color-text-2: #6b7280;
+  --color-red: #E24B4A;
+  --color-red-light: #FCEBEB;
+  --color-blue: #378ADD;
+  --color-blue-light: #E6F1FB;
+  --color-amber: #BA7517;
+  --color-amber-light: #FAEEDA;
+
+  /* Polices */
+  --font-sans: DM Sans, sans-serif;
+  --font-syne: Syne, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Styles de base personnalisés */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Utilitaires supplémentaires */
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }

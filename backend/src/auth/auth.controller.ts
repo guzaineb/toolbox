@@ -1,7 +1,7 @@
-import { Controller, Post, Body, UseGuards, Get, Request, Query } from '@nestjs/common';
+// src/auth/auth.controller.ts
+import { Controller, Post, Body, Get, Query, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CreateUserDto } from '../users/dto/create-user.dto'; // N'oublie pas d'importer ton DTO aussi
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -14,8 +14,14 @@ export class AuthController {
 
   @Get('verify-email')
   async verifyEmail(@Query('token') token: string) {
+    if (!token) throw new BadRequestException('Token manquant');
     await this.authService.verifyEmail(token);
-    return { message: 'Email vérifié avec succès. Vous pouvez maintenant vous connecter.' };
+    return { message: 'Email vérifié avec succès' };
+  }
+
+  @Post('verify-code')
+  async verifyWithCode(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyCode(body.email, body.code);
   }
 
   @Post('login')

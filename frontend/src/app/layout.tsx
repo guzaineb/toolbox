@@ -1,21 +1,16 @@
+import React from 'react'
+import './globals.css'
+import type { Metadata } from 'next'
 
-import './globals.css';
-import { Inter } from 'next/font/google';
-import LayoutClient from '../components/LayoutClient';
-
-const inter = Inter({ subsets: ['latin'] });
-
-export const metadata = {
-  title: 'ProjectStruct',
-  description: 'Plateforme d’incubation',
-};
+export const metadata: Metadata = {
+  title: 'ProjectStruct - Plateforme de structuration de projets entrepreneuriaux',
+  description: 'De l\'idée au projet structuré et finançable. ProjectStruct guide les porteurs de projet étape par étape.',
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body className={inter.className}>
-        <LayoutClient>{children}</LayoutClient>
-      </body>
+      <body>{children}</body>
     </html>
-  );
+  )
 }

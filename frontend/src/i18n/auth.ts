@@ -147,6 +147,6 @@ export const authTranslations = {
     langEn: "English",
     langAr: "العربية",
   },
-} as const;
+} as const satisfies Record<Lang, any>;
 
 export type AuthTranslation = typeof authTranslations.fr;

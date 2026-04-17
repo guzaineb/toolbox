@@ -35,4 +35,14 @@ export class ProfileDto {
   @IsOptional()
   @IsString()
   preferredLanguage?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  linkedin?: string;
+
+
 }

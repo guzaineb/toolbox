@@ -1,4 +1,4 @@
-import { Button } from '@/components/auth/ui'
+import { Button } from '@/components/shared/ui'
 import Link from 'next/link'
 
 

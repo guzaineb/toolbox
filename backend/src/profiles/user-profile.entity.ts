@@ -36,6 +36,9 @@ export class UserProfile {
   @Column({ default: 'fr' })
   preferred_language: string;
 
+   @Column({ nullable: true })
+  linkedin: string;
+  
   @OneToOne(() => User, user => user.profile)
   user: User;
 }

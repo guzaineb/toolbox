@@ -15,7 +15,8 @@ export class UsersService {
     private profileRepository: Repository<UserProfile>,
   ) {}
 
- async create(createUserDto: CreateUserDto, verificationToken: string): Promise<User> {
+ async create(createUserDto: CreateUserDto, verificationToken: string,  verificationCode: string,
+    codeExpires: Date,): Promise<User> {
     const existing = await this.userRepository.findOneBy({ email: createUserDto.email });
     if (existing) throw new ConflictException('Cet email est déjà utilisé.');
 
@@ -25,7 +26,10 @@ export class UsersService {
       email: createUserDto.email,
       password_hash: hashed,
       verification_token: verificationToken,
+      verification_code: verificationCode,
+      verification_code_expires: codeExpires,
       is_verified: false,
+      role: createUserDto.role || null, 
        profile: {
 first_name: createUserDto.profile.first_name,
       last_name: createUserDto.profile.last_name,
@@ -35,6 +39,8 @@ first_name: createUserDto.profile.first_name,
       city: createUserDto.profile.city,
       address: createUserDto.profile.address,
       preferred_language: createUserDto.profile.preferredLanguage,
+      bio: createUserDto.profile.bio,
+      linkedin: createUserDto.profile.linkedin, 
     },
     });
 

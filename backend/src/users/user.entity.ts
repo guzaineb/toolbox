@@ -5,12 +5,10 @@ import { ExpertProfile } from '../expert/expert-profile.entity';
 import { IncubatorMember } from '../incubator-members/incubator-member.entity';
 
 export enum UserRole {
-  ADMIN = 'admin',
-  EXPERT = 'expert',
-  PROJECT_OWNER = 'project_owner',
-  INCUBATORMEMBRE='incubator_membre'
-}
+  ADMIN = 'admin', EXPERT = 'expert', PROJECT_OWNER = 'project_owner',
+  INCUBATORMEMBRE='incubator_membre',
 
+}
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -30,7 +28,12 @@ export class User {
 
  @Column({ name: 'verification_token', nullable: true, type: 'varchar' })
   verification_token: string | null;
+  @Column({ nullable: true, type: 'varchar' })
+  verification_code: string  | null;
 
+  @Column({ nullable: true, type: 'timestamp' })
+  verification_code_expires: Date | null;
+  
   @Column({ nullable: true })
   last_login_at: Date;
 
@@ -55,7 +58,8 @@ export class User {
   @OneToMany(() => IncubatorMember, member => member.user)
   @JoinColumn()
   incubatorMembers: IncubatorMember[];
-@Column({ type: 'enum', enum: UserRole, default: UserRole.PROJECT_OWNER })
-role: UserRole;
+
+@Column({ type: 'enum',  enum: UserRole, nullable: true, default: null })
+role: UserRole | null;
 
 }
