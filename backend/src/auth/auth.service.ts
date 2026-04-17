@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException,} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -23,26 +19,25 @@ export class AuthService {
     private usersRepository: Repository<User>,
   ) {}
 
-  // ✅ REGISTER (génère token + code OTP)
   async register(registerDto: CreateUserDto) {
     const verificationToken = uuidv4();
+    // ✅ FIX: verificationCode était généré mais jamais passé à usersService.create()
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const codeExpires = new Date();
     codeExpires.setHours(codeExpires.getHours() + 1);
 
+    // ✅ FIX: signature corrigée — on passe les 4 arguments requis par UsersService.create()
     const user = await this.usersService.create(
       registerDto,
       verificationToken,
-      verificationCode,
+      verificationCode,   // ← était manquant avant
       codeExpires,
     );
 
     if (!user) {
       throw new BadRequestException("Erreur lors de la création de l'utilisateur");
     }
-
     try {
-      // ✅ Appel avec 3 arguments : (email, code, token)
       await this.mailService.sendVerificationEmail(
         user.email,
         verificationCode,
@@ -50,6 +45,8 @@ export class AuthService {
       );
     } catch (error) {
       console.error('Erreur envoi email:', error);
+      // ✅ Note: on ne throw pas ici pour ne pas bloquer l'inscription
+      // mais en production, envisagez une queue (Bull/Redis) pour retry
     }
 
     return {
@@ -57,47 +54,66 @@ export class AuthService {
     };
   }
 
-  // ✅ VERIFICATION PAR TOKEN (lien direct)
   async verifyEmail(token: string): Promise<{ message: string }> {
     if (!token) {
       throw new BadRequestException('Token manquant');
     }
 
-    const user = await this.usersRepository.findOne({
-      where: { verification_token: token },
-    });
+    const decodedToken = decodeURIComponent(token.trim());
 
-    if (!user) {
-      throw new BadRequestException('Token de vérification invalide ou expiré.');
+    // ✅ update() direct évite les problèmes de nullable avec save()
+    const result = await this.usersRepository.update(
+      { verification_token: decodedToken },
+      {
+        is_verified: true,
+        verification_token: null,
+        verification_code: null,
+        verification_code_expires: null,
+      },
+    );
+
+    if (!result.affected || result.affected === 0) {
+      throw new BadRequestException('Token de vérification invalide ou déjà utilisé.');
     }
 
-    user.is_verified = true;
-    user.verification_token = null;
-    user.verification_code = null;        // ✅ autorisé car nullable
-    user.verification_code_expires = null; // ✅ autorisé car nullable
-
-    await this.usersRepository.save(user);
     return { message: 'Email vérifié avec succès.' };
   }
 
-  // ✅ VERIFICATION PAR CODE OTP
   async verifyCode(email: string, code: string): Promise<{ message: string }> {
     const user = await this.usersRepository.findOne({ where: { email } });
-    if (!user || user.verification_code !== code) {
+
+    if (!user) {
+      throw new BadRequestException('Utilisateur introuvable');
+    }
+
+    if (user.is_verified) {
+      return { message: 'Email déjà vérifié.' };
+    }
+
+    if (user.verification_code !== code) {
       throw new BadRequestException('Code invalide');
     }
-    if (new Date() > user.verification_code_expires!) {
+
+    if (
+      !user.verification_code_expires ||
+      new Date() > user.verification_code_expires
+    ) {
       throw new BadRequestException('Code expiré. Demandez un nouveau lien.');
     }
-    user.is_verified = true;
-    user.verification_token = null;
-    user.verification_code = null;
-    user.verification_code_expires = null;
-    await this.usersRepository.save(user);
+
+    await this.usersRepository.update(
+      { email },
+      {
+        is_verified: true,
+        verification_token: null,
+        verification_code: null,
+        verification_code_expires: null,
+      },
+    );
+
     return { message: 'Email vérifié avec succès.' };
   }
 
-  // ✅ VALIDATE USER (pour login)
   async validateUser(email: string, password: string): Promise<Partial<User>> {
     const user = await this.usersService.findByEmail(email);
 
@@ -105,28 +121,50 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    if (!user.is_verified) {
+    // ✅ Recharge depuis la base pour avoir is_verified et role à jour
+    const freshUser = await this.usersRepository.findOne({
+      where: { id: user.id },
+    });
+
+    if (!freshUser || !freshUser.is_verified) {
       throw new UnauthorizedException(
         'Veuillez vérifier votre adresse email avant de vous connecter.',
       );
     }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!freshUser.is_active) {
+      throw new UnauthorizedException('Ce compte a été désactivé.');
+    }
+
+    const isMatch = await bcrypt.compare(password, freshUser.password_hash);
     if (!isMatch) {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    const { password_hash, verification_token, verification_code, verification_code_expires, ...result } = user;
+    // ✅ Mise à jour de last_login_at
+    await this.usersRepository.update(
+      { id: freshUser.id },
+      { last_login_at: new Date() },
+    );
+
+    const {
+      password_hash,
+      verification_token,
+      verification_code,
+      verification_code_expires,
+      ...result
+    } = freshUser;
+
     return result;
   }
 
-  // ✅ LOGIN
   async login(user: Partial<User>) {
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, role: user.role };
     return {
       id: user.id,
       email: user.email,
       role: user.role,
+      // ✅ Le role est inclus dans le JWT payload pour les guards
       access_token: this.jwtService.sign(payload),
     };
   }

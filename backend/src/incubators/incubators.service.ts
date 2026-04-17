@@ -14,8 +14,8 @@ export class IncubatorsService {
     @InjectRepository(IncubatorMember)
     private memberRepo: Repository<IncubatorMember>,
     @InjectRepository(User)
-     private userRepo: Repository<User>,
-  ) {}
+    private userRepo: Repository<User>,
+  ) { }
 
   async create(userId: string, dto: CreateIncubatorDto): Promise<Incubator> {
     const incubator = this.incubatorRepo.create({
@@ -24,7 +24,6 @@ export class IncubatorsService {
     });
     const saved = await this.incubatorRepo.save(incubator);
 
-    // Create admin member
     const adminMember = this.memberRepo.create({
       user_id: userId,
       incubator_id: saved.id,
@@ -33,6 +32,7 @@ export class IncubatorsService {
       can_manage_members: true,
       can_manage_programs: true,
       can_manage_cohorts: true,
+      status: 'active',
     });
     await this.memberRepo.save(adminMember);
 
@@ -44,7 +44,18 @@ export class IncubatorsService {
   }
 
   async findOne(id: string) {
-    return this.incubatorRepo.findOne({ where: { id }, relations: ['members.user', 'documents'] });
+    return this.incubatorRepo.findOne({
+      where: { id },
+      relations: ['members.user.profile', 'documents'],
+    });
   }
-  
+
+  // ✅ AJOUT : récupère les incubateurs dont le user est membre
+  async findByUser(userId: string): Promise<Incubator[]> {
+    const members = await this.memberRepo.find({
+      where: { user: { id: userId } },
+      relations: ['incubator', 'incubator.members', 'incubator.documents'],
+    });
+    return members.map((m) => m.incubator).filter(Boolean);
+  }
 }

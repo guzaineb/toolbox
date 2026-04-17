@@ -15,13 +15,17 @@ export class UsersService {
     private profileRepository: Repository<UserProfile>,
   ) {}
 
- async create(createUserDto: CreateUserDto, verificationToken: string,  verificationCode: string,
-    codeExpires: Date,): Promise<User> {
+  async create(
+    createUserDto: CreateUserDto,
+    verificationToken: string,
+    verificationCode: string,
+    codeExpires: Date,
+  ): Promise<User> {
     const existing = await this.userRepository.findOneBy({ email: createUserDto.email });
     if (existing) throw new ConflictException('Cet email est déjà utilisé.');
 
     const hashed = await bcrypt.hash(createUserDto.password, 10);
-    
+
     const user = this.userRepository.create({
       email: createUserDto.email,
       password_hash: hashed,
@@ -29,29 +33,21 @@ export class UsersService {
       verification_code: verificationCode,
       verification_code_expires: codeExpires,
       is_verified: false,
-      role: createUserDto.role || null, 
-       profile: {
-first_name: createUserDto.profile.first_name,
-      last_name: createUserDto.profile.last_name,
-      phone: createUserDto.profile.phone,
-      birth_date: createUserDto.profile.birthDate, // Attention au mapping birthDate -> birth_date
-      country: createUserDto.profile.country,
-      city: createUserDto.profile.city,
-      address: createUserDto.profile.address,
-      preferred_language: createUserDto.profile.preferredLanguage,
-      bio: createUserDto.profile.bio,
-      linkedin: createUserDto.profile.linkedin, 
-    },
+      role: createUserDto.role || null,
+      profile: {
+        first_name: createUserDto.profile.first_name,
+        last_name: createUserDto.profile.last_name,
+        phone: createUserDto.profile.phone,
+        birth_date: createUserDto.profile.birthDate,
+        country: createUserDto.profile.country,
+        city: createUserDto.profile.city,
+        address: createUserDto.profile.address,
+        preferred_language: createUserDto.profile.preferredLanguage,
+        bio: createUserDto.profile.bio,
+        linkedin: createUserDto.profile.linkedin,
+      },
     });
 
-    return this.userRepository.save(user);
-  }
-  async markAsVerified(token: string) {
-    const user = await this.userRepository.findOneBy({ verification_token: token });
-    if (!user) return null;
-
-    user.is_verified = true;
-    user.verification_token = null;
     return this.userRepository.save(user);
   }
 
@@ -59,21 +55,30 @@ first_name: createUserDto.profile.first_name,
     return this.userRepository.findOne({ where: { email }, relations: ['profile'] });
   }
 
-async findById(id: string) {
-  return this.userRepository.findOne({
-    where: { id },
-    relations: ['profile', 'projectOwnerProfile', 'expertProfile', 'incubatorMembers'],
-  });
-}
-async getUsers(options: any = {}) {
-  const [users, total] = await this.userRepository.findAndCount({
-    ...options,
-    // On peut forcer l'exclusion des mots de passe par sécurité ici si besoin
-    relations: ['profile'], // Exemple : inclure les profils par défaut
-  });
+  async findById(id: string) {
+    return this.userRepository.findOne({
+      where: { id },
+      relations: ['profile', 'projectOwnerProfile', 'expertProfile', 'incubatorMembers'],
+    });
+  }
 
-  return {
-    data: users,
-    total,
-  };}
+  // ✅ AJOUT : mise à jour du profil personnel
+  async updateProfile(userId: string, data: Partial<UserProfile>) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['profile'],
+    });
+    if (!user || !user.profile) return null;
+
+    await this.profileRepository.update({ id: user.profile.id }, data);
+    return this.findById(userId);
+  }
+
+  async getUsers(options: any = {}) {
+    const [users, total] = await this.userRepository.findAndCount({
+      ...options,
+      relations: ['profile'],
+    });
+    return { data: users, total };
+  }
 }

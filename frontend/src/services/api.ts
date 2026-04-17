@@ -1,27 +1,44 @@
+// services/api.ts
 import axios from 'axios';
 
+// ✅ Vérifiez que NEXT_PUBLIC_API_URL est défini dans .env.local
+// NEXT_PUBLIC_API_URL=http://localhost:3001
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Intercepteur pour ajouter le token
+const isBrowser = () => typeof window !== 'undefined';
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (isBrowser()) {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch { }
   }
   return config;
 });
 
-// Intercepteur pour gérer les erreurs 401 (refresh token, déconnexion)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
+    const url = error.config?.url ?? '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+
+    if (
+      error.response?.status === 401 &&
+      isBrowser() &&
+      !isAuthEndpoint
+    ) {
+      try { localStorage.removeItem('access_token'); } catch { }
+      window.location.href = '/auth/login';
     }
+
     return Promise.reject(error);
   }
 );

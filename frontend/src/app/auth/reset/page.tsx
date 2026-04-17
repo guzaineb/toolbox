@@ -1,4 +1,4 @@
-import { Button, Field, Input, Progress } from '@/components/auth/ui'
+import { Button, Field, Input, Progress } from '@/components/shared/ui'
 import Link from 'next/link'
 
 export default function ResetPage() {

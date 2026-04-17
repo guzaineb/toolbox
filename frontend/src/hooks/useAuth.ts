@@ -1,52 +1,152 @@
-import { useEffect, useState } from 'react';
+// hooks/useAuth.ts
+"use client";
+
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../services/api';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type UserRole = 'admin' | 'expert' | 'project_owner' | 'incubator_membre';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: UserRole | null;
+  is_verified: boolean;
+  is_active: boolean;
+  // ✅ FIX : propriétés manquantes qui causaient l'erreur TS2339
+  profile?: {
+    first_name: string;
+    last_name: string;
+    phone?: string;
+    bio?: string;
+    country?: string;
+    city?: string;
+    linkedin?: string;
+    preferred_language?: string;
+    birth_date?: string;
+  };
+  projectOwnerProfile?: {
+    id: string;
+    current_status?: string;
+  } | null;
+  expertProfile?: {
+    id: string;
+    headline?: string;
+  } | null;
+  incubatorMembers?: {
+    id: string;
+    role: string;
+    incubator?: { id: string; name: string };
+  }[];
+}
+
+// ─── Routes par rôle ──────────────────────────────────────────────────────────
+
+export const ROLE_ROUTES: Record<string, string> = {
+  admin:             '/dashboard',
+  expert:            '/dashboard/expert',
+  project_owner:     '/dashboard/project-owner',
+  incubator_membre:  '/dashboard/incubator',
+};
+
+const DEFAULT_ROUTE = '/dashboard';
+
+// ─── Storage helper — ✅ FIX : try/catch complet pour accès refusé (iframe, etc.) ──
+
+const storage = {
+  get: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      // localStorage inaccessible (iframe cross-origin, mode privé, etc.)
+      return null;
+    }
+  },
+  set: (key: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      // silently fail
+    }
+  },
+  remove: (key: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // silently fail
+    }
+  },
+};
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useAuth() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser]       = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const router                = useRouter();
 
-  // 🔥 Load user on app start
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-
+    const token = storage.get('access_token');
     if (!token) {
       setLoading(false);
       return;
     }
 
-    api.get('/users/me')
-      .then(res => setUser(res.data))
-      .catch(() => {
-        localStorage.removeItem('access_token');
-        setUser(null);
-      })
+    api.get<AuthUser>('/users/me')
+      .then(res  => setUser(res.data))
+      .catch(()  => { storage.remove('access_token'); setUser(null); })
       .finally(() => setLoading(false));
-
   }, []);
 
-  // 🔐 LOGIN
-  const login = async (email: string, password: string) => {
-    try {
-      const res = await api.post('/auth/login', { email, password });
+  const login = useCallback(
+    async (email: string, password: string): Promise<AuthUser> => {
+      try {
+        const { data: authData } = await api.post<{
+          access_token: string;
+          id: string;
+          email: string;
+          role: UserRole;
+        }>('/auth/login', { email, password });
 
-      localStorage.setItem('access_token', res.data.access_token);
+        if (!authData.access_token) throw new Error('Token non reçu');
 
-      const userRes = await api.get('/users/me');
-      setUser(userRes.data);
+        storage.set('access_token', authData.access_token);
 
-      return userRes.data;
-    } catch (err) {
-      throw new Error('Identifiants incorrects');
-    }
-  };
+        const { data: userData } = await api.get<AuthUser>('/users/me');
+        setUser(userData);
+        return userData;
+      } catch (error) {
+        storage.remove('access_token');
+        setUser(null);
+        throw error;
+      }
+    },
+    [],
+  );
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
+  const logout = useCallback(() => {
+    storage.remove('access_token');
     setUser(null);
-    router.push('/login');
-  };
+    router.push('/auth/login');
+  }, [router]);
 
-  return { user, loading, login, logout };
+  const redirectToDashboard = useCallback(
+    (role: string | null | undefined) => {
+      const destination = role ? (ROLE_ROUTES[role] ?? DEFAULT_ROUTE) : DEFAULT_ROUTE;
+      router.push(destination);
+    },
+    [router],
+  );
+
+  const isRole = useCallback(
+    (role: UserRole) => user?.role === role,
+    [user],
+  );
+
+  return { user, loading, login, logout, redirectToDashboard, isRole };
 }

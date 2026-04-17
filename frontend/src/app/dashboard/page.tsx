@@ -1,176 +1,279 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '../../services/api';
-import IncubatorCard from '../../components/IncubatorCard';
-import { useAuth } from '../../hooks/useAuth';
 import Link from 'next/link';
+import api from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
+import { Badge, Button, Card, StatBox } from '@/components/shared/ui';
 
-export default function Dashboard() {
+interface Incubator {
+  id: string;
+  name: string;
+  city?: string;
+  country?: string;
+  description?: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
+  members?: { id: string; role: string; status: string; user?: { profile?: { first_name: string; last_name: string } } }[];
+  documents?: { id: string; verification_status: string; document_type: string }[];
+}
+
+const STATUS_BADGE: Record<string, 'amber' | 'green' | 'red'> = {
+  pending: 'amber', approved: 'green', rejected: 'red',
+};
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'En attente', approved: 'Approuvé', rejected: 'Rejeté',
+};
+const ROLE_BADGE: Record<string, 'green' | 'blue' | 'amber' | 'gray'> = {
+  admin: 'green', program_manager: 'blue', cohort_manager: 'amber',
+  review_manager: 'blue', member: 'gray', viewer: 'gray',
+};
+const ROLE_LABEL: Record<string, string> = {
+  admin: 'Admin', program_manager: 'Program Mgr', cohort_manager: 'Cohort Mgr',
+  review_manager: 'Review Mgr', member: 'Membre', viewer: 'Viewer',
+};
+
+export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const [incubators, setIncubators] = useState([]);
-  const [loadingIncubators, setLoadingIncubators] = useState(true);
+  const [incubators, setIncubators] = useState<Incubator[]>([]);
+  const [loadingInc, setLoadingInc] = useState(true);
+  const [selectedInc, setSelectedInc] = useState<Incubator | null>(null);
 
   useEffect(() => {
-    if (user && user?.incubatorMembers?.length > 0) {
-      api.get(`/incubators/my`)
-        .then(res => setIncubators(res.data))
-        .finally(() => setLoadingIncubators(false));
-    } else {
-      setLoadingIncubators(false);
-    }
+    api.get('/incubators/my')
+      .then(res => {
+        const data: Incubator[] = res.data ?? [];
+        setIncubators(data);
+        if (data.length > 0) setSelectedInc(data[0]);
+      })
+      .catch(() => setIncubators([]))
+      .finally(() => setLoadingInc(false));
   }, [user]);
 
-  // ✅ Vérification stricte du chargement
-  if (authLoading || loadingIncubators) {
+  if (authLoading || loadingInc) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="p-8 max-w-[1100px] animate-pulse space-y-4">
+        <div className="h-[100px] bg-border rounded" />
+        <div className="grid grid-cols-4 gap-2.5">
+          {[1,2,3,4].map(i => <div key={i} className="h-20 bg-border rounded" />)}
+        </div>
+        <div className="grid grid-cols-[1fr_300px] gap-4">
+          <div className="h-48 bg-border rounded" />
+          <div className="h-48 bg-border rounded" />
+        </div>
       </div>
     );
   }
 
-  // ✅ Vérification que user existe avant tout rendu
   if (!user) {
     return (
-      <div className="text-center py-20 bg-white rounded-2xl shadow-sm border">
-        <div className="text-6xl mb-6">🔒</div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Session expirée</h2>
-        <p className="text-xl text-gray-600 mb-8">
-          Veuillez vous reconnecter pour accéder à votre tableau de bord.
-        </p>
-        <Link 
-          href="/login" 
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-4 rounded-2xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all"
-        >
-          Se connecter
-        </Link>
+      <div className="p-8 max-w-[480px]">
+        <Card className="text-center py-14">
+          <div className="text-4xl mb-4">🔒</div>
+          <h2 className="text-[16px] font-semibold mb-2">Session expirée</h2>
+          <p className="text-[13px] text-text-2 mb-5">Veuillez vous reconnecter.</p>
+          <Link href="/auth/login"><Button variant="primary">Se connecter</Button></Link>
+        </Card>
       </div>
     );
   }
 
-  // ✅ Maintenant user est garanti non-null, on peut accéder à ses propriétés en toute sécurité
-  const role = user.projectOwnerProfile ? 'Porteur de projet' :
-    user.expertProfile ? 'Expert' :
-    user.incubatorMembers?.length > 0 ? 'Membre incubateur' : 'Membre';
+  const firstName = user.profile?.first_name ?? '';
+  const lastName  = user.profile?.last_name ?? '';
+  const fullName  = [firstName, lastName].filter(Boolean).join(' ') || 'Utilisateur';
+  const initials  = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || '??';
+  const location  = [user.profile?.city, user.profile?.country].filter(Boolean).join(', ');
 
-  // ✅ Valeurs par défaut pour éviter les undefined
-  const firstName = user.profile?.first_name || '';
-  const lastName = user.profile?.last_name || '';
-  const firstInitial = firstName.charAt(0) || '?';
-  const lastInitial = lastName.charAt(0) || '?';
-  const fullName = `${firstName} ${lastName}`.trim() || 'Utilisateur';
-  const userBio = user.profile?.bio || 'Ajoutez une bio pour vous présenter.';
+  const bannerBadges: string[] = [];
+  if ((user.incubatorMembers?.length ?? 0) > 0) bannerBadges.push('Admin incubateur');
+  if (user.projectOwnerProfile) bannerBadges.push('Porteur de projet');
+  if (user.expertProfile) bannerBadges.push('Expert');
+  if (user.is_verified) bannerBadges.push('✓ Vérifié');
+
+  const pendingDocs = selectedInc?.documents?.filter(d => d.verification_status === 'pending') ?? [];
 
   return (
-    <div>
-      {/* Profile Summary */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-xl mb-8 shadow-2xl">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold">
-                {firstInitial}{lastInitial}
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold">{fullName}</h2>
-                <p className="text-blue-100 text-lg mt-1">{role}</p>
-                <p className="text-blue-50 mt-2">{userBio}</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link 
-                href="/dashboard/profile" 
-                className="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl font-medium transition-all text-center"
-              >
-                Compléter mon profil
-              </Link>
-              {user.incubatorMembers && user.incubatorMembers.length > 0 && (
-                <Link 
-                  href="/dashboard/incubator" 
-                  className="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl font-medium transition-all text-center"
-                >
-                  Gérer incubateurs ({user.incubatorMembers.length})
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
+    <div className="p-8 max-w-[1100px]">
+
+      <div className="mb-5">
+        <h1 className="font-display text-[22px]">Dashboard</h1>
+        <p className="text-[13px] text-text-2">Bienvenue, {firstName || 'utilisateur'} — voici votre espace de travail</p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Statut vérification</h3>
-          <div className="text-3xl font-bold text-green-600">
-            {user.is_verified ? 'Vérifié' : 'Non vérifié'}
-          </div>
-          <p className="text-gray-500 mt-1">
-            {user.is_verified ? 'Compte vérifié' : 'Vérifiez votre compte pour plus de visibilité'}
-          </p>
+      {/* Banner */}
+      <div className="bg-accent rounded-[12px] p-5 flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
+        <div className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center text-[16px] font-semibold flex-shrink-0">
+          {initials}
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Incubateurs</h3>
-          <div className="text-3xl font-bold text-blue-600">
-            {user.incubatorMembers?.length || 0}
+        <div className="flex-1 min-w-0">
+          <div className="text-[16px] font-semibold text-white">{fullName}</div>
+          <div className="text-[12px] text-white/75 mt-0.5">
+            {user.email}{location ? ` · ${location}` : ''}
           </div>
-          <p className="text-gray-500 mt-1">Membre actif</p>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Rôle actif</h3>
-          <p className="text-2xl font-bold capitalize">{role}</p>
-          <p className="text-gray-500 mt-1">Sur la plateforme</p>
-        </div>
-      </div>
-
-      {/* Incubators Section */}
-      {user.incubatorMembers && user.incubatorMembers.length > 0 && (
-        <>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Mes incubateurs</h2>
-            <Link 
-              href="/dashboard/incubator/create" 
-              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all"
-            >
-              + Nouveau incubateur
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {incubators.map((inc: any) => (
-              <IncubatorCard key={inc.id} incubator={inc} />
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {bannerBadges.map(b => (
+              <span key={b} className="bg-white/20 text-white text-[11px] px-2 py-0.5 rounded-full">{b}</span>
             ))}
-            {incubators.length === 0 && (
-              <div className="col-span-full bg-white p-12 rounded-2xl border-2 border-dashed border-gray-300 text-center">
-                <div className="text-4xl mb-4">🏢</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun incubateur</h3>
-                <p className="text-gray-500 mb-6">Commencez par créer votre premier incubateur</p>
-                <Link 
-                  href="/dashboard/incubator/create" 
-                  className="bg-blue-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors inline-block"
-                >
-                  Créer mon incubateur
-                </Link>
-              </div>
-            )}
           </div>
-        </>
-      )}
-
-      {(!user.incubatorMembers || user.incubatorMembers.length === 0) && (
-        <div className="text-center py-20 bg-white rounded-2xl shadow-sm border">
-          <div className="text-6xl mb-6">🚀</div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Bienvenue sur ProjectStruct !</h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Complétez votre profil {role.toLowerCase()} pour accéder à toutes les fonctionnalités de la plateforme.
-          </p>
-          <Link 
-            href="/dashboard/profile" 
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-4 rounded-2xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all inline-block"
-          >
-            Compléter mon profil
+        </div>
+        <div className="flex gap-2 flex-shrink-0">
+          <Link href="/dashboard/profile/edit">
+            <Button className="!bg-white/15 !text-white !border-white/20 text-[12px] hover:!bg-white/25">
+              Modifier le profil
+            </Button>
+          </Link>
+          <Link href="/dashboard/incubator/create">
+            <Button className="!bg-white !text-accent !border-white text-[12px] font-medium">
+              + Créer incubateur
+            </Button>
           </Link>
         </div>
-      )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+        <StatBox num={user.is_verified ? '✓' : '✗'} label="Email vérifié" />
+        <StatBox num={incubators.length} label="Incubateurs" />
+        <StatBox num={user.expertProfile ? '✓' : '—'} label="Profil expert" />
+        <StatBox num={user.projectOwnerProfile ? '✓' : '—'} label="Profil porteur" />
+      </div>
+
+      {/* Two-col */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+
+        <div className="space-y-4">
+          {/* Incubateurs */}
+          <Card>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2">Mes incubateurs</div>
+              <Link href="/dashboard/incubator/create">
+                <Button variant="primary" className="text-[11px] !py-1 !px-2.5">+ Nouveau</Button>
+              </Link>
+            </div>
+            {incubators.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="text-3xl mb-3">🏢</div>
+                <p className="text-[13px] font-medium mb-1">Aucun incubateur</p>
+                <p className="text-[12px] text-text-2 mb-4">Créez votre premier incubateur pour commencer.</p>
+                <Link href="/dashboard/incubator/create">
+                  <Button variant="primary" className="text-[12px]">Créer un incubateur</Button>
+                </Link>
+              </div>
+            ) : (
+              incubators.map(inc => (
+                <div
+                  key={inc.id}
+                  className={`flex items-center gap-3 py-3 border-b border-border last:border-none cursor-pointer rounded transition-colors ${selectedInc?.id === inc.id ? 'bg-accent-light' : 'hover:bg-bg'}`}
+                  style={{ padding: '10px 8px' }}
+                  onClick={() => setSelectedInc(inc)}
+                >
+                  <div className="w-9 h-9 rounded bg-accent-light text-accent-mid flex items-center justify-center text-[13px] font-semibold flex-shrink-0">
+                    {inc.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium truncate">{inc.name}</div>
+                    <div className="text-[11px] text-text-2">
+                      {[inc.city, inc.country].filter(Boolean).join(', ')} · {inc.members?.length ?? 0} membres
+                    </div>
+                  </div>
+                  <Badge variant={STATUS_BADGE[inc.verification_status] ?? 'gray'}>
+                    {STATUS_LABEL[inc.verification_status] ?? inc.verification_status}
+                  </Badge>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <Link href={`/dashboard/incubator/${inc.id}/members`} onClick={e => e.stopPropagation()}>
+                      <Button className="text-[11px] !py-1 !px-2">Équipe</Button>
+                    </Link>
+                    <Link href={`/dashboard/incubator/${inc.id}`} onClick={e => e.stopPropagation()}>
+                      <Button className="text-[11px] !py-1 !px-2">Gérer →</Button>
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </Card>
+
+          {/* Raccourcis */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: '💡', title: 'Porteur de projet', desc: 'Profil entrepreneurial', href: '/dashboard/project-owner' },
+              { icon: '📄', title: 'Documents', desc: 'Vérification incubateur', href: selectedInc ? `/dashboard/incubator/${selectedInc.id}/documents` : '/dashboard/incubator' },
+              { icon: '👤', title: 'Mon profil', desc: 'Infos personnelles', href: '/dashboard/profile/edit' },
+            ].map(({ icon, title, desc, href }) => (
+              <Link key={title} href={href}>
+                <Card className="hover:border-accent transition-colors cursor-pointer !p-4">
+                  <div className="text-[16px] mb-2">{icon}</div>
+                  <div className="text-[13px] font-medium">{title}</div>
+                  <p className="text-[11px] text-text-2 mt-0.5">{desc}</p>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Colonne droite */}
+        <div className="space-y-4">
+          {/* Équipe */}
+          {selectedInc ? (
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 truncate">
+                  Équipe — {selectedInc.name}
+                </div>
+                <Link href={`/dashboard/incubator/${selectedInc.id}/members`}>
+                  <Button className="text-[11px] !py-1 !px-2">+ Inviter</Button>
+                </Link>
+              </div>
+              {(selectedInc.members ?? []).length === 0 ? (
+                <p className="text-[12px] text-text-2 text-center py-4">Aucun membre.</p>
+              ) : (
+                (selectedInc.members ?? []).slice(0, 5).map(m => {
+                  const fn = m.user?.profile?.first_name ?? '?';
+                  const ln = m.user?.profile?.last_name ?? '';
+                  return (
+                    <div key={m.id} className="flex items-center gap-2.5 py-2.5 border-b border-border last:border-none">
+                      <div className="w-7 h-7 rounded-full bg-accent-light text-accent flex items-center justify-center text-[10px] font-medium flex-shrink-0">
+                        {`${fn.charAt(0)}${ln.charAt(0)}`.toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0 text-[13px] truncate">{fn} {ln}</div>
+                      <Badge variant={ROLE_BADGE[m.role] ?? 'gray'}>{ROLE_LABEL[m.role] ?? m.role}</Badge>
+                    </div>
+                  );
+                })
+              )}
+            </Card>
+          ) : (
+            <Card className="text-center py-10">
+              <p className="text-[12px] text-text-2">Sélectionnez un incubateur pour voir son équipe.</p>
+            </Card>
+          )}
+
+          {/* Documents en attente */}
+          <Card>
+            <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-3">
+              Documents en attente
+            </div>
+            {pendingDocs.length === 0 ? (
+              <p className="text-[12px] text-text-2 text-center py-4">Aucun document en attente.</p>
+            ) : (
+              pendingDocs.map(doc => (
+                <div key={doc.id} className="flex items-center gap-2.5 py-2.5 border-b border-border last:border-none">
+                  <span className="text-[14px]">📄</span>
+                  <span className="text-[13px] flex-1 truncate capitalize">
+                    {doc.document_type.replace(/_/g, ' ')}
+                  </span>
+                  <Badge variant="amber">En attente</Badge>
+                </div>
+              ))
+            )}
+            {selectedInc && (
+              <Link href={`/dashboard/incubator/${selectedInc.id}/documents`}>
+                <Button className="w-full justify-center text-[12px] mt-3">
+                  Uploader des documents
+                </Button>
+              </Link>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
