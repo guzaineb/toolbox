@@ -1,54 +1,133 @@
-import Link from 'next/link'
-import { AdminGuard, Badge, Button, Card, StatBox } from '@/components/shared/ui'
+'use client';
 
-export default function IncubatorPage() {
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import api from '@/services/api';
+import { Badge, Button, Card, StatBox } from '@/components/shared/ui';
+
+interface Incubator {
+  id: string;
+  name: string;
+  slug: string;
+  city?: string;
+  country?: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
+  status: 'active' | 'suspended';
+  members?: { id: string }[];
+  documents?: { id: string; verification_status: string }[];
+}
+
+const VERIFICATION_LABEL: Record<string, string> = {
+  pending: 'En attente de validation',
+  approved: 'Approuvé',
+  rejected: 'Rejeté',
+};
+const VERIFICATION_VARIANT: Record<string, 'amber' | 'green' | 'red'> = {
+  pending: 'amber',
+  approved: 'green',
+  rejected: 'red',
+};
+
+export default function IncubatorListPage() {
+  const [incubators, setIncubators] = useState<Incubator[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get('/incubators/my')
+      .then((res) => setIncubators(res.data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse space-y-3">
+          <div className="h-7 w-64 bg-border rounded" />
+          <div className="h-4 w-48 bg-border rounded" />
+          <div className="h-24 bg-border rounded mt-4" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 max-w-[800px]">
-      <h1 className="font-display text-[26px] mb-1">Incubateur</h1>
-      <p className="text-[13px] text-text-2 mb-7">Gérez votre structure d'accompagnement</p>
-
-      {/* Incubator card */}
-      <Card className="flex items-center gap-[14px] mb-5">
-        <div className="w-14 h-14 rounded-[10px] bg-[#fdf0ec] text-[#8a3a1a] flex items-center justify-center text-[20px] flex-shrink-0">
-          🏢
-        </div>
-        <div>
-          <div className="text-[16px] font-semibold">StartUp Tunisia Hub</div>
-          <div className="text-[12px] text-text-2">startup-tunisia-hub · Privé · Tunis</div>
-          <div className="flex gap-1.5 mt-1.5">
-            <Badge variant="amber">En attente de validation</Badge>
-            <Badge variant="blue">Actif</Badge>
-          </div>
-        </div>
-        <div className="ml-auto flex gap-1.5">
-          <Link href="/dashboard/incubator/manage">
-            <Button className="text-[12px]">Modifier</Button>
-          </Link>
-          <Link href="/dashboard/incubator/new">
-            <Button variant="primary" className="text-[12px]">+ Créer</Button>
-          </Link>
-        </div>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2.5 mb-5">
-        <StatBox num={7} label="Membres" />
-        <StatBox num="2/4" label="Documents validés" />
-        <StatBox num={2021} label="Année de création" />
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2 flex-wrap">
-        <Link href="/dashboard/incubator/members">
-          <Button>Gérer l'équipe →</Button>
-        </Link>
-        <Link href="/dashboard/incubator/documents">
-          <Button>Documents vérification →</Button>
-        </Link>
-        <Link href="/dashboard/incubator/manage">
-          <Button>Informations <AdminGuard /></Button>
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="font-display text-[26px]">Incubateurs</h1>
+        <Link href="/dashboard/incubator/create">
+          <Button variant="primary" className="text-[12px]">+ Créer un incubateur</Button>
         </Link>
       </div>
+      <p className="text-[13px] text-text-2 mb-7">
+        Gérez vos structures d'accompagnement
+      </p>
+
+      {incubators.length === 0 ? (
+        <Card className="text-center py-12">
+          <div className="text-3xl mb-3">🏢</div>
+          <p className="text-[14px] font-medium mb-1">Aucun incubateur</p>
+          <p className="text-[13px] text-text-2 mb-5">
+            Créez votre premier incubateur pour commencer.
+          </p>
+          <Link href="/dashboard/incubator/create">
+            <Button variant="primary">+ Créer un incubateur</Button>
+          </Link>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {incubators.map((inc) => {
+            const approvedDocs =
+              inc.documents?.filter((d) => d.verification_status === 'approved').length ?? 0;
+            const totalDocs = inc.documents?.length ?? 0;
+            const foundationYear = '—';
+
+            return (
+              <Card key={inc.id} className="flex items-center gap-[14px]">
+                <div className="w-14 h-14 rounded-[10px] bg-[#fdf0ec] text-[#8a3a1a] flex items-center justify-center text-[20px] flex-shrink-0">
+                  🏢
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[16px] font-semibold truncate">{inc.name}</div>
+                  <div className="text-[12px] text-text-2">
+                    {inc.slug}
+                    {inc.city ? ` · ${inc.city}` : ''}
+                    {inc.country ? `, ${inc.country}` : ''}
+                  </div>
+                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                    <Badge variant={VERIFICATION_VARIANT[inc.verification_status] ?? 'amber'}>
+                      {VERIFICATION_LABEL[inc.verification_status] ?? inc.verification_status}
+                    </Badge>
+                    <Badge variant={inc.status === 'active' ? 'blue' : 'gray'}>
+                      {inc.status === 'active' ? 'Actif' : 'Suspendu'}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Mini stats */}
+                <div className="hidden sm:flex gap-4 text-center mr-2">
+                  <div>
+                    <div className="text-[16px] font-semibold">{inc.members?.length ?? 0}</div>
+                    <div className="text-[10px] text-text-2">Membres</div>
+                  </div>
+                  <div>
+                    <div className="text-[16px] font-semibold">
+                      {approvedDocs}/{totalDocs}
+                    </div>
+                    <div className="text-[10px] text-text-2">Docs validés</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <Link href={`/dashboard/incubator/${inc.id}`}>
+                    <Button className="text-[12px]">Gérer</Button>
+                  </Link>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
-  )
+  );
 }

@@ -18,15 +18,21 @@ interface Member {
 interface Incubator {
   id: string;
   name: string;
+  slug: string;
   description?: string;
   email?: string;
   phone?: string;
   website_url?: string;
   city?: string;
   country?: string;
-  verification_status: string;
-  status: string;
+  organization_type?: string;
+  registration_number?: string;
+  tax_id?: string;
+  foundation_date?: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
+  status: 'active' | 'suspended';
   members?: Member[];
+  documents?: { id: string; verification_status: string }[];
 }
 
 const ROLE_BADGE: Record<string, 'green' | 'blue' | 'amber' | 'gray'> = {
@@ -39,17 +45,17 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 export default function IncubatorDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { incubatorId } = useParams<{ incubatorId: string }>();
   const [incubator, setIncubator] = useState<Incubator | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      api.get(`/incubators/${id}`)
+    if (incubatorId) {
+      api.get(`/incubators/${incubatorId}`)
         .then(res => setIncubator(res.data))
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [incubatorId]);
 
   if (loading) {
     return (
@@ -76,6 +82,8 @@ export default function IncubatorDetailPage() {
   }
 
   const activeMembers = incubator.members?.filter(m => m.status === 'active') ?? [];
+  const approvedDocs = incubator.documents?.filter(d => d.verification_status === 'approved').length ?? 0;
+  const totalDocs = incubator.documents?.length ?? 0;
 
   return (
     <div className="p-8 max-w-[860px]">
@@ -87,16 +95,19 @@ export default function IncubatorDetailPage() {
             <Badge variant={incubator.verification_status === 'approved' ? 'green' : incubator.verification_status === 'rejected' ? 'red' : 'amber'}>
               {incubator.verification_status === 'approved' ? 'Approuvé' : incubator.verification_status === 'rejected' ? 'Rejeté' : 'En attente'}
             </Badge>
+            <Badge variant={incubator.status === 'active' ? 'blue' : 'gray'}>
+              {incubator.status === 'active' ? 'Actif' : 'Suspendu'}
+            </Badge>
           </div>
           {incubator.description && (
             <p className="text-[13px] text-text-2 max-w-xl">{incubator.description}</p>
           )}
         </div>
         <div className="flex gap-2">
-          <Link href={`/dashboard/incubator/${id}/members`}>
+          <Link href={`/dashboard/incubator/${incubatorId}/members`}>
             <Button className="text-[12px]">Équipe</Button>
           </Link>
-          <Link href={`/dashboard/incubator/${id}/documents`}>
+          <Link href={`/dashboard/incubator/${incubatorId}/documents`}>
             <Button className="text-[12px]">Documents</Button>
           </Link>
         </div>
@@ -105,25 +116,18 @@ export default function IncubatorDetailPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2.5 mb-5">
         <StatBox num={incubator.members?.length ?? 0} label="Membres" />
-        <StatBox num={activeMembers.length} label="Actifs" />
-        <StatBox
-          num={incubator.verification_status === 'approved' ? '✓' : '⏳'}
-          label="Vérification"
-        />
+        <StatBox num={`${approvedDocs}/${totalDocs}`} label="Docs validés" />
+        <StatBox num={activeMembers.length} label="Membres actifs" />
       </div>
 
-      {/* Info card */}
+      {/* Informations */}
       <Card className="mb-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-3">
-          Informations
-        </div>
+        <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-3">Informations</div>
         <div className="grid grid-cols-2 gap-y-3 text-[13px]">
-          {incubator.email && (
-            <><span className="text-text-2">Email</span><span>{incubator.email}</span></>
-          )}
-          {incubator.phone && (
-            <><span className="text-text-2">Téléphone</span><span>{incubator.phone}</span></>
-          )}
+          {incubator.slug && <><span className="text-text-2">Slug</span><span>{incubator.slug}</span></>}
+          {incubator.organization_type && <><span className="text-text-2">Type</span><span>{incubator.organization_type}</span></>}
+          {incubator.email && <><span className="text-text-2">Email</span><span>{incubator.email}</span></>}
+          {incubator.phone && <><span className="text-text-2">Téléphone</span><span>{incubator.phone}</span></>}
           {incubator.website_url && (
             <><span className="text-text-2">Site web</span>
             <a href={incubator.website_url} target="_blank" rel="noreferrer" className="text-accent hover:underline">
@@ -133,6 +137,14 @@ export default function IncubatorDetailPage() {
           {(incubator.city || incubator.country) && (
             <><span className="text-text-2">Localisation</span>
             <span>{[incubator.city, incubator.country].filter(Boolean).join(', ')}</span></>
+          )}
+          {incubator.registration_number && (
+            <><span className="text-text-2">N° d'enregistrement</span><span>{incubator.registration_number}</span></>
+          )}
+          {incubator.tax_id && <><span className="text-text-2">NIF</span><span>{incubator.tax_id}</span></>}
+          {incubator.foundation_date && (
+            <><span className="text-text-2">Fondation</span>
+            <span>{new Date(incubator.foundation_date).getFullYear()}</span></>
           )}
         </div>
       </Card>
@@ -144,7 +156,7 @@ export default function IncubatorDetailPage() {
             <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2">
               Équipe ({incubator.members.length})
             </div>
-            <Link href={`/dashboard/incubator/${id}/members`}>
+            <Link href={`/dashboard/incubator/${incubatorId}/members`}>
               <Button className="text-[11px] !py-1 !px-2">Gérer →</Button>
             </Link>
           </div>
@@ -165,6 +177,11 @@ export default function IncubatorDetailPage() {
               </div>
             );
           })}
+          {incubator.members.length > 4 && (
+            <div className="text-[12px] text-text-2 text-center pt-2">
+              +{incubator.members.length - 4} autres membres
+            </div>
+          )}
         </Card>
       )}
     </div>
