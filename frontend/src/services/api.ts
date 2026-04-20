@@ -36,7 +36,7 @@ api.interceptors.response.use(
       !isAuthEndpoint
     ) {
       try { localStorage.removeItem('access_token'); } catch { }
-      window.location.href = '/auth/login';
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);

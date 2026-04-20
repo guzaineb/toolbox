@@ -5,8 +5,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../services/api';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export type UserRole = 'admin' | 'expert' | 'project_owner' | 'incubator_membre';
 
 export interface AuthUser {
@@ -41,8 +39,6 @@ export interface AuthUser {
     incubator?: { id: string; name: string };
   }[];
 }
-
-// ─── Routes par rôle ──────────────────────────────────────────────────────────
 
 export const ROLE_ROUTES: Record<string, string> = {
   admin:             '/dashboard',

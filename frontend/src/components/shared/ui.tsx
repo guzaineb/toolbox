@@ -31,7 +31,7 @@ export function AdminGuard({ className }: { className?: string }) {
 }
 
 // ---- BUTTON ----
-type BtnVariant = 'default' | 'primary' |'secondary'
+type BtnVariant = 'default' | 'primary' |'secondary' |'outline' | 'ghost' | 'danger'
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: BtnVariant
   fullWidth?: boolean

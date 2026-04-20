@@ -1,10 +1,11 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UserProfile } from '../profiles/user-profile.entity';
+import { UpdateProfileDto } from '../profiles/dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -63,16 +64,24 @@ export class UsersService {
   }
 
   // ✅ AJOUT : mise à jour du profil personnel
-  async updateProfile(userId: string, data: Partial<UserProfile>) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['profile'],
-    });
-    if (!user || !user.profile) return null;
-
-    await this.profileRepository.update({ id: user.profile.id }, data);
-    return this.findById(userId);
+async updateProfile(userId: string, data: UpdateProfileDto) {
+  const user = await this.userRepository.findOne({
+    where: { id: userId },
+    relations: ['profile'],
+  });
+  
+  if (!user) throw new NotFoundException('User not found');
+  if (!user.profile) throw new NotFoundException('Profile not found');
+  
+  // Convert birth_date string to Date if provided
+  const updateData: any = { ...data };
+  if (data.birth_date) {
+    updateData.birth_date = new Date(data.birth_date);
   }
+  
+  await this.profileRepository.update({ id: user.profile.id }, updateData);
+  return this.findById(userId);
+}
 
   async getUsers(options: any = {}) {
     const [users, total] = await this.userRepository.findAndCount({

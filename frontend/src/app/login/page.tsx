@@ -24,7 +24,6 @@ export default function LoginPage() {
 
     try {
       const user = await login(data.email, data.password);
-      // user.role comes from /users/me — matches ROLE_ROUTES keys exactly
       redirectToDashboard(user.role);
     } catch (err: any) {
       const message =

@@ -1,4 +1,4 @@
-'use client';
+"use client"
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -6,31 +6,31 @@ import { useRouter } from 'next/navigation';
 import api from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card, ErrorAlert, Field, Input, Select, Textarea } from '@/components/shared/ui';
-
-interface ProfileForm {
-  first_name: string;
-  last_name: string;
-  phone: string;
-  birth_date: string;
-  country: string;
-  city: string;
-  address: string;
-  bio: string;
-  linkedin: string;
-  preferred_language: string;
-}
+import { ProfileForm } from '@/types/profil';
 
 export default function ProfileEditPage() {
   const { user } = useAuth();
   const router = useRouter();
+  
+  // Initialisation du formulaire
   const [form, setForm] = useState<ProfileForm>({
-    first_name: '', last_name: '', phone: '', birth_date: '',
-    country: '', city: '', address: '', bio: '', linkedin: '', preferred_language: 'fr',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    birth_date: '',
+    country: '',
+    city: '',
+    address: '',
+    bio: '',
+    linkedin: '',
+    preferred_language: 'fr',
   });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Pré-remplissage du formulaire avec les données existantes
   useEffect(() => {
     if (user?.profile) {
       const p = user.profile as any;
@@ -38,7 +38,8 @@ export default function ProfileEditPage() {
         first_name: p.first_name ?? '',
         last_name: p.last_name ?? '',
         phone: p.phone ?? '',
-        birth_date: p.birth_date ? p.birth_date.split('T')[0] : '',
+        // Transformation de la date ISO (ex: 1990-05-20T00:00:00Z) en format YYYY-MM-DD pour l'input date
+        birth_date: p.birth_date ? new Date(p.birth_date).toISOString().split('T')[0] : '',
         country: p.country ?? '',
         city: p.city ?? '',
         address: p.address ?? '',
@@ -50,22 +51,49 @@ export default function ProfileEditPage() {
   }, [user]);
 
   const handleSave = async () => {
-    setSaving(true); setError(null); setSuccess(false);
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
     try {
-      await api.patch('/users/profile', form);
+      /**
+       * NETTOYAGE DU PAYLOAD
+       * On transforme les chaînes vides en 'undefined' ou on les supprime.
+       * Cela permet au validateur @IsOptional() du backend de ne pas rejeter la requête.
+       */
+      const payload: any = {};
+      Object.keys(form).forEach((key) => {
+        const value = (form as any)[key];
+        if (value !== '' && value !== null) {
+          payload[key] = value;
+        }
+      });
+
+      // Envoi de la requête au backend
+      await api.patch('/users/profile', payload);
+      
       setSuccess(true);
+
+      // Redirection après succès
       setTimeout(() => {
         setSuccess(false);
         router.push('/dashboard/profile');
+        // Optionnel : Forcer le rafraîchissement des données utilisateur
+        // window.location.reload(); 
       }, 1500);
+
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Erreur lors de la sauvegarde');
+      console.error("Erreur mise à jour profil:", err);
+      // Gestion propre du message d'erreur (NestJS renvoie souvent un tableau dans err.response.data.message)
+      const backendMessage = err?.response?.data?.message;
+      setError(Array.isArray(backendMessage) ? backendMessage[0] : (backendMessage ?? 'Erreur lors de la sauvegarde'));
     } finally {
       setSaving(false);
     }
   };
 
-  const initials = `${form.first_name.charAt(0)}${form.last_name.charAt(0)}`.toUpperCase() || '??';
+  // Calcul des initiales pour l'avatar
+  const initials = `${form.first_name?.charAt(0) || ''}${form.last_name?.charAt(0) || ''}`.toUpperCase() || '??';
 
   return (
     <div className="p-8 max-w-[800px]">
@@ -85,14 +113,15 @@ export default function ProfileEditPage() {
       <p className="text-[13px] text-text-2 mb-7">Ces informations sont visibles par les autres membres</p>
 
       {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
+      
       {success && (
-        <div className="mb-5 p-3 rounded bg-accent-light text-accent text-[13px] border border-accent/20">
-          ✓ Profil mis à jour. Redirection…
+        <div className="mb-5 p-3 rounded bg-green-50 text-green-600 text-[13px] border border-green-200">
+          ✓ Profil mis à jour avec succès. Redirection…
         </div>
       )}
 
       <Card>
-        {/* Avatar row */}
+        {/* Row d'en-tête (Avatar & Email) */}
         <div className="flex items-center gap-[14px] mb-5 pb-5 border-b border-border">
           <div className="w-14 h-14 rounded-full bg-accent-light text-accent flex items-center justify-center text-[18px] font-semibold">
             {initials}
@@ -103,26 +132,46 @@ export default function ProfileEditPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Formulaire en deux colonnes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Prénom">
-            <Input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} />
+            <Input 
+              value={form.first_name} 
+              onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} 
+            />
           </Field>
           <Field label="Nom">
-            <Input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} />
+            <Input 
+              value={form.last_name} 
+              onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} 
+            />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Téléphone">
-            <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+216 55 123 456" />
+            <Input 
+              value={form.phone} 
+              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} 
+              placeholder="+216 -- --- ---" 
+            />
           </Field>
           <Field label="Date de naissance">
-            <Input type="date" value={form.birth_date} onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))} />
+            <Input 
+              type="date" 
+              value={form.birth_date} 
+              onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))} 
+            />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Pays">
-            <Select value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))}>
-              <option value="">— Pays —</option>
+            <Select 
+              value={form.country} 
+              onChange={e => setForm(f => ({ ...f, country: e.target.value }))}
+            >
+              <option value="">— Sélectionner —</option>
               <option value="TN">Tunisie</option>
               <option value="MA">Maroc</option>
               <option value="DZ">Algérie</option>
@@ -130,30 +179,60 @@ export default function ProfileEditPage() {
             </Select>
           </Field>
           <Field label="Ville">
-            <Input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
+            <Input 
+              value={form.city} 
+              onChange={e => setForm(f => ({ ...f, city: e.target.value }))} 
+            />
           </Field>
         </div>
+
         <Field label="Adresse">
-          <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+          <Input 
+            value={form.address} 
+            onChange={e => setForm(f => ({ ...f, address: e.target.value }))} 
+          />
         </Field>
-        <Field label="Bio">
-          <Textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} />
+
+        <Field label="Bio (Présentation)">
+          <Textarea 
+            value={form.bio} 
+            onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} 
+            rows={4}
+          />
         </Field>
-        <Field label="LinkedIn">
-          <Input value={form.linkedin} onChange={e => setForm(f => ({ ...f, linkedin: e.target.value }))} placeholder="https://linkedin.com/in/…" />
+
+        <Field label="Profil LinkedIn">
+          <Input 
+            value={form.linkedin} 
+            onChange={e => setForm(f => ({ ...f, linkedin: e.target.value }))} 
+            placeholder="https://linkedin.com/in/votre-profil" 
+          />
         </Field>
+
         <Field label="Langue préférée">
-          <Select value={form.preferred_language} onChange={e => setForm(f => ({ ...f, preferred_language: e.target.value }))}>
+          <Select 
+            value={form.preferred_language} 
+            onChange={e => setForm(f => ({ ...f, preferred_language: e.target.value }))}
+          >
             <option value="fr">Français</option>
             <option value="ar">Arabe</option>
             <option value="en">Anglais</option>
           </Select>
         </Field>
 
-        <div className="flex gap-2 mt-1">
-          <Link href="/dashboard/profile"><Button>Annuler</Button></Link>
-          <Button variant="primary" className="flex-1 justify-center" onClick={handleSave} loading={saving}>
-            Enregistrer
+        {/* Actions */}
+        <div className="flex gap-2 mt-4">
+          <Link href="/dashboard/profile">
+            <Button type="button" variant="outline">Annuler</Button>
+          </Link>
+          <Button 
+            variant="primary" 
+            className="flex-1 justify-center" 
+            onClick={handleSave} 
+            loading={saving}
+            disabled={saving}
+          >
+            {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </Button>
         </div>
       </Card>

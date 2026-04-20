@@ -83,7 +83,7 @@ export default function RegisterWizard() {
     setLoading(true);
     setSubmitError(null);
     const roleMapping: Record<string, string> = {
-      owner: "project_owner", expert: "expert", incubator: "incubator_member",
+      owner: "project_owner", expert: "expert", incubator: "incubator_membre",
     };
     const payload = {
       email: formData.email,
