@@ -1,386 +1,264 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ErrorAlert, Field, Input, Select, Textarea, Button } from '@/components/shared/ui';
-import { useExpertiseAreas } from '@/hooks/useExpertiseAreas';
-import { useExpertProfile } from '@/hooks/useExpertProfile';
-import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import api from '@/services/api';
+import {
+  ExpertProfile,
+  ExpertiseArea,
+  AVAILABILITY_LABELS,
+  AVAILABILITY_COLORS,
+} from '@/types/expert';
 
-const STEPS = [
-  { id: 1, label: 'Identité',      icon: '👤' },
-  { id: 2, label: 'Expertise',     icon: '🎯' },
-  { id: 3, label: 'Disponibilité', icon: '📅' },
-];
+export default function ExpertDashboardPage() {
+  const [profile, setProfile] = useState<ExpertProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default function ExpertOnboardingPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [ready, setReady] = useState(false); // ← attend que les deux fetches soient finis
-
-  const {
-    allAreas,
-    selectedAreaIds,
-    areaLevels,
-    setSelectedAreaIds,
-    setAreaLevels,
-    toggleArea,
-    updateAreaLevel,
-    updateAreaYears,
-    groupedAreas,
-    fetchAreas,
-  } = useExpertiseAreas();
-
-  const {
-    form,
-    saving,
-    error,
-    updateFormField,
-    saveProfile,
-    fetchProfile,
-  } = useExpertProfile();
-
-  // ── Chargement initial ──────────────────────────────────────────
   useEffect(() => {
-    const load = async () => {
-      const [, profile] = await Promise.all([fetchAreas(), fetchProfile()]);
-      if (profile?.expertiseAreas?.length) {
-        setSelectedAreaIds(profile.expertiseAreas.map((a: any) => a.id));
-        const levels: Record<string, any> = {};
-        profile.expertiseAreas.forEach((a: any) => {
-          levels[a.id] = { id: a.id, level: a.level || 'Expert', years: a.years || 1 };
-        });
-        setAreaLevels(levels);
-      }
-      setReady(true); // ← seulement ici, après les deux fetches
-    };
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    api.get('/experts/me')
+      .then((r) => setProfile(r.data))
+      .catch(() => setProfile(null))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleFinish = async () => {
-    await saveProfile(selectedAreaIds);
-    router.push('/dashboard/expert');
+  const handleRemoveArea = async (areaId: string) => {
+    if (!confirm('Retirer ce domaine d\'expertise ?')) return;
+    try {
+      await api.delete(`/experts/expertise/${areaId}`);
+      setProfile((prev) =>
+        prev
+          ? { ...prev, expertiseAreas: prev.expertiseAreas.filter((a) => a.id !== areaId) }
+          : prev,
+      );
+    } catch {
+      alert('Erreur lors de la suppression.');
+    }
   };
 
-  // ── Loading skeleton ────────────────────────────────────────────
-  if (!ready) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center p-4">
-        <div className="w-full max-w-[560px] animate-pulse space-y-4">
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-border" />
-          <div className="mx-auto h-7 w-64 bg-border rounded" />
-          <div className="mx-auto h-4 w-48 bg-border rounded" />
-          <div className="h-48 bg-border rounded-2xl mt-6" />
+      <div style={{ padding: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {[1, 2, 3].map((i) => (
+            <div key={i} style={{ height: '24px', background: '#f0ede8', borderRadius: '6px', width: `${50 + i * 15}%` }} />
+          ))}
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-[560px]">
-
-        {/* ── Header ── */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent-light text-[28px] mb-4">
-            {STEPS[step - 1].icon}
+  // Pas encore de profil
+  if (!profile) {
+    return (
+      <div style={{ padding: '32px', maxWidth: '600px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 6px' }}>Mon profil expert</h1>
+        <p style={{ fontSize: '13px', color: '#888', marginBottom: '24px' }}>
+          Vous n'avez pas encore de profil expert.
+        </p>
+        <div style={{
+          border: '2px dashed #e8e5df', borderRadius: '16px',
+          padding: '40px', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🧠</div>
+          <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>
+            Créez votre profil expert
           </div>
-          <h1 className="font-display text-[28px] font-semibold mb-1">
-            {step === 1 && 'Votre identité professionnelle'}
-            {step === 2 && "Vos domaines d'expertise"}
-            {step === 3 && 'Votre disponibilité'}
-          </h1>
-          <p className="text-[13px] text-text-2">
-            {step === 1 && 'Présentez-vous aux startups que vous accompagnerez'}
-            {step === 2 && 'Sélectionnez vos domaines et précisez votre niveau'}
-            {step === 3 && 'Indiquez votre disponibilité et finalisez votre profil'}
+          <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
+            Renseignez vos domaines d'expertise pour être sollicité dans les cohortes.
+          </p>
+          <Link href="/dashboard/expert/create">
+            <button style={primaryBtn}>+ Créer mon profil expert</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Grouper les domaines par catégorie
+  const grouped = profile.expertiseAreas.reduce((acc, area) => {
+    if (!acc[area.category]) acc[area.category] = [];
+    acc[area.category].push(area);
+    return acc;
+  }, {} as Record<string, ExpertiseArea[]>);
+
+  const availColor = AVAILABILITY_COLORS[profile.availability_status] ?? '#888';
+  const availLabel = AVAILABILITY_LABELS[profile.availability_status] ?? profile.availability_status;
+
+  return (
+    <div style={{ padding: '32px', maxWidth: '720px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
+        <div>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px' }}>Mon profil expert</h1>
+          <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
+            Gérez vos informations et domaines d'expertise
           </p>
         </div>
+        <Link href="/dashboard/expert/create">
+          <button style={secondaryBtn}>✏ Modifier</button>
+        </Link>
+      </div>
 
-        {/* ── Stepper ── */}
-        <div className="flex items-center justify-between mb-8">
-          {STEPS.map((s, i) => (
-            <div key={s.id} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all duration-300',
-                  step > s.id  ? 'bg-accent text-white' :
-                  step === s.id ? 'bg-accent text-white ring-4 ring-accent/20' :
-                                  'bg-border text-text-2'
-                )}>
-                  {step > s.id ? (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : s.id}
-                </div>
-                <span className={cn(
-                  'text-[11px] mt-1 font-medium transition-colors',
-                  step >= s.id ? 'text-accent' : 'text-text-2'
-                )}>
-                  {s.label}
+      {/* Identity Card */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '16px' }}>
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '12px',
+            background: '#f0ede8', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: '24px', flexShrink: 0,
+          }}>
+            🧠
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: '#111', marginBottom: '2px' }}>
+              {profile.headline}
+            </div>
+            {(profile.position || profile.organization) && (
+              <div style={{ fontSize: '13px', color: '#666' }}>
+                {[profile.position, profile.organization].filter(Boolean).join(' · ')}
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '3px 10px', borderRadius: '100px',
+                background: `${availColor}15`,
+                border: `1px solid ${availColor}40`,
+                fontSize: '12px', fontWeight: 600, color: availColor,
+              }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: availColor, display: 'inline-block' }} />
+                {availLabel}
+              </span>
+              {profile.years_of_experience && (
+                <span style={{ fontSize: '12px', color: '#888' }}>
+                  · {profile.years_of_experience} ans d'expérience
                 </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className="flex-1 h-[2px] mx-2 mb-4 rounded-full bg-border overflow-hidden">
-                  <div
-                    className="h-full bg-accent transition-all duration-500 rounded-full"
-                    style={{ width: step > s.id ? '100%' : '0%' }}
-                  />
-                </div>
               )}
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* ── Card ── */}
-        <div className="bg-surface rounded-2xl border border-border p-7 shadow-sm">
-          {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
+        {profile.bio && (
+          <p style={{ fontSize: '13.5px', color: '#444', lineHeight: 1.7, margin: '0 0 16px' }}>
+            {profile.bio}
+          </p>
+        )}
 
-          {/* Step 1 — Identité */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <Field label="Titre / Headline *">
-                <Input
-                  autoFocus
-                  placeholder="Ex: Expert en financement de startups"
-                  value={form.headline}
-                  onChange={e => updateFormField('headline', e.target.value)}
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Organisation">
-                  <Input
-                    placeholder="Nom de l'entreprise"
-                    value={form.organization}
-                    onChange={e => updateFormField('organization', e.target.value)}
-                  />
-                </Field>
-                <Field label="Poste">
-                  <Input
-                    placeholder="CEO, Consultant…"
-                    value={form.position}
-                    onChange={e => updateFormField('position', e.target.value)}
-                  />
-                </Field>
-              </div>
-              <Field label="Années d'expérience">
-                <Input
-                  type="number"
-                  placeholder="10"
-                  value={form.years_of_experience}
-                  onChange={e => updateFormField('years_of_experience', Number(e.target.value))}
-                />
-              </Field>
-              <Field label="LinkedIn">
-                <Input
-                  placeholder="https://linkedin.com/in/…"
-                  value={form.linkedin_url}
-                  onChange={e => updateFormField('linkedin_url', e.target.value)}
-                />
-              </Field>
-              <Field label="Bio">
-                <Textarea
-                  placeholder="Décrivez votre parcours et ce que vous apportez aux startups…"
-                  rows={3}
-                  value={form.bio}
-                  onChange={e => updateFormField('bio', e.target.value)}
-                />
-              </Field>
+        {profile.linkedin_url && (
+          <a
+            href={profile.linkedin_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: '12.5px', color: '#0077b5', textDecoration: 'none' }}
+          >
+            🔗 Voir sur LinkedIn
+          </a>
+        )}
+      </div>
+
+      {/* Domaines d'expertise */}
+      <div style={{ ...card, marginTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 600 }}>Domaines d'expertise</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+              {profile.expertiseAreas.length} domaine{profile.expertiseAreas.length !== 1 ? 's' : ''} associé{profile.expertiseAreas.length !== 1 ? 's' : ''}
             </div>
-          )}
-
-          {/* Step 2 — Expertise */}
-          {step === 2 && (
-            <div>
-              <p className="text-[12px] text-text-2 mb-4">
-                Cliquez sur les domaines qui correspondent à votre expertise
-              </p>
-
-              {/* Domaines groupés */}
-              {Object.keys(groupedAreas).length === 0 ? (
-                // Fallback si groupedAreas est vide malgré ready=true
-                <div className="text-[13px] text-text-2 text-center py-8">
-                  Aucun domaine disponible.
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 pb-1">
-                  {Object.entries(groupedAreas).map(([cat, areas]) => (
-                    <div key={cat}>
-                      <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-2">
-                        {cat}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {areas.map(area => (
-                          <button
-                            key={area.id}
-                            type="button"
-                            onClick={() => toggleArea(area.id)}
-                            className={cn(
-                              'text-[12px] px-3 py-1.5 rounded-full border transition-all',
-                              selectedAreaIds.includes(area.id)
-                                ? 'bg-accent-light text-accent border-accent font-medium'
-                                : 'bg-bg text-text-2 border-border hover:border-accent'
-                            )}
-                          >
-                            {area.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Détail niveau par expertise sélectionnée */}
-              {selectedAreaIds.length > 0 && (
-                <>
-                  <div className="h-px bg-border my-4" />
-                  <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-2.5">
-                    Précisez votre niveau ({selectedAreaIds.length} sélectionné{selectedAreaIds.length > 1 ? 's' : ''})
-                  </div>
-                  <div className="max-h-[200px] overflow-y-auto">
-                    {selectedAreaIds.map(id => {
-                      const area = allAreas.find(a => a.id === id);
-                      if (!area) return null;
-                      const lvl = areaLevels[id] ?? { level: 'Expert', years: 1 };
-                      return (
-                        <div key={id} className="flex items-center gap-3 py-2.5 border-b border-border last:border-none">
-                          <span className="text-[13px] font-medium flex-1 truncate">{area.name}</span>
-                          <select
-                            value={lvl.level}
-                            onChange={e => updateAreaLevel(id, e.target.value)}
-                            className="text-[12px] py-1 px-2 border border-border rounded bg-bg text-text-1 outline-none focus:border-accent"
-                          >
-                            <option>Expert</option>
-                            <option>Intermédiaire</option>
-                            <option>Débutant</option>
-                          </select>
-                          <input
-                            type="number"
-                            min={1}
-                            value={lvl.years}
-                            onChange={e => updateAreaYears(id, Number(e.target.value))}
-                            className="w-14 text-[12px] py-1 px-2 text-center border border-border rounded bg-bg text-text-1 focus:border-accent outline-none"
-                          />
-                          <span className="text-[11px] text-text-2">ans</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-
-              {/* Message si rien sélectionné */}
-              {selectedAreaIds.length === 0 && Object.keys(groupedAreas).length > 0 && (
-                <div className="mt-4 p-3 rounded-lg bg-bg border border-border text-[12px] text-text-2 text-center">
-                  Sélectionnez au moins un domaine pour continuer
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 3 — Disponibilité + récap */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <Field label="Disponibilité">
-                <Select
-                  value={form.availability_status}
-                  onChange={e => updateFormField('availability_status', e.target.value)}
-                >
-                  <option value="available">Disponible</option>
-                  <option value="partial">Partiellement disponible</option>
-                  <option value="unavailable">Non disponible</option>
-                </Select>
-              </Field>
-
-              {/* Récap */}
-              <div className="rounded-xl bg-bg border border-border p-4 space-y-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2">
-                  Récapitulatif
-                </div>
-                <div className="space-y-1.5 text-[13px]">
-                  <div className="flex gap-2">
-                    <span className="text-text-2 w-32 flex-shrink-0">Headline</span>
-                    <span className="font-medium truncate">{form.headline || '—'}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-text-2 w-32 flex-shrink-0">Organisation</span>
-                    <span className="truncate">{form.organization || '—'}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-text-2 w-32 flex-shrink-0">Expérience</span>
-                    <span>{form.years_of_experience ? `${form.years_of_experience} ans` : '—'}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-text-2 w-32 flex-shrink-0">Expertises</span>
-                    <span className="text-accent font-medium">
-                      {selectedAreaIds.length} domaine{selectedAreaIds.length > 1 ? 's' : ''} sélectionné{selectedAreaIds.length > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-                {selectedAreaIds.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border">
-                    {selectedAreaIds.slice(0, 6).map(id => {
-                      const area = allAreas.find(a => a.id === id);
-                      return area ? (
-                        <span key={id} className="text-[11px] px-2 py-0.5 rounded-full bg-accent-light text-accent border border-accent/20">
-                          {area.name}
-                        </span>
-                      ) : null;
-                    })}
-                    {selectedAreaIds.length > 6 && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-border text-text-2">
-                        +{selectedAreaIds.length - 6}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          </div>
+          <Link href="/dashboard/expert/create">
+            <button style={{ ...secondaryBtn, fontSize: '12px', padding: '6px 12px' }}>+ Modifier</button>
+          </Link>
         </div>
 
-        {/* ── Navigation ── */}
-        <div className="flex gap-3 mt-5">
-          {step > 1 ? (
-            <Button type="button" className="flex-1 justify-center" onClick={() => setStep(s => s - 1)}>
-              ← Retour
-            </Button>
-          ) : (
-            <Button type="button" className="flex-1 justify-center" onClick={() => router.back()}>
-              Annuler
-            </Button>
-          )}
+        {profile.expertiseAreas.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#aaa', fontSize: '13px' }}>
+            Aucun domaine sélectionné
+          </div>
+        ) : (
+          Object.entries(grouped).map(([category, items]) => (
+            <div key={category} style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#bbb', marginBottom: '8px' }}>
+                {category}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                {items.map((area) => (
+                  <span
+                    key={area.id}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '5px 12px', borderRadius: '100px',
+                      background: '#f0ede8', fontSize: '12.5px', fontWeight: 500, color: '#333',
+                    }}
+                  >
+                    {area.name}
+                    <button
+                      onClick={() => handleRemoveArea(area.id)}
+                      title="Retirer"
+                      style={{
+                        background: 'none', border: 'none', padding: '0',
+                        cursor: 'pointer', color: '#aaa', lineHeight: 1,
+                        fontSize: '13px', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
-          {step < STEPS.length ? (
-            <Button
-              type="button"
-              variant="primary"
-              className="flex-1 justify-center"
-              disabled={step === 2 && selectedAreaIds.length === 0}
-              onClick={() => setStep(s => s + 1)}
-            >
-              Continuer →
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="primary"
-              loading={saving}
-              className="flex-1 justify-center"
-              onClick={handleFinish}
-            >
-              Terminer ✓
-            </Button>
-          )}
-        </div>
-
-        <p className="text-center text-[12px] text-text-2 mt-4">
-          Étape {step} sur {STEPS.length}
-        </p>
+      {/* Stats légères */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '16px' }}>
+        <StatCard icon="🎯" value={profile.expertiseAreas.length} label="Domaines" />
+        <StatCard icon="📅" value={profile.years_of_experience ?? '—'} label="Années exp." />
+        <StatCard icon="📡" value={availLabel} label="Statut" small />
       </div>
     </div>
   );
 }
+
+// ── Helpers UI ────────────────────────────────────────────────────────────────
+
+function StatCard({ icon, value, label, small }: { icon: string; value: string | number; label: string; small?: boolean }) {
+  return (
+    <div style={{ ...card, textAlign: 'center', padding: '16px' }}>
+      <div style={{ fontSize: '24px', marginBottom: '6px' }}>{icon}</div>
+      <div style={{ fontSize: small ? '13px' : '20px', fontWeight: 700, color: '#111' }}>{value}</div>
+      <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{label}</div>
+    </div>
+  );
+}
+
+const card: React.CSSProperties = {
+  background: '#fff',
+  border: '1px solid #e8e5df',
+  borderRadius: '14px',
+  padding: '20px 24px',
+  boxShadow: '0 1px 6px rgba(0,0,0,.04)',
+};
+
+const primaryBtn: React.CSSProperties = {
+  padding: '10px 20px',
+  background: '#1a1a2e',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '8px',
+  fontSize: '13.5px',
+  fontWeight: 600,
+  cursor: 'pointer',
+};
+
+const secondaryBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  background: '#fff',
+  color: '#1a1a2e',
+  border: '1.5px solid #e8e5df',
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 500,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+};

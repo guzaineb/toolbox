@@ -1,7 +1,9 @@
-import {Controller, Post, Body, Get, Param, UseGuards, Req, Patch,} from '@nestjs/common';
+import {Controller, Post, Body, Get, Param, UseGuards, Req, Patch, Delete, HttpCode, HttpStatus,} from '@nestjs/common';
 import { IncubatorsService } from './incubators.service';
 import { CreateIncubatorDto } from './dto/create-incubator.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateIncubatorDto } from './dto/update-incubator.dto';
+import { UpdateStatusDto, UpdateVerificationDto } from './dto/update-status.dto';
 
 @Controller('incubators')
 export class IncubatorsController {
@@ -29,4 +31,45 @@ export class IncubatorsController {
   findOne(@Param('id') id: string) {
     return this.incubatorsService.findOne(id);
   }
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateIncubatorDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.incubatorsService.update(id, dto, req.user.id);
+  }
+
+    @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  remove(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.incubatorsService.remove(id, req.user.id);
+  }
+
+ @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateStatusDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.incubatorsService.updateStatus(id, dto, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/verification')
+  updateVerification(
+    @Param('id') id: string,
+    @Body() dto: UpdateVerificationDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.incubatorsService.updateVerification(id, dto, req.user.id);
+  }
+
+
 }

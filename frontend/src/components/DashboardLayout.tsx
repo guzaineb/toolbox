@@ -86,9 +86,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed lg:sticky top-0 left-0 z-30 h-screen
-          w-72 bg-white/90 backdrop-blur-md border-r border-gray-200/60 shadow-xl
+        className={`fixed lg:sticky top-0 left-0 z-30 h-screen w-72 bg-white/90 backdrop-blur-md border-r border-gray-200/60 shadow-xl
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 flex flex-col
@@ -199,13 +197,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </span>
               Actif
             </Badge>
-
-            <Link href="/not-found">
-              <button className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all text-text-2">
-                404 test
-              </button>
-            </Link>
-
             <Link href="/invite">
               <button className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all text-text-2">
                 Invitation

@@ -1,45 +1,83 @@
 'use client';
 
-import { ExpertiseArea } from '@/hooks/useExpertiseAreas';
-import { cn } from '@/lib/utils';
+import { ExpertiseArea } from '@/types/expert';
+import { useMemo } from 'react';
 
-interface ExpertiseSelectorProps {
-  groupedAreas: Record<string, ExpertiseArea[]>;
-  selectedAreaIds: string[];
-  onToggleArea: (id: string) => void;
+interface Props {
+  areas: ExpertiseArea[];
+  selected: string[]; // ids
+  onChange: (ids: string[]) => void;
+  max?: number;
 }
 
-export function ExpertiseSelector({ groupedAreas, selectedAreaIds, onToggleArea }: ExpertiseSelectorProps) {
+export function ExpertiseAreaSelector({ areas, selected, onChange, max = 8 }: Props) {
+  // Grouper par catégorie
+  const grouped = useMemo(() => {
+    const map = new Map<string, ExpertiseArea[]>();
+    for (const area of areas) {
+      if (!map.has(area.category)) map.set(area.category, []);
+      map.get(area.category)!.push(area);
+    }
+    return map;
+  }, [areas]);
+
+  const toggle = (id: string) => {
+    if (selected.includes(id)) {
+      onChange(selected.filter((s) => s !== id));
+    } else {
+      if (max && selected.length >= max) return;
+      onChange([...selected, id]);
+    }
+  };
+
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-3">
-        Domaines d'expertise
-      </div>
-      <div className="text-[12px] text-text-2 mb-3">
-        Sélectionnez vos domaines (cliquez pour activer)
-      </div>
-
-      {Object.entries(groupedAreas).map(([cat, areas]) => (
-        <div key={cat} className="mb-3">
-          <div className="text-[11px] text-text-2 mb-1.5">{cat}</div>
-          <div className="flex flex-wrap">
-            {areas.map(area => (
-              <button
-                key={area.id}
-                onClick={() => onToggleArea(area.id)}
-                className={cn(
-                  'inline-flex items-center gap-1 text-[12px] px-2.5 py-1 rounded-full border m-[3px] cursor-pointer transition-all',
-                  selectedAreaIds.includes(area.id)
-                    ? 'bg-accent-light text-accent border-accent'
-                    : 'bg-bg text-text-2 border-border hover:border-accent'
-                )}
-              >
-                {area.name}
-              </button>
-            ))}
+      {Array.from(grouped.entries()).map(([category, items]) => (
+        <div key={category} style={{ marginBottom: '20px' }}>
+          <div style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '.1em',
+            textTransform: 'uppercase',
+            color: '#999',
+            marginBottom: '8px',
+          }}>
+            {category}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+            {items.map((area) => {
+              const isSelected = selected.includes(area.id);
+              const isDisabled = !isSelected && selected.length >= max;
+              return (
+                <button
+                  key={area.id}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => toggle(area.id)}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '100px',
+                    fontSize: '12.5px',
+                    fontWeight: isSelected ? 600 : 400,
+                    border: `1.5px solid ${isSelected ? '#1a1a2e' : '#e8e5df'}`,
+                    background: isSelected ? '#1a1a2e' : '#fff',
+                    color: isSelected ? '#fff' : isDisabled ? '#ccc' : '#333',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    transition: 'all .15s',
+                    opacity: isDisabled ? 0.5 : 1,
+                  }}
+                >
+                  {isSelected && <span style={{ marginRight: '4px' }}>✓</span>}
+                  {area.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       ))}
+      <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+        {selected.length} / {max} domaines sélectionnés
+      </div>
     </div>
   );
 }

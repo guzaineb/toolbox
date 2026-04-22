@@ -1,5 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn,
+} from 'typeorm';
 import { User } from '../users/user.entity';
+import { ProjectOwnerSkill } from './project-owner-skill.entity';
+import { ProjectOwnerExperience } from './project-owner-experience.entity';
 
 @Entity('project_owner_profiles')
 export class ProjectOwnerProfile {
@@ -30,4 +34,16 @@ export class ProjectOwnerProfile {
   @OneToOne(() => User, user => user.projectOwnerProfile)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @OneToMany(() => ProjectOwnerSkill, skill => skill.profile, { cascade: true })
+  skills: ProjectOwnerSkill[];
+
+  @OneToMany(() => ProjectOwnerExperience, exp => exp.profile, { cascade: true })
+  experiences: ProjectOwnerExperience[];
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 }

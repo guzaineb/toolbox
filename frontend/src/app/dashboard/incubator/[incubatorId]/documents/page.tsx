@@ -10,15 +10,22 @@ interface Doc {
   document_type: string;
   file_url: string;
   verification_status: 'pending' | 'approved' | 'rejected';
-  created_at?: string;
+  uploaded_at?: string;
 }
 
 const DOC_TYPES = [
-  { value: 'registre_commerce', label: 'Registre de commerce' },
-  { value: 'document_legal', label: 'Document légal' },
-  { value: 'attestation_fiscale', label: 'Attestation fiscale' },
+  { value: 'registre_commerce',     label: 'Registre de commerce' },
+  { value: 'document_legal',        label: 'Document légal' },
+  { value: 'attestation_fiscale',   label: 'Attestation fiscale' },
   { value: 'preuve_institutionnelle', label: 'Preuve institutionnelle' },
 ];
+
+const STATUS_BADGE: Record<string, 'amber' | 'green' | 'red'> = {
+  pending: 'amber', approved: 'green', rejected: 'red',
+};
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'En attente', approved: 'Approuvé', rejected: 'Rejeté',
+};
 
 export default function DocumentsPage() {
   const { incubatorId } = useParams<{ incubatorId: string }>();
@@ -28,6 +35,8 @@ export default function DocumentsPage() {
   const [docType, setDocType] = useState('registre_commerce');
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocs = () => {
@@ -60,6 +69,7 @@ export default function DocumentsPage() {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) handleUpload(file);
+    e.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -69,14 +79,32 @@ export default function DocumentsPage() {
     if (file) handleUpload(file);
   };
 
-  const statusBadge = (status: string) => {
-    const map: Record<string, 'amber' | 'green' | 'red'> = {
-      pending: 'amber', approved: 'green', rejected: 'red',
-    };
-    const labels: Record<string, string> = {
-      pending: 'En attente', approved: 'Approuvé', rejected: 'Rejeté',
-    };
-    return <Badge variant={map[status] ?? 'gray'}>{labels[status] ?? status}</Badge>;
+  const handleDelete = async (docId: string) => {
+    setError(null);
+    setDeletingId(docId);
+    try {
+      await api.delete(`/incubators/${incubatorId}/documents/${docId}`);
+      fetchDocs();
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? 'Erreur suppression');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleVerify = async (docId: string, status: 'approved' | 'rejected') => {
+    setError(null);
+    setVerifyingId(docId);
+    try {
+      await api.patch(`/incubators/${incubatorId}/documents/${docId}/verify`, {
+        verification_status: status,
+      });
+      fetchDocs();
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? 'Erreur vérification');
+    } finally {
+      setVerifyingId(null);
+    }
   };
 
   return (
@@ -132,6 +160,7 @@ export default function DocumentsPage() {
         <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-text-2 mb-3">
           Documents soumis ({docs.length})
         </div>
+
         {loading ? (
           <div className="animate-pulse space-y-2">
             {[1, 2].map(i => <div key={i} className="h-12 bg-border rounded" />)}
@@ -141,25 +170,64 @@ export default function DocumentsPage() {
         ) : (
           docs.map(doc => {
             const typeLabel = DOC_TYPES.find(t => t.value === doc.document_type)?.label ?? doc.document_type;
+            const isVerifying = verifyingId === doc.id;
+            const isDeleting = deletingId === doc.id;
+
             return (
-              <div key={doc.id} className="flex items-center gap-3 py-3 border-b border-border last:border-none">
-                <div className="text-xl flex-shrink-0">📄</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium truncate">{typeLabel}</div>
-                  {doc.created_at && (
-                    <div className="text-[11px] text-text-2">
-                      {new Date(doc.created_at).toLocaleDateString('fr-FR')}
-                    </div>
-                  )}
+              <div key={doc.id} className="py-3 border-b border-border last:border-none">
+                {/* Ligne principale */}
+                <div className="flex items-center gap-3">
+                  <div className="text-xl flex-shrink-0">📄</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium truncate">{typeLabel}</div>
+                    {doc.uploaded_at && (
+                      <div className="text-[11px] text-text-2">
+                        {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
+                      </div>
+                    )}
+                  </div>
+
+                  <Badge variant={STATUS_BADGE[doc.verification_status] ?? 'gray'}>
+                    {STATUS_LABEL[doc.verification_status] ?? doc.verification_status}
+                  </Badge>
+
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_API_URL}${doc.file_url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Button className="text-[11px] !py-1 !px-2">Voir</Button>
+                  </a>
+
+                  <Button
+                    className="text-[11px] !py-1 !px-2 !text-red-500 !border-red-200 hover:!bg-red-50"
+                    loading={isDeleting}
+                    onClick={() => handleDelete(doc.id)}
+                  >
+                    ✕
+                  </Button>
                 </div>
-                {statusBadge(doc.verification_status)}
-                <a
-                  href={`${process.env.NEXT_PUBLIC_API_URL}${doc.file_url}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Button className="text-[11px] !py-1 !px-2 ml-1">Voir</Button>
-                </a>
+
+                {/* Actions de vérification (admin) — visibles si en attente */}
+                {doc.verification_status === 'pending' && (
+                  <div className="flex gap-2 mt-2 ml-8">
+                    <Button
+                      variant="primary"
+                      className="text-[11px] !py-1 !px-3"
+                      loading={isVerifying}
+                      onClick={() => handleVerify(doc.id, 'approved')}
+                    >
+                      ✓ Approuver
+                    </Button>
+                    <Button
+                      className="text-[11px] !py-1 !px-3 !text-red-500 !border-red-200 hover:!bg-red-50"
+                      loading={isVerifying}
+                      onClick={() => handleVerify(doc.id, 'rejected')}
+                    >
+                      ✗ Rejeter
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })
