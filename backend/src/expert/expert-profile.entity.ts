@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { User } from '../users/user.entity';
 import { ExpertiseArea } from './expertise-area.entity';
+import { ExpertProfileExpertiseArea } from './expert-profile-expertise-area.entity';
 
 @Entity('expert_profiles')
 export class ExpertProfile {
@@ -32,7 +33,9 @@ export class ExpertProfile {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToMany(() => ExpertiseArea)
-  @JoinTable({ name: 'expert_profile_expertise_areas' })
+  //@ManyToMany(() => ExpertiseArea)
+  //@JoinTable({ name: 'expert_profile_expertise_areas' })
   expertiseAreas: ExpertiseArea[];
+ @OneToMany(() => ExpertProfileExpertiseArea, conn => conn.expertProfile, {cascade: true,eager: false})
+  expertiseConnections: ExpertProfileExpertiseArea[];
 }

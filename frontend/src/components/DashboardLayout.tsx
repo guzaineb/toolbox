@@ -6,7 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from '@/components/shared/ui';
 import {LayoutDashboard,User,Factory,Plus,Users,FolderKanban,GraduationCap,Settings,LogOut,Menu,X,ChevronRight,} from 'lucide-react';
-
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -16,13 +15,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // 🔐 Protection route
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
+    if (!loading && !user) { router.push('/login');}
   }, [user, loading, router]);
+
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
@@ -34,28 +30,43 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
           <p className="text-text-2 text-sm font-medium">Chargement de votre espace...</p>
         </div>
-      </div> );}
+      </div>
+    );
+  }
+
   if (!user) return null;
-  const getPrimaryRole = () => {
-    if (user.projectOwnerProfile) return 'project-owner';
-    if (user.expertProfile) return 'expert';
-    if (user.incubatorMembers) return 'incubator-member';
-    return 'member';
-  };
-  const role = getPrimaryRole();
-  const isIncubatorMember = role === 'incubator-member';
+
+  // ✅ On utilise le champ `role` de l'utilisateur (source de vérité)
+  const userRole = user.role; // 'admin' | 'expert' | 'project_owner' | 'incubator_membre' | null
+
+  // Drapeaux pour la construction de la navigation
+  const isAdmin = userRole === 'admin';
+  const isExpert = userRole === 'expert';
+  const isProjectOwner = userRole === 'project_owner';
+  const isIncubatorMember = userRole === 'incubator_membre';
+
+  // Éléments de navigation selon le rôle principal
   const NAV_ITEMS = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/profile', label: 'Mon profil', icon: User },
-    ...(isIncubatorMember
-      ? [{ href: '/dashboard/incubator', label: 'Incubateur', icon: Factory },{ href: '/dashboard/incubator/create', label: 'Créer', icon: Plus },{ href: '/dashboard/members', label: 'Équipe', icon: Users },
-        ]
-      : []),
-    ...(role === 'project-owner'
+    ...(isProjectOwner
       ? [{ href: '/dashboard/project-owner', label: 'Projets', icon: FolderKanban }]
       : []),
-    ...(role === 'expert'
+    ...(isExpert
       ? [{ href: '/dashboard/expert', label: 'Expertise', icon: GraduationCap }]
+      : []),
+    ...(isIncubatorMember
+      ? [
+          { href: '/dashboard/incubator', label: 'Incubateur', icon: Factory },
+          { href: '/dashboard/incubator/create', label: 'Créer', icon: Plus },
+          { href: '/dashboard/members', label: 'Équipe', icon: Users },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          // Exemple d’items pour l’admin (ajustez selon vos besoins)
+          { href: '/dashboard/admin', label: 'Administration', icon: Settings },
+        ]
       : []),
     { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
   ];
@@ -68,11 +79,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     : '??';
 
   const roleLabels: Record<string, string> = {
-    'project-owner': 'Porteur de projet',
+    admin: 'Administrateur',
     expert: 'Expert',
-    'incubator-member': 'Membre incubateur',
-    member: 'Membre',
+    project_owner: 'Porteur de projet',
+    incubator_membre: 'Membre incubateur',
   };
+
+  const currentRoleLabel = userRole ? roleLabels[userRole] : 'Membre';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 flex">
@@ -101,7 +114,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
               <div className="text-xs text-text-3 mt-1 capitalize flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
-                Dashboard · {roleLabels[role]}
+                Dashboard · {currentRoleLabel}
               </div>
             </div>
             <button
@@ -153,7 +166,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">{fullName || 'Utilisateur'}</div>
               <div className="text-xs text-text-3 capitalize truncate">
-                {roleLabels[role]}
+                {currentRoleLabel}
               </div>
             </div>
           </div>
@@ -181,7 +194,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="hidden sm:flex items-center text-sm text-text-3">
               <span className="font-medium text-text">ProjectStruct</span>
               <ChevronRight size={14} className="mx-1.5 opacity-50" />
-              <span className="capitalize">{roleLabels[role]}</span>
+              <span className="capitalize">{currentRoleLabel}</span>
               <ChevronRight size={14} className="mx-1.5 opacity-50" />
               <span className="font-medium text-text">
                 {NAV_ITEMS.find(item => item.href === pathname)?.label || 'Dashboard'}
@@ -207,9 +220,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Dynamic content */}
         <main className="flex-1 p-4 md:p-6">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
     </div>

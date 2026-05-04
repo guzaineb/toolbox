@@ -11,7 +11,7 @@ import { User } from '../users/user.entity';
     TypeOrmModule.forFeature([Incubator, IncubatorMember, User])
   ],
   controllers: [IncubatorsController],
-  providers: [IncubatorsService],   // ← PAS de IncubatorRepository ici
+  providers: [IncubatorsService],  
   exports: [IncubatorsService],
 })
 export class IncubatorsModule {}

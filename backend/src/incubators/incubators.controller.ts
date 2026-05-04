@@ -9,7 +9,6 @@ import { UpdateStatusDto, UpdateVerificationDto } from './dto/update-status.dto'
 export class IncubatorsController {
   constructor(private incubatorsService: IncubatorsService) {}
 
-  // ✅ /incubators/my AVANT /:id pour éviter le conflit de routes
   @UseGuards(JwtAuthGuard)
   @Get('my')
   findMine(@Req() req: { user: { id: string } }) {
@@ -33,8 +32,7 @@ export class IncubatorsController {
   }
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(
-    @Param('id') id: string,
+  update( @Param('id') id: string,
     @Body() dto: UpdateIncubatorDto,
     @Req() req: { user: { id: string } },
   ) {

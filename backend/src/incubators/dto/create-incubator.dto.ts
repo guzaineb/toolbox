@@ -50,4 +50,11 @@ export class CreateIncubatorDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+@IsOptional()
+@IsString()
+tax_id?: string;
+@IsOptional()
+@IsUrl()
+logo_url?: string;
 }

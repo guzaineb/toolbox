@@ -12,6 +12,7 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailService } from './mail/mail.service';
+import { UploadsModule } from './uploads/uploads.module';
 
 
 
@@ -31,7 +32,7 @@ import { MailService } from './mail/mail.service';
       }),
       inject: [ConfigService],
     }),
-    IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule],
+    IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule,UploadsModule],
   controllers: [AppController],
   providers: [AppService, MailService],
 })

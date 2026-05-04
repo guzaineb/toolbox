@@ -12,6 +12,6 @@ export class ExpertiseArea {
   @Column({ nullable: true })
   category: string;
 
-  @ManyToMany(() => ExpertProfile, expert => expert.expertiseAreas)
-  experts: ExpertProfile[];
+  //@ManyToMany(() => ExpertProfile, expert => expert.expertiseAreas)
+  //experts: ExpertProfile[];
 }

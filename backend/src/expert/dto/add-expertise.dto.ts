@@ -1,14 +1,12 @@
-import { IsUUID, IsOptional, IsString, IsNumber, Min, Max } from 'class-validator';
+import { IsUUID, IsOptional, IsString, IsNumber, Min, Max, IsIn } from 'class-validator';
 
 export class AddExpertiseDto {
   @IsUUID('4')
   expertiseAreaId: string;
 
-  /**
-   * Niveau : 'beginner' | 'intermediate' | 'advanced' | 'expert'
-   */
   @IsOptional()
   @IsString()
+  @IsIn(['junior', 'intermediate', 'senior', 'expert'])
   level?: string;
 
   @IsOptional()

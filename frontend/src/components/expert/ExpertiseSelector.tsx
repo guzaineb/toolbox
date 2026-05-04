@@ -1,82 +1,137 @@
+// components/expert/ExpertiseSelector.tsx
 'use client';
 
+import { useState } from 'react';
+import { Search, X, Plus } from 'lucide-react';
 import { ExpertiseArea } from '@/types/expert';
-import { useMemo } from 'react';
 
-interface Props {
+interface ExpertiseSelectorProps {
   areas: ExpertiseArea[];
-  selected: string[]; // ids
-  onChange: (ids: string[]) => void;
-  max?: number;
+  groupedAreas: Record<string, ExpertiseArea[]>;
+  selectedIds: string[];
+  onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
+  loading?: boolean;
 }
 
-export function ExpertiseAreaSelector({ areas, selected, onChange, max = 8 }: Props) {
-  // Grouper par catégorie
-  const grouped = useMemo(() => {
-    const map = new Map<string, ExpertiseArea[]>();
-    for (const area of areas) {
-      if (!map.has(area.category)) map.set(area.category, []);
-      map.get(area.category)!.push(area);
-    }
-    return map;
-  }, [areas]);
+export function ExpertiseSelector({
+  areas,
+  groupedAreas,
+  selectedIds,
+  onSelect,
+  onRemove,
+  loading = false,
+}: ExpertiseSelectorProps) {
+  const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
 
-  const toggle = (id: string) => {
-    if (selected.includes(id)) {
-      onChange(selected.filter((s) => s !== id));
-    } else {
-      if (max && selected.length >= max) return;
-      onChange([...selected, id]);
-    }
-  };
+  const filteredAreas = areas.filter(area =>
+    area.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selectedAreas = areas.filter(area => selectedIds.includes(area.id));
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-10 bg-gray-200 rounded-lg" />
+        <div className="h-20 bg-gray-200 rounded-lg" />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {Array.from(grouped.entries()).map(([category, items]) => (
-        <div key={category} style={{ marginBottom: '20px' }}>
-          <div style={{
-            fontSize: '11px',
-            fontWeight: 700,
-            letterSpacing: '.1em',
-            textTransform: 'uppercase',
-            color: '#999',
-            marginBottom: '8px',
-          }}>
-            {category}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-            {items.map((area) => {
-              const isSelected = selected.includes(area.id);
-              const isDisabled = !isSelected && selected.length >= max;
-              return (
+    <div className="space-y-4">
+      {/* Barre de recherche */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Rechercher un domaine d'expertise..."
+          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Domaines sélectionnés */}
+      {selectedAreas.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-sm font-medium text-gray-700 mb-2">Sélectionnés ({selectedAreas.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {selectedAreas.map(area => (
+              <div key={area.id} className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white rounded-full text-sm">
+                {area.name}
                 <button
-                  key={area.id}
                   type="button"
-                  disabled={isDisabled}
-                  onClick={() => toggle(area.id)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '100px',
-                    fontSize: '12.5px',
-                    fontWeight: isSelected ? 600 : 400,
-                    border: `1.5px solid ${isSelected ? '#1a1a2e' : '#e8e5df'}`,
-                    background: isSelected ? '#1a1a2e' : '#fff',
-                    color: isSelected ? '#fff' : isDisabled ? '#ccc' : '#333',
-                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                    transition: 'all .15s',
-                    opacity: isDisabled ? 0.5 : 1,
-                  }}
+                  onClick={() => onRemove(area.id)}
+                  className="hover:text-gray-300 transition-colors"
                 >
-                  {isSelected && <span style={{ marginRight: '4px' }}>✓</span>}
-                  {area.name}
+                  <X className="h-3 w-3" />
                 </button>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
-      ))}
-      <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-        {selected.length} / {max} domaines sélectionnés
+      )}
+
+      {/* Liste des domaines disponibles */}
+      <div className="max-h-80 overflow-y-auto space-y-4">
+        {search ? (
+          <div className="flex flex-wrap gap-2">
+            {filteredAreas.map(area => (
+              <button
+                key={area.id}
+                type="button"
+                onClick={() => onSelect(area.id)}
+                disabled={selectedIds.includes(area.id)}
+                className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                  selectedIds.includes(area.id)
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {area.name}
+              </button>
+            ))}
+            {filteredAreas.length === 0 && (
+              <p className="text-gray-500 text-sm">Aucun domaine trouvé</p>
+            )}
+          </div>
+        ) : (
+          Object.entries(groupedAreas).map(([category, categoryAreas]) => {
+            const availableAreas = categoryAreas.filter(area => !selectedIds.includes(area.id));
+            if (availableAreas.length === 0 && !showAll) return null;
+            
+            return (
+              <div key={category}>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">{category}</h4>
+                <div className="flex flex-wrap gap-2">
+                  {availableAreas.slice(0, showAll ? undefined : 6).map(area => (
+                    <button
+                      key={area.id}
+                      type="button"
+                      onClick={() => onSelect(area.id)}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors"
+                    >
+                      {area.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+        
+        {!search && (
+          <button
+            type="button"
+            onClick={() => setShowAll(!showAll)}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            {showAll ? 'Voir moins' : 'Voir plus de domaines'}
+          </button>
+        )}
       </div>
     </div>
   );

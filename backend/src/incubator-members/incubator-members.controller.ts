@@ -40,8 +40,8 @@ export class IncubatorMembersController {
   ) {
     return this.membersService.inviteMember(incubatorId, dto, req.user.id);
   }
-  @Post('accept')
-  accept(@Body() dto: AcceptInviteDto, @Req() req) {
+ @Post('accept')
+  async acceptInvite(@Body() dto: AcceptInviteDto, @Req() req) {
     return this.membersService.acceptInvitation(dto, req.user.id);
   }
 

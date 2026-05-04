@@ -2,8 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IncubatorDocument } from './incubator-document.entity';
 import { IncubatorDocumentsService } from './incubator-documents.service';
-import { IncubatorDocumentsController } from './incubator-documents.controller';
+
 import { IncubatorMember } from 'src/incubator-members/incubator-member.entity';
+import { IncubatorDocumentsController } from './incubator-documents.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([IncubatorDocument,  IncubatorMember,])],

@@ -52,4 +52,7 @@ export class UpdateIncubatorDto {
   @IsOptional()
   @IsString()
   city?: string;
+  @IsOptional()
+@IsUrl()
+logo_url?: string;
 }

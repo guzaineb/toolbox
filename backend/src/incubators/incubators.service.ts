@@ -65,11 +65,7 @@ export class IncubatorsService {
     return members.map((m) => m.incubator).filter(Boolean);
   }
 
-  async update(
-    id: string,
-    dto: UpdateIncubatorDto,
-    userId: string,
-  ): Promise<Incubator> {
+  async update( id: string, dto: UpdateIncubatorDto, userId: string,): Promise<Incubator> {
     await this.assertAdmin(id, userId);
     const incubator = await this.findOne(id);
 

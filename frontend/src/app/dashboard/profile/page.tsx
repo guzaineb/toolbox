@@ -6,13 +6,10 @@ import { useAuth } from '@/hooks/useAuth'
 
 export default function ProfilePage() {
   const { user } = useAuth()
-
   const profile = user?.profile as any
-
   const firstName = profile?.first_name ?? ''
   const lastName = profile?.last_name ?? ''
   const fullName = `${firstName} ${lastName}`.trim() || 'Utilisateur'
-
   const initials =
     `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase() ||
     '??'
@@ -38,12 +35,6 @@ export default function ProfilePage() {
         <Link href="/dashboard/profile/edit">
           <span className="px-3.5 py-1.5 rounded-[5px] text-[12px] font-medium bg-transparent text-text-2 hover:text-text cursor-pointer">
             Modifier
-          </span>
-        </Link>
-
-        <Link href="/dashboard/settings">
-          <span className="px-3.5 py-1.5 rounded-[5px] text-[12px] font-medium bg-transparent text-text-2 hover:text-text cursor-pointer">
-            Paramètres
           </span>
         </Link>
       </div>

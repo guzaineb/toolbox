@@ -151,4 +151,42 @@ export class MailService {
       html,
     });
   }
+  async sendInvitation(email: string, incubatorName: string, token: string): Promise<void> {
+    const inviteUrl = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`;
+    
+    await this.transporter.sendMail({
+      from: `"Incubator Platform" <${process.env.SMTP_FROM}>`,
+      to: email,
+      subject: `Invitation à rejoindre ${incubatorName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Invitation à rejoindre ${incubatorName}</h2>
+          <p>Vous avez été invité à rejoindre l'incubateur <strong>${incubatorName}</strong>.</p>
+          <p>Cliquez sur le lien ci-dessous pour accepter l'invitation :</p>
+          <a href="${inviteUrl}" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px;">
+            Accepter l'invitation
+          </a>
+          <p style="margin-top: 20px; font-size: 12px; color: #666;">
+            Ce lien expire dans 7 jours.<br>
+            Si vous n'avez pas demandé cette invitation, ignorez cet email.
+          </p>
+        </div>
+      `,
+    });
+  }
+
+  async sendDocumentVerification(email: string, documentType: string, status: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: `"Incubator Platform" <${process.env.SMTP_FROM}>`,
+      to: email,
+      subject: `Document ${documentType} - ${status === 'approved' ? 'Approuvé' : 'Rejeté'}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Vérification de document</h2>
+          <p>Votre document "${documentType}" a été ${status === 'approved' ? 'approuvé' : 'rejeté'}.</p>
+          ${status === 'rejected' ? '<p>Veuillez soumettre un nouveau document conforme.</p>' : ''}
+        </div>
+      `,
+    });
+  }
 }

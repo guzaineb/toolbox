@@ -19,8 +19,6 @@ export class ProjectOwnerService {
     private experienceRepo: Repository<ProjectOwnerExperience>,
   ) {}
 
-  // ─── Profile CRUD ─────────────────────────────────────────────────────────
-
   async create(userId: string, dto: CreateProjectOwnerDto) {
     const profile = this.repo.create({ user: { id: userId }, ...dto });
     return this.repo.save(profile);

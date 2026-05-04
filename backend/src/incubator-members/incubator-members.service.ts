@@ -1,33 +1,31 @@
-import {Injectable,BadRequestException,ForbiddenException,NotFoundException,} from '@nestjs/common';
+// src/modules/incubator-members/incubator-members.service.ts
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IncubatorMember } from './incubator-member.entity';
+import { IncubatorInvitation } from './incubator-invitation.entity';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
-
 import { User } from '../users/user.entity';
 import { Incubator } from '../incubators/incubator.entity';
-import * as crypto from 'crypto';
 import { AcceptInviteDto, InviteMemberDto } from './dto/invite-member.dto';
-
-// Stockage en mémoire pour les invitations (à remplacer par une table BDD en prod)
-const pendingInvitations = new Map<
-  string,
-  { incubatorId: string; email: string; role: string; job_title?: string; expiresAt: Date }
->();
+import * as crypto from 'crypto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class IncubatorMembersService {
   constructor(
     @InjectRepository(IncubatorMember)
     private memberRepo: Repository<IncubatorMember>,
+    @InjectRepository(IncubatorInvitation)
+    private invitationRepo: Repository<IncubatorInvitation>,
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(Incubator)
     private incubatorRepo: Repository<Incubator>,
+    private emailService: MailService,
   ) {}
 
-  // ─── Ajouter un membre (par UUID) ───────────────────────────────────────────
   async addMember(
     incubatorId: string,
     dto: AddMemberDto,
@@ -57,7 +55,6 @@ export class IncubatorMembersService {
     return this.memberRepo.save(member);
   }
 
-  // ─── Lister les membres ─────────────────────────────────────────────────────
   async findByIncubator(incubatorId: string): Promise<IncubatorMember[]> {
     return this.memberRepo.find({
       where: { incubator_id: incubatorId },
@@ -65,7 +62,6 @@ export class IncubatorMembersService {
     });
   }
 
-  // ─── Mon rôle dans l'incubateur ─────────────────────────────────────────────
   async getMyMembership(
     incubatorId: string,
     userId: string,
@@ -78,7 +74,6 @@ export class IncubatorMembersService {
     return member;
   }
 
-  // ─── Modifier un membre ──────────────────────────────────────────────────────
   async updateMember(
     memberId: string,
     incubatorId: string,
@@ -92,7 +87,6 @@ export class IncubatorMembersService {
     });
     if (!member) throw new NotFoundException('Membre introuvable');
 
-    // Empêcher la suppression du dernier admin
     if (dto.role && dto.role !== 'admin' && member.role === 'admin') {
       const adminCount = await this.memberRepo.count({
         where: { incubator_id: incubatorId, role: 'admin' },
@@ -105,12 +99,14 @@ export class IncubatorMembersService {
     Object.assign(member, dto);
     return this.memberRepo.save(member);
   }
-async removeMember(memberId: string,incubatorId: string,currentUserId: string,): Promise<{ message: string }> {
+
+  async removeMember(memberId: string, incubatorId: string, currentUserId: string): Promise<{ message: string }> {
     await this.assertCanManageMembers(incubatorId, currentUserId);
     const member = await this.memberRepo.findOne({
-      where: { id: memberId, incubator_id: incubatorId },});
+      where: { id: memberId, incubator_id: incubatorId },
+    });
     if (!member) throw new NotFoundException('Membre introuvable');
-    // Empêcher la suppression du dernier admin
+
     if (member.role === 'admin') {
       const adminCount = await this.memberRepo.count({
         where: { incubator_id: incubatorId, role: 'admin' },
@@ -120,7 +116,6 @@ async removeMember(memberId: string,incubatorId: string,currentUserId: string,):
       }
     }
 
-    // Empêcher l'auto-suppression si c'est le current user
     if (member.user_id === currentUserId) {
       throw new BadRequestException("Vous ne pouvez pas vous retirer vous-même");
     }
@@ -129,13 +124,16 @@ async removeMember(memberId: string,incubatorId: string,currentUserId: string,):
     return { message: 'Membre supprimé' };
   }
 
-  // ─── Inviter par email ───────────────────────────────────────────────────────
-  async inviteMember(incubatorId: string,dto: InviteMemberDto,currentUserId: string,): Promise<{ message: string; token?: string }> {
+  async inviteMember(
+    incubatorId: string,
+    dto: InviteMemberDto,
+    currentUserId: string,
+  ): Promise<{ message: string; token?: string }> {
     await this.assertCanManageMembers(incubatorId, currentUserId);
+    
     const incubator = await this.incubatorRepo.findOneBy({ id: incubatorId });
     if (!incubator) throw new NotFoundException('Incubateur introuvable');
 
-    // Vérifier si l'utilisateur existe déjà
     const user = await this.userRepo.findOneBy({ email: dto.email });
     if (user) {
       const existing = await this.memberRepo.findOne({
@@ -144,59 +142,65 @@ async removeMember(memberId: string,incubatorId: string,currentUserId: string,):
       if (existing) throw new BadRequestException('Cet utilisateur est déjà membre');
     }
 
-    // Générer un token d'invitation
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    pendingInvitations.set(token, {
-      incubatorId,
+    const invitation = this.invitationRepo.create({
+      token,
+      incubator_id: incubatorId,
       email: dto.email,
       role: dto.role,
       job_title: dto.job_title,
-      expiresAt,
+      expires_at: expiresAt,
     });
+    await this.invitationRepo.save(invitation);
 
-    // TODO: Envoyer un email avec le token (intégrer un service mail)
-    // await this.mailService.sendInvitation(dto.email, incubator.name, token);
+    await this.emailService.sendInvitation(dto.email, incubator.name, token);
+
     return {
       message: `Invitation envoyée à ${dto.email}`,
-      token, // Exposé seulement en développement - à retirer en prod
+      token: process.env.NODE_ENV === 'development' ? token : undefined,
     };
   }
- async acceptInvitation(dto: AcceptInviteDto,userId: string,): Promise<IncubatorMember> {
-    const invitation = pendingInvitations.get(dto.token);
-    if (!invitation) throw new BadRequestException('Token invalide ou expiré');
 
-    if (invitation.expiresAt < new Date()) {
-      pendingInvitations.delete(dto.token);
+  async acceptInvitation(dto: AcceptInviteDto, userId: string): Promise<IncubatorMember> {
+    const invitation = await this.invitationRepo.findOne({
+      where: { token: dto.token },
+      relations: ['incubator'],
+    });
+    
+    if (!invitation) throw new BadRequestException('Token invalide');
+    if (invitation.expires_at < new Date()) {
+      await this.invitationRepo.remove(invitation);
       throw new BadRequestException("L'invitation a expiré");
     }
 
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
-
+    
     if (user.email !== invitation.email) {
       throw new ForbiddenException("Cette invitation ne vous est pas destinée");
     }
+
     const existing = await this.memberRepo.findOne({
-      where: { user_id: userId, incubator_id: invitation.incubatorId },
+      where: { user_id: userId, incubator_id: invitation.incubator_id },
     });
     if (existing) throw new BadRequestException('Vous êtes déjà membre de cet incubateur');
+
     const member = this.memberRepo.create({
       user_id: userId,
-      incubator_id: invitation.incubatorId,
+      incubator_id: invitation.incubator_id,
       role: invitation.role as any,
       job_title: invitation.job_title,
       status: 'active',
     });
 
     const saved = await this.memberRepo.save(member);
-    pendingInvitations.delete(dto.token);
+    await this.invitationRepo.remove(invitation);
 
     return saved;
   }
 
-  // ─── Helper : vérifie les droits de gestion ──────────────────────────────────
   private async assertCanManageMembers(
     incubatorId: string,
     userId: string,

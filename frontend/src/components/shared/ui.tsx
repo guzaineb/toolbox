@@ -1,24 +1,27 @@
 import { cn } from '@/lib/utils'
 
 // ---- BADGE ----
-type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray'
+type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary';
+
 const badgeVariants: Record<BadgeVariant, string> = {
   green: 'bg-accent-light text-accent',
   amber: 'bg-amber-light text-amber',
   red: 'bg-red-light text-red',
   blue: 'bg-blue-light text-blue',
   gray: 'bg-bg text-text-2 border border-border',
-}
+  secondary: 'bg-gray-100 text-gray-700 border border-gray-200',
+};
+
 export function Badge({ variant = 'gray', children, className }: {
-  variant?: BadgeVariant
-  children: React.ReactNode
-  className?: string
+  variant?: BadgeVariant;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <span className={cn('inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full', badgeVariants[variant], className)}>
       {children}
     </span>
-  )
+  );
 }
 
 // ---- ADMIN GUARD ----
@@ -36,6 +39,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: BtnVariant
   fullWidth?: boolean
   children: React.ReactNode
+  size?: 'sm' | 'md' | 'lg'; 
 }
 // Ajoute "loading" au Button
 export function Button({ variant = 'default', fullWidth = false, className, children, loading, ...props }: ButtonProps & { loading?: boolean }) {
@@ -54,17 +58,13 @@ export function Button({ variant = 'default', fullWidth = false, className, chil
     </button>
   )
 }
-
-// Composant Alert simple pour les erreurs serveur
-export function ErrorAlert({ message }: { message: string }) {
+export function ErrorAlert({ message, className }: { message: string; className?: string }) {
   return (
-    <div className="p-3 rounded bg-red-light text-red text-[13px] border border-red/10">
+    <div className={cn("p-3 rounded bg-red-light text-red text-[13px] border border-red/10", className)}>
       {message}
     </div>
   )
 }
-
-// ---- CARD ----
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn('bg-surface border border-border rounded p-6 shadow-sm', className)}>
@@ -72,18 +72,23 @@ export function Card({ children, className }: { children: React.ReactNode; class
     </div>
   )
 }
-
-// ---- FIELD (label + input wrapper) ----
-export function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+export function Field({ label, children, className, required }: { 
+  label: string; 
+  children: React.ReactNode; 
+  className?: string;
+  required?: boolean;
+}) {
   return (
     <div className={cn('mb-[14px]', className)}>
-      <label className="block text-[12px] font-medium text-text-2 mb-[5px]">{label}</label>
+      <label className="block text-[12px] font-medium text-text-2 mb-[5px]">
+        {label}
+        {required && <span className="text-red ml-1">*</span>}
+      </label>
       {children}
     </div>
   )
 }
 
-// ---- INPUT ----
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
@@ -92,8 +97,6 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     />
   )
 }
-
-// ---- SELECT ----
 export function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
@@ -104,8 +107,6 @@ export function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSe
     </select>
   )
 }
-
-// ---- TEXTAREA ----
 export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
@@ -114,7 +115,6 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
     />
   )
 }
-// ---- PROGRESS ----
 export function Progress({ value }: { value: number }) {
   return (
     <div className="h-1 bg-border rounded-sm overflow-hidden">
@@ -125,7 +125,17 @@ export function Progress({ value }: { value: number }) {
     </div>
   )
 }
-// ---- TOGGLE ----
+export function ProgressBar({ value, max = 100, className }: { value: number; max?: number; className?: string }) {
+  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+  return (
+    <div className={cn("h-1 bg-border rounded-sm overflow-hidden", className)}>
+      <div
+        className="h-full bg-accent rounded-sm transition-all duration-400"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  )
+}
 export function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button
@@ -145,7 +155,7 @@ export function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) 
     </button>
   )
 }
-// ---- AVATAR ----
+
 export function Avatar({ initials, bg = 'bg-accent-light', color = 'text-accent', size = 'sm' }: {
   initials: string
   bg?: string
