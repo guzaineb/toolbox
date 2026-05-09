@@ -35,7 +35,7 @@ export default function Home() {
 
   return (
     <div className="relative">
-      <h2 className="sr-only">ProjectStruct – Plateforme de structuration de projets entrepreneuriaux</h2>
+      <h2 className="sr-only">ToolBox – Plateforme de structuration de projets entrepreneuriaux</h2>
       
       <Navbar 
         isLoggedIn={isLoggedIn} 

@@ -89,7 +89,7 @@ export function Field({ label, children, className, required }: {
   )
 }
 
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export function Input({className, ...props}: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className="w-full px-3 py-[9px] border border-border rounded-sm bg-surface text-text text-[14px] outline-none transition-colors focus:border-accent"
@@ -97,7 +97,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     />
   )
 }
-export function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select({ children,className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       className="w-full px-3 py-[9px] border border-border rounded-sm bg-surface text-text text-[14px] outline-none transition-colors focus:border-accent"
@@ -107,7 +107,7 @@ export function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSe
     </select>
   )
 }
-export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({className, ...props}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       className="w-full px-3 py-[9px] border border-border rounded-sm bg-surface text-text text-[14px] outline-none transition-colors focus:border-accent resize-y min-h-[80px]"

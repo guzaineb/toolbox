@@ -37,8 +37,10 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
     <>
       <nav className="bg-surface border-b border-border px-6 h-[60px] flex items-center justify-between sticky top-0 z-100 relative">
         <a href="/" className="font-syne text-lg font-bold text-text flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-accent inline-block"></span>
-          ProjectStruct
+                <text x="180" y="220" textAnchor="middle" dominantBaseline="middle" fontFamily="Syne" fontSize="24" fontWeight="700" letterSpacing=".5">
+    <tspan fill="#a0e0b8">Tool</tspan>
+    <tspan fill="#c9a84c">Box</tspan>
+  </text> 
         </a>
 
         {/* Desktop navigation */}
