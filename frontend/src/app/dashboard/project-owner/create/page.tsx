@@ -1,4 +1,3 @@
-// app/project-owner/create/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -31,13 +30,8 @@ export default function CreateProjectOwnerProfile() {
     if (profile && !loading) {
       const isProfileComplete = checkProfileCompleteness(profile);
       if (isProfileComplete) {
-<<<<<<< HEAD
-        router.push('/project-owner/dashboard');
-=======
         router.push('/dashboard/project-owner');
->>>>>>> 38c6efc (Misa a jour les interfaces)
       } else {
-        // Charger les données existantes dans le formulaire
         setForm({
           current_status: profile.current_status || '',
           education_level: profile.education_level || '',

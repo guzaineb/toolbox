@@ -6,9 +6,6 @@ import { useProjectOwnerProfile } from '@/hooks/useProjectOwnerProfile';
 import { Button, Card, Field, Input, Select, Toggle, Badge, ProgressBar } from '@/components/shared/ui';
 import { CreateSkillDto, CreateExperienceDto } from '@/types/projectOwner';
 
-<<<<<<< HEAD
-=======
-// Fonction utilitaire pour supprimer les champs vides avant envoi
 const cleanForm = (data: any) => {
   const cleaned: any = {};
   Object.keys(data).forEach(key => {
@@ -20,7 +17,6 @@ const cleanForm = (data: any) => {
   return cleaned;
 };
 
->>>>>>> 38c6efc (Misa a jour les interfaces)
 export default function ProjectOwnerDashboard() {
   const router = useRouter();
   const { profile, loading, saving, error, saveProfile, addSkill, deleteSkill, addExperience, deleteExperience, refetch } = useProjectOwnerProfile();
@@ -58,12 +54,8 @@ export default function ProjectOwnerDashboard() {
   };
 
   const handleEditSubmit = async () => {
-<<<<<<< HEAD
-    await saveProfile(form);
-=======
     // Nettoyer les champs vides avant envoi
     await saveProfile(cleanForm(form));
->>>>>>> 38c6efc (Misa a jour les interfaces)
     setEditMode(false);
     await refetch();
   };
@@ -81,22 +73,13 @@ export default function ProjectOwnerDashboard() {
 
   // Rediriger vers la création si pas de profil
   if (!profile) {
-    router.push('/project-owner/create');
+    router.push('/dashboard/project-owner/create');
     return null;
   }
 
   // Mode édition
   if (editMode) {
     const initialForm = {
-<<<<<<< HEAD
-      current_status: profile.current_status || '',
-      education_level: profile.education_level || '',
-      field_of_study: profile.field_of_study || '',
-      occupation: profile.occupation || '',
-      entrepreneurial_experience_level: profile.entrepreneurial_experience_level || 0,
-      has_previous_startup: profile.has_previous_startup || false,
-      linkedin_url: profile.linkedin_url || '',
-=======
       current_status: profile.current_status,
       education_level: profile.education_level,
       field_of_study: profile.field_of_study ,
@@ -104,7 +87,6 @@ export default function ProjectOwnerDashboard() {
       entrepreneurial_experience_level: profile.entrepreneurial_experience_level || 0,
       has_previous_startup: profile.has_previous_startup || false,
       linkedin_url: profile.linkedin_url ,
->>>>>>> 38c6efc (Misa a jour les interfaces)
     };
 
     return (
@@ -322,13 +304,6 @@ export default function ProjectOwnerDashboard() {
   );
 }
 
-<<<<<<< HEAD
-// Modals (identiques à ceux de la page create)
-=======
-// ----------------------------------------------
-// Modal Skill (inchangé)
-// ----------------------------------------------
->>>>>>> 38c6efc (Misa a jour les interfaces)
 function SkillModal({ onAdd, onClose, saving }: { onAdd: (skill: CreateSkillDto) => Promise<void>; onClose: () => void; saving: boolean }) {
   const [skillName, setSkillName] = useState('');
   const [level, setLevel] = useState<CreateSkillDto['level']>('beginner');
@@ -363,20 +338,14 @@ function SkillModal({ onAdd, onClose, saving }: { onAdd: (skill: CreateSkillDto)
   );
 }
 
-<<<<<<< HEAD
-=======
 // ----------------------------------------------
 // Modal Experience (CORRIGÉ : dates vides non envoyées)
 // ----------------------------------------------
->>>>>>> 38c6efc (Misa a jour les interfaces)
 function ExperienceModal({ onAdd, onClose, saving }: { onAdd: (exp: CreateExperienceDto) => Promise<void>; onClose: () => void; saving: boolean }) {
   const [form, setForm] = useState<CreateExperienceDto>({ title: '', organization: '', description: '', start_date: '', end_date: '' });
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.organization.trim()) return;
-<<<<<<< HEAD
-    await onAdd(form);
-=======
     
     // Ne pas envoyer les dates vides
     const payload: CreateExperienceDto = {
@@ -388,7 +357,6 @@ function ExperienceModal({ onAdd, onClose, saving }: { onAdd: (exp: CreateExperi
     if (form.end_date) payload.end_date = form.end_date;
     
     await onAdd(payload);
->>>>>>> 38c6efc (Misa a jour les interfaces)
     setForm({ title: '', organization: '', description: '', start_date: '', end_date: '' });
   };
 
@@ -397,15 +365,6 @@ function ExperienceModal({ onAdd, onClose, saving }: { onAdd: (exp: CreateExperi
       <div className="bg-white rounded-xl p-6 max-w-md w-full">
         <h3 className="text-lg font-semibold mb-4">Ajouter une expérience</h3>
         <Field label="Titre *">
-<<<<<<< HEAD
-          <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Chef de produit..." />
-        </Field>
-        <Field label="Organisation *">
-          <Input value={form.organization} onChange={e => setForm(f => ({ ...f, organization: e.target.value }))} placeholder="Startup XYZ..." />
-        </Field>
-        <Field label="Description">
-          <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Décrivez vos responsabilités..." />
-=======
           <Input 
             value={form.title} 
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))} 
@@ -425,7 +384,6 @@ function ExperienceModal({ onAdd, onClose, saving }: { onAdd: (exp: CreateExperi
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))} 
             placeholder="Décrivez vos responsabilités et réalisations..."
           />
->>>>>>> 38c6efc (Misa a jour les interfaces)
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date de début">

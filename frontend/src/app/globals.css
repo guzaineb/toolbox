@@ -1,9 +1,5 @@
 /* Import des polices Google */
-<<<<<<< HEAD
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap');
-=======
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
->>>>>>> 38c6efc (Misa a jour les interfaces)
 
 /* Import de Tailwind CSS v4 */
 @import "tailwindcss";
@@ -16,11 +12,6 @@
   --color-accent-light: #E1F5EE;
   --color-surface: #ffffff;
   --color-bg: #F8F9FA;
-<<<<<<< HEAD
-  --color-border: rgba(0,0,0,0.1);
-  --color-text: #1a1a1a;
-  --color-text-2: #6b7280;
-=======
   --color-border: #e5e7eb;
   --color-border-2: #d1d5db;
   --color-ink: #1a1a1a;
@@ -30,22 +21,12 @@
   --color-moss-light: #e6f4ef;
   --color-moss-dark: #0f6e56;
   --color-cream: #f8f9fa;
->>>>>>> 38c6efc (Misa a jour les interfaces)
   --color-red: #E24B4A;
   --color-red-light: #FCEBEB;
   --color-blue: #378ADD;
   --color-blue-light: #E6F1FB;
   --color-amber: #BA7517;
   --color-amber-light: #FAEEDA;
-<<<<<<< HEAD
-
-  /* Polices */
-  --font-sans: DM Sans, sans-serif;
-  --font-syne: Syne, sans-serif;
-}
-
-/* Styles de base personnalisés */
-=======
   --color-green: #10b981;
 
   /* Polices */
@@ -129,7 +110,6 @@
 }
 
 /* Styles de base */
->>>>>>> 38c6efc (Misa a jour les interfaces)
 @layer base {
   * {
     box-sizing: border-box;
@@ -141,11 +121,7 @@
   
   body {
     background-color: var(--color-bg);
-<<<<<<< HEAD
-    color: var(--color-text);
-=======
     color: var(--color-ink);
->>>>>>> 38c6efc (Misa a jour les interfaces)
     font-family: var(--font-sans);
   }
 }
@@ -163,8 +139,6 @@
     white-space: nowrap;
     border-width: 0;
   }
-<<<<<<< HEAD
-=======
 }.btn-primary {
   background: var(--moss);
   color: white;
@@ -209,5 +183,4 @@
   background: linear-gradient(90deg, var(--moss), var(--moss-light));
   border-radius: 3px;
   transition: width 0.3s ease;
->>>>>>> 38c6efc (Misa a jour les interfaces)
 }

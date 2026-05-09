@@ -75,19 +75,11 @@ export default function ExpertCreatePage() {
       // 1. Créer d'abord le profil avec les informations de base
       const profile = await saveProfile({
         headline: form.headline,
-<<<<<<< HEAD
-        bio: form.bio || undefined,
-        organization: form.organization || undefined,
-        position: form.position || undefined,
-        years_of_experience: form.years_of_experience ? parseInt(form.years_of_experience) : undefined,
-        linkedin_url: form.linkedin_url || undefined,
-=======
         bio: form.bio ,
         organization: form.organization ,
         position: form.position ,
         years_of_experience: form.years_of_experience ? parseInt(form.years_of_experience) : undefined,
         linkedin_url: form.linkedin_url ,
->>>>>>> 38c6efc (Misa a jour les interfaces)
         availability_status: form.availability_status,
         expertiseAreaIds: [], // Initialement sans expertises
       });
