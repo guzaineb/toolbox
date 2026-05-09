@@ -1,9 +1,15 @@
 import { cn } from "@/lib/utils";
 
 const ROLES = [
+<<<<<<< HEAD
   { id: "owner", icon: "💡", label: "Porteur de projet", desc: "J'ai une idée à développer", bg: "bg-accent-light" },
   { id: "expert", icon: "🎓", label: "Expert", desc: "Je coache des startups", bg: "bg-amber-light" },
   { id: "incubator", icon: "🏢", label: "Membre incubateur", desc: "Je travaille en incubateur", bg: "bg-blue-light" },
+=======
+  { id: "project_owner", icon: "💡", label: "Porteur de projet", desc: "J'ai une idée à développer", bg: "bg-accent-light" },
+  { id: "expert", icon: "🎓", label: "Expert", desc: "Je coache des startups", bg: "bg-amber-light" },
+  { id: "incubator_membre", icon: "🏢", label: "Membre incubateur", desc: "Je travaille en incubateur", bg: "bg-blue-light" },
+>>>>>>> 38c6efc (Misa a jour les interfaces)
 ];
 
 interface StepRoleProps {

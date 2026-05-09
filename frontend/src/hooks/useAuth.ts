@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // hooks/useAuth.ts
+=======
+>>>>>>> 38c6efc (Misa a jour les interfaces)
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -13,7 +16,10 @@ export interface AuthUser {
   role: UserRole | null;
   is_verified: boolean;
   is_active: boolean;
+<<<<<<< HEAD
   // ✅ FIX : propriétés manquantes qui causaient l'erreur TS2339
+=======
+>>>>>>> 38c6efc (Misa a jour les interfaces)
   profile?: {
     first_name: string;
     last_name: string;
@@ -49,15 +55,21 @@ export const ROLE_ROUTES: Record<string, string> = {
 
 const DEFAULT_ROUTE = '/dashboard';
 
+<<<<<<< HEAD
 // ─── Storage helper — ✅ FIX : try/catch complet pour accès refusé (iframe, etc.) ──
 
+=======
+>>>>>>> 38c6efc (Misa a jour les interfaces)
 const storage = {
   get: (key: string): string | null => {
     if (typeof window === 'undefined') return null;
     try {
       return window.localStorage.getItem(key);
     } catch {
+<<<<<<< HEAD
       // localStorage inaccessible (iframe cross-origin, mode privé, etc.)
+=======
+>>>>>>> 38c6efc (Misa a jour les interfaces)
       return null;
     }
   },
@@ -79,8 +91,11 @@ const storage = {
   },
 };
 
+<<<<<<< HEAD
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
+=======
+>>>>>>> 38c6efc (Misa a jour les interfaces)
 export function useAuth() {
   const [user, setUser]       = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);

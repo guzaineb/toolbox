@@ -168,4 +168,49 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+async forgotPassword(email: string): Promise<{ message: string }> {
+  const user = await this.usersRepository.findOne({ where: { email } });
+  if (!user) {
+    // Sécurité : on répond pareil même si l'email n'existe pas
+    return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
+  }
+
+  const token = uuidv4();
+  const expires = new Date();
+  expires.setHours(expires.getHours() + 1);
+
+  await this.usersRepository.update(user.id, {
+    resetPasswordToken: token,
+    resetPasswordExpires: expires,
+  });
+
+  // Envoi de l'email
+  await this.mailService.sendResetPasswordEmail(user.email, token);
+
+  return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
+}
+
+async resetPassword(token: string, newPassword: string) {
+  console.log('Token reçu:', token);
+  const user = await this.usersRepository.findOne({
+    where: { resetPasswordToken: token },
+  });
+  console.log('Utilisateur trouvé:', user?.id, user?.resetPasswordExpires);
+  if (!user) {
+    throw new BadRequestException('Token invalide ou expiré.');
+  }
+
+  if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+    throw new BadRequestException('Le token a expiré. Refaites une demande.');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await this.usersRepository.update(user.id, {
+    password_hash: hashedPassword,
+    resetPasswordToken: null,
+    resetPasswordExpires: null,
+  });
+
+  return { message: 'Mot de passe mis à jour avec succès.' };
+}
 }

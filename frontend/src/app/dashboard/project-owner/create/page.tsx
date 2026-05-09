@@ -31,7 +31,11 @@ export default function CreateProjectOwnerProfile() {
     if (profile && !loading) {
       const isProfileComplete = checkProfileCompleteness(profile);
       if (isProfileComplete) {
+<<<<<<< HEAD
         router.push('/project-owner/dashboard');
+=======
+        router.push('/dashboard/project-owner');
+>>>>>>> 38c6efc (Misa a jour les interfaces)
       } else {
         // Charger les données existantes dans le formulaire
         setForm({
