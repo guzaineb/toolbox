@@ -1,21 +1,18 @@
-<<<<<<< HEAD
+
 "use client";
-=======
-'use client';
->>>>>>> 38c6efc (Misa a jour les interfaces)
+
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
-<<<<<<< HEAD
+
 import { Button, Input, Field, Sep, ErrorAlert } from '@/components/shared/ui';
-=======
+
 import { LoginSVG } from '@/components/auth/GeoSVGs';
 import AuthShell from '@/components/auth/AuthShell';
 import LeftPanel from '@/components/auth/LeftPanel';
 import RightPanel from '@/components/auth/RightPanel';
->>>>>>> 38c6efc (Misa a jour les interfaces)
 
 interface LoginFormData {
   email: string;
@@ -27,12 +24,8 @@ export default function LoginPage() {
   const { login, redirectToDashboard } = useAuth();
 
   const [serverError, setServerError] = useState<string | null>(null);
-<<<<<<< HEAD
-  const [isLoading, setIsLoading]     = useState(false);
-=======
-  const [isLoading, setIsLoading] = useState(false);
->>>>>>> 38c6efc (Misa a jour les interfaces)
 
+  const [isLoading, setIsLoading] = useState(false);
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
     setIsLoading(true);
@@ -52,90 +45,6 @@ export default function LoginPage() {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen flex items-center justify-center bg-bg p-6">
-      <div className="w-full max-w-[420px] bg-surface border border-border rounded-xl p-9 shadow-sm">
-
-        {/* Logo */}
-        <div className="font-semibold text-[22px] text-text mb-7 text-center">
-          Project<span className="text-accent">Struct</span>
-        </div>
-
-        {/* Heading */}
-        <div className="mb-8">
-          <h1 className="text-[20px] font-bold text-text mb-1">Connexion</h1>
-          {/* ✅ FIX: was text-[1authpx] */}
-          <p className="text-[14px] text-text-2">Accédez à votre espace</p>
-        </div>
-
-        {/* Server error */}
-        {serverError && (
-          <div className="mb-5">
-            <ErrorAlert message={serverError} />
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-          <Field label="Email">
-            <Input
-              type="email"
-              placeholder="vous@example.com"
-              {...register('email', { required: "L'email est requis" })}
-            />
-            {errors.email && (
-              <span className="text-[11px] text-red mt-1 block">
-                {errors.email.message}
-              </span>
-            )}
-          </Field>
-
-          <Field label="Mot de passe">
-            <Input
-              type="password"
-              placeholder="••••••••"
-              {...register('password', { required: "Le mot de passe est requis" })}
-            />
-            {errors.password && (
-              <span className="text-[11px] text-red mt-1 block">
-                {errors.password.message}
-              </span>
-            )}
-          </Field>
-
-          <div className="text-right">
-            <Link
-              href="/auth/reset"
-              className="text-[12px] text-accent hover:underline"
-            >
-              Mot de passe oublié ?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            fullWidth
-            loading={isLoading}
-          >
-            Se connecter
-          </Button>
-
-        </form>
-
-        <Sep />
-
-        <p className="text-[12px] text-text-2 text-center">
-          Pas encore de compte ?{' '}
-          <Link href="/register" className="text-accent font-medium hover:underline">
-            S'inscrire
-          </Link>
-        </p>
-
-      </div>
-    </div>
-=======
     <AuthShell
       left={
         <LeftPanel
@@ -250,8 +159,5 @@ export default function LoginPage() {
             </Link>
           </p>
         </RightPanel>
-      }
-    />
->>>>>>> 38c6efc (Misa a jour les interfaces)
-  );
+      }/>  );
 }

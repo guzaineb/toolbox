@@ -36,14 +36,11 @@ export class User {
   
   @Column({ nullable: true })
   last_login_at: Date;
-<<<<<<< HEAD
-=======
   @Column({ nullable: true, name: 'reset_password_token', type: 'varchar' })
 resetPasswordToken: string | null;
 
 @Column({ nullable: true, name: 'reset_password_expires', type: 'timestamp' })
 resetPasswordExpires: Date | null;
->>>>>>> 38c6efc (Misa a jour les interfaces)
 
   @CreateDateColumn()
   created_at: Date;
