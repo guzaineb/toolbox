@@ -42,7 +42,7 @@ export default function IncubatorListPage() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="animate-pulse space-y-3">
+        <div className="animate-pulse space-y-">
           <div className="h-7 w-64 bg-border rounded" />
           <div className="h-4 w-48 bg-border rounded" />
           <div className="h-24 bg-border rounded mt-4" />

@@ -210,11 +210,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </span>
               Actif
             </Badge>
-            <Link href="/invite">
-              <button className="text-xs px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-moss-light transition-all text-ink-2">
-                Invitation
-              </button>
-            </Link>
           </div>
         </header>
 

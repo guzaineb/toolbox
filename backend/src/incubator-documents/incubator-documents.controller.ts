@@ -1,4 +1,3 @@
-// src/incubator-documents/incubator-documents.controller.ts
 import { Controller, Post, Param, UseGuards, Req, UseInterceptors, UploadedFile, Body, Get, Delete, HttpCode, HttpStatus, Patch } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { IncubatorDocumentsService } from './incubator-documents.service';

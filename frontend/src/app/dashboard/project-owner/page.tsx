@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProjectOwnerProfile } from '@/hooks/useProjectOwnerProfile';
 import { Button, Card, Field, Input, Select, Toggle, Badge, ProgressBar } from '@/components/shared/ui';
@@ -33,6 +33,21 @@ export default function ProjectOwnerDashboard() {
     linkedin_url: '',
   });
 
+  // Pré-remplir le formulaire quand on passe en mode édition
+  useEffect(() => {
+    if (editMode && profile) {
+      setForm({
+        current_status: profile.current_status || '',
+        education_level: profile.education_level || '',
+        field_of_study: profile.field_of_study || '',
+        occupation: profile.occupation || '',
+        entrepreneurial_experience_level: profile.entrepreneurial_experience_level || 0,
+        has_previous_startup: profile.has_previous_startup || false,
+        linkedin_url: profile.linkedin_url || '',
+      });
+    }
+  }, [editMode, profile]);
+
   const getCompletionPercentage = () => {
     if (!profile) return 0;
     let completed = 0;
@@ -46,15 +61,14 @@ export default function ProjectOwnerDashboard() {
     if (profile.has_previous_startup) completed++;
     if (profile.linkedin_url) completed++;
     
-    if (profile.skills.length > 0) completed += Math.min(profile.skills.length, 2);
-    if (profile.experiences.length > 0) completed += Math.min(profile.experiences.length, 2);
+    if (profile.skills?.length > 0) completed += Math.min(profile.skills.length, 2);
+    if (profile.experiences?.length > 0) completed += Math.min(profile.experiences.length, 2);
     
     total += 4;
     return Math.min(Math.floor((completed / total) * 100), 100);
   };
 
   const handleEditSubmit = async () => {
-    // Nettoyer les champs vides avant envoi
     await saveProfile(cleanForm(form));
     setEditMode(false);
     await refetch();
@@ -71,30 +85,14 @@ export default function ProjectOwnerDashboard() {
     );
   }
 
-  // Rediriger vers la création si pas de profil
-  if (!profile) {
-    router.push('/dashboard/project-owner/create');
-    return null;
-  }
-
-  // Mode édition
-  if (editMode) {
-    const initialForm = {
-      current_status: profile.current_status,
-      education_level: profile.education_level,
-      field_of_study: profile.field_of_study ,
-      occupation: profile.occupation ,
-      entrepreneurial_experience_level: profile.entrepreneurial_experience_level || 0,
-      has_previous_startup: profile.has_previous_startup || false,
-      linkedin_url: profile.linkedin_url ,
-    };
-
+  // Mode édition (seulement si un profil existe)
+  if (editMode && profile) {
     return (
       <div className="p-8 max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Modifier mon profil</h1>
         <Card className="space-y-4">
           <Field label="Statut actuel">
-            <Select value={form.current_status || initialForm.current_status} onChange={e => setForm(f => ({ ...f, current_status: e.target.value }))}>
+            <Select value={form.current_status} onChange={e => setForm(f => ({ ...f, current_status: e.target.value }))}>
               <option value="">— Sélectionner —</option>
               <option value="student">Étudiant</option>
               <option value="employee">Salarié</option>
@@ -103,7 +101,7 @@ export default function ProjectOwnerDashboard() {
             </Select>
           </Field>
           <Field label="Niveau d'études">
-            <Select value={form.education_level || initialForm.education_level} onChange={e => setForm(f => ({ ...f, education_level: e.target.value }))}>
+            <Select value={form.education_level} onChange={e => setForm(f => ({ ...f, education_level: e.target.value }))}>
               <option value="">— Sélectionner —</option>
               <option value="bac">Bac</option>
               <option value="bac+2">Bac+2</option>
@@ -113,13 +111,13 @@ export default function ProjectOwnerDashboard() {
             </Select>
           </Field>
           <Field label="Domaine d'études">
-            <Input value={form.field_of_study || initialForm.field_of_study} onChange={e => setForm(f => ({ ...f, field_of_study: e.target.value }))} />
+            <Input value={form.field_of_study} onChange={e => setForm(f => ({ ...f, field_of_study: e.target.value }))} />
           </Field>
           <Field label="Occupation">
-            <Input value={form.occupation || initialForm.occupation} onChange={e => setForm(f => ({ ...f, occupation: e.target.value }))} />
+            <Input value={form.occupation} onChange={e => setForm(f => ({ ...f, occupation: e.target.value }))} />
           </Field>
           <Field label="Expérience entrepreneuriale">
-            <Select value={form.entrepreneurial_experience_level || initialForm.entrepreneurial_experience_level} onChange={e => setForm(f => ({ ...f, entrepreneurial_experience_level: Number(e.target.value) }))}>
+            <Select value={form.entrepreneurial_experience_level} onChange={e => setForm(f => ({ ...f, entrepreneurial_experience_level: Number(e.target.value) }))}>
               <option value={0}>Aucune expérience</option>
               <option value={1}>Débutant (idée)</option>
               <option value={2}>Intermédiaire (1–3 startups)</option>
@@ -128,10 +126,10 @@ export default function ProjectOwnerDashboard() {
           </Field>
           <div className="flex items-center gap-2">
             <span>Expérience startup précédente</span>
-            <Toggle on={form.has_previous_startup || initialForm.has_previous_startup} onToggle={() => setForm(f => ({ ...f, has_previous_startup: !f.has_previous_startup }))} />
+            <Toggle on={form.has_previous_startup} onToggle={() => setForm(f => ({ ...f, has_previous_startup: !f.has_previous_startup }))} />
           </div>
           <Field label="LinkedIn">
-            <Input value={form.linkedin_url || initialForm.linkedin_url} onChange={e => setForm(f => ({ ...f, linkedin_url: e.target.value }))} />
+            <Input value={form.linkedin_url} onChange={e => setForm(f => ({ ...f, linkedin_url: e.target.value }))} />
           </Field>
           <div className="flex gap-3 justify-end">
             <Button variant="secondary" onClick={() => setEditMode(false)}>Annuler</Button>
@@ -142,7 +140,22 @@ export default function ProjectOwnerDashboard() {
     );
   }
 
-  // Vue du profil
+  // Si aucun profil n'existe, afficher un message invitant à en créer un
+  if (!profile) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto text-center">
+        <Card className="p-12">
+          <h2 className="text-2xl font-bold mb-4">Aucun profil trouvé</h2>
+          <p className="text-gray-600 mb-6">Vous n'avez pas encore créé votre profil porteur de projet.</p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/project-owner/create')}>
+            Créer mon profil
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Vue du profil (mode consultation)
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -212,6 +225,7 @@ export default function ProjectOwnerDashboard() {
                 {profile.entrepreneurial_experience_level === 1 && "💡 Idée en développement"}
                 {profile.entrepreneurial_experience_level === 2 && "📈 Intermédiaire"}
                 {profile.entrepreneurial_experience_level === 3 && "🏆 Avancé"}
+                {!profile.entrepreneurial_experience_level && "Non renseigné"}
               </span>
             </div>
             <div className="flex justify-between">
@@ -233,11 +247,11 @@ export default function ProjectOwnerDashboard() {
               + Ajouter
             </Button>
           </div>
-          {profile.skills.length === 0 ? (
+          {profile.skills?.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Aucune compétence renseignée</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {profile.skills.map(skill => (
+              {profile.skills?.map(skill => (
                 <Badge key={skill.id} variant="secondary" className="flex items-center gap-1 px-3 py-1">
                   {skill.skill_name}
                   <span className="text-xs text-gray-500">({skill.level})</span>
@@ -257,11 +271,11 @@ export default function ProjectOwnerDashboard() {
               + Ajouter
             </Button>
           </div>
-          {profile.experiences.length === 0 ? (
+          {profile.experiences?.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Aucune expérience renseignée</p>
           ) : (
             <div className="space-y-4">
-              {profile.experiences.map(exp => (
+              {profile.experiences?.map(exp => (
                 <div key={exp.id} className="border-b last:border-0 pb-3">
                   <div className="flex justify-between items-start">
                     <div>
@@ -285,7 +299,7 @@ export default function ProjectOwnerDashboard() {
         </Card>
       </div>
 
-      {/* Modals */}
+      {/* Modales */}
       {showSkillModal && (
         <SkillModal
           onAdd={async (skill) => { await addSkill(skill); setShowSkillModal(false); }}
@@ -338,16 +352,12 @@ function SkillModal({ onAdd, onClose, saving }: { onAdd: (skill: CreateSkillDto)
   );
 }
 
-// ----------------------------------------------
-// Modal Experience (CORRIGÉ : dates vides non envoyées)
-// ----------------------------------------------
 function ExperienceModal({ onAdd, onClose, saving }: { onAdd: (exp: CreateExperienceDto) => Promise<void>; onClose: () => void; saving: boolean }) {
   const [form, setForm] = useState<CreateExperienceDto>({ title: '', organization: '', description: '', start_date: '', end_date: '' });
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.organization.trim()) return;
     
-    // Ne pas envoyer les dates vides
     const payload: CreateExperienceDto = {
       title: form.title,
       organization: form.organization,

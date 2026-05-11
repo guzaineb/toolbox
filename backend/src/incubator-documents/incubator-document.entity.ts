@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Incubator } from '../incubators/incubator.entity';
+import { User } from 'src/users/user.entity';
 
 @Entity('incubator_documents')
 export class IncubatorDocument {
@@ -17,9 +18,11 @@ export class IncubatorDocument {
 
   @Column({ default: 'pending' })
   verification_status: 'pending' | 'approved' | 'rejected';
-
-  @Column({ type: 'uuid' })
-  uploaded_by_user_id: string;
+ @Column({ nullable: true, type: 'text' })
+  rejection_reason: string | null;
+@ManyToOne(() => User)
+@JoinColumn({ name: 'uploaded_by_user_id' })
+uploaded_by_user: User;
 
   @CreateDateColumn()
   uploaded_at: Date;

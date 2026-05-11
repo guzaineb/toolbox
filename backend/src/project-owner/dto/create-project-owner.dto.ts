@@ -20,4 +20,13 @@ export class CreateProjectOwnerDto {
   @IsOptional()
   @IsBoolean()
   has_previous_startup?: boolean;
+  @IsOptional()
+  @IsString()
+  occupation?: string;
+  @IsOptional()
+  @IsString()
+  field_of_study?: string;
+
+
+
 }

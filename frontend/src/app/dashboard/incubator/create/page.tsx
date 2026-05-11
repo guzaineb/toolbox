@@ -154,7 +154,7 @@ export default function CreateIncubatorPage() {
                 <Field label="Slug (URL unique) *">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-text-2 select-none">
-                      incubateur/
+                 
                     </span>
                     <Input
                       className="pl-[88px]"

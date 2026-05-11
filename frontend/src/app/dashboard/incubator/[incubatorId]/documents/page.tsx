@@ -11,13 +11,21 @@ interface Doc {
   file_url: string;
   verification_status: 'pending' | 'approved' | 'rejected';
   uploaded_at?: string;
+  uploaded_by_user_id?: string;
+  rejection_reason?: string; // Ajout
+  uploaded_by?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+  };
 }
 
 const DOC_TYPES = [
-  { value: 'registre_commerce',     label: 'Registre de commerce' },
-  { value: 'document_legal',        label: 'Document légal' },
-  { value: 'attestation_fiscale',   label: 'Attestation fiscale' },
-  { value: 'preuve_institutionnelle', label: 'Preuve institutionnelle' },
+  { value: 'commerce_register', label: 'Registre de commerce' },
+  { value: 'legal_doc', label: 'Document légal' },
+  { value: 'tax_certificate', label: 'Attestation fiscale' },
+  { value: 'institutional_proof', label: 'Preuve institutionnelle' },
 ];
 
 const STATUS_BADGE: Record<string, 'amber' | 'green' | 'red'> = {
@@ -38,6 +46,8 @@ export default function DocumentsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const fetchDocs = () => {
     if (!incubatorId) return;
@@ -92,18 +102,21 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleVerify = async (docId: string, status: 'approved' | 'rejected') => {
+  const handleVerify = async (docId: string, status: 'approved' | 'rejected', reason?: string) => {
     setError(null);
     setVerifyingId(docId);
     try {
       await api.patch(`/incubators/${incubatorId}/documents/${docId}/verify`, {
         verification_status: status,
+        rejection_reason: reason,
       });
       fetchDocs();
     } catch (err: any) {
       setError(err?.response?.data?.message ?? 'Erreur vérification');
     } finally {
       setVerifyingId(null);
+      setRejectingId(null);
+      setRejectReason('');
     }
   };
 
@@ -185,6 +198,11 @@ export default function DocumentsPage() {
                         {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
                       </div>
                     )}
+                    {doc.uploaded_by && (
+                      <div className="text-[11px] text-text-2">
+                        {doc.uploaded_by.first_name} {doc.uploaded_by.last_name} ({doc.uploaded_by.role})
+                      </div>
+                    )}
                   </div>
 
                   <Badge variant={STATUS_BADGE[doc.verification_status] ?? 'gray'}>
@@ -208,6 +226,13 @@ export default function DocumentsPage() {
                   </Button>
                 </div>
 
+                {/* Affichage de la raison de rejet si présente */}
+                {doc.verification_status === 'rejected' && doc.rejection_reason && (
+                  <div className="mt-2 ml-8 text-red-600 text-[11px] bg-red-50 p-2 rounded">
+                    ❌ Raison du rejet : {doc.rejection_reason}
+                  </div>
+                )}
+
                 {/* Actions de vérification (admin) — visibles si en attente */}
                 {doc.verification_status === 'pending' && (
                   <div className="flex gap-2 mt-2 ml-8">
@@ -219,13 +244,49 @@ export default function DocumentsPage() {
                     >
                       ✓ Approuver
                     </Button>
-                    <Button
-                      className="text-[11px] !py-1 !px-3 !text-red-500 !border-red-200 hover:!bg-red-50"
-                      loading={isVerifying}
-                      onClick={() => handleVerify(doc.id, 'rejected')}
-                    >
-                      ✗ Rejeter
-                    </Button>
+                    
+                    {rejectingId === doc.id ? (
+                      <div className="flex flex-col gap-2 w-full mt-2">
+                        <textarea
+                          className="w-full p-2 text-sm border border-border rounded"
+                          rows={2}
+                          placeholder="Raison du rejet (obligatoire)"
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            className="text-[11px] !py-1 !px-3 bg-red-500 text-white"
+                            loading={isVerifying}
+                            onClick={() => {
+                              if (!rejectReason.trim()) {
+                                setError('Veuillez indiquer une raison de rejet');
+                                return;
+                              }
+                              handleVerify(doc.id, 'rejected', rejectReason);
+                            }}
+                          >
+                            Confirmer le rejet
+                          </Button>
+                          <Button
+                            className="text-[11px] !py-1 !px-3"
+                            onClick={() => {
+                              setRejectingId(null);
+                              setRejectReason('');
+                            }}
+                          >
+                            Annuler
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        className="text-[11px] !py-1 !px-3 !text-red-500 !border-red-200 hover:!bg-red-50"
+                        onClick={() => setRejectingId(doc.id)}
+                      >
+                        ✗ Rejeter
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
