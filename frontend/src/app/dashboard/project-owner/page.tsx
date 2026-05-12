@@ -1,413 +1,445 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useProjectOwnerProfile } from '@/hooks/useProjectOwnerProfile';
-import { Button, Card, Field, Input, Select, Toggle, Badge, ProgressBar } from '@/components/shared/ui';
-import { CreateSkillDto, CreateExperienceDto } from '@/types/projectOwner';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  User, Briefcase, Zap, GraduationCap, Link2, Pencil, Plus,
+  Trash2, X, Loader2, Rocket, BookOpen, Building2, Calendar,
+  CheckCircle2, TrendingUp, LayoutTemplate,
+} from 'lucide-react'
+import { useProjectOwnerProfile } from '@/hooks/useProjectOwnerProfile'
+import {
+  Button, Card, CardHeader, Badge, ProgressBar, ErrorAlert,
+} from '@/components/shared/ui'
+import { SkillModal } from '@/components/project-owner/SkillModal'
+import { ExperienceModal } from '@/components/project-owner/ExperienceModal'
 
-const cleanForm = (data: any) => {
-  const cleaned: any = {};
-  Object.keys(data).forEach(key => {
-    const value = data[key];
-    if (value !== '' && value !== null && value !== undefined) {
-      cleaned[key] = value;
-    }
-  });
-  return cleaned;
-};
+const STATUS_LABEL: Record<string, string> = {
+  student: 'Étudiant',
+  employee: 'Salarié',
+  entrepreneur: 'Entrepreneur',
+  unemployed: 'Sans emploi',
+}
+
+const EDU_LABEL: Record<string, string> = {
+  bac: 'Bac',
+  'bac+2': 'Bac+2',
+  'bac+3': 'Bac+3 (Licence)',
+  'bac+5': 'Bac+5 (Master)',
+  doctorat: 'Doctorat',
+}
+
+const EXP_LEVEL_LABEL: Record<
+  number,
+  { label: string; variant: 'green' | 'blue' | 'amber' | 'gray' }
+> = {
+  0: { label: 'Débutant', variant: 'gray' },
+  1: { label: 'Idée en développement', variant: 'green' },
+  2: { label: 'Intermédiaire', variant: 'blue' },
+  3: { label: 'Avancé', variant: 'amber' },
+}
+
+const SKILL_LEVEL_LABEL: Record<
+  string,
+  { label: string; variant: 'green' | 'blue' | 'amber' | 'gray' }
+> = {
+  beginner: { label: 'Débutant', variant: 'gray' },
+  intermediate: { label: 'Intermédiaire', variant: 'blue' },
+  advanced: { label: 'Avancé', variant: 'amber' },
+  expert: { label: 'Expert', variant: 'green' },
+}
 
 export default function ProjectOwnerDashboard() {
-  const router = useRouter();
-  const { profile, loading, saving, error, saveProfile, addSkill, deleteSkill, addExperience, deleteExperience, refetch } = useProjectOwnerProfile();
-  const [editMode, setEditMode] = useState(false);
-  const [showSkillModal, setShowSkillModal] = useState(false);
-  const [showExpModal, setShowExpModal] = useState(false);
-  const [form, setForm] = useState({
-    current_status: '',
-    education_level: '',
-    field_of_study: '',
-    occupation: '',
-    entrepreneurial_experience_level: 0,
-    has_previous_startup: false,
-    linkedin_url: '',
-  });
+  const router = useRouter()
+  const {
+    profile,
+    loading,
+    saving,
+    error,
+    addSkill,
+    addExperience,
+    deleteSkill,
+    deleteExperience,
+    refetch,
+  } = useProjectOwnerProfile()
 
-  // Pré-remplir le formulaire quand on passe en mode édition
-  useEffect(() => {
-    if (editMode && profile) {
-      setForm({
-        current_status: profile.current_status || '',
-        education_level: profile.education_level || '',
-        field_of_study: profile.field_of_study || '',
-        occupation: profile.occupation || '',
-        entrepreneurial_experience_level: profile.entrepreneurial_experience_level || 0,
-        has_previous_startup: profile.has_previous_startup || false,
-        linkedin_url: profile.linkedin_url || '',
-      });
-    }
-  }, [editMode, profile]);
+  const [showSkillModal, setShowSkillModal] = useState(false)
+  const [showExpModal, setShowExpModal] = useState(false)
 
   const getCompletionPercentage = () => {
-    if (!profile) return 0;
-    let completed = 0;
-    let total = 7;
-    
-    if (profile.current_status) completed++;
-    if (profile.education_level) completed++;
-    if (profile.field_of_study) completed++;
-    if (profile.occupation) completed++;
-    if (profile.entrepreneurial_experience_level > 0) completed++;
-    if (profile.has_previous_startup) completed++;
-    if (profile.linkedin_url) completed++;
-    
-    if (profile.skills?.length > 0) completed += Math.min(profile.skills.length, 2);
-    if (profile.experiences?.length > 0) completed += Math.min(profile.experiences.length, 2);
-    
-    total += 4;
-    return Math.min(Math.floor((completed / total) * 100), 100);
-  };
+    if (!profile) return 0
+    let completed = 0
+    let total = 7
 
-  const handleEditSubmit = async () => {
-    await saveProfile(cleanForm(form));
-    setEditMode(false);
-    await refetch();
-  };
+    if (profile.current_status) completed++
+    if (profile.education_level) completed++
+    if (profile.field_of_study) completed++
+    if (profile.occupation) completed++
+    if (profile.entrepreneurial_experience_level > 0) completed++
+    if (profile.has_previous_startup) completed++
+    if (profile.linkedin_url) completed++
+
+    if (profile.skills?.length > 0) completed += Math.min(profile.skills.length, 2)
+    if (profile.experiences?.length > 0) completed += Math.min(profile.experiences.length, 2)
+
+    total += 4
+    return Math.min(Math.floor((completed / total) * 100), 100)
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f2eb]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement de votre profil...</p>
+          <Loader2 size={32} className="mx-auto text-moss animate-spin mb-3" />
+          <p className="text-[13px] text-ink3">Chargement de votre profil…</p>
         </div>
       </div>
-    );
+    )
   }
 
-  // Mode édition (seulement si un profil existe)
-  if (editMode && profile) {
-    return (
-      <div className="p-8 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Modifier mon profil</h1>
-        <Card className="space-y-4">
-          <Field label="Statut actuel">
-            <Select value={form.current_status} onChange={e => setForm(f => ({ ...f, current_status: e.target.value }))}>
-              <option value="">— Sélectionner —</option>
-              <option value="student">Étudiant</option>
-              <option value="employee">Salarié</option>
-              <option value="entrepreneur">Entrepreneur</option>
-              <option value="unemployed">Sans emploi</option>
-            </Select>
-          </Field>
-          <Field label="Niveau d'études">
-            <Select value={form.education_level} onChange={e => setForm(f => ({ ...f, education_level: e.target.value }))}>
-              <option value="">— Sélectionner —</option>
-              <option value="bac">Bac</option>
-              <option value="bac+2">Bac+2</option>
-              <option value="bac+3">Bac+3 (Licence)</option>
-              <option value="bac+5">Bac+5 (Master)</option>
-              <option value="doctorat">Doctorat</option>
-            </Select>
-          </Field>
-          <Field label="Domaine d'études">
-            <Input value={form.field_of_study} onChange={e => setForm(f => ({ ...f, field_of_study: e.target.value }))} />
-          </Field>
-          <Field label="Occupation">
-            <Input value={form.occupation} onChange={e => setForm(f => ({ ...f, occupation: e.target.value }))} />
-          </Field>
-          <Field label="Expérience entrepreneuriale">
-            <Select value={form.entrepreneurial_experience_level} onChange={e => setForm(f => ({ ...f, entrepreneurial_experience_level: Number(e.target.value) }))}>
-              <option value={0}>Aucune expérience</option>
-              <option value={1}>Débutant (idée)</option>
-              <option value={2}>Intermédiaire (1–3 startups)</option>
-              <option value={3}>Avancé (3+ startups)</option>
-            </Select>
-          </Field>
-          <div className="flex items-center gap-2">
-            <span>Expérience startup précédente</span>
-            <Toggle on={form.has_previous_startup} onToggle={() => setForm(f => ({ ...f, has_previous_startup: !f.has_previous_startup }))} />
-          </div>
-          <Field label="LinkedIn">
-            <Input value={form.linkedin_url} onChange={e => setForm(f => ({ ...f, linkedin_url: e.target.value }))} />
-          </Field>
-          <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={() => setEditMode(false)}>Annuler</Button>
-            <Button variant="primary" onClick={handleEditSubmit} loading={saving}>Mettre à jour</Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Si aucun profil n'existe, afficher un message invitant à en créer un
   if (!profile) {
     return (
-      <div className="p-8 max-w-2xl mx-auto text-center">
-        <Card className="p-12">
-          <h2 className="text-2xl font-bold mb-4">Aucun profil trouvé</h2>
-          <p className="text-gray-600 mb-6">Vous n'avez pas encore créé votre profil porteur de projet.</p>
-          <Button variant="primary" onClick={() => router.push('/dashboard/project-owner/create')}>
-            Créer mon profil
+      <div className="p-6 md:p-8 max-w-[500px] mx-auto">
+        <Card className="text-center py-14">
+          <div className="w-14 h-14 rounded-full bg-moss-light text-moss flex items-center justify-center mx-auto mb-4">
+            <User size={24} />
+          </div>
+          <h2 className="font-syne text-[18px] font-bold text-ink mb-2">Aucun profil trouvé</h2>
+          <p className="text-[13px] text-ink3 mb-6">
+            Vous n'avez pas encore créé votre profil porteur de projet.
+          </p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/project-owner/edit')}>
+            <Plus size={14} /> Créer mon profil
           </Button>
         </Card>
       </div>
-    );
+    )
   }
 
-  // Vue du profil (mode consultation)
+  const completion = getCompletionPercentage()
+  const expLevel = profile.entrepreneurial_experience_level ?? 0
+  const expConfig = EXP_LEVEL_LABEL[expLevel] || EXP_LEVEL_LABEL[0]
+
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Mon profil porteur de projet</h1>
-          <div className="mt-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Complétion du profil :</span>
-              <ProgressBar value={getCompletionPercentage()} className="w-48" />
-              <span className="text-sm font-medium">{getCompletionPercentage()}%</span>
-            </div>
+    <div className="p-6 md:p-8 max-w-[900px] mx-auto space-y-5">
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="font-syne text-[22px] font-extrabold text-ink mb-2">
+            Mon profil porteur de projet
+          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={expConfig.variant}>{expConfig.label}</Badge>
+            {profile.has_previous_startup && <Badge variant="green">Startup expérimenté</Badge>}
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => router.push('/project-owner/create')}>
-            Compléter mon profil
-          </Button>
-          <Button variant="primary" onClick={() => setEditMode(true)}>
-            Modifier
+        <div className="flex gap-2 flex-shrink-0">
+          <Button variant="primary" size="sm" onClick={() => router.push('/dashboard/project-owner/edit')}>
+            <Pencil size={13} /> Modifier
           </Button>
         </div>
       </div>
 
-      {/* Cartes d'information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📋</span> Informations personnelles
-          </h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Statut :</span>
-              <span className="font-medium">{profile.current_status || 'Non renseigné'}</span>
+      {error && <ErrorAlert message={error} />}
+
+      {/* ── Progression ── */}
+      <Card className="p-0 overflow-hidden">
+        <div className="p-[14px_18px] flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <TrendingUp size={14} className="text-moss" />
+            <span className="text-[11px] font-bold text-ink3 uppercase tracking-[0.07em]">
+              Complétion du profil
+            </span>
+          </div>
+          <div className="flex-1 w-full">
+            <ProgressBar value={completion} />
+          </div>
+          <span className="text-[13px] font-bold text-moss flex-shrink-0">{completion}%</span>
+        </div>
+      </Card>
+
+      {/* ── Stats rapides ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-moss/[.05] border border-border rounded-[10px] p-[14px] text-center">
+          <div className="font-syne text-[22px] font-extrabold text-ink leading-none">
+            {profile.skills?.length ?? 0}
+          </div>
+          <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">
+            Compétences
+          </div>
+        </div>
+        <div className="bg-moss/[.05] border border-border rounded-[10px] p-[14px] text-center">
+          <div className="font-syne text-[22px] font-extrabold text-ink leading-none">
+            {profile.experiences?.length ?? 0}
+          </div>
+          <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">
+            Expériences
+          </div>
+        </div>
+        <div className="bg-moss/[.05] border border-border rounded-[10px] p-[14px] text-center">
+          <div className="font-syne text-[22px] font-extrabold text-ink leading-none">
+            {expLevel}
+          </div>
+          <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">
+            Niveau
+          </div>
+        </div>
+        <div className="bg-moss/[.05] border border-border rounded-[10px] p-[14px] text-center">
+          <div className="font-syne text-[22px] font-extrabold text-ink leading-none">
+            {profile.has_previous_startup ? 'Oui' : 'Non'}
+          </div>
+          <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">
+            Startup
+          </div>
+        </div>
+      </div>
+
+      {/* ── Grille infos ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Informations personnelles */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader icon={<User size={13} />} title="Informations personnelles" />
+          <div className="px-[18px] py-2 divide-y divide-border">
+            <div className="flex items-start gap-[9px] py-[9px]">
+              <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                <Briefcase size={13} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                  Statut
+                </div>
+                <div className="text-[13px] font-medium text-ink">
+                  {profile.current_status ? STATUS_LABEL[profile.current_status] : 'Non renseigné'}
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Niveau d'études :</span>
-              <span className="font-medium">{profile.education_level || 'Non renseigné'}</span>
+            <div className="flex items-start gap-[9px] py-[9px]">
+              <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                <GraduationCap size={13} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                  Niveau d'études
+                </div>
+                <div className="text-[13px] font-medium text-ink">
+                  {profile.education_level ? EDU_LABEL[profile.education_level] : 'Non renseigné'}
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Domaine :</span>
-              <span className="font-medium">{profile.field_of_study || 'Non renseigné'}</span>
+            <div className="flex items-start gap-[9px] py-[9px]">
+              <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                <BookOpen size={13} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                  Domaine
+                </div>
+                <div className="text-[13px] font-medium text-ink">
+                  {profile.field_of_study || 'Non renseigné'}
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Occupation :</span>
-              <span className="font-medium">{profile.occupation || 'Non renseigné'}</span>
+            <div className="flex items-start gap-[9px] py-[9px]">
+              <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                <LayoutTemplate size={13} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                  Occupation
+                </div>
+                <div className="text-[13px] font-medium text-ink">
+                  {profile.occupation || 'Non renseigné'}
+                </div>
+              </div>
             </div>
             {profile.linkedin_url && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">LinkedIn :</span>
-                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  Voir le profil
-                </a>
+              <div className="flex items-start gap-[9px] py-[9px]">
+                <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                  <Link2 size={13} />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                    LinkedIn
+                  </div>
+                  <a
+                    href={profile.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] font-medium text-moss hover:underline"
+                  >
+                    Voir le profil →
+                  </a>
+                </div>
               </div>
             )}
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>🚀</span> Parcours entrepreneurial
-          </h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Expérience :</span>
-              <span className="font-medium">
-                {profile.entrepreneurial_experience_level === 0 && "🌟 Débutant"}
-                {profile.entrepreneurial_experience_level === 1 && "💡 Idée en développement"}
-                {profile.entrepreneurial_experience_level === 2 && "📈 Intermédiaire"}
-                {profile.entrepreneurial_experience_level === 3 && "🏆 Avancé"}
-                {!profile.entrepreneurial_experience_level && "Non renseigné"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Expérience startup :</span>
-              <span className="font-medium">{profile.has_previous_startup ? '✅ Oui' : '❌ Non'}</span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Compétences et expériences */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <span>⚡</span> Compétences
-            </h2>
-            <Button variant="secondary" size="sm" onClick={() => setShowSkillModal(true)}>
-              + Ajouter
-            </Button>
-          </div>
-          {profile.skills?.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Aucune compétence renseignée</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {profile.skills?.map(skill => (
-                <Badge key={skill.id} variant="secondary" className="flex items-center gap-1 px-3 py-1">
-                  {skill.skill_name}
-                  <span className="text-xs text-gray-500">({skill.level})</span>
-                  <button onClick={() => deleteSkill(skill.id)} className="ml-2 text-red-500 hover:text-red-700">×</button>
-                </Badge>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <span>💼</span> Expériences
-            </h2>
-            <Button variant="secondary" size="sm" onClick={() => setShowExpModal(true)}>
-              + Ajouter
-            </Button>
-          </div>
-          {profile.experiences?.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Aucune expérience renseignée</p>
-          ) : (
-            <div className="space-y-4">
-              {profile.experiences?.map(exp => (
-                <div key={exp.id} className="border-b last:border-0 pb-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{exp.title}</h3>
-                      <p className="text-sm text-gray-600">{exp.organization}</p>
-                      {exp.start_date && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(exp.start_date).toLocaleDateString()} → {exp.end_date ? new Date(exp.end_date).toLocaleDateString() : 'Présent'}
-                        </p>
-                      )}
-                      {exp.description && <p className="text-sm mt-2">{exp.description}</p>}
-                    </div>
-                    <button onClick={() => deleteExperience(exp.id)} className="text-red-500 text-sm">
-                      Supprimer
-                    </button>
-                  </div>
+        {/* Parcours entrepreneurial */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader icon={<Rocket size={13} />} title="Parcours entrepreneurial" />
+          <div className="px-[18px] py-2 divide-y divide-border">
+            <div className="flex items-start gap-[9px] py-[9px]">
+              <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                <TrendingUp size={13} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                  Expérience
                 </div>
-              ))}
+                <div className="text-[13px] font-medium text-ink flex items-center gap-2">
+                  {expConfig.label}
+                  <Badge variant={expConfig.variant} className="text-[9px]">
+                    {expConfig.label}
+                  </Badge>
+                </div>
+              </div>
             </div>
-          )}
+            <div className="flex items-start gap-[9px] py-[9px]">
+              <div className="w-[20px] flex-shrink-0 mt-[1px] text-ink3">
+                <Building2 size={13} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-ink3 uppercase tracking-[0.07em] mb-[2px]">
+                  Startup précédente
+                </div>
+                <div className="text-[13px] font-medium text-ink">
+                  {profile.has_previous_startup ? (
+                    <span className="flex items-center gap-1 text-moss">
+                      <CheckCircle2 size={13} /> Oui
+                    </span>
+                  ) : (
+                    <span className="text-ink3">Non</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
       </div>
 
-      {/* Modales */}
+      {/* ── Compétences & Expériences ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Compétences */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader icon={<Zap size={13} />} title="Compétences">
+            <Button size="sm" variant="ghost" onClick={() => setShowSkillModal(true)}>
+              <Plus size={13} /> Ajouter
+            </Button>
+          </CardHeader>
+          <div className="p-[16px_18px]">
+            {!profile.skills?.length ? (
+              <div className="text-center py-8">
+                <Zap size={28} className="mx-auto text-ink3 mb-2" />
+                <p className="text-[12px] text-ink3">Aucune compétence renseignée</p>
+              </div>
+            ) : (
+              <div className="space-y-0 divide-y divide-border">
+                {profile.skills.map((skill) => {
+                  const levelConfig = SKILL_LEVEL_LABEL[skill.level] || SKILL_LEVEL_LABEL.beginner
+                  return (
+                    <div key={skill.id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                          <span className="text-[13px] font-semibold text-ink">{skill.skill_name}</span>
+                          <Badge variant={levelConfig.variant} className="text-[9px]">
+                            {levelConfig.label}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="!text-red hover:!bg-red-light flex-shrink-0"
+                          onClick={() => deleteSkill(skill.id)}
+                        >
+                          <Trash2 size={13} />
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Expériences */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader icon={<Briefcase size={13} />} title="Expériences">
+            <Button size="sm" variant="ghost" onClick={() => setShowExpModal(true)}>
+              <Plus size={13} /> Ajouter
+            </Button>
+          </CardHeader>
+          <div className="p-[16px_18px]">
+            {!profile.experiences?.length ? (
+              <div className="text-center py-8">
+                <Briefcase size={28} className="mx-auto text-ink3 mb-2" />
+                <p className="text-[12px] text-ink3">Aucune expérience renseignée</p>
+              </div>
+            ) : (
+              <div className="space-y-0 divide-y divide-border">
+                {profile.experiences.map((exp) => (
+                  <div key={exp.id} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-semibold text-ink">{exp.title}</div>
+                        <div className="text-[11px] text-ink3 mt-0.5">{exp.organization}</div>
+                        {(exp.start_date || exp.end_date) && (
+                          <div className="flex items-center gap-1 text-[10px] text-ink3 mt-1">
+                            <Calendar size={10} />
+                            {exp.start_date
+                              ? new Date(exp.start_date).toLocaleDateString('fr-FR')
+                              : '—'}
+                            {' → '}
+                            {exp.end_date
+                              ? new Date(exp.end_date).toLocaleDateString('fr-FR')
+                              : 'Présent'}
+                          </div>
+                        )}
+                        {exp.description && (
+                          <p className="text-[12px] text-ink2 mt-2 leading-relaxed">{exp.description}</p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="!text-red hover:!bg-red-light flex-shrink-0"
+                        onClick={() => deleteExperience(exp.id)}
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* ── Modales ── */}
       {showSkillModal && (
         <SkillModal
-          onAdd={async (skill) => { await addSkill(skill); setShowSkillModal(false); }}
+          onAdd={async (skill) => {
+            await addSkill(skill)
+            setShowSkillModal(false)
+            await refetch()
+          }}
           onClose={() => setShowSkillModal(false)}
           saving={saving}
         />
       )}
       {showExpModal && (
         <ExperienceModal
-          onAdd={async (exp) => { await addExperience(exp); setShowExpModal(false); }}
+          onAdd={async (exp) => {
+            await addExperience(exp)
+            setShowExpModal(false)
+            await refetch()
+          }}
           onClose={() => setShowExpModal(false)}
           saving={saving}
         />
       )}
     </div>
-  );
-}
-
-function SkillModal({ onAdd, onClose, saving }: { onAdd: (skill: CreateSkillDto) => Promise<void>; onClose: () => void; saving: boolean }) {
-  const [skillName, setSkillName] = useState('');
-  const [level, setLevel] = useState<CreateSkillDto['level']>('beginner');
-
-  const handleSubmit = async () => {
-    if (!skillName.trim()) return;
-    await onAdd({ skill_name: skillName, level });
-    setSkillName('');
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full">
-        <h3 className="text-lg font-semibold mb-4">Ajouter une compétence</h3>
-        <Field label="Nom de la compétence">
-          <Input value={skillName} onChange={e => setSkillName(e.target.value)} placeholder="React, Python, Marketing..." autoFocus />
-        </Field>
-        <Field label="Niveau">
-          <Select value={level} onChange={e => setLevel(e.target.value as any)}>
-            <option value="beginner">🌱 Débutant</option>
-            <option value="intermediate">📚 Intermédiaire</option>
-            <option value="advanced">🚀 Avancé</option>
-            <option value="expert">🏆 Expert</option>
-          </Select>
-        </Field>
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" onClick={handleSubmit} loading={saving}>Ajouter</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ExperienceModal({ onAdd, onClose, saving }: { onAdd: (exp: CreateExperienceDto) => Promise<void>; onClose: () => void; saving: boolean }) {
-  const [form, setForm] = useState<CreateExperienceDto>({ title: '', organization: '', description: '', start_date: '', end_date: '' });
-
-  const handleSubmit = async () => {
-    if (!form.title.trim() || !form.organization.trim()) return;
-    
-    const payload: CreateExperienceDto = {
-      title: form.title,
-      organization: form.organization,
-      description: form.description || undefined,
-    };
-    if (form.start_date) payload.start_date = form.start_date;
-    if (form.end_date) payload.end_date = form.end_date;
-    
-    await onAdd(payload);
-    setForm({ title: '', organization: '', description: '', start_date: '', end_date: '' });
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full">
-        <h3 className="text-lg font-semibold mb-4">Ajouter une expérience</h3>
-        <Field label="Titre *">
-          <Input 
-            value={form.title} 
-            onChange={e => setForm(f => ({ ...f, title: e.target.value }))} 
-            placeholder="Chef de produit, Développeur, Fondateur..."
-          />
-        </Field>
-        <Field label="Organisation *">
-          <Input 
-            value={form.organization} 
-            onChange={e => setForm(f => ({ ...f, organization: e.target.value }))} 
-            placeholder="Startup XYZ, Entreprise ABC..."
-          />
-        </Field>
-        <Field label="Description">
-          <Input 
-            value={form.description} 
-            onChange={e => setForm(f => ({ ...f, description: e.target.value }))} 
-            placeholder="Décrivez vos responsabilités et réalisations..."
-          />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Date de début">
-            <Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
-          </Field>
-          <Field label="Date de fin">
-            <Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
-          </Field>
-        </div>
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" onClick={handleSubmit} loading={saving}>Ajouter</Button>
-        </div>
-      </div>
-    </div>
-  );
+  )
 }

@@ -64,9 +64,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(isIncubatorMember
       ? [
         { href: '/dashboard/incubator', label: 'Incubateur', icon: Factory },
-        { href: '/dashboard/incubator/create', label: 'Créer', icon: Plus },
-        { href: '/dashboard/members', label: 'Équipe', icon: Users },
-      ]
+        ]
       : []),
     ...(isAdmin ? [{ href: '/dashboard/admin', label: 'Administration', icon: Settings }] : []),
     { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
@@ -155,13 +153,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             );
           })}
         </nav>
+  
 
         {/* User footer */}
         <div className="p-4 border-t border-border mt-auto">
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-moss-light/30 mb-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-light text-white flex items-center justify-center text-sm font-semibold shadow-sm">
-              {initials}
-            </div>
+            <div className="w-[72px] h-[72px] rounded-full flex-shrink-0 flex items-center justify-center
+          bg-gradient-to-br from-moss to-[#1a5c3a] shadow-[0_0_0_3px_rgba(45,122,82,0.2),0_2px_12px_rgba(45,122,82,0.15)]
+          font-syne text-[22px] font-extrabold text-[#a0e0b8]">
+          {initials}
+        </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate text-ink">{fullName || 'Utilisateur'}</div>
               <div className="text-xs text-ink-3 capitalize truncate">

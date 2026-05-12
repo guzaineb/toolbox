@@ -95,21 +95,30 @@ export function ExpertProfileCard({ profile, variant = 'full', onEdit }: ExpertP
         )}
 
         {/* Expertise Areas */}
-        {profile.expertiseAreas.length > 0 && (
-          <div>
-            <h4 className="font-medium text-gray-700 mb-3">Domaines d'expertise</h4>
-            <div className="flex flex-wrap gap-2">
-              {profile.expertiseAreas.map((area) => (
-                <span
-                  key={area.id}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
-                >
-                  {area.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+{profile.expertiseConnections.length > 0 && (
+  <div>
+    <h4 className="font-medium text-gray-700 mb-3">
+      Domaines d'expertise
+    </h4>
+
+    <div className="flex flex-wrap gap-2">
+      {profile.expertiseConnections.map((connection) => (
+        <div
+          key={connection.id}
+          className="px-3 py-2 bg-gray-100 rounded-full flex items-center gap-2"
+        >
+          <span className="text-sm text-gray-700">
+            {connection.expertiseArea.name}
+          </span>
+
+          <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+            {connection.level}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {/* LinkedIn */}
         {profile.linkedin_url && (

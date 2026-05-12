@@ -14,7 +14,7 @@ export const AppDataSource = new DataSource({
   port: 5432,
   username: 'postgres',
   password: 'admin',
-  database: 'db-tool',
+  database: 'db-toolbox',
   entities: [__dirname + '/../**/*.entity.{ts,js}'],
   synchronize: true, 
 });

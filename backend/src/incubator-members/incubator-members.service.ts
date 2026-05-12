@@ -1,4 +1,3 @@
-// src/modules/incubator-members/incubator-members.service.ts
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -213,4 +212,25 @@ export class IncubatorMembersService {
       throw new ForbiddenException('Permissions insuffisantes pour gérer les membres');
     }
   }
+  async declineInvitation(token: string, userId: string): Promise<{ message: string }> {
+  const invitation = await this.invitationRepo.findOne({
+    where: { token },
+    relations: ['incubator'],
+  });
+  if (!invitation) throw new BadRequestException('Token invalide');
+  if (invitation.expires_at < new Date()) {
+    await this.invitationRepo.remove(invitation);
+    throw new BadRequestException('Invitation déjà expirée');
+  }
+
+  const user = await this.userRepo.findOneBy({ id: userId });
+  if (!user) throw new NotFoundException('Utilisateur introuvable');
+  if (user.email !== invitation.email) {
+    throw new ForbiddenException('Cette invitation ne vous est pas destinée');
+  }
+  // Optionnel : envoyer un email à l’inviteur pour l’informer du refus
+  // await this.emailService.sendDeclineNotice(invitation.incubator.ownerId, user.email);
+  await this.invitationRepo.remove(invitation);
+  return { message: 'Invitation refusée avec succès' };
+}
 }

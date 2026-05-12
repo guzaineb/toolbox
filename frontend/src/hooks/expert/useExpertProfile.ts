@@ -1,3 +1,5 @@
+// hooks/useExpertProfile.ts (version corrigée)
+
 import { useState, useEffect, useCallback } from 'react';
 import { expertService } from '@/services/expert.service';
 import { ExpertProfile, UpdateExpertDto, CreateExpertDto, AddExpertiseDto } from '@/types/expert';
@@ -44,21 +46,20 @@ export function useExpertProfile() {
     }
   }, [profile]);
 
-
-const updateAvailability = useCallback(async (status: ExpertProfile['availability_status']): Promise<void> => {
-  setSaving(true);
-  setError(null);
-  try {
-    const updated = await expertService.updateProfile({ availability_status: status });
-    setProfile(updated);
-  } catch (err: any) {
-    const msg = err.response?.data?.message || err.message;
-    setError(msg);
-    throw err; // Propager l'erreur pour gestion dans le modal
-  } finally {
-    setSaving(false);
-  }
-}, []);
+  const updateAvailability = useCallback(async (status: ExpertProfile['availability_status']) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await expertService.updateProfile({ availability_status: status });
+      setProfile(updated);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      setError(msg);
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }, []);
 
   const addExpertise = useCallback(async (dto: AddExpertiseDto) => {
     setSaving(true);
@@ -85,6 +86,7 @@ const updateAvailability = useCallback(async (status: ExpertProfile['availabilit
   const updateExpertiseLevel = useCallback(async (expertiseAreaId: string, level: string, years?: number) => {
     setSaving(true);
     try {
+      // L’API retourne désormais un ExpertProfile complet
       const updated = await expertService.updateExpertiseLevel(expertiseAreaId, level, years);
       setProfile(updated);
       return updated;
@@ -97,6 +99,7 @@ const updateAvailability = useCallback(async (status: ExpertProfile['availabilit
     setSaving(true);
     try {
       await expertService.removeExpertise(expertiseAreaId);
+      // Mise à jour locale de l’état après suppression
       setProfile(prev => prev ? {
         ...prev,
         expertiseConnections: prev.expertiseConnections.filter(c => c.expertiseArea.id !== expertiseAreaId)
@@ -116,5 +119,18 @@ const updateAvailability = useCallback(async (status: ExpertProfile['availabilit
     }
   }, []);
 
-  return {profile,loading,saving,error,saveProfile,updateAvailability,addExpertise,addMultipleExpertises,updateExpertiseLevel,removeExpertise,deleteProfile,refetch: fetchProfile,};
+  return {
+    profile,
+    loading,
+    saving,
+    error,
+    saveProfile,
+    updateAvailability,
+    addExpertise,
+    addMultipleExpertises,
+    updateExpertiseLevel,
+    removeExpertise,
+    deleteProfile,
+    refetch: fetchProfile,
+  };
 }

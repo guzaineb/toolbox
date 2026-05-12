@@ -56,7 +56,7 @@ export default function LoginPage() {
             { num: '12k', label: 'Projets' },
           ]}
           testimonial={{
-            text: 'ProjectStruct a transformé notre façon de gérer les cohortes et les relations avec les experts.',
+            text: 'ToolBox a transformé notre façon de gérer les cohortes et les relations avec les experts.',
             initials: 'SA',
             name: 'Sara Amrani · DG, InnoHub Casablanca',
           }}

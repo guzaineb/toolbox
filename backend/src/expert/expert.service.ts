@@ -210,9 +210,6 @@ async updateExpertiseAreas(profileId: string, areaIds: string[]): Promise<void> 
     return;
   }
   
-  // Supprimer toutes les connexions existantes
-  await this.expertiseConnRepo.delete({ expertProfile: { id: profileId } });
-
   if (areaIds.length > 0) {
     const areas = await this.areaRepo.findBy({ id: In(areaIds) });
     
@@ -228,12 +225,7 @@ async updateExpertiseAreas(profileId: string, areaIds: string[]): Promise<void> 
   }
 }
 
-async updateExpertiseLevel(
-  userId: string,
-  expertiseAreaId: string,
-  level?: string,
-  yearsOfExperience?: number
-): Promise<ExpertProfileExpertiseArea> {
+async updateExpertiseLevel( userId: string, expertiseAreaId: string,level?: string,yearsOfExperience?: number): Promise<ExpertProfileExpertiseArea> {
   const profile = await this.findByUserOrFail(userId);
   const connection = await this.expertiseConnRepo.findOne({
     where: {
@@ -246,9 +238,7 @@ async updateExpertiseLevel(
   if (!connection) {
     throw new NotFoundException('Ce domaine d\'expertise n\'est pas associé au profil.');
   }
-  
-  // CORRECTION 5: Mettre à jour seulement si les valeurs sont fournies
-  if (level !== undefined && level !== null) {
+    if (level !== undefined && level !== null) {
     connection.level = level;
   }
   

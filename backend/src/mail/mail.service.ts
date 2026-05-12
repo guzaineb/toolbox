@@ -177,7 +177,7 @@ export class MailService {
       <body style="margin:0;padding:32px 16px;background-color:#0a0a0a;">
         <div class="container">
           <div class="header">
-            <div class="logo">Project<span>Struct</span></div>
+            <div class="logo">Tool<span>box</span></div>
             <div class="tagline">construire · connecter · développer</div>
           </div>
           <div class="content">
@@ -320,8 +320,6 @@ export class MailService {
       html: this.getBaseTemplate(content),
     });
   }
-
-
 
 async sendResetPasswordEmail(email: string, token: string): Promise<void> {
   const frontendUrl = this.configService.get<string>('FRONTEND_URL');

@@ -8,7 +8,7 @@ import { AcceptInviteDto, InviteMemberDto } from './dto/invite-member.dto';
 @Controller('incubators/:incubatorId/members')
 @UseGuards(JwtAuthGuard)
 export class IncubatorMembersController {
-  constructor(private membersService: IncubatorMembersService) {}
+  constructor(private membersService: IncubatorMembersService) { }
 
   @Post()
   add(@Param('incubatorId') incubatorId: string, @Body() dto: AddMemberDto, @Req() req) {
@@ -19,31 +19,35 @@ export class IncubatorMembersController {
   list(@Param('incubatorId') incubatorId: string) {
     return this.membersService.findByIncubator(incubatorId);
   }
-   @Get('me')
+  @Get('me')
   getMe(@Param('incubatorId') incubatorId: string, @Req() req) {
     return this.membersService.getMyMembership(incubatorId, req.user.id);
   }
-    @Patch(':id')
-  update(@Param('incubatorId') incubatorId: string,@Param('id') memberId: string,@Body() dto: UpdateMemberDto,@Req() req,
+  @Patch(':id')
+  update(@Param('incubatorId') incubatorId: string, @Param('id') memberId: string, @Body() dto: UpdateMemberDto, @Req() req,
   ) {
     return this.membersService.updateMember(memberId, incubatorId, dto, req.user.id);
   }
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('incubatorId') incubatorId: string,@Param('id') memberId: string,@Req() req,
+  remove(@Param('incubatorId') incubatorId: string, @Param('id') memberId: string, @Req() req,
   ) {
     return this.membersService.removeMember(memberId, incubatorId, req.user.id);
   }
 
   @Post('invite')
-  invite(@Param('incubatorId') incubatorId: string,@Body() dto: InviteMemberDto,@Req() req,
+  invite(@Param('incubatorId') incubatorId: string, @Body() dto: InviteMemberDto, @Req() req,
   ) {
     return this.membersService.inviteMember(incubatorId, dto, req.user.id);
   }
- @Post('accept')
+  @Post('accept')
   async acceptInvite(@Body() dto: AcceptInviteDto, @Req() req) {
     return this.membersService.acceptInvitation(dto, req.user.id);
   }
-
+  @Post('decline')
+  @HttpCode(HttpStatus.OK)
+  async declineInvite(@Body() dto: AcceptInviteDto, @Req() req) {
+    return this.membersService.declineInvitation(dto.token, req.user.id);
+  }
 
 }

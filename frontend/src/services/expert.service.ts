@@ -93,14 +93,13 @@ class ExpertService {
     return response.data;
   }
 
-   async updateExpertiseLevel(expertiseAreaId: string,level: string,years_of_experience?: number
-  ): Promise<ExpertiseConnection> {
-    const response = await api.patch(`/experts/me/expertises/${expertiseAreaId}`, {
-      level,
-      years_of_experience,
-    });
-    return response.data;
-  }
+  async updateExpertiseLevel(expertiseAreaId: string,level: string,years_of_experience?: number): Promise<ExpertProfile> {
+  const response = await api.patch(`/experts/me/expertises/${expertiseAreaId}`, {
+    level,
+    years_of_experience,
+  });
+  return response.data;
+}
 
   async removeExpertise(expertiseAreaId: string): Promise<void> {
     await api.delete(`/experts/me/expertises/${expertiseAreaId}`);

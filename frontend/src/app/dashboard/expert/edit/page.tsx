@@ -81,19 +81,11 @@ export default function ExpertEditPage() {
       // Ne pas envoyer les expertiseAreaIds car elles sont gérées séparément
       await saveProfile({
         headline: form.headline,
-<<<<<<< HEAD
-        bio: form.bio || undefined,
-        organization: form.organization || undefined,
-        position: form.position || undefined,
-        years_of_experience: form.years_of_experience ? parseInt(form.years_of_experience) : undefined,
-        linkedin_url: form.linkedin_url || undefined,
-=======
         bio: form.bio ,
         organization: form.organization ,
         position: form.position ,
         years_of_experience: form.years_of_experience ? parseInt(form.years_of_experience) : undefined,
         linkedin_url: form.linkedin_url ,
->>>>>>> 38c6efc (Misa a jour les interfaces)
       });
       router.push('/dashboard/expert');
     } catch (err: any) {
@@ -257,79 +249,6 @@ export default function ExpertEditPage() {
           </Field>
         </div>
 
-        {/* Gestion des expertises */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Mes domaines d'expertise</h2>
-            <button
-              type="button"
-              onClick={() => {
-                setLocalError('');
-                setNewExpertiseAreaId('');
-                setNewExpertiseLevel('intermediate');
-                setNewExpertiseYears('');
-                setShowAddExpertise(true);
-              }}
-              className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-              disabled={saving}
-            >
-              <Plus className="w-4 h-4" />
-              Ajouter
-            </button>
-          </div>
-          
-          {expertises.length === 0 ? (
-            <p className="text-gray-500 text-sm">Aucun domaine sélectionné.</p>
-          ) : (
-            <div className="space-y-4">
-              {expertises.map(exp => (
-                <div key={exp.id} className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium text-gray-900 min-w-[180px]">{exp.areaName}</span>
-                  <select
-                    value={exp.level}
-                    onChange={(e) => handleUpdateExpertise(
-                      exp.connectionId || exp.id, 
-                      exp.areaId, 
-                      e.target.value as ExpertiseLevel, 
-                      exp.yearsOfExperience
-                    )}
-                    className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900"
-                    disabled={saving}
-                  >
-                    <option value="junior">Junior</option>
-                    <option value="intermediate">Intermédiaire</option>
-                    <option value="senior">Senior</option>
-                    <option value="expert">Expert</option>
-                  </select>
-                  <input
-                    type="number"
-                    value={exp.yearsOfExperience || ''}
-                    onChange={(e) => {
-                      const years = e.target.value === '' ? 0 : parseInt(e.target.value);
-                      handleUpdateExpertise(
-                        exp.connectionId || exp.id,
-                        exp.areaId, 
-                        exp.level, 
-                        isNaN(years) ? 0 : years
-                      );
-                    }}
-                    className="w-24 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900"
-                    placeholder="Années"
-                    disabled={saving}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExpertise(exp.areaId)}
-                    className="ml-auto text-red-600 hover:text-red-800"
-                    disabled={saving}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Boutons actions */}
         <div className="flex justify-between gap-3">
