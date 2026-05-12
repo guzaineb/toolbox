@@ -3,7 +3,7 @@ import { Card, Progress, StatBox } from '@/components/shared/ui'
 
 export default function DashboardPage() {
   return (
-    <div className="p-8 max-w-[800px]">
+    <div className="p-8 max-w-[max-w-6xl]">
       <h1 className="font-display text-[26px] text-text mb-1">Bonjour, Mehdi 👋</h1>
       <p className="text-[13px] text-text-2 mb-7">Voici un aperçu de votre activité sur ProjectStruct</p>
 

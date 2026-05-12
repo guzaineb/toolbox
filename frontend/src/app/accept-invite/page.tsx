@@ -63,7 +63,7 @@ export default function AcceptInvitePage() {
   if (status === 'idle' && token) {
     return (
       <div className="min-h-screen bg-[#f5f2eb] flex items-center justify-center p-4">
-        <Card className="max-w-[440px] w-full p-0 overflow-hidden">
+        <Card className="max-w-[600px] w-full p-0 overflow-hidden">
           <div className="p-[18px] text-center border-b border-border bg-surface-2">
             <div className="w-14 h-14 rounded-[14px] bg-moss-light text-moss flex items-center justify-center mx-auto mb-3">
               <Building2 size={28} />

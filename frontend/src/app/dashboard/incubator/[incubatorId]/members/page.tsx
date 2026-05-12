@@ -46,7 +46,7 @@ const AVATAR_COLORS = [
 ]
 
 /* ═════════════════════════════════════
-   MODALE : INVITER UN MEMBRE
+   MODALE : INVITER UN MEMBRE (élargie)
 ═════════════════════════════════════ */
 function InviteModal({
   incubatorId, onClose, onSuccess,
@@ -86,23 +86,23 @@ function InviteModal({
       className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6 z-50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <Card className="w-full max-w-[420px] p-0 overflow-hidden shadow-lg">
-        <CardHeader icon={<UserPlus size={13} />} title="Inviter un membre">
+      <Card className="w-full max-w-[640px] p-0 overflow-hidden shadow-lg">
+        <CardHeader icon={<UserPlus size={15} />} title="Inviter un membre">
           <Button size="sm" variant="ghost" onClick={onClose}>
-            <X size={14} />
+            <X size={16} />
           </Button>
         </CardHeader>
 
-        <div className="p-[18px]">
-          {error && <div className="mb-4"><ErrorAlert message={error} /></div>}
+        <div className="p-6">
+          {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
 
           {sent ? (
-            <div className="text-center py-2">
-              <div className="w-12 h-12 rounded-full bg-moss-light text-moss flex items-center justify-center mx-auto mb-3">
-                <Send size={20} />
+            <div className="text-center py-4">
+              <div className="w-14 h-14 rounded-full bg-moss-light text-moss flex items-center justify-center mx-auto mb-4">
+                <Send size={24} />
               </div>
-              <h3 className="font-syne text-[15px] font-bold text-ink mb-1">Invitation envoyée</h3>
-              <p className="text-[12px] text-ink3 mb-4">
+              <h3 className="font-syne text-lg font-bold text-ink mb-2">Invitation envoyée</h3>
+              <p className="text-sm text-ink3 mb-6">
                 Une notification a été transmise par email. Le membre recevra un lien pour rejoindre l'incubateur.
               </p>
               <Button variant="primary" className="w-full" onClick={onClose}>
@@ -110,7 +110,7 @@ function InviteModal({
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-5">
               <Field label="Email de l'utilisateur">
                 <Input
                   type="email"
@@ -118,10 +118,11 @@ function InviteModal({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoFocus
+                  className="text-base"
                 />
               </Field>
               <Field label="Rôle">
-                <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                <Select value={role} onChange={(e) => setRole(e.target.value)} className="text-base">
                   <option value="program_manager">Program Manager</option>
                   <option value="cohort_manager">Cohort Manager</option>
                   <option value="review_manager">Review Manager</option>
@@ -134,9 +135,10 @@ function InviteModal({
                   placeholder="ex: Responsable Cohortes"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
+                  className="text-base"
                 />
               </Field>
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-3">
                 <Button className="flex-1" onClick={onClose}>Annuler</Button>
                 <Button
                   variant="primary"
@@ -156,7 +158,7 @@ function InviteModal({
 }
 
 /* ═════════════════════════════════════
-   MODALE : ÉDITER UN MEMBRE
+   MODALE : ÉDITER UN MEMBRE (élargie)
 ═════════════════════════════════════ */
 function EditMemberModal({
   incubatorId, member, onClose, onSuccess,
@@ -204,19 +206,19 @@ function EditMemberModal({
       className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6 z-50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <Card className="w-full max-w-[440px] p-0 overflow-hidden shadow-lg">
-        <CardHeader icon={<Pencil size={13} />} title={`Modifier ${fn} ${ln}`}>
+      <Card className="w-full max-w-[680px] p-0 overflow-hidden shadow-lg">
+        <CardHeader icon={<Pencil size={15} />} title={`Modifier ${fn} ${ln}`}>
           <Button size="sm" variant="ghost" onClick={onClose}>
-            <X size={14} />
+            <X size={16} />
           </Button>
         </CardHeader>
 
-        <div className="p-[18px]">
-          {error && <div className="mb-4"><ErrorAlert message={error} /></div>}
+        <div className="p-6">
+          {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
 
-          <div className="space-y-3">
+          <div className="space-y-5">
             <Field label="Rôle">
-              <Select value={role} onChange={(e) => setRole(e.target.value)}>
+              <Select value={role} onChange={(e) => setRole(e.target.value)} className="text-base">
                 <option value="admin">Admin</option>
                 <option value="program_manager">Program Manager</option>
                 <option value="cohort_manager">Cohort Manager</option>
@@ -226,10 +228,10 @@ function EditMemberModal({
               </Select>
             </Field>
             <Field label="Titre du poste">
-              <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+              <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="text-base" />
             </Field>
             <Field label="Statut">
-              <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <Select value={status} onChange={(e) => setStatus(e.target.value)} className="text-base">
                 <option value="active">Actif</option>
                 <option value="inactive">Inactif</option>
               </Select>
@@ -238,23 +240,23 @@ function EditMemberModal({
             <Sep />
 
             <SectionLabel>Permissions</SectionLabel>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-ink2">Gérer les membres</span>
+                <span className="text-sm font-medium text-ink2">Gérer les membres</span>
                 <Toggle on={canManageMembers} onToggle={() => setCanManageMembers(!canManageMembers)} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-ink2">Gérer les programmes</span>
+                <span className="text-sm font-medium text-ink2">Gérer les programmes</span>
                 <Toggle on={canManagePrograms} onToggle={() => setCanManagePrograms(!canManagePrograms)} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-ink2">Gérer les cohortes</span>
+                <span className="text-sm font-medium text-ink2">Gérer les cohortes</span>
                 <Toggle on={canManageCohorts} onToggle={() => setCanManageCohorts(!canManageCohorts)} />
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3 mt-5">
+          <div className="flex gap-3 mt-8">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>
             <Button variant="primary" className="flex-1" loading={loading} onClick={handleSave}>
               Enregistrer
@@ -267,7 +269,7 @@ function EditMemberModal({
 }
 
 /* ═════════════════════════════════════
-   PAGE PRINCIPALE
+   PAGE PRINCIPALE (inchangée)
 ═════════════════════════════════════ */
 export default function MembersPage() {
   const { incubatorId } = useParams<{ incubatorId: string }>()
@@ -310,7 +312,7 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[760px] mx-auto">
+    <div className="p-6 md:p-8 max-w-6xl mx-auto">
       {showInvite && incubatorId && (
         <InviteModal
           incubatorId={incubatorId}
@@ -327,41 +329,41 @@ export default function MembersPage() {
         />
       )}
 
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-syne text-[22px] font-extrabold text-ink">Équipe</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+        <h1 className="font-syne text-2xl font-extrabold text-ink">Équipe</h1>
         <Button variant="primary" size="sm" onClick={() => setShowInvite(true)}>
           <UserPlus size={14} />
           Inviter un membre
         </Button>
       </div>
-      <p className="text-[13px] text-ink3 mb-7">
+      <p className="text-sm text-ink3 mb-8">
         Gérez les membres et leurs permissions dans cet incubateur
       </p>
 
-      {error && <div className="mb-4"><ErrorAlert message={error} /></div>}
+      {error && <div className="mb-6"><ErrorAlert message={error} /></div>}
       {inviteSuccess && (
-        <div className="mb-4">
+        <div className="mb-6">
           <SuccessAlert message={inviteSuccess} />
         </div>
       )}
 
       <Card className="p-0 overflow-hidden">
-        <CardHeader icon={<Users size={13} />} title={`Membres (${members.length})`} />
-        <div className="p-[16px_18px]">
+        <CardHeader icon={<Users size={15} />} title={`Membres (${members.length})`} />
+        <div className="p-5">
           {loading ? (
-            <div className="animate-pulse space-y-3">
+            <div className="animate-pulse space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 bg-border rounded-lg" />
+                <div key={i} className="h-16 bg-border rounded-lg" />
               ))}
             </div>
           ) : members.length === 0 ? (
-            <div className="text-center py-10">
-              <Users size={32} className="mx-auto text-ink3 mb-3" />
-              <p className="text-[13px] text-ink3">Aucun membre pour le moment.</p>
+            <div className="text-center py-12">
+              <Users size={40} className="mx-auto text-ink3 mb-4" />
+              <p className="text-sm text-ink3">Aucun membre pour le moment.</p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-3"
+                className="mt-4"
                 onClick={() => setShowInvite(true)}
               >
                 Inviter le premier membre
@@ -378,38 +380,38 @@ export default function MembersPage() {
                 return (
                   <div
                     key={m.id}
-                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                    className="flex flex-wrap items-center gap-4 py-4 first:pt-0 last:pb-0"
                   >
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${colorClass}`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${colorClass}`}
                     >
                       {initials}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium text-ink flex items-center gap-2 flex-wrap">
+                      <div className="text-sm font-medium text-ink flex items-center gap-2 flex-wrap">
                         {fn} {ln}
                         {m.is_primary_contact && (
-                          <span className="text-[9px] px-[6px] py-[2px] rounded-full bg-blue-light text-blue border border-blue/18 font-bold">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-light text-blue border border-blue/18 font-bold">
                             Contact principal
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-ink3 truncate">
+                      <div className="text-xs text-ink3 truncate">
                         {m.user?.email}
                         {m.job_title && ` · ${m.job_title}`}
                       </div>
                     </div>
 
-                    <div className="hidden md:flex gap-1 flex-wrap">
+                    <div className="hidden md:flex gap-1.5 flex-wrap">
                       {m.can_manage_members && (
-                        <Badge variant="gray" className="text-[9px]">Membres</Badge>
+                        <Badge variant="gray" className="text-[10px]">Membres</Badge>
                       )}
                       {m.can_manage_programs && (
-                        <Badge variant="gray" className="text-[9px]">Programs</Badge>
+                        <Badge variant="gray" className="text-[10px]">Programs</Badge>
                       )}
                       {m.can_manage_cohorts && (
-                        <Badge variant="gray" className="text-[9px]">Cohortes</Badge>
+                        <Badge variant="gray" className="text-[10px]">Cohortes</Badge>
                       )}
                     </div>
 
@@ -426,7 +428,7 @@ export default function MembersPage() {
                         variant="ghost"
                         onClick={() => setEditingMember(m)}
                       >
-                        <Pencil size={13} />
+                        <Pencil size={14} />
                       </Button>
                       <Button
                         size="sm"
@@ -435,7 +437,7 @@ export default function MembersPage() {
                         loading={deletingId === m.id}
                         onClick={() => handleDelete(m.id)}
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={14} />
                       </Button>
                     </div>
                   </div>

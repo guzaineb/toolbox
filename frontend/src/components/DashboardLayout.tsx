@@ -57,7 +57,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isIncubatorMember = userRole === 'incubator_membre';
 
   const NAV_ITEMS = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/profile', label: 'Mon profil', icon: User },
     ...(isProjectOwner ? [{ href: '/dashboard/project-owner', label: 'Projets', icon: FolderKanban }] : []),
     ...(isExpert ? [{ href: '/dashboard/expert', label: 'Expertise', icon: GraduationCap }] : []),
@@ -67,7 +66,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         ]
       : []),
     ...(isAdmin ? [{ href: '/dashboard/admin', label: 'Administration', icon: Settings }] : []),
-    { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
   ];
 
   const firstName = user.profile?.first_name || '';

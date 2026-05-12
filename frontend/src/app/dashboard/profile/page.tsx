@@ -57,7 +57,7 @@ export default function ProfilePage() {
   )
 
   return (
-    <div className="p-7 max-w-[900px] mx-auto">
+    <div className="p-7 max-w-[max-w-6xl] mx-auto">
       <TabNav
         tabs={[
           { id: 'public', label: 'Vue publique' },

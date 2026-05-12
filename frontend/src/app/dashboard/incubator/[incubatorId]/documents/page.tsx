@@ -128,7 +128,7 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[700px] mx-auto">
+    <div className="p-6 md:p-8 max-w-[1000px] mx-auto">
       <h1 className="font-syne text-[22px] font-extrabold text-ink mb-1">Documents</h1>
       <p className="text-[12px] text-ink3 mb-7">Uploadez les documents pour la vérification de votre incubateur</p>
 

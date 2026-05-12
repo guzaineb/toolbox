@@ -37,7 +37,7 @@ export default function IncubatorListPage() {
 
   if (loading) {
     return (
-      <div className="p-8 max-w-[860px] mx-auto">
+      <div className="p-8 max-w-[max-w-6xl] mx-auto">
         <div className="animate-pulse space-y-4">
           <div className="h-7 w-64 bg-border rounded-lg" />
           <div className="h-4 w-48 bg-border rounded" />
@@ -48,7 +48,7 @@ export default function IncubatorListPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[860px] mx-auto">
+    <div className="p-6 md:p-8 max-w-[max-w-6xl] mx-auto">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-syne text-[22px] font-extrabold text-ink mb-[2px] ">Incubateurs</h1>

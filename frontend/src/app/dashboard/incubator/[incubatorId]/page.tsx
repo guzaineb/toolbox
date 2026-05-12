@@ -86,7 +86,7 @@ export default function IncubatorDetailPage() {
 
   if (!incubator) {
     return (
-      <div className="p-8 max-w-[900px] mx-auto">
+      <div className="p-8 max-w-[max-w-6xl] mx-auto">
         <Card className="text-center py-16">
           <div className="w-12 h-12 rounded-full bg-red-light text-red flex items-center justify-center mx-auto mb-3">
             <Info size={20} />
@@ -118,7 +118,7 @@ export default function IncubatorDetailPage() {
   ].filter(Boolean) as { label: string; value: string; href?: string }[]
 
   return (
-    <div className="p-6 md:p-8 max-w-[900px] mx-auto space-y-5">
+    <div className="p-6 md:p-8 max-w-[max-w-6xl] mx-auto space-y-5">
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-[5px] text-[11px] text-ink3 mb-2">
