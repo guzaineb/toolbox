@@ -1,4 +1,3 @@
-// services/api.ts
 import axios from 'axios';
 
 // ✅ Vérifiez que NEXT_PUBLIC_API_URL est défini dans .env.local

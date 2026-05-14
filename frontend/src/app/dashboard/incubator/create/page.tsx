@@ -52,7 +52,8 @@ export default function CreateIncubatorPage() {
   }
 
   // Navigation vers l'étape suivante (sans dépasser la dernière)
-  const goNext = async () => {
+const goNext = async (e?: React.MouseEvent) => {
+  e?.preventDefault(); 
     if (step >= STEPS.length) return
 
     let valid = false
@@ -274,7 +275,7 @@ export default function CreateIncubatorPage() {
             )}
 
             {!isLastStep ? (
-              <Button type="button" variant="primary" className="flex-1 justify-center" onClick={goNext}>
+              <Button type="button" variant="primary" className="flex-1 justify-center" onClick={(e) => goNext(e)}>
                 Continuer <ChevronRight size={14} />
               </Button>
             ) : (

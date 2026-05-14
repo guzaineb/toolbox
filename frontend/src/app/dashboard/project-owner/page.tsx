@@ -108,7 +108,7 @@ export default function ProjectOwnerDashboard() {
           <p className="text-[13px] text-ink3 mb-6">
             Vous n'avez pas encore créé votre profil porteur de projet.
           </p>
-          <Button variant="primary" onClick={() => router.push('/dashboard/project-owner/edit')}>
+          <Button variant="primary" onClick={() => router.push('/dashboard/project-owner/create')}>
             <Plus size={14} /> Créer mon profil
           </Button>
         </Card>

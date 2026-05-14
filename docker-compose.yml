@@ -2,19 +2,25 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-admin}
+      POSTGRES_DB: ${DATABASE_NAME:-toolbox}
     volumes:
       - toolbox_pgdata:/var/lib/postgresql/data
     networks:
       - toolbox_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build: ./backend
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - ./backend/.env
     networks:
@@ -22,6 +28,8 @@ services:
     ports:
       - "3020:3000"
     restart: unless-stopped
+    command: >
+      sh -c "node wait-for-db.js && npm run seed && npm run start:prod"
 
   web:
     build: ./frontend

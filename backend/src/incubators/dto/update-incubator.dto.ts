@@ -53,6 +53,6 @@ export class UpdateIncubatorDto {
   @IsString()
   city?: string;
   @IsOptional()
-@IsUrl()
-logo_url?: string;
+  @IsUrl()
+  logo_url?: string;
 }

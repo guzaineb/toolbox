@@ -19,7 +19,7 @@ export class MailService {
     });
   }
 
- 
+  // Template de base (inchangé)
   private getBaseTemplate(content: string): string {
     return `
       <!DOCTYPE html>
@@ -321,40 +321,37 @@ export class MailService {
     });
   }
 
-async sendResetPasswordEmail(email: string, token: string): Promise<void> {
-  const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-  const resetLink = `${frontendUrl}/auth/reset?token=${encodeURIComponent(token)}`;
+  async sendResetPasswordEmail(email: string, token: string): Promise<void> {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const resetLink = `${frontendUrl}/auth/reset?token=${encodeURIComponent(token)}`;
 
-  const content = `
-    <div style="text-align:center;">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#c9a84c,#b88a2a);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-        <span style="font-size:28px;">🔐</span>
+    const content = `
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#c9a84c,#b88a2a);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+          <span style="font-size:28px;">🔐</span>
+        </div>
+        <h1 style="font-size:24px;color:#ffffff;margin-bottom:8px;">Réinitialisation du mot de passe</h1>
+        <p style="color:#9bb2a8;font-size:14px;margin-bottom:24px;">
+          Vous avez demandé à réinitialiser votre mot de passe.<br>
+          Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.
+        </p>
       </div>
-      <h1 style="font-size:24px;color:#ffffff;margin-bottom:8px;">Réinitialisation du mot de passe</h1>
-      <p style="color:#9bb2a8;font-size:14px;margin-bottom:24px;">
-        Vous avez demandé à réinitialiser votre mot de passe.<br>
-        Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.
-      </p>
-    </div>
 
-    <div style="text-align:center;margin:24px 0;">
-      <a href="${resetLink}" class="btn">Créer un nouveau mot de passe →</a>
-    </div>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${resetLink}" class="btn">Créer un nouveau mot de passe →</a>
+      </div>
 
-    <div class="info-note">
-      ⏳ Ce lien expire dans <strong style="color:#c9a84c;">1 heure</strong>.<br>
-      Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
-    </div>
-  `;
+      <div class="info-note">
+        ⏳ Ce lien expire dans <strong style="color:#c9a84c;">1 heure</strong>.<br>
+        Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+      </div>
+    `;
 
-  await this.transporter.sendMail({
-    from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
-    to: email,
-    subject: '🔐 Réinitialisez votre mot de passe ToolBox',
-    html: this.getBaseTemplate(content),
-  });
+    await this.transporter.sendMail({
+      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      to: email,
+      subject: '🔐 Réinitialisez votre mot de passe ToolBox',
+      html: this.getBaseTemplate(content),
+    });
+  }
 }
-
-    
-    };
-  

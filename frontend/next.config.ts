@@ -5,12 +5,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/uploads/:path*',
-        destination: 'http://localhost:3000/uploads/:path*',
+        destination: 'http://api:3000/uploads/:path*',
       },
     ];
   },
   images: {
-    domains: ['localhost'],
+    domains: ['localhost','91.134.139.163'],
   },
 };
 
