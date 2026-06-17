@@ -4,6 +4,8 @@ import {
   Review, CreateReviewDto, ProgressInfo, PorteurKPIs, IncubateurKPIs,
   AIChatResponse, BMCResponse, BusinessPlanResponse, EvaluationResponse,
   ScoreInfo, UpdateStepDto, ProjectDocument,
+  ProjectVersion, BmcSnapshot, BmcBlocks, ProjectShare,
+  DetailedProjectStats,
 } from '@/types/project';
 
 class ProjectService {
@@ -49,6 +51,11 @@ class ProjectService {
 
   async getProgress(id: string): Promise<ProgressInfo> {
     const response = await api.get(`/projects/${id}/progress`);
+    return response.data;
+  }
+
+  async getDetailedStats(projectId: string): Promise<DetailedProjectStats> {
+    const response = await api.get(`/progress/project/${projectId}/detailed`);
     return response.data;
   }
 
@@ -166,6 +173,87 @@ class ProjectService {
 
   async markAllAsRead(): Promise<void> {
     await api.patch('/notifications/read-all');
+  }
+
+  // ── Versions ──
+  async getVersions(projectId: string): Promise<ProjectVersion[]> {
+    const response = await api.get(`/projects/${projectId}/versions`);
+    return response.data;
+  }
+
+  async getVersion(projectId: string, versionId: string): Promise<ProjectVersion> {
+    const response = await api.get(`/projects/${projectId}/versions/${versionId}`);
+    return response.data;
+  }
+
+  async createVersion(projectId: string, label?: string): Promise<ProjectVersion> {
+    const response = await api.post(`/projects/${projectId}/versions`, { label });
+    return response.data;
+  }
+
+  async restoreVersion(projectId: string, versionId: string): Promise<ProjectVersion> {
+    const response = await api.post(`/projects/${projectId}/versions/${versionId}/restore`);
+    return response.data;
+  }
+
+  async compareVersions(projectId: string, v1: string, v2: string): Promise<any> {
+    const response = await api.get(`/projects/${projectId}/versions/compare/${v1}/${v2}`);
+    return response.data;
+  }
+
+  // ── BMC ──
+  async generateBmc(projectId: string, isGreen?: boolean): Promise<BmcSnapshot> {
+    const response = await api.post(`/projects/${projectId}/bmc/generate`, { is_green: isGreen });
+    return response.data;
+  }
+
+  async getBmc(projectId: string): Promise<BmcSnapshot> {
+    const response = await api.get(`/projects/${projectId}/bmc`);
+    return response.data;
+  }
+
+  async getBmcHistory(projectId: string): Promise<BmcSnapshot[]> {
+    const response = await api.get(`/projects/${projectId}/bmc/history`);
+    return response.data;
+  }
+
+  async updateBmc(projectId: string, blocks: Partial<BmcBlocks>, isGreen?: boolean): Promise<BmcSnapshot> {
+    const response = await api.patch(`/projects/${projectId}/bmc`, { blocks, is_green: isGreen });
+    return response.data;
+  }
+
+  // ── Shares ──
+  async createShare(projectId: string, permissions?: any, expiresAt?: string): Promise<ProjectShare> {
+    const response = await api.post(`/projects/${projectId}/shares`, { permissions, expires_at: expiresAt });
+    return response.data;
+  }
+
+  async getShares(projectId: string): Promise<ProjectShare[]> {
+    const response = await api.get(`/projects/${projectId}/shares`);
+    return response.data;
+  }
+
+  async revokeShare(projectId: string, shareId: string): Promise<void> {
+    await api.delete(`/projects/${projectId}/shares/${shareId}`);
+  }
+
+  // ── Exports ──
+  async getExportUrl(projectId: string, format: string): Promise<string> {
+    return `${api.defaults.baseURL}/projects/${projectId}/exports/${format}`;
+  }
+
+  async exportProject(projectId: string, format: string): Promise<void> {
+    const token = localStorage.getItem('access_token');
+    const response = await api.get(`/projects/${projectId}/exports/${format}`, {
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const url = URL.createObjectURL(new Blob([response.data]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `projet-rapport.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }
 

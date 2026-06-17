@@ -1,4 +1,4 @@
-import { IsOptional, IsEnum, IsObject } from 'class-validator';
+import { IsOptional, IsEnum, IsObject, IsArray } from 'class-validator';
 import { StepStatus } from '../project-step.entity';
 
 export class UpdateStepDto {
@@ -13,4 +13,11 @@ export class UpdateStepDto {
   @IsOptional()
   @IsEnum(StepStatus)
   status?: StepStatus;
+}
+
+export class SubmitStepDto {
+  @IsOptional()
+  @IsArray()
+  @IsObject({ each: true })
+  validation_errors?: string[];
 }
