@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProgressHistory } from './progress-history.entity';
 import { ProjectStep } from '../journey/project-step.entity';
