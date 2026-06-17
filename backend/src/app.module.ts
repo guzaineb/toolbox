@@ -20,6 +20,10 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { ProgressModule } from './progress/progress.module';
 import { AiAssistantModule } from './ai-assistant/ai-assistant.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { VersionsModule } from './versions/versions.module';
+import { BmcModule } from './bmc/bmc.module';
+import { SharesModule } from './shares/shares.module';
+import { ExportsModule } from './exports/exports.module';
 
 @Module({
   imports: [
@@ -41,6 +45,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule,
     UploadsModule, ProjectsModule, JourneyModule, DocumentsModule,
     ReviewsModule, ProgressModule, AiAssistantModule, NotificationsModule,
+    VersionsModule, BmcModule, SharesModule, ExportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
