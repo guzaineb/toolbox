@@ -1,7 +1,7 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
 
 /* ── FormHead ── */
 export function FormHead({ title, subtitle }: { title: string; subtitle: string }) {
@@ -10,22 +10,22 @@ export function FormHead({ title, subtitle }: { title: string; subtitle: string 
       <h1 className="font-syne text-xl sm:text-2xl font-bold text-ink mb-1">{title}</h1>
       <p className="text-xs sm:text-sm text-ink2">{subtitle}</p>
     </div>
-  );
+  )
 }
 
 /* ── Field ── */
 interface FieldProps {
-  label: string;
-  type?: string;
-  value?: string;
-  placeholder?: string;
-  onChange?: (v: string) => void;
-  rightSlot?: React.ReactNode;
-  bottomSlot?: React.ReactNode;
-  error?: string;
-  register?: any;
-  name?: string;
-  required?: boolean;
+  label: string
+  type?: string
+  value?: string
+  placeholder?: string
+  onChange?: (v: string) => void
+  rightSlot?: React.ReactNode
+  bottomSlot?: React.ReactNode
+  error?: string
+  register?: any
+  name?: string
+  required?: boolean
 }
 
 export function Field({
@@ -41,11 +41,11 @@ export function Field({
   name,
   required,
 }: FieldProps) {
-  const inputProps = register && name ? register(name) : {};
+  const inputProps = register && name ? register(name) : {}
 
   return (
     <div className="mb-3 sm:mb-3.5 md:mb-4 relative">
-      <label className="block text-[10px] sm:text-[11px] font-semibold tracking-wide text-ink2 mb-1.5 uppercase">
+      <label className="block text-[10px] sm:text-[11px] font-semibold tracking-[0.06em] text-ink2 mb-1.5 uppercase">
         {label}
         {required && <span className="text-red ml-1">*</span>}
       </label>
@@ -55,8 +55,8 @@ export function Field({
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
-          className={`w-full px-3 sm:px-3.5 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm text-ink bg-cream outline-none transition-all duration-200 focus:border-moss focus:bg-surface placeholder:text-ink3 ${
-            error ? 'border-red focus:border-red' : 'border-border'
+          className={`w-full px-3 sm:px-3.5 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm text-ink bg-surface outline-none transition-all duration-200 focus:border-moss focus:shadow-[0_0_0_3px_rgba(45,122,82,0.09)] focus:bg-white placeholder:text-ink3 ${
+            error ? 'border-red focus:border-red focus:shadow-[0_0_0_3px_rgba(226,75,74,0.09)]' : 'border-border'
           } ${rightSlot ? 'pr-9 sm:pr-10' : ''}`}
           {...inputProps}
         />
@@ -71,43 +71,43 @@ export function Field({
       )}
       {bottomSlot}
     </div>
-  );
+  )
 }
 
 /* ── PasswordField ── */
 interface PasswordFieldProps {
-  label?: string;
-  placeholder?: string;
-  value: string;
-  onChange: (v: string) => void;
-  confirmValue?: string;
-  onConfirmChange?: (v: string) => void;
-  showStrength?: boolean;
-  showConfirm?: boolean;
-  error?: string;
-  register?: any;
-  name?: string;
-  required?: boolean;
+  label?: string
+  placeholder?: string
+  value: string
+  onChange: (v: string) => void
+  confirmValue?: string
+  onConfirmChange?: (v: string) => void
+  showStrength?: boolean
+  showConfirm?: boolean
+  error?: string
+  register?: any
+  name?: string
+  required?: boolean
 }
 
 function scorePassword(pw: string) {
-  const hasLen = pw.length >= 8;
-  const hasUp = /[A-Z]/.test(pw);
-  const hasLo = /[a-z]/.test(pw);
-  const hasNum = /[0-9]/.test(pw);
-  const hasSp = /[^A-Za-z0-9]/.test(pw);
-  const isLong = pw.length >= 12;
-  const score = [hasLen, hasUp, hasLo, hasNum, hasSp, isLong].filter(Boolean).length;
-  return { score, hasLen, hasUp, hasLo, hasNum, hasSp, isLong };
+  const hasLen = pw.length >= 8
+  const hasUp = /[A-Z]/.test(pw)
+  const hasLo = /[a-z]/.test(pw)
+  const hasNum = /[0-9]/.test(pw)
+  const hasSp = /[^A-Za-z0-9]/.test(pw)
+  const isLong = pw.length >= 12
+  const score = [hasLen, hasUp, hasLo, hasNum, hasSp, isLong].filter(Boolean).length
+  return { score, hasLen, hasUp, hasLo, hasNum, hasSp, isLong }
 }
 
 function levelInfo(score: number, empty: boolean) {
-  if (empty) return { label: 'Entrez un mot de passe', color: '#9ca3af', segs: 0 };
-  if (score <= 1) return { label: 'Très faible', color: '#E24B4A', segs: 1 };
-  if (score === 2) return { label: 'Faible', color: '#E24B4A', segs: 2 };
-  if (score === 3) return { label: 'Moyen', color: '#EF9F27', segs: 3 };
-  if (score === 4) return { label: 'Bon', color: '#1D9E75', segs: 4 };
-  return { label: 'Excellent', color: '#085041', segs: 5 };
+  if (empty) return { label: 'Entrez un mot de passe', color: '#9ca3af', segs: 0 }
+  if (score <= 1) return { label: 'Très faible', color: '#E24B4A', segs: 1 }
+  if (score === 2) return { label: 'Faible', color: '#E24B4A', segs: 2 }
+  if (score === 3) return { label: 'Moyen', color: '#EF9F27', segs: 3 }
+  if (score === 4) return { label: 'Bon', color: '#1D9E75', segs: 4 }
+  return { label: 'Excellent', color: '#085041', segs: 5 }
 }
 
 export function PasswordField({
@@ -124,9 +124,9 @@ export function PasswordField({
   name,
   required,
 }: PasswordFieldProps) {
-  const [showPw, setShowPw] = useState(false);
-  const { score, hasLen, hasUp, hasLo, hasNum, hasSp, isLong } = scorePassword(value);
-  const { label: strengthLabel, color, segs } = levelInfo(score, value.length === 0);
+  const [showPw, setShowPw] = useState(false)
+  const { score, hasLen, hasUp, hasLo, hasNum, hasSp, isLong } = scorePassword(value)
+  const { label: strengthLabel, color, segs } = levelInfo(score, value.length === 0)
 
   const rules = [
     { id: 'len', text: '8 caractères min.', ok: hasLen },
@@ -135,28 +135,27 @@ export function PasswordField({
     { id: 'nu', text: 'Chiffre', ok: hasNum },
     { id: 'sp', text: 'Caractère spécial', ok: hasSp },
     { id: 'long', text: '12+ caractères', ok: isLong },
-  ];
+  ]
 
-  // Correction ici : utilisation de confirmValue avec valeur par défaut
-  const hasConfirmValue = confirmValue && confirmValue.length > 0;
-  const matches = hasConfirmValue && value === confirmValue;
-  const inputProps = register && name ? register(name) : {};
+  const hasConfirmValue = confirmValue && confirmValue.length > 0
+  const matches = hasConfirmValue && value === confirmValue
+  const inputProps = register && name ? register(name) : {}
 
   const getSegColor = (index: number) => {
-    if (value.length === 0) return 'bg-border';
+    if (value.length === 0) return 'bg-border'
     if (index <= segs) {
-      if (segs <= 2) return 'bg-[#E24B4A]';
-      if (segs === 3) return 'bg-[#EF9F27]';
-      if (segs === 4) return 'bg-[#1D9E75]';
-      return 'bg-[#085041]';
+      if (segs <= 2) return 'bg-[#E24B4A]'
+      if (segs === 3) return 'bg-[#EF9F27]'
+      if (segs === 4) return 'bg-[#1D9E75]'
+      return 'bg-[#085041]'
     }
-    return 'bg-border';
-  };
+    return 'bg-border'
+  }
 
   return (
     <div>
       <div className="mb-3 sm:mb-3.5 md:mb-4 relative">
-        <label className="block text-[10px] sm:text-[11px] font-semibold tracking-wide text-ink2 mb-1.5 uppercase">
+        <label className="block text-[10px] sm:text-[11px] font-semibold tracking-[0.06em] text-ink2 mb-1.5 uppercase">
           {label}
           {required && <span className="text-red ml-1">*</span>}
         </label>
@@ -166,7 +165,7 @@ export function PasswordField({
             value={value}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full px-3 sm:px-3.5 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm text-ink bg-cream outline-none transition-all duration-200 focus:border-moss focus:bg-surface placeholder:text-ink3 pr-9 sm:pr-10 ${
+            className={`w-full px-3 sm:px-3.5 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm text-ink bg-surface outline-none transition-all duration-200 focus:border-moss focus:shadow-[0_0_0_3px_rgba(45,122,82,0.09)] focus:bg-white placeholder:text-ink3 pr-9 sm:pr-10 ${
               error ? 'border-red focus:border-red' : 'border-border'
             }`}
             autoComplete="new-password"
@@ -178,7 +177,13 @@ export function PasswordField({
             className="absolute right-2 sm:right-3 text-ink3 hover:text-ink2 transition-colors text-sm sm:text-base"
             aria-label="Afficher/masquer le mot de passe"
           >
-            {showPw ? '🙈' : '👁'}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              {showPw ? (
+                <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></>
+              ) : (
+                <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>
+              )}
+            </svg>
           </button>
         </div>
         {error && <p className="text-[10px] sm:text-[11px] text-red mt-1.5">{error}</p>}
@@ -187,16 +192,11 @@ export function PasswordField({
           <>
             <div className="flex gap-1 mt-2">
               {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${getSegColor(i)}`}
-                />
+                <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${getSegColor(i)}`} />
               ))}
             </div>
             <div className="flex justify-between items-center mt-1.5">
-              <span className="text-[10px] sm:text-[11px] font-medium" style={{ color }}>
-                {strengthLabel}
-              </span>
+              <span className="text-[10px] sm:text-[11px] font-medium" style={{ color }}>{strengthLabel}</span>
             </div>
           </>
         )}
@@ -219,7 +219,7 @@ export function PasswordField({
 
       {showConfirm && onConfirmChange !== undefined && (
         <div className="mb-3 sm:mb-3.5 md:mb-4">
-          <label className="block text-[10px] sm:text-[11px] font-semibold tracking-wide text-ink2 mb-1.5 uppercase">
+          <label className="block text-[10px] sm:text-[11px] font-semibold tracking-[0.06em] text-ink2 mb-1.5 uppercase">
             Confirmer
           </label>
           <div className="relative flex items-center">
@@ -228,7 +228,7 @@ export function PasswordField({
               value={confirmValue}
               placeholder="Répétez le mot de passe"
               onChange={(e) => onConfirmChange(e.target.value)}
-              className={`w-full px-3 sm:px-3.5 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm text-ink bg-cream outline-none transition-all duration-200 focus:border-moss focus:bg-surface ${
+              className={`w-full px-3 sm:px-3.5 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm text-ink bg-surface outline-none transition-all duration-200 focus:border-moss focus:shadow-[0_0_0_3px_rgba(45,122,82,0.09)] focus:bg-white ${
                 matches && hasConfirmValue
                   ? 'border-green-500 pr-9'
                   : hasConfirmValue
@@ -249,16 +249,16 @@ export function PasswordField({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 /* ── Button ── */
 export function BtnMain({children,onClick,type = 'button',disabled,
 }: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  type?: 'button' | 'submit';
-  disabled?: boolean;
+  children: React.ReactNode
+  onClick?: () => void
+  type?: 'button' | 'submit'
+  disabled?: boolean
 }) {
   return (
     <button
@@ -269,7 +269,7 @@ export function BtnMain({children,onClick,type = 'button',disabled,
     >
       {children}
     </button>
-  );
+  )
 }
 
 export function BtnSecondary({
@@ -277,20 +277,20 @@ export function BtnSecondary({
   onClick,
   disabled,
 }: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border border-border bg-transparent text-ink cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 hover:border-border2 hover:bg-cream disabled:opacity-60 disabled:cursor-not-allowed"
+      className="w-full py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border border-border bg-transparent text-ink cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 hover:bg-surface-2 hover:border-moss/20 disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {children}
     </button>
-  );
+  )
 }
 
 /* ── Divider ── */
@@ -301,7 +301,7 @@ export function Divider({ label = 'ou' }: { label?: string }) {
       <span className="text-[10px] sm:text-[11px] text-ink3">{label}</span>
       <div className="flex-1 h-px bg-border" />
     </div>
-  );
+  )
 }
 
 /* ── FormLink ── */
@@ -310,9 +310,9 @@ export function FormLink({
   linkText,
   onClick,
 }: {
-  text: string;
-  linkText: string;
-  onClick: () => void;
+  text: string
+  linkText: string
+  onClick: () => void
 }) {
   return (
     <p className="text-[11px] sm:text-xs text-ink2 text-center mt-3 sm:mt-4">
@@ -321,12 +321,8 @@ export function FormLink({
         {linkText}
       </button>
     </p>
-  );
+  )
 }
-
-
-
-
 
 /* ── Grid2 ── */
 export function Grid2({ children }: { children: React.ReactNode }) {
@@ -334,16 +330,16 @@ export function Grid2({ children }: { children: React.ReactNode }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
       {children}
     </div>
-  );
+  )
 }
 
-/* ── ProgressBar ── */
+/* ── ProgressBar (auth stepper) ── */
 export function ProgressBar({ steps, current }: { steps: number; current: number }) {
   return (
     <div className="flex items-center gap-2 mb-6 sm:mb-8">
       {Array.from({ length: steps }).map((_, i) => {
-        const done = i < current - 1;
-        const active = i === current - 1;
+        const done = i < current - 1
+        const active = i === current - 1
         return (
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div
@@ -351,10 +347,14 @@ export function ProgressBar({ steps, current }: { steps: number; current: number
                 done ? 'bg-moss text-white' : active ? 'bg-ink text-white' : 'bg-border text-ink3'
               }`}
             >
-              {done ? '✓' : i + 1}
+              {done ? (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : i + 1}
             </div>
             {i < steps - 1 && (
-              <div className="flex-1 h-0.5 bg-border ml-2 first:ml-0 overflow-hidden rounded-full">
+              <div className="flex-1 h-0.5 bg-border ml-2 overflow-hidden rounded-full">
                 <div
                   className={`h-full bg-moss rounded-full transition-all duration-300 ${
                     done ? 'w-full' : 'w-0'
@@ -363,8 +363,8 @@ export function ProgressBar({ steps, current }: { steps: number; current: number
               </div>
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

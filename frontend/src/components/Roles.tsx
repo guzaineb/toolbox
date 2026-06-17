@@ -34,25 +34,27 @@ export default function Roles() {
   ]
 
   const tagColors: Record<Role['tagColor'], string> = {
-    green: 'bg-accent-light text-accent',
+    green: 'bg-moss-light text-moss',
     blue: 'bg-blue-light text-blue',
-    amber: 'bg-amber-light text-amber',
+    amber: 'bg-amber-light text-amber-dark',
     red: 'bg-red-light text-red'
   }
 
   return (
-    <section className="max-w-[1000px] mx-auto px-6 pb-[72px]" id="roles">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-text-2 mb-8 text-center">
-        Pour chaque acteur
+    <section className="max-w-[1000px] mx-auto px-6 pb-[80px]" id="roles">
+      <div className="text-center mb-10">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink3 mb-2">Pour chaque acteur</div>
+        <h2 className="font-syne text-[28px] font-bold text-ink">Une solution adaptée à votre rôle</h2>
+        <p className="text-sm text-ink2 mt-2 max-w-md mx-auto">Que vous soyez porteur, incubateur, coach ou jury, ToolBox s&apos;adapte à vos besoins.</p>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 mt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {roles.map((role, idx) => (
-          <div key={idx} className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-2">
+          <div key={idx} className="group bg-surface border border-border rounded-xl p-6 flex flex-col gap-3 transition-all duration-200 hover:shadow-card-hover hover:border-moss/20">
             <span className={`inline-flex text-[11px] font-semibold px-2.5 py-0.5 rounded-full w-fit ${tagColors[role.tagColor]}`}>
               {role.tag}
             </span>
-            <h3 className="text-sm font-semibold text-text">{role.title}</h3>
-            <p className="text-xs text-text-2 leading-relaxed">{role.description}</p>
+            <h3 className="text-sm font-semibold text-ink">{role.title}</h3>
+            <p className="text-xs text-ink2 leading-relaxed">{role.description}</p>
           </div>
         ))}
       </div>

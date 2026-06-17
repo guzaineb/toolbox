@@ -35,6 +35,15 @@ export class ProjectStep {
   @Column({ type: 'enum', enum: StepStatus, default: StepStatus.NOT_STARTED })
   status: StepStatus;
 
+  @Column({ type: 'float', nullable: true })
+  score: number | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  validation_errors: string[] | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  submitted_at: Date | null;
+
   @ManyToOne(() => Project, project => project.steps)
   @JoinColumn({ name: 'project_id' })
   project: Project;

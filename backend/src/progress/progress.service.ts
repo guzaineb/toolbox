@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProgressHistory } from './progress-history.entity';
-import { ProjectStep } from '../journey/project-step.entity';
+import { ProjectStep, StepStatus } from '../journey/project-step.entity';
 
 @Injectable()
 export class ProgressService {
@@ -43,6 +43,11 @@ export class ProgressService {
   async getProjectProgress(projectId: string): Promise<{
     percentage: number;
     completed: number;
+    submitted: number;
+    approved: number;
+    rejected: number;
+    in_progress: number;
+    not_started: number;
     total: number;
     byStatus: Record<string, number>;
   }> {
@@ -52,9 +57,41 @@ export class ProgressService {
     steps.forEach(s => {
       byStatus[s.status] = (byStatus[s.status] || 0) + 1;
     });
-    const completed = steps.filter(s => s.status === 'approved').length;
+    const approved = steps.filter(s => s.status === 'approved').length;
+    const submitted = steps.filter(s => s.status === 'submitted').length;
+    const rejected = steps.filter(s => s.status === 'rejected').length;
+    const in_progress = steps.filter(s => s.status === 'in_progress').length;
+    const not_started = steps.filter(s => s.status === 'not_started').length;
+    const completed = approved;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { percentage, completed, total, byStatus };
+    return { percentage, completed, submitted, approved, rejected, in_progress, not_started, total, byStatus };
+  }
+
+  async getDetailedProjectStats(projectId: string): Promise<{
+    progress: any;
+    history: ProgressHistory[];
+    stepsStatus: { step_number: number; title: string; status: string; score: number | null }[];
+  }> {
+    const [progress, history, steps] = await Promise.all([
+      this.getProjectProgress(projectId),
+      this.getHistory(projectId),
+      this.stepRepo.find({
+        where: { project_id: projectId },
+        order: { step_number: 'ASC' },
+        select: ['step_number', 'title', 'status', 'score', 'validation_errors'],
+      }),
+    ]);
+
+    return {
+      progress,
+      history,
+      stepsStatus: steps.map(s => ({
+        step_number: s.step_number,
+        title: s.title,
+        status: s.status,
+        score: s.score,
+      })),
+    };
   }
 
   async getPorteurKPIs(userId: string): Promise<{

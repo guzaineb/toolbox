@@ -13,6 +13,12 @@ export class ProgressController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('project/:projectId/detailed')
+  getDetailedProjectStats(@Param('projectId') projectId: string) {
+    return this.progressService.getDetailedProjectStats(projectId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('project/:projectId/history')
   getHistory(@Param('projectId') projectId: string) {
     return this.progressService.getHistory(projectId);
