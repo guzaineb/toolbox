@@ -118,29 +118,7 @@ export default function StepEditorPage() {
     }
   }, [formContent, step, updateStepApi, clearMessages])
 
-  const autoSave = useCallback(async () => {
-    if (!step) return
-    setSaveStatus('saving')
-    try {
-      const newStatus = step.status === 'not_started' ? 'in_progress' : step.status
-      await updateStepApi({ content: formContent, status: newStatus })
-      setSaveStatus('saved')
-      setLastSaved(new Date())
-      setTimeout(() => setSaveStatus(prev => prev === 'saved' ? 'idle' : prev), 2000)
-    } catch {
-      setSaveStatus('error')
-    }
-  }, [formContent, step, updateStepApi])
-
-  useEffect(() => {
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = setTimeout(() => {
-      if (saveStatus !== 'saving') autoSave()
-    }, 5000)
-    return () => {
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    }
-  }, [formContent])
+  // autoSave désactivé — sauvegarde manuelle uniquement
 
   const handleFieldChange = (sectionKey: string, value: any) => {
     setFormContent(prev => ({ ...prev, [sectionKey]: value }))
@@ -151,16 +129,40 @@ export default function StepEditorPage() {
     await doSave(false)
   }
 
+  const COMPLEX_TYPES = ['pestel_v2', 'stakeholder_matrix', 'customer_segment', 'value_proposition', 'discovery_card'];
+
+  const isSectionFilled = (section: typeof subSections[0]): boolean => {
+    const sectionContent = formContent[section.key]
+    if (!sectionContent) return false
+    const hasComplexType = section.guidedQuestions.some(gq => COMPLEX_TYPES.includes(gq.type))
+    if (hasComplexType) {
+      const gq = section.guidedQuestions.find(gq => COMPLEX_TYPES.includes(gq.type))
+      if (!gq) return false
+      if (gq.type === 'pestel_v2') {
+        return typeof sectionContent === 'object' && Object.values(sectionContent).some((d: any) => d?.quoi || d?.comment)
+      }
+      if (gq.type === 'stakeholder_matrix' || gq.type === 'customer_segment' || gq.type === 'discovery_card') {
+        return Array.isArray(sectionContent) && sectionContent.length > 0
+      }
+      if (gq.type === 'value_proposition') {
+        return typeof sectionContent === 'object' && (sectionContent.productsServices?.length > 0 || sectionContent.greenValue || sectionContent.socialValue)
+      }
+      return false
+    }
+    return typeof sectionContent === 'object' && Object.values(sectionContent).some((v: any) => v && v !== '')
+  }
+
   const validateBeforeSubmit = (): boolean => {
     const errors: string[] = []
     for (const section of subSections) {
-      const sectionContent = formContent[section.key]
-      if (!sectionContent || typeof sectionContent !== 'object') {
+      if (!isSectionFilled(section)) {
         errors.push(`La section "${section.label}" n'est pas remplie`)
         continue
       }
+      const sectionContent = formContent[section.key]
       const emptyQuestions = section.guidedQuestions.filter((gq) => {
-        const val = sectionContent[gq.question]
+        if (COMPLEX_TYPES.includes(gq.type)) return false
+        const val = sectionContent?.[gq.question]
         return val === undefined || val === '' || (Array.isArray(val) && val.length === 0)
       })
       if (emptyQuestions.length > 0) {
@@ -197,10 +199,7 @@ export default function StepEditorPage() {
     sectionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const completedSections = subSections.filter((s) => {
-    const sectionContent = formContent[s.key]
-    return sectionContent && typeof sectionContent === 'object' && Object.values(sectionContent).some((v) => v && v !== '')
-  }).length
+  const completedSections = subSections.filter((s) => isSectionFilled(s)).length
 
   const totalSections = subSections.length
 
@@ -441,7 +440,7 @@ export default function StepEditorPage() {
                         }`}
                       >
                         <span className={`w-[5px] h-[5px] rounded-full flex-shrink-0 ${
-                          formContent[s.key] && Object.values(formContent[s.key] || {}).some((v: any) => v && v !== '')
+                          isSectionFilled(s)
                             ? 'bg-moss'
                             : 'bg-ink3/30'
                         }`} />

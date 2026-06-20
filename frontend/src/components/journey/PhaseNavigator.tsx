@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Card } from '@/components/shared/ui';
 import { PHASES, ProjectStep } from '@/types/project';
 
-const STATUS_ICONS = {
+const STATUS_ICONS: Record<string, any> = {
   not_started: Circle,
   in_progress: Clock,
   submitted: AlertCircle,
@@ -49,7 +49,7 @@ export function PhaseNavigator({
     for (const sn of phaseSteps) {
       const step = steps.find((s) => s.step_number === sn);
       if (step) total++;
-      if (step?.status === 'approved') completed++;
+      if (step?.status === 'approved' || step?.status === 'submitted') completed++;
     }
     return { completed, total: Math.max(total, phaseSteps.length) };
   };
@@ -120,7 +120,7 @@ export function PhaseNavigator({
                     >
                       <Icon size={12} className={cn(
                         'flex-shrink-0',
-                        status === 'approved' && 'text-moss',
+                        (status === 'approved' || status === 'submitted') && 'text-moss',
                         status === 'in_progress' && 'text-blue',
                         status === 'submitted' && 'text-amber-dark',
                         status === 'rejected' && 'text-red',

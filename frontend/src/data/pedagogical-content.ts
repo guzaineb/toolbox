@@ -2,7 +2,8 @@ export interface GuidedQuestion {
   question: string;
   hint?: string;
   placeholder?: string;
-  type: 'text' | 'textarea' | 'select' | 'number' | 'swot' | 'pestel' | 'bmc';
+  key?: string;
+  type: 'text' | 'textarea' | 'select' | 'number' | 'swot' | 'pestel' | 'pestel_v2' | 'stakeholder_matrix' | 'customer_segment' | 'value_proposition' | 'discovery_card' | 'bmc';
   options?: { label: string; value: string }[];
   subQuestions?: GuidedQuestion[];
 }
@@ -23,6 +24,12 @@ export interface StepPedagogicalContent {
   title: string;
   objective: string;
   whyImportant: string;
+  avantDeLire?: {
+    description: string;
+    resultatsAttendus: string;
+  };
+  etudeDeCas?: string;
+  conseils?: string[];
   keyConcepts: { term: string; definition: string }[];
   estimatedMinutes: number;
   subSections: SubSectionContent[];

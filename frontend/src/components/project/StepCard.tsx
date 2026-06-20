@@ -5,7 +5,7 @@ import { Badge } from '@/components/shared/ui';
 import { ProjectStep, STEP_STATUS_LABELS, STEP_STATUS_VARIANTS } from '@/types/project';
 import { CheckCircle2, Circle, Clock, ArrowRight, AlertCircle } from 'lucide-react';
 
-const STATUS_ICONS = {
+const STATUS_ICONS: Record<string, any> = {
   not_started: Circle,
   in_progress: Clock,
   submitted: AlertCircle,

@@ -4,6 +4,11 @@ import { Input, Textarea, Select, Field } from '@/components/shared/ui';
 import { GuidedQuestion } from '@/data/pedagogical-content';
 import { SWOTAnalysis } from './SWOTAnalysis';
 import { PESTELAnalysis } from './PESTELAnalysis';
+import { PESTELAnalysisV2 } from './PESTELAnalysisV2';
+import { StakeholderMatrix } from './StakeholderMatrix';
+import { CustomerSegmentCard } from './CustomerSegmentCard';
+import { ValuePropositionCanvas } from './ValuePropositionCanvas';
+import { DiscoveryCard } from './DiscoveryCard';
 import { BMCEditor } from './BMCEditor';
 
 export function GuidedField({
@@ -36,6 +41,61 @@ export function GuidedField({
         value={value}
         onChange={onChange}
         subQuestions={question.subQuestions}
+      />
+    );
+  }
+
+  if (question.type === 'pestel_v2') {
+    return (
+      <PESTELAnalysisV2
+        label={question.question}
+        hint={question.hint}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (question.type === 'stakeholder_matrix') {
+    return (
+      <StakeholderMatrix
+        label={question.question}
+        hint={question.hint}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (question.type === 'customer_segment') {
+    return (
+      <CustomerSegmentCard
+        label={question.question}
+        hint={question.hint}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (question.type === 'value_proposition') {
+    return (
+      <ValuePropositionCanvas
+        label={question.question}
+        hint={question.hint}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (question.type === 'discovery_card') {
+    return (
+      <DiscoveryCard
+        label={question.question}
+        hint={question.hint}
+        value={value}
+        onChange={onChange}
       />
     );
   }

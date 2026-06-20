@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 // ─────────────────────────────────────────────
 // BADGE
 // ─────────────────────────────────────────────
-type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary' | 'purple'
+type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary' | 'purple' | 'teal'
 
 const badgeVariants: Record<BadgeVariant, string> = {
   green:     'bg-moss-light text-moss border border-moss/20',
@@ -16,6 +16,7 @@ const badgeVariants: Record<BadgeVariant, string> = {
   gray:      'bg-ink/[.07] text-ink2 border border-ink/[.15]',
   secondary: 'bg-gray-100 text-gray-700 border border-gray-200',
   purple:    'bg-purple-light text-purple border border-purple/20',
+  teal:      'bg-teal-50 text-teal-700 border border-teal-200',
 }
 
 export function Badge({
