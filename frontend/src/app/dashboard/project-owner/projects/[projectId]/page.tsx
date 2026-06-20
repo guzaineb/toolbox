@@ -10,9 +10,11 @@ import {
 } from 'lucide-react';
 import { Button, Card, Badge, Progress, ErrorAlert, GlassCard } from '@/components/shared/ui';
 import { StepCard } from '@/components/project/StepCard';
+import { ProjectSidebar } from '@/components/project/ProjectSidebar';
 import { useProject } from '@/hooks/useProjects';
 import { projectService } from '@/services/project.service';
-import { ProjectStep, PROJECT_STATUS_LABELS, PHASES, DetailedProjectStats, ProjectVersion, Review, ScoreInfo } from '@/types/project';
+import { ProjectStep, PROJECT_STATUS_LABELS, PHASES, DetailedProjectStats, ProjectVersion, Review, ScoreInfo, ProgressInfo } from '@/types/project';
+import { getToolProgress, TOOL_STEP_MAPPING, ToolKey } from '@/types/switchers';
 import { useState, useEffect, useCallback } from 'react';
 
 const STATUS_VARIANTS: Record<string, 'green' | 'amber' | 'blue' | 'gray' | 'red'> = {
@@ -159,8 +161,26 @@ function ProjectDetailContent() {
   const scoreValue = scores?.average || 0;
   const scoreCriteria = scores?.criteria || {};
 
+  const toolProgress: Record<string, number> = {};
+  if (steps.length > 0) {
+    (Object.keys(TOOL_STEP_MAPPING) as ToolKey[]).forEach((key) => {
+      toolProgress[key] = getToolProgress(steps, key);
+    });
+  }
+
   return (
-    <div className="p-6 md:p-8 max-w-[1000px] mx-auto space-y-6">
+    <div className="p-6 md:p-8 mx-auto space-y-6">
+      <div className="flex gap-6 items-start">
+        {/* Left sidebar – modules */}
+        <div className="w-[260px] flex-shrink-0 hidden lg:block">
+          <ProjectSidebar
+            projectId={projectId}
+            steps={steps}
+            progress={toolProgress}
+          />
+        </div>
+        {/* Main content */}
+        <div className="flex-1 min-w-0 max-w-[800px]">
       {/* Back */}
       <button onClick={() => router.push('/dashboard/project-owner')} className="flex items-center gap-1.5 text-[12px] text-ink3 hover:text-ink transition-colors">
         <ArrowLeft size={14} /> Mes projets
@@ -443,6 +463,9 @@ function ProjectDetailContent() {
           )}
         </div>
       )}
+
+      </div>{/* end main content */}
+    </div>{/* end flex row */}
 
       {/* Delete confirmation */}
       {showDelete && (

@@ -19,7 +19,28 @@ export function SubSectionCard({
   const [expanded, setExpanded] = useState(index === 0);
   const ref = useRef<HTMLDivElement>(null);
 
+  const COMPLEX_TYPES = ['pestel_v2', 'stakeholder_matrix', 'customer_segment', 'value_proposition', 'discovery_card'];
+
   const filledCount = section.guidedQuestions.filter((gq) => {
+    if (COMPLEX_TYPES.includes(gq.type)) {
+      const val = content[section.key];
+      if (gq.type === 'pestel_v2') {
+        return val && typeof val === 'object' && Object.values(val).some((d: any) => d?.quoi || d?.comment);
+      }
+      if (gq.type === 'stakeholder_matrix') {
+        return Array.isArray(val) && val.length > 0;
+      }
+      if (gq.type === 'customer_segment') {
+        return Array.isArray(val) && val.length > 0;
+      }
+      if (gq.type === 'value_proposition') {
+        return val && typeof val === 'object' && (val.productsServices?.length > 0 || val.greenValue || val.socialValue);
+      }
+      if (gq.type === 'discovery_card') {
+        return Array.isArray(val) && val.length > 0;
+      }
+      return false;
+    }
     const val = content[section.key]?.[gq.question];
     return val !== undefined && val !== '' && !(Array.isArray(val) && val.length === 0);
   }).length;
@@ -27,14 +48,21 @@ export function SubSectionCard({
   const totalQuestions = section.guidedQuestions.length;
   const progress = totalQuestions > 0 ? Math.round((filledCount / totalQuestions) * 100) : 0;
 
-  const handleFieldChange = (questionText: string, value: any) => {
+  const handleFieldChange = (questionText: string, value: any, gqType?: string) => {
     const sectionKey = section.key;
+    if (gqType && COMPLEX_TYPES.includes(gqType)) {
+      onChange(sectionKey, value);
+      return;
+    }
     const current = { ...(content[sectionKey] || {}) };
     current[questionText] = value;
     onChange(sectionKey, current);
   };
 
-  const getFieldValue = (questionText: string) => {
+  const getFieldValue = (questionText: string, gqType?: string) => {
+    if (gqType && COMPLEX_TYPES.includes(gqType)) {
+      return content[section.key] ?? null;
+    }
     return content[section.key]?.[questionText] ?? '';
   };
 
@@ -89,39 +117,15 @@ export function SubSectionCard({
 
           <div className="space-y-4 pt-2">
             {section.guidedQuestions.map((gq, qi) => {
-              const fieldValue = getFieldValue(gq.question);
+              const fieldValue = getFieldValue(gq.question, gq.type);
 
-              if (gq.type === 'swot') {
+              if (COMPLEX_TYPES.includes(gq.type)) {
                 return (
                   <GuidedField
                     key={qi}
                     question={gq}
                     value={fieldValue}
-                    onChange={(val) => handleFieldChange(gq.question, val)}
-                    depth={0}
-                  />
-                );
-              }
-
-              if (gq.type === 'pestel') {
-                return (
-                  <GuidedField
-                    key={qi}
-                    question={gq}
-                    value={fieldValue}
-                    onChange={(val) => handleFieldChange(gq.question, val)}
-                    depth={0}
-                  />
-                );
-              }
-
-              if (gq.type === 'bmc') {
-                return (
-                  <GuidedField
-                    key={qi}
-                    question={gq}
-                    value={fieldValue}
-                    onChange={(val) => handleFieldChange(gq.question, val)}
+                    onChange={(val) => handleFieldChange(gq.question, val, gq.type)}
                     depth={0}
                   />
                 );
