@@ -50,6 +50,7 @@ export class ProgressService {
     not_started: number;
     total: number;
     byStatus: Record<string, number>;
+    toolProgress: Record<string, number>;
   }> {
     const steps = await this.stepRepo.find({ where: { project_id: projectId } });
     const total = steps.length;
@@ -59,12 +60,37 @@ export class ProgressService {
     });
     const approved = steps.filter(s => s.status === 'approved').length;
     const submitted = steps.filter(s => s.status === 'submitted').length;
+    const completed = submitted + approved;
     const rejected = steps.filter(s => s.status === 'rejected').length;
     const in_progress = steps.filter(s => s.status === 'in_progress').length;
     const not_started = steps.filter(s => s.status === 'not_started').length;
-    const completed = approved;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { percentage, completed, submitted, approved, rejected, in_progress, not_started, total, byStatus };
+
+    const toolProgress = this.calculateToolProgress(steps);
+    return { percentage, completed, submitted, approved, rejected, in_progress, not_started, total, byStatus, toolProgress };
+  }
+
+  private calculateToolProgress(steps: ProjectStep[]): Record<string, number> {
+    const TOOL_STEP_MAPPING: Record<string, number[]> = {
+      modele_affaires_vert: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+      plan_affaires_vert: [15, 16, 17, 18],
+      eco_conception: [14],
+      acces_financement: [16, 17],
+      acces_marche: [7, 8, 9, 12],
+      mesure_impact: [20],
+    };
+    const result: Record<string, number> = {};
+    const stepMap = new Map(steps.map(s => [s.step_number, s]));
+    for (const [key, stepNumbers] of Object.entries(TOOL_STEP_MAPPING)) {
+      const relevant = stepNumbers.filter(n => stepMap.has(n));
+      if (relevant.length === 0) { result[key] = 0; continue; }
+      const done = relevant.filter(n => {
+        const s = stepMap.get(n);
+        return s && (s.status === 'submitted' || s.status === 'approved');
+      }).length;
+      result[key] = Math.round((done / relevant.length) * 100);
+    }
+    return result;
   }
 
   async getDetailedProjectStats(projectId: string): Promise<{

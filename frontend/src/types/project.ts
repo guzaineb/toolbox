@@ -111,6 +111,7 @@ export interface ProgressInfo {
   not_started: number;
   total: number;
   byStatus?: Record<string, number>;
+  toolProgress?: Record<string, number>;
 }
 
 export interface DetailedProjectStats {
@@ -247,6 +248,12 @@ export const PHASES: PhaseInfo[] = [
   { phaseNumber: 1, name: 'Ébaucher et définir', description: 'Définissez les fondations de votre projet', steps: [1, 2, 3, 4, 5, 6] },
   { phaseNumber: 2, name: 'Construire', description: 'Construisez votre modèle économique', steps: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] },
   { phaseNumber: 3, name: 'Tester', description: 'Testez vos hypothèses sur le terrain', steps: [19] },
-  { phaseNumber: 4, name: 'Mettre en œuvre', description: 'Planifiez et exécutez', steps: [20] },
-  { phaseNumber: 5, name: 'Mesurer et améliorer', description: 'Suivez vos indicateurs de performance', steps: [21] },
+  { phaseNumber: 4, name: 'Mesurer et améliorer', description: 'Suivez vos indicateurs de performance', steps: [20] },
 ];
+
+export const STADE_THRESHOLDS = [
+  { key: 'ideation', label: 'Idéation', maxPercent: 25 },
+  { key: 'creation', label: 'Création', maxPercent: 50 },
+  { key: 'amorcage', label: 'Amorçage', maxPercent: 75 },
+  { key: 'scaling', label: 'Scaling', maxPercent: 100 },
+] as const;

@@ -7,8 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePathname, useRouter } from 'next/navigation'
 import { Badge } from '@/components/shared/ui'
 import {
-  LayoutDashboard, User, Factory, Plus,
-  Users,
+  LayoutDashboard, User, Factory,
   FolderKanban,
   GraduationCap,
   Settings,
@@ -60,7 +59,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isIncubatorMember = userRole === 'incubator_membre'
 
   const NAV_ITEMS = [
-    { href: '/dashboard/profile', label: 'Mon profil', icon: User },
+    { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
     ...(isProjectOwner ? [{ href: '/dashboard/project-owner/profile', label: 'Profil porteur', icon: FolderKanban }] : []),
     ...(isProjectOwner ? [{ href: '/dashboard/project-owner', label: 'Mes Projets', icon: FolderKanban }] : []),
     ...(isExpert ? [{ href: '/dashboard/expert', label: 'Expertise', icon: GraduationCap }] : []),
@@ -71,6 +70,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       ? [{ href: '/dashboard/incubator', label: 'Incubateur', icon: Factory }]
       : []),
     ...(isAdmin ? [{ href: '/dashboard/admin', label: 'Administration', icon: Settings }] : []),
+    { href: '/dashboard/profile', label: 'Mon profil', icon: User },
   ]
 
   const firstName = user.profile?.first_name || ''
@@ -90,7 +90,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-cream flex">
-      {/* Overlay mobile */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 lg:hidden"
@@ -98,7 +97,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed lg:sticky top-0 left-0 z-30 h-screen ${sidebarWidth} bg-surface border-r border-border shadow-lg
           transform transition-all duration-300 ease-in-out
@@ -106,7 +104,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           lg:translate-x-0 flex flex-col
         `}
       >
-        {/* Logo & Brand */}
         <div className="px-6 py-5 border-b border-border">
           <div className="flex items-center justify-between">
             <div className={cn(sidebarCollapsed && 'hidden')}>
@@ -133,8 +130,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 px-3 py-6 overflow-y-auto scrollbar-thin">
           {!sidebarCollapsed && (
             <div className="text-[11px] font-semibold text-ink3 uppercase tracking-[0.08em] px-3 mb-3">
               Menu principal
@@ -167,7 +163,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {/* Sidebar collapse toggle (desktop only) */}
+        {/* Sidebar collapse toggle */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className="hidden lg:flex items-center justify-center border-t border-border py-3 text-ink3 hover:text-ink hover:bg-moss-light/30 transition-colors cursor-pointer"
@@ -175,7 +171,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <ChevronLeft size={16} className={cn('transition-transform duration-200', sidebarCollapsed && 'rotate-180')} />
         </button>
 
-        {/* User footer */}
         <div className={cn('p-4 border-t border-border mt-auto', sidebarCollapsed && 'px-2')}>
           <div className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-xl bg-moss-light/30 mb-3',
@@ -209,9 +204,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
         <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
@@ -245,7 +238,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* Dynamic content */}
         <main className="flex-1 p-4 md:p-6">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>

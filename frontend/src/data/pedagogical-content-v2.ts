@@ -2,1425 +2,1758 @@ import {
   GuidedQuestion,
   SubSectionContent,
   StepPedagogicalContent,
-} from './pedagogical-content';
+} from "./pedagogical-content";
 
 export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent> = {
-  1: {
-    stepNumber: 1,
-    title: "Esquisser l'idée d'entreprise",
-    objective: "Définir les contours de votre projet en clarifiant l'idée, le secteur d'activité et l'inspiration qui vous anime.",
-    whyImportant: "Une idée bien esquissée est le socle de tout le parcours entrepreneurial. Prendre le temps de la clarifier maintenant vous évitera des erreurs stratégiques coûteuses plus tard.",
-    keyConcepts: [
+    1: {
+      stepNumber: 1,
+      title: "Esquissez votre idée d'entreprise",
+      objective: "Définir les contours de votre projet en clarifiant le nom, la description, l'inspiration et le secteur d'activité.",
+      whyImportant: "Une idée bien esquissée est le socle de tout le parcours entrepreneurial. Prendre le temps de poser les bases vous évite des erreurs stratégiques coûteuses et vous donne une direction claire.",
+      avantDeLire: {
+        description: "Dans cette étape, vous allez donner une première forme concrète à votre idée. Ne cherchez pas la perfection : l'objectif est d'écrire ce qui vous vient, même si c'est encore flou. Vous aurez tout le parcours pour affiner.",
+        resultatsAttendus: "Un nom provisoire, une description claire de votre idée, l'histoire de son inspiration et le secteur d'activité identifié.",
+      },
+      etudeDeCas: "Sophie, 32 ans, a eu l'idée de créer une plateforme de mise en relation entre producteurs locaux et consommateurs après avoir vu un documentaire sur le gaspillage alimentaire. Elle a noté son idée dans un carnet : « Relocal » la plateforme qui connecte les producteurs locaux aux consommateurs urbains. Elle a précisé son secteur (agroalimentaire, numérique) et a commencé à en parler autour d'elle pour tester le concept.",
+      conseils: [
+        "Ne cherchez pas le nom parfait dès le départ : un nom provisoire suffit pour commencer",
+        "Parlez de votre idée à 5 personnes de confiance pour recueillir leurs premières réactions",
+        "Notez tout, même les idées qui vous semblent farfelues : elles peuvent contenir une pépite",
+        "Restez ouvert : votre idée va évoluer tout au long de ce parcours"
+      ],
+      keyConcepts: [
       { term: "Idée d'entreprise", definition: "Le concept de base de ce que vous voulez créer, sans être encore un business model détaillé." },
       { term: "Secteur d'activité", definition: "Le domaine économique dans lequel vous allez exercer (ex: agriculture, numérique, services)." },
-      { term: "Proposition de valeur", definition: "La promesse de valeur que vous ferez à vos futurs clients." },
+      { term: "Proposition de valeur", definition: "La promesse de valeur que vous ferez à vos futurs clients." }
     ],
-    estimatedMinutes: 40,
-    subSections: [
+      estimatedMinutes: 40,
+      subSections: [
       {
-        key: 'nom_provisoire', label: 'Nom provisoire du projet', objective: 'Trouver un nom temporaire pour votre projet',
-        whyImportant: 'Le nom est la première identité de votre projet. Même provisoire, il vous aide à incarner votre idée et à en parler autour de vous.',
-        tips: ['Choisissez un nom simple, facile à retenir et à prononcer', 'Évitez les noms trop génériques ou déjà utilisés', 'Testez-le verbalement auprès de votre entourage'],
-        examples: ['« EcoVoyage » pour un projet de tourisme durable', '« SantéConnect » pour une plateforme de téléconsultation'],
+        key: "nom_provisoire",
+        label: "Nom provisoire du projet",
+        objective: "Trouver un nom temporaire pour votre projet",
+        whyImportant: "Le nom est la première identité de votre projet. Même provisoire, il vous aide à incarner votre idée et à en parler autour de vous.",
+        tips: [
+        "Choisissez un nom simple, facile à retenir et à prononcer",
+        "Évitez les noms trop génériques ou déjà utilisés",
+        "Testez-le verbalement auprès de votre entourage"
+      ],
+        examples: [
+        "« Relocal » pour une plateforme de mise en relation locale",
+        "« Vert-Connect » pour un réseau d'entreprises écoresponsables"
+      ],
         guidedQuestions: [
-          { question: 'Quel nom provisoire donnez-vous à votre projet ?', hint: 'Vous pourrez le changer plus tard', placeholder: 'ex: MonProjet', type: 'text' },
-          { question: 'Pourquoi ce nom vous semble-t-il approprié ?', placeholder: 'expliquez votre choix...', type: 'text' },
-        ],
-        estimatedMinutes: 5,
+            { question: "Quel nom provisoire donnez-vous à votre projet ?", hint: "Vous pourrez le changer plus tard", placeholder: "ex: Relocal", type: "text" },
+            { question: "Pourquoi ce nom vous semble-t-il approprié ?", placeholder: "expliquez votre choix...", type: "text" }
+          ],
+        estimatedMinutes: 5
       },
       {
-        key: 'description_idee', label: "Description de l'idée", objective: "Décrire votre idée de façon claire et concise",
+        key: "description_idee",
+        label: "Description de l'idée",
+        objective: "Décrire votre idée de façon claire et concise",
         whyImportant: "Une description claire vous permet de partager votre vision facilement et d'obtenir des retours utiles.",
-        tips: ['Commencez par le problème que vous voulez résoudre', 'Expliquez votre solution en une phrase', 'Terminez par l\'impact que vous souhaitez avoir'],
-        examples: ['Mon projet est une plateforme web qui connecte les producteurs locaux avec les consommateurs pour réduire le gaspillage alimentaire.'],
+        tips: [
+        "Commencez par le problème que vous voulez résoudre",
+        "Expliquez votre solution en une phrase",
+        "Terminez par l'impact que vous souhaitez avoir"
+      ],
+        examples: [
+        "Relocal est une plateforme web qui connecte les producteurs locaux avec les consommateurs urbains pour réduire le gaspillage alimentaire et soutenir l'économie locale."
+      ],
         guidedQuestions: [
-          { question: "Décrivez votre idée en 5 à 10 lignes", hint: 'Imaginez que vous la présentez à un inconnu', placeholder: "Mon idée consiste à...", type: 'textarea' },
-          { question: "Quel est le concept central en une phrase ?", placeholder: "ex: Une plateforme de...", type: 'text' },
-        ],
-        estimatedMinutes: 10,
+            { question: "Décrivez votre idée en 5 à 10 lignes", hint: "Imaginez que vous la présentez à un inconnu", placeholder: "Mon idée consiste à...", type: "textarea" },
+            { question: "Quel est le concept central en une phrase ?", placeholder: "ex: Une plateforme de mise en relation entre...", type: "text" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'inspiration', label: 'Inspiration et origine du projet', objective: "Expliquer ce qui vous a poussé à créer ce projet",
+        key: "inspiration",
+        label: "Inspiration et origine du projet",
+        objective: "Expliquer ce qui vous a poussé à créer ce projet",
         whyImportant: "Votre histoire personnelle donne du sens à votre projet et constitue un moteur puissant dans les moments difficiles.",
-        tips: ['Racontez une expérience personnelle qui a déclenché l\'idée', 'Citez des personnes ou des situations qui vous ont inspiré', 'Soyez authentique : les histoires vraies touchent les gens'],
-        examples: ['Après avoir vu un documentaire sur la pollution plastique, j\'ai eu envie de créer une alternative aux emballages jetables.'],
+        tips: [
+        "Racontez une expérience personnelle qui a déclenché l'idée",
+        "Citez des personnes ou des situations qui vous ont inspiré",
+        "Soyez authentique : les histoires vraies touchent les gens"
+      ],
+        examples: [
+        "Après avoir vu un documentaire sur le gaspillage alimentaire et découvert que 30% de la production locale est perdue faute de distribution, j'ai eu envie d'agir."
+      ],
         guidedQuestions: [
-          { question: "Qu'est-ce qui vous a inspiré à créer ce projet ?", placeholder: "Mon inspiration vient de...", type: 'textarea' },
-          { question: "Y a-t-il une expérience personnelle à l'origine de cette idée ?", placeholder: "racontez votre histoire...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
+            { question: "Qu'est-ce qui vous a inspiré à créer ce projet ?", placeholder: "Mon inspiration vient de...", type: "textarea" },
+            { question: "Y a-t-il une expérience personnelle à l'origine de cette idée ?", placeholder: "racontez votre histoire...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'secteur_activite', label: "Secteur d'activité", objective: "Identifier le ou les secteurs d'activité de votre projet",
+        key: "secteur_activite",
+        label: "Secteur d'activité",
+        objective: "Identifier le ou les secteurs d'activité de votre projet",
         whyImportant: "Le secteur d'activité détermine les règles, les obligations légales et les opportunités de votre projet.",
-        tips: ['Identifiez le secteur principal (ex: agriculture, numérique, services)', 'Certains projets sont transverses : notez tous les secteurs concernés', 'Renseignez-vous sur les spécificités réglementaires de votre secteur'],
-        examples: ['Secteur principal : tourisme. Sous-secteur : hébergement écoresponsable.'],
+        tips: [
+        "Identifiez le secteur principal (ex: agriculture, numérique, services)",
+        "Certains projets sont transverses : notez tous les secteurs concernés",
+        "Renseignez-vous sur les spécificités réglementaires de votre secteur"
+      ],
+        examples: [
+        "Secteur principal : agroalimentaire. Secondaire : numérique (plateforme SaaS)."
+      ],
         guidedQuestions: [
-          { question: "Dans quel(s) secteur(s) d'activité vous situez-vous ?", placeholder: "ex: agriculture, numérique, artisanat, services...", type: 'text' },
-          { question: "Y a-t-il des réglementations spécifiques à connaître dans ce secteur ?", hint: 'Agréments, diplômes, normes...', placeholder: "ex: certification bio, agrément sanitaire...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
-      },
+            { question: "Dans quel(s) secteur(s) d'activité vous situez-vous ?", placeholder: "ex: agriculture, numérique, artisanat, services...", type: "text" },
+            { question: "Y a-t-il des réglementations spécifiques à connaître dans ce secteur ?", hint: "Agréments, diplômes, normes...", placeholder: "ex: certification bio, agrément sanitaire...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai un nom provisoire pour mon projet", "Je peux décrire mon idée en 5 lignes", "J'ai identifié l'origine et l'inspiration de mon projet", "J'ai défini mon secteur d'activité"],
-  },
-
-  2: {
-    stepNumber: 2,
-    title: "Identifier les problèmes et les besoins",
-    objective: "Analyser en profondeur les problèmes, besoins et frustrations de vos futurs clients pour construire une solution pertinente.",
-    whyImportant: "Les projets qui échouent le plus souvent sont ceux qui résolvent un problème que personne n'a. Une bonne identification des besoins réduit considérablement ce risque.",
-    keyConcepts: [
-      { term: "Problème douloureux", definition: "Un besoin non satisfait ou une difficulté réelle qui pousse à chercher une solution." },
-      { term: "Besoin utilisateur", definition: "Ce dont le client a réellement besoin, pas nécessairement ce qu'il dit vouloir." },
-      { term: "Alternative existante", definition: "Comment vos clients potentiels résolvent leur problème aujourd'hui, avant votre solution." },
+      checklist: [
+        "J'ai un nom provisoire pour mon projet",
+        "Je peux décrire mon idée en 5 à 10 lignes",
+        "J'ai identifié l'origine et l'inspiration de mon projet",
+        "J'ai défini mon secteur d'activité"
+      ],
+      resources: [
+        { title: "Comment trouver le bon nom pour votre entreprise", type: "article" },
+        { title: "Carte des secteurs d'activité - INSEE", type: "tool" }
+      ],
+    },
+    2: {
+      stepNumber: 2,
+      title: "Identifier les problèmes et les besoins",
+      objective: "Analyser en profondeur les problèmes que rencontre votre cible et les besoins non satisfaits auxquels votre projet pourrait répondre.",
+      whyImportant: "Un projet qui résout un problème réel a 5 fois plus de chances de succès. Comprendre les besoins profonds de vos futurs clients est la clé d'une proposition de valeur pertinente.",
+      avantDeLire: {
+        description: "Avant de construire votre solution, il est essentiel de bien comprendre le problème. Dans cette étape, vous allez explorer les difficultés rencontrées par votre cible, les solutions existantes et identifier les opportunités.",
+        resultatsAttendus: "Une liste des problèmes clés identifiés, une cartographie des solutions existantes et une analyse des besoins non satisfaits.",
+      },
+      etudeDeCas: "Sophie a interrogé 15 consommateurs et 8 producteurs locaux. Elle a découvert que les consommateurs veulent acheter local mais ne savent pas où trouver les producteurs. Les producteurs, eux, n'ont pas les moyens de commercialiser leurs produits en ville. Le vrai problème n'est pas l'offre ou la demande, mais l'absence de connexion entre les deux.",
+      conseils: [
+        "Ne vous fiez pas à vos seules intuitions : allez parler à des personnes réelles",
+        "Écoutez plus que vous ne parlez lors de vos entretiens",
+        "Cherchez à comprendre le « pourquoi » derrière chaque problème",
+        "Notez les contradictions : elles révèlent souvent des opportunités cachées"
+      ],
+      keyConcepts: [
+      { term: "Problème douloureux", definition: "Une difficulté réelle et persistante rencontrée par votre cible, pour laquelle elle est prête à payer pour une solution." },
+      { term: "Besoins non satisfaits", definition: "Des attentes ou désirs que les solutions actuelles ne comblent pas entièrement." },
+      { term: "Entretien exploratoire", definition: "Une conversation structurée avec une personne de votre cible pour comprendre ses problèmes et besoins en profondeur." }
     ],
-    estimatedMinutes: 50,
-    subSections: [
+      estimatedMinutes: 50,
+      subSections: [
       {
-        key: 'probleme_principal', label: 'Problème principal identifié', objective: 'Définir le problème central que votre projet résout',
-        whyImportant: 'Un problème bien défini est la moitié de la solution. Plus vous êtes précis, plus votre réponse sera pertinente.',
-        tips: ['Un bon problème est spécifique et mesurable', 'Distinguer le problème de ses symptômes', 'Validez que ce problème est partagé par plusieurs personnes'],
-        examples: ['Les petits producteurs n\'ont pas accès à un réseau de distribution rentable et perdent 30% de leur production.'],
+        key: "problemes_identifies",
+        label: "Problèmes identifiés",
+        objective: "Lister et prioriser les problèmes que vous souhaitez résoudre",
+        whyImportant: "Tous les problèmes ne se valent pas : certains sont urgents, d'autres superficiels. Prioriser vous permet de concentrer vos efforts.",
+        tips: [
+        "Un bon problème est fréquent, urgent et non résolu",
+        "Distinguer les symptômes des causes profondes",
+        "Validez chaque problème avec au moins 3 personnes de votre cible"
+      ],
+        examples: [
+        "Les consommateurs urbains n'ont pas accès aux produits locaux frais",
+        "Les producteurs locaux n'ont pas de canal de distribution vers la ville"
+      ],
         guidedQuestions: [
-          { question: "Quel est le problème principal que vous résolvez ?", placeholder: "Le problème central est...", type: 'textarea' },
-          { question: "Depuis combien de temps ce problème existe-t-il ?", hint: "Un problème ancien = un marché mature avec des solutions établies", placeholder: "ex: Depuis toujours / Apparu récemment", type: 'text' },
-          { question: "Quelle est la fréquence de ce problème ?", type: 'select', options: [{ label: 'Quotidienne', value: 'daily' }, { label: 'Hebdomadaire', value: 'weekly' }, { label: 'Mensuelle', value: 'monthly' }, { label: 'Occasionnelle', value: 'occasional' }] },
-        ],
-        estimatedMinutes: 12,
+            { question: "Quels sont les principaux problèmes que vous avez identifiés ?", placeholder: "Problème 1 : ...", type: "textarea" },
+            { question: "Comment savez-vous que ce sont de vrais problèmes ?", hint: "Quelles preuves avez-vous ? Entretiens, observations, données ?", placeholder: "J'ai interrogé... observé...", type: "textarea" },
+            { question: "Quel est le problème le plus urgent à résoudre ?", placeholder: "Le problème prioritaire est...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'besoins_utilisateurs', label: "Besoins des utilisateurs", objective: "Comprendre ce dont vos clients ont réellement besoin",
-        whyImportant: "Les clients n'achètent pas un produit, ils achètent la solution à un besoin. Comprendre le vrai besoin est essentiel.",
-        tips: ["Distinguer besoin exprimé (ce qu'ils disent) et besoin latent (ce dont ils ont vraiment besoin)", "Posez la question 'Pourquoi ?' plusieurs fois pour creuser", "Observez les comportements, pas seulement les paroles"],
-        examples: ["Les clients disent vouloir 'des produits bio' mais leur vrai besoin est 'manger sainement sans y consacrer trop de temps'."],
+        key: "solutions_existantes",
+        label: "Solutions existantes",
+        objective: "Analyser les solutions déjà disponibles sur le marché",
+        whyImportant: "Connaître les alternatives de vos futurs clients vous aide à positionner votre solution et à identifier les lacunes du marché.",
+        tips: [
+        "Ne négligez pas les solutions « low-tech » ou artisanales",
+        "Analysez les forces et faiblesses de chaque alternative",
+        "Demandez à votre cible ce qui lui manque dans les solutions actuelles"
+      ],
+        examples: [
+        "Les marchés physiques (limitée en heures et en lieux)",
+        "Les AMAP (engagement contraignant pour le consommateur)",
+        "La vente directe à la ferme (nécessite une voiture)"
+      ],
         guidedQuestions: [
-          { question: "Quels sont les principaux besoins de vos futurs clients ?", placeholder: "Besoins identifiés...", type: 'textarea' },
-          { question: "Comment ces besoins sont-ils exprimés par vos clients ?", hint: "Ce qu'ils disent vs ce dont ils ont vraiment besoin", placeholder: "Besoins exprimés et besoins latents...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
+            { question: "Comment vos futurs clients résolvent-ils ce problème aujourd'hui ?", placeholder: "Actuellement, ils...", type: "textarea" },
+            { question: "Quels sont les inconvénients des solutions actuelles ?", placeholder: "Les solutions existantes ne permettent pas de...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'douleur_client', label: "Douleur du client", objective: "Identifier les frustrations et difficultés rencontrées par vos clients",
-        whyImportant: "La 'douleur' est ce qui motive le changement. Plus elle est forte, plus vos clients seront prêts à adopter votre solution.",
-        tips: ['Quantifiez la douleur : en temps perdu, en argent, en frustration', 'Plus la douleur est forte, plus le client est prêt à payer', 'Une douleur quotidienne est plus motivante qu\'une douleur annuelle'],
-        examples: ['Perte de 2h par jour à chercher des produits locaux = frustration quotidienne forte.'],
+        key: "opportunites",
+        label: "Opportunités identifiées",
+        objective: "Identifier les opportunités là où les besoins ne sont pas satisfaits",
+        whyImportant: "Les plus grandes opportunités d'innovation se trouvent là où les solutions actuelles échouent à satisfaire les besoins.",
+        tips: [
+        "Cherchez les frustrations exprimées par votre cible",
+        "Un « j'aimerais bien mais... » est souvent une opportunité",
+        "Les compromis que font vos clients sont des signaux forts"
+      ],
+        examples: [
+        "Aucune solution ne permet une connexion directe et en temps réel entre producteurs et consommateurs urbains"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les principales frustrations de vos clients ?", placeholder: "Frustrations identifiées...", type: 'textarea' },
-          { question: "Que coûte ce problème à vos clients (temps, argent, stress) ?", placeholder: "Coût estimé...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'alternatives_actuelles', label: "Alternatives actuelles", objective: "Analyser comment le problème est résolu aujourd'hui",
-        whyImportant: "Vos clients potentiels ne vivent pas dans le vide : ils ont déjà des solutions, même imparfaites. Les connaître vous permet de vous différencier.",
-        tips: ['Listez toutes les alternatives : solutions payantes, gratuites, artisanales', 'Identifiez ce qui manque à chaque alternative', 'Votre opportunité est dans ce qu\'elles ne résolvent pas'],
-        examples: ["Alternative 1 : Aller au marché (chronophage). Alternative 2 : Supermarché (pas local). Alternative 3 : Drive fermier (choix limité)."],
-        guidedQuestions: [
-          { question: "Comment vos clients résolvent-ils leur problème aujourd'hui ?", placeholder: "Solutions actuelles...", type: 'textarea' },
-          { question: "Qu'est-ce qui manque ou ne satisfait pas dans ces alternatives ?", placeholder: "Insatisfactions...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
+            { question: "Quelles opportunités voyez-vous dans les lacunes identifiées ?", placeholder: "L'opportunité que j'identifie est...", type: "textarea" },
+            { question: "Pourquoi personne n'a-t-il encore résolu ce problème ?", hint: "Barrières techniques, financières, réglementaires ?", placeholder: "Peut-être parce que...", type: "textarea" }
+          ],
+        estimatedMinutes: 20
+      }
     ],
-    checklist: ["J'ai identifié un problème principal clair", "J'ai compris les besoins profonds de mes clients", "J'ai listé les frustrations de mes clients", "J'ai analysé les alternatives existantes"],
-  },
-
-  3: {
-    stepNumber: 3,
-    title: "Comprendre le contexte",
-    objective: "Analyser l'environnement interne et externe de votre projet pour anticiper les opportunités et les menaces.",
-    whyImportant: "Un projet ne naît pas dans le vide. Comprendre le contexte (marché, tendances, concurrence) est essentiel pour positionner votre offre et anticiper les risques.",
-    keyConcepts: [
-      { term: "SWOT", definition: "Analyse des Forces (Strengths), Faiblesses (Weaknesses), Opportunités (Opportunities) et Menaces (Threats)." },
-      { term: "PESTEL", definition: "Analyse macro-environnementale couvrant les dimensions Politique, Économique, Social, Technologique, Environnemental et Légal." },
-      { term: "Environnement concurrentiel", definition: "L'ensemble des acteurs qui proposent des solutions alternatives à la vôtre sur le marché." },
+      checklist: [
+        "J'ai identifié au moins 3 problèmes réels de ma cible",
+        "J'ai analysé les solutions existantes sur le marché",
+        "J'ai validé mes hypothèses auprès de personnes de ma cible",
+        "J'ai repéré des opportunités concrètes"
+      ],
+      resources: [
+        { title: "Comment mener un entretien exploratoire", type: "article" },
+        { title: "Guide d'analyse des besoins clients", type: "article" }
+      ],
+    },
+    3: {
+      stepNumber: 3,
+      title: "Comprendre le contexte (PESTEL)",
+      objective: "Analyser les facteurs externes (Politique, Économique, Socioculturel, Technologique, Environnemental, Légal) qui influencent votre projet.",
+      whyImportant: "Votre projet n'existe pas en vase clos. Les facteurs externes peuvent créer des opportunités ou des menaces. Les ignorer, c'est prendre le risque d'être surpris par des événements que vous auriez pu anticiper.",
+      avantDeLire: {
+        description: "L'analyse PESTEL est un outil stratégique qui vous aide à comprendre l'environnement dans lequel votre projet va évoluer. Pour chaque dimension, demandez-vous : quels sont les facteurs clés ? Et quel est leur impact sur mon projet ?",
+        resultatsAttendus: "Une analyse complète des 6 dimensions PESTEL avec pour chacune les facteurs identifiés et leur impact potentiel sur votre projet.",
+      },
+      etudeDeCas: "Sophie a réalisé son PESTEL : Politique (soutien gouvernemental à l'agriculture locale), Économique (inflation qui pousse aux circuits courts), Socioculturel (prise de conscience écologique), Technologique (applications de mise en relation matures), Environnemental (urgence climatique favorable aux circuits courts), Légal (réglementations sur la vente alimentaire). Elle a ainsi identifié que le contexte était très favorable à son projet.",
+      conseils: [
+        "Ne vous limitez pas à une seule source d'information : croisez les données",
+        "Pour chaque facteur, distinguez l'impact à court terme et à long terme",
+        "Impliquez des personnes d'horizons différents pour enrichir l'analyse",
+        "Mettez à jour votre analyse PESTEL régulièrement (au moins une fois par an)"
+      ],
+      keyConcepts: [
+      { term: "Analyse PESTEL", definition: "Un outil d'analyse macro-environnementale qui examine six catégories de facteurs externes influençant une entreprise." },
+      { term: "Facteurs clés", definition: "Les éléments spécifiques dans chaque dimension PESTEL qui ont un impact significatif sur votre projet." },
+      { term: "Opportunités et menaces", definition: "Les facteurs externes positifs (opportunités) ou négatifs (menaces) que votre analyse PESTEL révèle." }
     ],
-    estimatedMinutes: 70,
-    subSections: [
+      estimatedMinutes: 55,
+      subSections: [
       {
-        key: 'swot_v2', label: 'Analyse SWOT', objective: 'Évaluer les forces, faiblesses, opportunités et menaces de votre projet',
-        whyImportant: "Le SWOT est l'outil stratégique le plus utilisé. Il offre une vision synthétique de votre positionnement.",
-        tips: ["Soyez honnête sur vos faiblesses : c'est le seul moyen de les corriger", "Les opportunités et menaces sont externes (hors de votre contrôle)", "Utilisez le SWOT pour prendre des décisions concrètes"],
-        examples: ["Force : équipe passionnée et expérimentée. Faiblesse : manque de trésorerie. Opportunité : forte demande pour le bio. Menace : inflation alimentaire."],
+        key: "analyse_pestel",
+        label: "Analyse PESTEL complète",
+        objective: "Examiner chaque dimension PESTEL et son impact sur votre projet",
+        whyImportant: "Une analyse PESTEL approfondie vous permet d'anticiper les évolutions de votre environnement et d'ajuster votre stratégie en conséquence.",
+        tips: [
+        "Commencez par les dimensions les plus pertinentes pour votre secteur",
+        "Utilisez des sources fiables (INSEE, rapports ministériels, études de marché)",
+        "Distinguer les tendances lourdes (certaines) des signaux faibles (incertains mais importants)"
+      ],
+        examples: [
+        "Politique : subventions pour l'agriculture locale, objectifs de souveraineté alimentaire",
+        "Technologique : démocratisation des plateformes de mise en relation, paiement mobile"
+      ],
         guidedQuestions: [
-          {
-            question: 'Forces', hint: "Quels sont vos atouts internes ?", placeholder: "Nos forces...",
-            type: 'swot', subQuestions: [
-              { question: "Quelles compétences clés possédez-vous ?", type: 'text' },
-              { question: "Quelles ressources uniques avez-vous ?", type: 'text' },
-              { question: "Qu'est-ce que vous faites mieux que les autres ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Faiblesses', hint: "Soyez honnête pour progresser", placeholder: "Nos faiblesses...",
-            type: 'swot', subQuestions: [
-              { question: "Quelles compétences vous manquent ?", type: 'text' },
-              { question: "Quelles ressources sont insuffisantes ?", type: 'text' },
-              { question: "Que font mieux vos concurrents que vous ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Opportunités', hint: "Facteurs externes positifs", placeholder: "Opportunités...",
-            type: 'swot', subQuestions: [
-              { question: "Quelles tendances du marché pouvez-vous exploiter ?", type: 'text' },
-              { question: "Y a-t-il des évolutions réglementaires favorables ?", type: 'text' },
-              { question: "Quels segments de clientèle sont mal desservis ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Menaces', hint: "Facteurs externes négatifs", placeholder: "Menaces...",
-            type: 'swot', subQuestions: [
-              { question: "Quels concurrents représentent une menace ?", type: 'text' },
-              { question: "Quelles évolutions du marché pourraient vous nuire ?", type: 'text' },
-              { question: "Y a-t-il des risques réglementaires ou économiques ?", type: 'text' },
-            ]
-          },
-        ],
-        estimatedMinutes: 20,
+            { question: "Analyse PESTEL de votre projet", hint: "Remplissez les 6 dimensions (Politique, Économique, Socioculturel, Technologique, Environnemental, Légal) avec les facteurs identifiés et leur impact sur votre projet.", type: "pestel_v2", key: "pestel_v2_data" }
+          ],
+        estimatedMinutes: 40
       },
       {
-        key: 'pestel_v2', label: 'Analyse PESTEL', objective: "Analyser les facteurs macro-environnementaux qui impactent votre projet",
-        whyImportant: "L'environnement macro-économique influence directement ou indirectement votre projet. Un bon entrepreneur anticipe ces changements.",
-        tips: ["Chaque dimension compte : ne négligez aucune", "Un même facteur peut être une opportunité ET une menace", "Restez factuel : appuyez-vous sur des sources fiables"],
-        examples: ["Politique : plan de relance pour la transition écologique. Économique : inflation impactant le pouvoir d'achat. Social : demande croissante de sens au travail."],
+        key: "synthese_pestel",
+        label: "Synthèse de l'analyse PESTEL",
+        objective: "Tirer les enseignements principaux de votre analyse",
+        whyImportant: "Une analyse sans synthèse n'a pas de valeur opérationnelle. L'objectif est d'identifier les implications concrètes pour votre projet.",
+        tips: [
+        "Identifiez les 3 facteurs les plus importants pour votre projet",
+        "Distinguer les opportunités à saisir des menaces à anticiper",
+        "Traduisez chaque conclusion en action concrète"
+      ],
+        examples: [
+        "Opportunité : forte demande sociétale pour le local => argument marketing puissant",
+        "Menace : inflation des coûts logistiques => optimiser la chaîne d'approvisionnement"
+      ],
         guidedQuestions: [
-          {
-            question: 'Politique', hint: "Lois, réglementations, subventions",
-            type: 'pestel', subQuestions: [
-              { question: "Quelles politiques publiques impactent votre secteur ?", type: 'text' },
-              { question: "Y a-t-il des aides ou subventions disponibles ?", type: 'text' },
-              { question: "La stabilité politique est-elle un facteur clé ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Économique', hint: "Croissance, inflation, emploi",
-            type: 'pestel', subQuestions: [
-              { question: "Quelle est la conjoncture économique actuelle ?", type: 'text' },
-              { question: "Comment évolue le pouvoir d'achat de vos clients ?", type: 'text' },
-              { question: "Les taux d'intérêt affectent-ils votre financement ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Socioculturel', hint: "Tendances sociales, démographie, valeurs",
-            type: 'pestel', subQuestions: [
-              { question: "Quelles tendances sociétales sont favorables à votre projet ?", type: 'text' },
-              { question: "Les comportements de consommation évoluent-ils dans votre sens ?", type: 'text' },
-              { question: "Quels facteurs démographiques sont importants ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Technologique', hint: "Innovations, digitalisation, R&D",
-            type: 'pestel', subQuestions: [
-              { question: "Quelles technologies impactent votre secteur ?", type: 'text' },
-              { question: "L'innovation est-elle rapide dans votre domaine ?", type: 'text' },
-              { question: "Avez-vous des besoins technologiques spécifiques ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Environnemental', hint: "Écologie, réglementation verte, RSE",
-            type: 'pestel', subQuestions: [
-              { question: "Quel est l'impact environnemental de votre activité ?", type: 'text' },
-              { question: "Les réglementations écologiques vous impactent-elles ?", type: 'text' },
-              { question: "Pouvez-vous faire de l'écologie un avantage concurrentiel ?", type: 'text' },
-            ]
-          },
-          {
-            question: 'Légal', hint: "Droit des affaires, propriété intellectuelle",
-            type: 'pestel', subQuestions: [
-              { question: "Quelles sont les obligations légales de votre secteur ?", type: 'text' },
-              { question: "Avez-vous besoin de protéger votre propriété intellectuelle ?", type: 'text' },
-              { question: "Quelles normes devez-vous respecter ?", type: 'text' },
-            ]
-          },
-        ],
-        estimatedMinutes: 20,
-      },
-      {
-        key: 'tendances_marche', label: "Tendances du marché", objective: "Identifier les grandes tendances qui influencent votre secteur",
-        whyImportant: "Surfer sur une tendance portante peut considérablement accélérer votre croissance. À l'inverse, un projet contre-tendance aura du mal à décoller.",
-        tips: ['Distinguer les tendances durables des effets de mode', 'Utilisez Google Trends, les rapports sectoriels', 'Une tendance forte = un marché qui grandit'],
-        examples: ["Tendance 1 : consommation locale et circuits courts. Tendance 2 : digitalisation des services. Tendance 3 : quête de sens et RSE."],
-        guidedQuestions: [
-          { question: "Quelles sont les 3 grandes tendances de votre marché ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment votre projet s'inscrit-il dans ces tendances ?", placeholder: "Mon projet capitalise sur...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
-      },
-      {
-        key: 'environnement_concurrentiel', label: "Environnement concurrentiel", objective: "Cartographier vos concurrents directs et indirects",
-        whyImportant: "Connaître ses concurrents permet de se différencier efficacement et d'éviter leurs erreurs.",
-        tips: ['Analysez 3 à 5 concurrents minimum', 'Ne vous limitez pas aux concurrents directs', 'Identifiez leur avantage concurrentiel et leurs faiblesses'],
-        examples: ["Concurrent direct : une autre plateforme de mise en relation. Concurrent indirect : les marchés physiques. Substitut : la vente directe à la ferme."],
-        guidedQuestions: [
-          { question: "Qui sont vos 3 principaux concurrents ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quels sont leurs points forts et leurs points faibles ?", placeholder: "Concurrent 1 : forces... faiblesses...", type: 'textarea' },
-          { question: "Quelle sera votre différence concurrentielle ?", placeholder: "Notre différence...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
-      },
+            { question: "Quels sont les 3 facteurs PESTEL les plus importants pour votre projet ?", placeholder: "1. ... 2. ... 3. ...", type: "textarea" },
+            { question: "Quelles opportunités pouvez-vous saisir ?", placeholder: "Je peux saisir l'opportunité de...", type: "textarea" },
+            { question: "Quelles menaces devez-vous anticiper ?", placeholder: "Je dois anticiper...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai réalisé une analyse SWOT complète", "J'ai réalisé une analyse PESTEL détaillée", "J'ai identifié les tendances clés du marché", "J'ai cartographié mon environnement concurrentiel"],
-  },
-
-  4: {
-    stepNumber: 4,
-    title: "Définir les objectifs",
-    objective: "Fixer des objectifs clairs et mesurables à court, moyen et long terme pour guider votre projet.",
-    whyImportant: "Des objectifs bien définis sont votre boussole. Ils vous permettent de rester focus, de mesurer votre progression et de communiquer votre vision.",
-    keyConcepts: [
-      { term: "Objectif SMART", definition: "Spécifique, Mesurable, Atteignable, Réaliste et Temporellement défini." },
-      { term: "Court terme", definition: "Objectifs à 3-6 mois, les premières étapes concrètes de votre projet." },
-      { term: "Long terme", definition: "Vision à 3-5 ans, la destination finale que vous visez." },
+      checklist: [
+        "J'ai analysé les 6 dimensions PESTEL",
+        "J'ai identifié les facteurs clés pour chaque dimension",
+        "J'ai évalué l'impact de chaque facteur sur mon projet",
+        "J'ai synthétisé les opportunités et les menaces principales"
+      ],
+      resources: [
+        { title: "Guide complet de l'analyse PESTEL", type: "article" },
+        { title: "Sources de données macro-économiques - INSEE", type: "tool" }
+      ],
+    },
+    4: {
+      stepNumber: 4,
+      title: "Fixez vos objectifs",
+      objective: "Définir des objectifs clairs et mesurables pour votre projet, en utilisant la méthode SMART et en les alignant avec votre vision.",
+      whyImportant: "Des objectifs bien définis sont votre boussole. Ils vous permettent de prendre des décisions cohérentes, de motiver votre équipe et de mesurer vos progrès. Sans objectifs, vous avancez sans direction.",
+      avantDeLire: {
+        description: "Fixer des objectifs, c'est transformer votre vision en cibles concrètes. Dans cette étape, vous allez définir des objectifs à court, moyen et long terme en utilisant la méthode SMART (Spécifique, Mesurable, Atteignable, Réaliste, Temporellement défini).",
+        resultatsAttendus: "Une liste d'objectifs SMART à différents horizons temporels, alignés avec votre vision globale.",
+      },
+      etudeDeCas: "Sophie s'est fixé trois objectifs : (1) CT : Tester sa plateforme avec 10 producteurs et 50 consommateurs dans les 3 mois, (2) MT : Atteindre 100 producteurs et 1000 consommateurs en 1 an, (3) LT : Devenir la référence de la distribution locale dans sa région en 3 ans. Chaque objectif est SMART : spécifique, mesurable, atteignable, réaliste et temporellement défini.",
+      conseils: [
+        "Commencez par des objectifs à court terme : ils sont plus faciles à définir et motivants",
+        "Impliquez votre équipe ou vos partenaires dans la définition des objectifs",
+        "Révisez vos objectifs régulièrement : ils doivent évoluer avec votre projet",
+        "Célébrez les petites victoires : chaque objectif atteint est un pas de plus"
+      ],
+      keyConcepts: [
+      { term: "Objectif SMART", definition: "Un objectif Spécifique, Mesurable, Atteignable, Réaliste et Temporellement défini." },
+      { term: "Court / Moyen / Long terme", definition: "Horizons temporels typiques : CT (< 6 mois), MT (6-24 mois), LT (> 24 mois)." },
+      { term: "Alignement stratégique", definition: "La cohérence entre vos objectifs quotidiens, votre mission et votre vision à long terme." }
     ],
-    estimatedMinutes: 45,
-    subSections: [
+      estimatedMinutes: 40,
+      subSections: [
       {
-        key: 'objectifs_court_terme', label: "Objectifs à court terme (3-6 mois)", objective: "Définir les premières étapes concrètes de votre projet",
-        whyImportant: "Les objectifs court terme transforment votre vision en actions immédiates. Sans eux, on remet toujours à demain.",
-        tips: ["Fixez-vous des objectifs que vous pouvez atteindre dans les 3-6 mois", "Priorisez : qu'est-ce qui est VRAIMENT important maintenant ?", "Chaque objectif doit avoir une date butoir précise"],
-        examples: ["Dans 3 mois : finaliser le prototype et le tester auprès de 10 utilisateurs. Dans 6 mois : premier client payant."],
+        key: "objectifs_ct",
+        label: "Objectifs à court terme",
+        objective: "Définir vos objectifs pour les 6 prochains mois",
+        whyImportant: "Les objectifs à court terme créent une dynamique positive et vous permettent de valider rapidement vos hypothèses.",
+        tips: [
+        "Concentrez-vous sur l'essentiel : moins d'objectifs, mais tenus",
+        "Chaque objectif doit avoir un responsable et une date butoir",
+        "Prévoyez des indicateurs simples pour mesurer le progrès"
+      ],
+        examples: [
+        "Lancer un MVP avec 10 producteurs partenaires d'ici 3 mois",
+        "Réaliser 30 entretiens clients d'ici fin du mois"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre objectif principal à 3 mois ?", placeholder: "ex: Finaliser le MVP", type: 'text' },
-          { question: "Quel est votre objectif principal à 6 mois ?", placeholder: "ex: Premier client payant", type: 'text' },
-          { question: "Quels sont les jalons intermédiaires pour y arriver ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Quels sont vos objectifs pour les 6 prochains mois ?", hint: "Soyez SMART : Spécifique, Mesurable, Atteignable, Réaliste, Temporel", placeholder: "Objectif 1 : d'ici [date], je veux [chiffre] [action]", type: "textarea" },
+            { question: "Comment mesurerez-vous l'atteinte de ces objectifs ?", placeholder: "Je mesurerai par...", type: "textarea" }
+          ],
+        estimatedMinutes: 12
       },
       {
-        key: 'objectifs_moyen_terme', label: "Objectifs à moyen terme (1-2 ans)", objective: "Planifier votre développement à horizon 1-2 ans",
-        whyImportant: "Les objectifs moyen terme sont le pont entre le démarrage et la maturité. Ils structurent votre développement.",
-        tips: ["Pensez en termes de croissance : clients, revenus, équipe", "Anticipez les besoins en financement", "Prévoyez des objectifs qualitatifs ET quantitatifs"],
-        examples: ["À 1 an : 500 clients actifs et 50 000€ de CA. À 2 ans : 2000 clients, équipe de 5 personnes, rentabilité."],
+        key: "objectifs_mt",
+        label: "Objectifs à moyen terme",
+        objective: "Définir vos objectifs pour les 6 à 24 prochains mois",
+        whyImportant: "Les objectifs à moyen terme relient vos actions quotidiennes à votre vision à long terme.",
+        tips: [
+        "Projetez-vous à 18-24 mois",
+        "Ces objectifs doivent être ambitieux mais crédibles",
+        "Ils doivent découler logiquement de vos objectifs CT"
+      ],
+        examples: [
+        "Atteindre 100 producteurs et 1000 consommateurs d'ici 1 an",
+        "Atteindre la rentabilité d'ici 18 mois"
+      ],
         guidedQuestions: [
-          { question: "Où voyez-vous votre projet dans 1 an ?", placeholder: "Dans 1 an...", type: 'textarea' },
-          { question: "Où voyez-vous votre projet dans 2 ans ?", placeholder: "Dans 2 ans...", type: 'textarea' },
-          { question: "Quels seront les indicateurs de succès à ces étapes ?", placeholder: "Indicateurs : CA, clients, impact...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Où voulez-vous être dans 1 à 2 ans ?", placeholder: "Dans 2 ans, j'aurai...", type: "textarea" },
+            { question: "Quelles étapes clés devez-vous franchir pour y arriver ?", placeholder: "Les étapes clés sont...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'objectifs_long_terme', label: "Objectifs à long terme (3-5 ans)", objective: "Définir la vision à long terme de votre projet",
-        whyImportant: "La vision long terme donne du sens à vos actions quotidiennes. C'est elle qui motive et fédère.",
-        tips: ["Soyez ambitieux mais crédible", "Imaginez l'impact que vous voulez avoir sur le monde", "Votre vision long terme peut évoluer, mais elle doit exister"],
-        examples: ["Devenir la référence européenne de la distribution alimentaire locale, avec 10 000 producteurs partenaires et 1 million d'utilisateurs."],
+        key: "objectifs_lt",
+        label: "Objectifs à long terme",
+        objective: "Définir votre vision à 3-5 ans",
+        whyImportant: "Le long terme donne un cap à votre projet et vous aide à prendre des décisions cohérentes aujourd'hui.",
+        tips: [
+        "Imaginez l'impact que vous voulez avoir sur le monde",
+        "Ces objectifs peuvent être plus qualitatifs",
+        "Ils doivent vous motiver et inspirer votre équipe"
+      ],
+        examples: [
+        "Devenir la référence de la distribution locale dans toute la région",
+        "Créer un impact mesurable sur la réduction du gaspillage alimentaire"
+      ],
         guidedQuestions: [
-          { question: "Où voyez-vous votre projet dans 3 à 5 ans ?", placeholder: "Dans 5 ans...", type: 'textarea' },
-          { question: "Quel impact souhaitez-vous avoir à long terme ?", placeholder: "Impact visé...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
+            { question: "Quelle est votre ambition à 3-5 ans ?", placeholder: "Dans 5 ans, mon projet aura...", type: "textarea" },
+            { question: "Quel impact voulez-vous avoir sur le monde ?", placeholder: "Je veux contribuer à...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'criteres_succes', label: "Critères de succès", objective: "Définir comment vous mesurerez la réussite de votre projet",
-        whyImportant: "Ce qui ne se mesure pas ne s'améliore pas. Des critères de succès clairs vous permettent de savoir si vous êtes sur la bonne voie.",
-        tips: ['Choisissez 3 à 5 critères principaux', 'Mélangez indicateurs quantitatifs et qualitatifs', "Revoyez vos critères régulièrement pour les ajuster"],
-        examples: ["Critères : 1) Satisfaction client > 4.5/5 2) Croissance mensuelle > 20% 3) Impact carbone négatif 4) Équipe stable et motivée"],
+        key: "alignement_objectifs",
+        label: "Alignement des objectifs",
+        objective: "Vérifier la cohérence entre vos différents objectifs",
+        whyImportant: "Des objectifs contradictoires vous dispersent. L'alignement garantit que chaque action vous rapproche de votre vision.",
+        tips: [
+        "Assurez-vous que chaque objectif CT contribue à un objectif MT",
+        "Vérifiez que tous vos objectifs vont dans la même direction",
+        "Éliminez les objectifs qui ne servent pas votre vision"
+      ],
+        examples: [
+        "Objectif CT : tester avec 10 producteurs => MT : 100 producteurs => LT : référence régionale"
+      ],
         guidedQuestions: [
-          { question: "Quels seront vos 3 à 5 critères de succès principaux ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment mesurerez-vous chacun de ces critères ?", placeholder: "ex: enquête NPS pour la satisfaction", type: 'textarea' },
-        ],
-        estimatedMinutes: 11,
-      },
+            { question: "Vos objectifs sont-ils alignés entre eux ?", hint: "Chaque objectif CT doit servir un objectif MT, qui sert un objectif LT", placeholder: "Mes objectifs sont alignés car...", type: "textarea" },
+            { question: "Y a-t-il des objectifs à modifier ou supprimer ?", placeholder: "Je dois peut-être revoir...", type: "text" }
+          ],
+        estimatedMinutes: 8
+      }
     ],
-    checklist: ["J'ai défini mes objectifs court terme (3-6 mois)", "J'ai défini mes objectifs moyen terme (1-2 ans)", "J'ai une vision long terme (3-5 ans)", "J'ai identifié mes critères de succès"],
-  },
-
-  5: {
-    stepNumber: 5,
-    title: "Définir la mission et la vision",
-    objective: "Formuler la mission, la vision et les valeurs de votre projet pour lui donner du sens et une direction claire.",
-    whyImportant: "Mission, vision et valeurs sont le cœur de votre projet. Elles guident vos décisions, inspirent votre équipe et rassurent vos partenaires.",
-    keyConcepts: [
-      { term: "Mission", definition: "Votre raison d'être : ce que vous faites, pour qui et pourquoi. Elle répond à la question 'Pourquoi existons-nous ?'." },
-      { term: "Vision", definition: "Votre ambition à long terme : le monde idéal que vous voulez créer. Elle répond à 'Où allons-nous ?'." },
-      { term: "Valeurs", definition: "Les principes qui guident vos actions et décisions. Elles définissent votre culture." },
+      checklist: [
+        "J'ai défini des objectifs à court terme (6 mois)",
+        "J'ai défini des objectifs à moyen terme (1-2 ans)",
+        "J'ai défini des objectifs à long terme (3-5 ans)",
+        "Mes objectifs sont alignés entre eux et avec ma vision"
+      ],
+      resources: [
+        { title: "La méthode SMART pour fixer vos objectifs", type: "article" },
+        { title: "OKR : une méthode complémentaire pour les startups", type: "article" }
+      ],
+    },
+    5: {
+      stepNumber: 5,
+      title: "Synthétiser une mission et une vision",
+      objective: "Formuler la mission (ce que vous faites aujourd'hui) et la vision (ce que vous voulez devenir) de votre projet.",
+      whyImportant: "Mission et vision sont le cœur de votre projet. Elles communiquent votre raison d'être, inspirent votre équipe, attirent vos partenaires et guident vos décisions stratégiques.",
+      avantDeLire: {
+        description: "La mission répond à la question « Pourquoi notre entreprise existe-t-elle ? » tandis que la vision répond à « Quel monde voulons-nous créer ? ». Prenez le temps de formuler ces deux énoncés : ils vous accompagneront tout au long de votre aventure entrepreneuriale.",
+        resultatsAttendus: "Un énoncé de mission clair et inspirant, et une vision ambitieuse qui définit votre impact à long terme.",
+      },
+      etudeDeCas: "Sophie a formulé sa mission : « Connecter producteurs locaux et consommateurs urbains pour une alimentation plus durable et accessible. » Sa vision : « Un monde où chaque repas contribue à une économie locale prospère et à une planète en meilleure santé. » Ces énoncés l'aident à communiquer son projet et à prendre des décisions cohérentes.",
+      conseils: [
+        "Soyez authentique : votre mission doit refléter vos vraies valeurs",
+        "Une bonne mission tient en une phrase (parfois deux)",
+        "Testez vos énoncés auprès de votre entourage : que comprennent-ils ?",
+        "Votre vision doit être ambitieuse mais pas irréaliste"
+      ],
+      keyConcepts: [
+      { term: "Mission", definition: "La raison d'être de votre entreprise aujourd'hui : ce que vous faites, pour qui et pourquoi." },
+      { term: "Vision", definition: "La situation idéale que vous voulez créer dans le futur : l'impact que vous souhaitez avoir sur le monde." },
+      { term: "Valeurs", definition: "Les principes fondamentaux qui guident vos actions et vos décisions en tant qu'entreprise." }
     ],
-    estimatedMinutes: 50,
-    subSections: [
+      estimatedMinutes: 35,
+      subSections: [
       {
-        key: 'mission', label: "Mission", objective: "Formuler votre raison d'être en une phrase claire",
-        whyImportant: "Une mission claire est votre cap. Elle vous aide à prendre des décisions cohérentes et à communiquer votre projet efficacement.",
-        tips: ['Une bonne mission est : courte, claire, mémorisable', "Elle répond à : qui, quoi, pourquoi", 'Évitez le jargon et les formules vagues'],
-        examples: ["Notre mission est de rendre l'alimentation locale accessible à tous, en connectant producteurs et consommateurs."],
+        key: "mission",
+        label: "Énoncé de mission",
+        objective: "Formuler la mission de votre projet",
+        whyImportant: "La mission est votre raison d'être. Elle donne du sens à votre travail et attire les personnes qui partagent vos valeurs.",
+        tips: [
+        "Structure : « Nous existons pour [action] afin de [impact] »",
+        "Soyez précis sur ce que vous faites et pour qui",
+        "Évitez le jargon : une mission doit être comprise par tous"
+      ],
+        examples: [
+        "« Connecter producteurs locaux et consommateurs urbains pour une alimentation plus durable et accessible. »"
+      ],
         guidedQuestions: [
-          { question: "Quelle est la raison d'être de votre projet ?", hint: "Pourquoi existe-t-il ?", placeholder: "Notre mission est de...", type: 'textarea' },
-          { question: "À qui profitez-vous concrètement ?", placeholder: "ex: aux producteurs locaux, aux consommateurs...", type: 'text' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Quelle est la raison d'être de votre projet ?", hint: "Pourquoi votre projet existe-t-il ? Quel problème résout-il ?", placeholder: "Mon projet existe pour...", type: "textarea" },
+            { question: "À qui profite votre projet ?", placeholder: "Mon projet profite à...", type: "text" },
+            { question: "Quelle est votre mission en une phrase ?", placeholder: "Notre mission est de...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'vision', label: "Vision", objective: "Décrire le futur idéal que vous voulez créer",
-        whyImportant: "La vision est votre North Star. Elle inspire et motive au-delà des difficultés quotidiennes.",
-        tips: ['Une vision doit être ambitieuse mais crédible', 'Elle décrit un futur désirable dans 5 à 10 ans', 'Elle doit donner envie de vous rejoindre'],
-        examples: ["Un monde où 100% des foyers ont accès à des produits locaux et de saison, et où les producteurs vivent dignement de leur travail."],
+        key: "vision",
+        label: "Énoncé de vision",
+        objective: "Formuler la vision à long terme de votre projet",
+        whyImportant: "La vision est votre étoile polaire. Elle vous motive dans les moments difficiles et inspire votre entourage à vous rejoindre.",
+        tips: [
+        "Imaginez le monde idéal que vous voulez créer",
+        "Soyez ambitieux mais concret",
+        "Une bonne vision donne envie de participer à l'aventure"
+      ],
+        examples: [
+        "« Un monde où chaque repas contribue à une économie locale prospère et à une planète en meilleure santé. »"
+      ],
         guidedQuestions: [
-          { question: "Quel est le monde idéal que vous voulez créer ?", placeholder: "Dans 10 ans, je veux que...", type: 'textarea' },
-          { question: "Quel sera l'impact de votre projet à son apogée ?", placeholder: "Impact maximal...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Quel est le monde idéal que vous voulez créer ?", placeholder: "J'imagine un monde où...", type: "textarea" },
+            { question: "Quel impact voulez-vous avoir sur la société ou l'environnement ?", placeholder: "Je veux avoir un impact sur...", type: "textarea" },
+            { question: "Quelle est votre vision en une phrase ?", placeholder: "Ma vision est...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'valeurs', label: "Valeurs", objective: "Définir les principes qui guideront vos actions",
-        whyImportant: "Les valeurs sont votre ADN. Elles vous aident à recruter les bonnes personnes et à prendre des décisions cohérentes.",
-        tips: ['Choisissez 3 à 5 valeurs maximum', 'Chaque valeur doit avoir une signification concrète', 'Vos valeurs doivent se traduire en actions'],
-        examples: ["1) Authenticité : nous faisons ce que nous disons. 2) Solidarité : nous priorisons les petits producteurs. 3) Transparence : nous publions nos données d'impact."],
+        key: "valeurs",
+        label: "Valeurs fondamentales",
+        objective: "Identifier les valeurs qui guideront votre projet",
+        whyImportant: "Les valeurs sont le cadre de référence pour toutes vos décisions. Elles définissent votre culture d'entreprise et votre identité.",
+        tips: [
+        "Choisissez 3 à 5 valeurs maximum",
+        "Chaque valeur doit se traduire par des comportements concrets",
+        "Impliquez votre équipe dans le choix des valeurs"
+      ],
+        examples: [
+        "Authenticité, Durabilité, Proximité, Transparence, Innovation responsable"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les 3 à 5 valeurs fondamentales de votre projet ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Que signifie chaque valeur concrètement dans votre quotidien ?", placeholder: "ex: Transparence = nous publions nos comptes", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'impact_souhaite', label: "Impact souhaité", objective: "Identifier l'impact positif que vous voulez avoir",
-        whyImportant: "Au-delà du profit, tout projet a un impact sur la société et l'environnement. Le définir vous permet de maximiser votre contribution positive.",
-        tips: ['Pensez impact social, environnemental ET économique', "Identifiez les indicateurs d'impact concrets", "L'impact positif est un avantage concurrentiel de plus en plus important"],
-        examples: ["Impact social : 500 emplois locaux créés. Impact environnemental : 1000 tonnes de CO2 évitées. Impact économique : 10M€ reversés aux producteurs."],
-        guidedQuestions: [
-          { question: "Quel impact positif souhaitez-vous avoir sur la société ?", placeholder: "Impact social...", type: 'textarea' },
-          { question: "Quel impact positif souhaitez-vous avoir sur l'environnement ?", placeholder: "Impact environnemental...", type: 'textarea' },
-          { question: "Comment mesurerez-vous ces impacts ?", placeholder: "Indicateurs d'impact...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
-      },
+            { question: "Quelles sont les valeurs les plus importantes pour votre projet ?", placeholder: "Mes valeurs sont...", type: "text" },
+            { question: "Comment ces valeurs se traduiront-elles dans votre quotidien ?", placeholder: "La valeur [X] se traduira par...", type: "textarea" }
+          ],
+        estimatedMinutes: 5
+      }
     ],
-    checklist: ["J'ai formulé ma mission clairement", "J'ai une vision inspirante pour mon projet", "J'ai défini mes 3-5 valeurs fondamentales", "J'ai identifié l'impact positif que je veux avoir"],
-  },
-
-  6: {
-    stepNumber: 6,
-    title: "Résumé du contexte et des objectifs",
-    objective: "Synthétiser votre analyse de contexte et vos objectifs pour vérifier la cohérence globale de votre projet.",
-    whyImportant: "Cette étape de synthèse est cruciale : elle vous permet de prendre du recul et de vérifier que tous les éléments de votre projet sont alignés avant de passer à la construction.",
-    keyConcepts: [
-      { term: "Cohérence stratégique", definition: "L'alignement entre votre contexte (marché, concurrence), vos objectifs et votre mission." },
-      { term: "Synthèse", definition: "La capacité à résumer l'essentiel en quelques points clés, signe d'une compréhension profonde." },
+      checklist: [
+        "J'ai formulé un énoncé de mission clair",
+        "J'ai formulé une vision inspirante",
+        "J'ai identifié mes valeurs fondamentales",
+        "Mes énoncés sont compréhensibles par une personne extérieure"
+      ],
+      resources: [
+        { title: "Comment rédiger une mission et une vision percutantes", type: "article" },
+        { title: "Exemples de mission et vision d'entreprises à impact", type: "article" }
+      ],
+    },
+    6: {
+      stepNumber: 6,
+      title: "Résumé du contexte et des objectifs",
+      objective: "Synthétiser l'ensemble des analyses précédentes (problèmes, PESTEL, objectifs, mission, vision) en un résumé cohérent.",
+      whyImportant: "Un résumé clair vous permet d'avoir une vue d'ensemble de votre projet et de communiquer efficacement avec vos parties prenantes. C'est aussi un point de référence pour la suite du parcours.",
+      avantDeLire: {
+        description: "Cette étape de synthèse est cruciale. Vous allez rassembler tout ce que vous avez appris et décidé jusqu'à présent pour créer un document de référence. Ce résumé vous servira de fil conducteur pour les étapes suivantes.",
+        resultatsAttendus: "Un document de synthèse reprenant votre contexte, vos objectifs, votre mission et votre vision, prêt à être partagé.",
+      },
+      etudeDeCas: "Sophie a rédigé une fiche de synthèse : « Relocal connecte producteurs locaux et consommateurs urbains pour réduire le gaspillage alimentaire. Contexte favorable (PESTEL). Objectifs : test 10/50 en 3 mois, 100/1000 en 1 an, référence régionale en 3 ans. Mission et vision définies. » Elle utilise cette fiche pour présenter son projet à des partenaires potentiels.",
+      conseils: [
+        "Faites relire votre résumé par quelqu'un qui ne connaît pas votre projet",
+        "Gardez votre résumé à jour : il évoluera avec votre projet",
+        "Utilisez-le comme support de présentation rapide (elevator pitch)",
+        "Conservez une copie physique et numérique"
+      ],
+      keyConcepts: [
+      { term: "Synthèse stratégique", definition: "Un document concis qui rassemble les éléments clés de votre analyse et de votre stratégie." },
+      { term: "Elevator pitch", definition: "Une présentation ultra-courte (30-60 secondes) de votre projet, comme si vous étiez dans un ascenseur." },
+      { term: "Cohérence stratégique", definition: "L'alignement logique entre votre analyse, vos objectifs, votre mission et votre vision." }
     ],
-    estimatedMinutes: 30,
-    subSections: [
+      estimatedMinutes: 30,
+      subSections: [
       {
-        key: 'synthese_contexte', label: "Synthèse du contexte", objective: "Résumer les éléments clés de votre analyse de contexte",
-        whyImportant: "Une synthèse claire vous permet d'avoir une vision d'ensemble et d'identifier rapidement les points d'attention.",
-        tips: ['Reprenez les points essentiels du SWOT et PESTEL', 'Identifiez les 3 opportunités les plus prometteuses', "Listez les 3 risques principaux à ne pas négliger"],
-        examples: ["Opportunités clés : tendance locale, digitalisation, aides publiques. Risques : concurrence des géants, inflation, contraintes réglementaires."],
+        key: "resume_contexte",
+        label: "Résumé du contexte",
+        objective: "Synthétiser votre analyse du contexte et des problèmes identifiés",
+        whyImportant: "Un résumé clair du contexte permet à toute personne de comprendre rapidement les fondements de votre projet.",
+        tips: [
+        "Restez concis : 5 à 10 lignes maximum",
+        "N'incluez que l'essentiel",
+        "Utilisez un langage simple et direct"
+      ],
         guidedQuestions: [
-          { question: "Quels sont les 3 enseignements clés de votre analyse de contexte ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quels sont les principaux risques à anticiper ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
+            { question: "Résumez le contexte de votre projet en 5 à 10 lignes", hint: "Problème identifié, opportunité, contexte PESTEL", placeholder: "Mon projet s'inscrit dans un contexte où...", type: "textarea" },
+            { question: "Quel est le problème principal que vous résolvez ?", placeholder: "Le problème principal est...", type: "text" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'synthese_objectifs', label: "Synthèse des objectifs", objective: "Résumer vos objectifs à toutes les échéances",
-        whyImportant: "Des objectifs synthétiques sont plus faciles à communiquer et à mémoriser pour votre équipe et vos partenaires.",
-        tips: ["Un objectif par horizon : 3 mois, 1 an, 5 ans", 'Chaque objectif doit être mesurable', 'Vérifiez que vos objectifs sont cohérents entre eux'],
-        examples: ["3 mois : 10 clients testeurs. 1 an : 500 clients. 5 ans : leader régional avec 50 000 clients."],
+        key: "resume_objectifs",
+        label: "Résumé des objectifs",
+        objective: "Synthétiser vos objectifs SMART",
+        whyImportant: "Avoir une vue claire de vos objectifs vous permet de prioriser vos actions et de mesurer vos progrès.",
+        tips: [
+        "Listez vos objectifs par horizon temporel",
+        "Un objectif = une ligne",
+        "Ajoutez une date butoir pour chaque objectif"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre objectif prioritaire à 3 mois ?", placeholder: "Objectif court terme...", type: 'text' },
-          { question: "Vos objectifs à 1 an et 5 ans sont-ils alignés ?", placeholder: "Expliquez la cohérence...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
+            { question: "Quels sont vos objectifs clés résumés ?", placeholder: "CT : ... MT : ... LT : ...", type: "textarea" },
+            { question: "Comment saurez-vous que vous avez réussi ?", placeholder: "Je saurai que j'ai réussi quand...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'coherence_globale', label: "Cohérence globale", objective: "Vérifier l'alignement entre contexte, mission, vision et objectifs",
-        whyImportant: "Un projet cohérent a plus de chances de réussir. Les incohérences entre le contexte et les objectifs sont des signaux d'alerte.",
-        tips: ["Votre mission doit répondre à une opportunité du marché", "Vos objectifs doivent être réalistes compte tenu du contexte", "Vos valeurs doivent se refléter dans votre vision"],
-        examples: ["Constat : marché local en croissance. Mission : rendre le local accessible. Objectif : 50 producteurs en 1 an. Cohérence : OK."],
+        key: "resume_mission_vision",
+        label: "Mission, vision et valeurs",
+        objective: "Rassembler vos énoncés de mission, vision et valeurs",
+        whyImportant: "Ces énoncés sont l'identité de votre projet. Les avoir tous au même endroit facilite leur communication.",
+        tips: [
+        "Mission et vision doivent tenir sur un post-it",
+        "Vos valeurs doivent être mémorables",
+        "Testez votre pitch auprès de 3 personnes"
+      ],
         guidedQuestions: [
-          { question: "Votre projet est-il cohérent dans son ensemble ?", type: 'select', options: [{ label: 'Oui, tout est aligné', value: 'yes' }, { label: 'Partiellement, quelques ajustements nécessaires', value: 'partial' }, { label: 'Non, je dois retravailler certains éléments', value: 'no' }] },
-          { question: "Quels ajustements devez-vous apporter pour améliorer la cohérence ?", placeholder: "Ajustements nécessaires...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
-      },
+            { question: "Quelle est votre mission ?", placeholder: "Notre mission est...", type: "text" },
+            { question: "Quelle est votre vision ?", placeholder: "Notre vision est...", type: "text" },
+            { question: "Quelles sont vos valeurs ?", placeholder: "Nos valeurs sont...", type: "text" },
+            { question: "Rédigez votre elevator pitch", hint: "30 secondes pour convaincre", placeholder: "Imaginez que vous êtes dans un ascenseur avec un investisseur...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai synthétisé mon analyse de contexte", "J'ai résumé mes objectifs par horizon", "J'ai vérifié la cohérence globale de mon projet", "J'ai identifié les ajustements nécessaires"],
-  },
-
-  7: {
-    stepNumber: 7,
-    title: "Identifier, cartographier et analyser les parties prenantes",
-    objective: "Lister, cartographier et analyser toutes les personnes et organisations qui ont un intérêt dans votre projet.",
-    whyImportant: "Les parties prenantes peuvent vous aider ou vous freiner. Les identifier tôt et comprendre leurs relations de pouvoir permet de construire des relations de confiance et d'éviter des blocages.",
-    keyConcepts: [
-      { term: "Partie prenante", definition: "Toute personne, groupe ou organisation qui influence ou est influencé par votre projet." },
-      { term: "Matrice pouvoir-intérêt", definition: "Outil de priorisation qui classe les parties prenantes selon leur pouvoir et leur intérêt pour le projet." },
-      { term: "Cartographie", definition: "Représentation visuelle des relations entre les parties prenantes et le projet." },
+      checklist: [
+        "J'ai rédigé un résumé clair du contexte de mon projet",
+        "J'ai synthétisé mes objectifs par horizon temporel",
+        "J'ai rassemblé ma mission, ma vision et mes valeurs",
+        "J'ai un elevator pitch prêt à être partagé"
+      ],
+      resources: [
+        { title: "Comment rédiger un elevator pitch percutant", type: "article" }
+      ],
+    },
+    7: {
+      stepNumber: 7,
+      title: "Identifier et cartographier les parties prenantes",
+      objective: "Identifier toutes les personnes, groupes ou organisations qui peuvent influencer ou être influencés par votre projet, et évaluer leur impact.",
+      whyImportant: "Ignorer une partie prenante clé peut compromettre votre projet. Une cartographie systématique vous permet d'anticiper les résistances, de mobiliser les soutiens et de construire des relations durables.",
+      avantDeLire: {
+        description: "Les parties prenantes ne sont pas seulement vos clients. Ce sont toutes les personnes ou organisations qui ont un intérêt dans votre projet : partenaires, fournisseurs, investisseurs, collectivités, associations, etc. Dans cette étape, vous allez les identifier, évaluer leur influence et planifier votre engagement.",
+        resultatsAttendus: "Une matrice des parties prenantes avec pour chacune : nom, niveau d'influence, niveau d'impact, effets sur le projet et actions à entreprendre.",
+      },
+      etudeDeCas: "Sophie a identifié ses parties prenantes : producteurs locaux (influence forte, impact fort), consommateurs urbains (influence moyenne, impact fort), mairies (influence moyenne, impact moyen), associations environnementales (influence faible, impact moyen), investisseurs (influence forte, impact faible). Pour chacune, elle a noté les actions à mener : contacter la mairie pour un partenariat, rencontrer des associations pour des recommandations.",
+      conseils: [
+        "Ne vous limitez pas aux parties prenantes évidentes",
+        "Impliquez tôt les parties prenantes à forte influence",
+        "Révisez régulièrement votre cartographie : de nouvelles parties prenantes peuvent apparaître",
+        "Pour chaque partie prenante, pensez à ce que vous pouvez lui offrir en retour"
+      ],
+      keyConcepts: [
+      { term: "Partie prenante", definition: "Tout individu, groupe ou organisation qui peut affecter ou être affecté par votre projet." },
+      { term: "Matrice d'influence/impact", definition: "Un outil pour évaluer et visualiser le pouvoir et l'intérêt de chaque partie prenante." },
+      { term: "Engagement des parties prenantes", definition: "L'ensemble des actions pour communiquer, consulter et collaborer avec vos parties prenantes." }
     ],
-    estimatedMinutes: 85,
-    subSections: [
+      estimatedMinutes: 45,
+      subSections: [
       {
-        key: 'parties_prenantes_directes', label: "Parties prenantes directes", objective: "Identifier les acteurs directement liés à votre projet",
-        whyImportant: "Vos parties prenantes directes sont vos premiers alliés. Leur satisfaction est essentielle à votre réussite.",
-        tips: ['Listez : clients, équipe, fournisseurs, partenaires, investisseurs', "Pour chacun, notez leurs attentes et leur influence", "Hiérarchisez-les par ordre d'importance"],
-        examples: ["Clients : attendent un service fiable. Équipe : attend un salaire et du sens. Fournisseurs : attendent des paiements réguliers."],
+        key: "matrice_parties_prenantes",
+        label: "Matrice des parties prenantes",
+        objective: "Cartographier vos parties prenantes avec leur influence et leur impact",
+        whyImportant: "Une cartographie visuelle vous aide à prioriser vos actions auprès de chaque partie prenante.",
+        tips: [
+        "Commencez par lister TOUTES les parties prenantes possibles",
+        "Évaluez objectivement leur influence (1-5) et leur impact (1-5)",
+        "Ne sous-estimez pas les parties prenantes à faible influence mais fort impact"
+      ],
         guidedQuestions: [
-          { question: "Qui sont vos parties prenantes directes ?", placeholder: "ex: clients, équipe, fournisseurs, partenaires, investisseurs", type: 'textarea' },
-          { question: "Quelles sont leurs attentes principales ?", placeholder: "Partie prenante A : attentes...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
+            { question: "Identifiez et évaluez vos parties prenantes", hint: "Ajoutez chaque partie prenante avec son nom, son influence (1-5), son impact (1-5), les effets sur votre projet et les actions à entreprendre.", type: "stakeholder_matrix", key: "stakeholder_matrix_data" }
+          ],
+        estimatedMinutes: 30
       },
       {
-        key: 'parties_prenantes_indirectes', label: "Parties prenantes indirectes", objective: "Identifier les acteurs indirectement concernés",
-        whyImportant: "Négliger les parties prenantes indirectes peut créer des oppositions imprévues qui freinent votre projet.",
-        tips: ['Pensez : collectivités locales, associations, riverains, médias', "Certaines parties prenantes indirectes peuvent devenir des alliés précieux", "Anticipez leurs préoccupations"],
-        examples: ["Mairie : attend des retombées économiques locales. Association environnementale : attend un engagement écologique."],
+        key: "plan_engagement",
+        label: "Plan d'engagement",
+        objective: "Planifier vos actions pour chaque partie prenante identifiée",
+        whyImportant: "Un plan d'engagement concret transforme votre analyse en actions. Sans plan, la cartographie reste théorique.",
+        tips: [
+        "Priorisez les parties prenantes à forte influence et fort impact",
+        "Pour chaque action, définissez un responsable et une échéance",
+        "Prévoyez une communication adaptée à chaque partie prenante"
+      ],
         guidedQuestions: [
-          { question: "Qui sont vos parties prenantes indirectes ?", placeholder: "ex: mairie, associations, riverains...", type: 'textarea' },
-          { question: "Quelles peuvent être leurs préoccupations vis-à-vis de votre projet ?", placeholder: "Préoccupations...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'influence_interet', label: "Influence et intérêt", objective: "Évaluer le niveau d'influence et d'intérêt de chaque partie prenante",
-        whyImportant: "Cette analyse vous permet de prioriser vos efforts de communication et de gestion des relations.",
-        tips: ['Utilisez une matrice influence/intérêt', 'Les parties prenantes à forte influence et fort intérêt sont à gérer en priorité', "Adaptez votre communication à chaque groupe"],
-        examples: ["Les investisseurs ont une forte influence et un fort intérêt : à impliquer étroitement. Les riverains ont un faible intérêt mais peuvent avoir une influence via des recours."],
-        guidedQuestions: [
-          { question: "Quelles parties prenantes ont le plus d'influence sur votre projet ?", placeholder: "Influence forte...", type: 'textarea' },
-          { question: "Quelles parties prenantes ont le plus d'intérêt dans votre projet ?", placeholder: "Intérêt fort...", type: 'textarea' },
-          { question: "Comment allez-vous gérer les relations avec chaque groupe ?", placeholder: "Stratégie de gestion...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
-      },
-      {
-        key: 'carte_influence', label: "Carte d'influence", objective: "Visualiser qui a du pouvoir sur votre projet",
-        whyImportant: "Comprendre les dynamiques d'influence vous permet d'anticiper les soutiens et les oppositions.",
-        tips: ["Placez chaque partie prenante sur une échelle d'influence", "Identifiez les relations d'influence entre parties prenantes", "Repérez les 'influenceurs cachés' souvent négligés"],
-        examples: ["Les investisseurs ont une influence décisionnelle. Les médias ont une influence d'opinion. Les associations ont une influence de réputation."],
-        guidedQuestions: [
-          { question: "Qui a le plus de pouvoir de décision sur votre projet ?", placeholder: "Décideurs clés...", type: 'textarea' },
-          { question: "Qui a du pouvoir d'influence sans décider directement ?", placeholder: "Influenceurs...", type: 'textarea' },
-          { question: "Comment ces influences s'exercent-elles ?", placeholder: "ex: décision, opinion, régulation...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'carte_interet', label: "Carte d'intérêt", objective: "Visualiser le niveau d'intérêt de chaque partie prenante",
-        whyImportant: "L'intérêt détermine l'engagement. Une partie prenante intéressée sera proactive, une autre devra être stimulée.",
-        tips: ["L'intérêt peut être positif (soutien) ou négatif (opposition)", "Un intérêt faible n'est pas un problème si l'influence est faible", "Un intérêt négatif nécessite une stratégie de gestion spécifique"],
-        examples: ["Les clients ont un intérêt fort et positif. Un concurrent a un intérêt fort mais négatif. La mairie peut avoir un intérêt modéré."],
-        guidedQuestions: [
-          { question: "Quelles parties prenantes ont le plus d'intérêt pour votre projet ?", placeholder: "Intérêt fort...", type: 'textarea' },
-          { question: "Y a-t-il des parties prenantes qui pourraient s'opposer à votre projet ?", placeholder: "Oppositions potentielles...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'matrice_pouvoir', label: "Matrice pouvoir-intérêt", objective: "Croiser pouvoir et intérêt pour prioriser vos actions",
-        whyImportant: "La matrice pouvoir-intérêt est l'outil de référence pour gérer ses parties prenantes de façon stratégique.",
-        tips: ["Quadrant 1 (fort pouvoir, fort intérêt) : à impliquer étroitement", "Quadrant 2 (fort pouvoir, faible intérêt) : à tenir satisfaits", "Quadrant 3 (faible pouvoir, fort intérêt) : à informer", "Quadrant 4 (faible pouvoir, faible intérêt) : à surveiller"],
-        examples: ["Investisseurs : Q1 → implication régulière. Mairie : Q2 → reporting trimestriel. Clients : Q3 → newsletter. Riverains : Q4 → information ponctuelle."],
-        guidedQuestions: [
-          { question: "Classez vos parties prenantes dans la matrice pouvoir-intérêt", placeholder: "Q1 (fort pouvoir, fort intérêt) : ... Q2 : ... Q3 : ... Q4 : ...", type: 'textarea' },
-          { question: "Quelle stratégie de gestion pour chaque quadrant ?", placeholder: "Q1 : impliquer, Q2 : satisfaire, Q3 : informer, Q4 : surveiller", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
-      },
+            { question: "Quelles actions allez-vous mener pour chaque partie prenante ?", placeholder: "Pour [partie prenante], je vais...", type: "textarea" },
+            { question: "Quelles sont les 3 actions prioritaires à réaliser cette semaine ?", placeholder: "1. ... 2. ... 3. ...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai identifié mes parties prenantes directes et indirectes", "J'ai créé une carte d'influence", "J'ai créé une carte d'intérêt", "J'ai construit ma matrice pouvoir-intérêt", "J'ai une stratégie pour chaque quadrant"],
-  },
-
-  8: {
-    stepNumber: 8,
-    title: "Segments de clientèle",
-    objective: "Définir précisément qui sont vos clients, les segmenter par profils et identifier vos premiers adoptants.",
-    whyImportant: "Viser 'tout le monde' est l'erreur la plus fréquente. Des segments clients bien définis permettent un marketing ciblé et une offre adaptée.",
-    keyConcepts: [
-      { term: "Segmentation", definition: "Division du marché en groupes homogènes de clients partageant des caractéristiques et besoins similaires." },
-      { term: "Early adopters", definition: "Premiers utilisateurs, prêts à essayer votre produit malgré ses imperfections." },
-      { term: "Marché cible", definition: "Le segment de clients que vous décidez de servir en priorité." },
+      checklist: [
+        "J'ai identifié toutes les parties prenantes de mon projet",
+        "J'ai évalué leur influence et leur impact",
+        "J'ai noté les effets de chaque partie prenante sur mon projet",
+        "J'ai défini des actions concrètes pour chaque partie prenante"
+      ],
+      resources: [
+        { title: "Guide de cartographie des parties prenantes", type: "article" },
+        { title: "Comment construire une matrice d'influence/impact", type: "article" }
+      ],
+    },
+    8: {
+      stepNumber: 8,
+      title: "Segments de clientèle",
+      objective: "Identifier et décrire les différents segments de clients que vous allez servir, en comprenant leurs besoins spécifiques.",
+      whyImportant: "Vous ne pouvez pas vendre à tout le monde. Une segmentation précise vous permet d'adapter votre offre, votre communication et votre expérience client à chaque groupe, maximisant ainsi votre efficacité commerciale.",
+      avantDeLire: {
+        description: "Un segment de clientèle est un groupe de personnes ou d'organisations qui partagent des besoins, des comportements ou des caractéristiques communes. Dans cette étape, vous allez créer des fiches pour chaque segment, détaillant leurs difficultés (pains), leurs bénéfices recherchés (gains) et leurs tâches à accomplir (jobs).",
+        resultatsAttendus: "Des fiches segment client complètes avec nom, description, pains, gains, jobs et archétype pour chaque segment identifié.",
+      },
+      etudeDeCas: "Sophie a identifié 3 segments : (1) Consommateurs urbains responsables : veulent acheter local mais manquent de temps et d'information, (2) Producteurs locaux : cherchent à commercialiser leurs produits sans intermédiaires coûteux, (3) Restaurants et cantines : veulent sourcer des produits locaux de façon fiable. Chaque segment a des pains, gains et jobs spécifiques.",
+      conseils: [
+        "Commencez par 2-3 segments maximum, vous pourrez en ajouter plus tard",
+        "Un segment est valide si vous pouvez répondre à ses besoins de façon unique",
+        "Évitez les segments trop larges (« tout le monde ») ou trop étroits",
+        "Validez vos segments auprès de clients potentiels réels"
+      ],
+      keyConcepts: [
+      { term: "Segment de clientèle", definition: "Un groupe distinct de clients partageant des besoins, comportements ou caractéristiques communes." },
+      { term: "Pains", definition: "Les difficultés, frustrations et obstacles rencontrés par votre segment cible." },
+      { term: "Gains", definition: "Les bénéfices, résultats et avantages recherchés par votre segment cible." },
+      { term: "Jobs", definition: "Les tâches fonctionnelles, sociales ou émotionnelles que votre segment cherche à accomplir." }
     ],
-    estimatedMinutes: 55,
-    subSections: [
+      estimatedMinutes: 50,
+      subSections: [
       {
-        key: 'segments_principaux', label: "Segments de clientèle principaux", objective: "Identifier vos 2-3 segments de clientèle principaux",
-        whyImportant: "Chaque segment a des besoins spécifiques. Les traiter séparément permet une offre plus pertinente.",
-        tips: ['Segmentez par : âge, revenu, localisation, comportement, besoin', "Un bon segment est : identifiable, accessible, rentable, suffisamment grand", "Commencez par 2-3 segments maximum"],
-        examples: ["Segment 1 : jeunes actifs urbains (25-35 ans) sensibles à l'écologie. Segment 2 : familles (35-50 ans) cherchant des produits sains."],
+        key: "segments_clients",
+        label: "Fiches segments client",
+        objective: "Créer des fiches détaillées pour chaque segment de clientèle identifié",
+        whyImportant: "Des fiches segment bien remplies sont la base de votre proposition de valeur et de votre stratégie marketing.",
+        tips: [
+        "Un segment = une fiche",
+        "Soyez précis dans la description : âge, profession, situation, comportements",
+        "Les pains et gains doivent être spécifiques, pas génériques"
+      ],
         guidedQuestions: [
-          { question: "Quels sont vos 2 à 3 segments de clientèle principaux ?", placeholder: "Segment 1 : ... Segment 2 : ... Segment 3 : ...", type: 'textarea' },
-          { question: "Quelles sont les caractéristiques distinctives de chaque segment ?", placeholder: "ex: âge, revenu, comportement d'achat...", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
+            { question: "Créez vos fiches segments client", hint: "Ajoutez un segment par fiche. Pour chaque segment, décrivez le nom, la description, les pains (difficultés), les gains (bénéfices recherchés), les jobs (tâches à accomplir) et l'archétype.", type: "customer_segment", key: "customer_segments_data" }
+          ],
+        estimatedMinutes: 35
       },
       {
-        key: 'profils_acheteurs', label: "Profils d'acheteurs", objective: "Détailler le profil type de chaque segment",
-        whyImportant: "Un profil d'acheteur détaillé rend votre client réel. Vous pouvez alors concevoir une offre qui lui parle vraiment.",
-        tips: ["Donnez un prénom à chaque profil pour le rendre concret", "Décrivez son quotidien, ses frustrations, ses aspirations", "Un bon profil est basé sur des observations réelles, pas des suppositions"],
-        examples: ["Sophie, 28 ans, chargée de marketing à Paris, cherche des produits locaux mais n'a pas le temps d'aller au marché."],
+        key: "priorisation_segments",
+        label: "Priorisation des segments",
+        objective: "Prioriser les segments sur lesquels concentrer vos efforts",
+        whyImportant: "Vous n'avez pas les ressources pour servir tous les segments en même temps. La priorisation est essentielle.",
+        tips: [
+        "Segment le plus porteur = problème le plus urgent + facilité d'accès",
+        "Un petit segment très motivé vaut mieux qu'un grand segment indifférent",
+        "Vous pouvez changer de priorité plus tard"
+      ],
         guidedQuestions: [
-          { question: "Décrivez le profil type de votre client principal (âge, profession, mode de vie)", placeholder: "Profil client...", type: 'textarea' },
-          { question: "Quels sont ses objectifs et ses frustrations dans sa vie quotidienne ?", placeholder: "Objectifs : ... Frustrations : ...", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
-      },
-      {
-        key: 'early_adopters', label: "Early adopters", objective: "Identifier vos premiers utilisateurs, prêts à vous faire confiance",
-        whyImportant: "Les early adopters sont vos meilleurs alliés : ils testent, donnent leur avis et font le bouche-à-oreille.",
-        tips: ["Les early adopters sont souvent des passionnés du secteur", "Ils acceptent les imperfections si la vision est forte", "Identifiez où ils se rassemblent (forums, groupes, événements)"],
-        examples: ["Les early adopters de notre plateforme : les producteurs locaux déjà engagés dans des AMAP et les consommateurs membres de groupes Facebook 'locavores'."],
-        guidedQuestions: [
-          { question: "Qui seront vos 10 premiers clients idéaux ?", placeholder: "Profil des 10 premiers clients...", type: 'textarea' },
-          { question: "Où pouvez-vous les trouver concrètement ?", placeholder: "ex: groupes Facebook, forums, salons, associations...", type: 'textarea' },
-          { question: "Comment allez-vous les convaincre d'essayer votre solution ?", placeholder: "Stratégie d'acquisition initiale...", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
-      },
-      {
-        key: 'marche_cible_v2', label: "Marché cible prioritaire", objective: "Choisir le segment à attaquer en premier",
-        whyImportant: "Concentrer vos ressources limitées sur un seul segment maximise vos chances de réussite au démarrage.",
-        tips: ["Choisissez le segment le plus accessible et le plus rentable", "Un petit segment conquis vaut mieux qu'un grand segment effleuré", "Vous pourrez vous étendre à d'autres segments plus tard"],
-        examples: ["Cible prioritaire : les jeunes actifs urbains (25-35 ans) car ils sont déjà sensibles à l'écologie, utilisent le digital et ont un pouvoir d'achat suffisant."],
-        guidedQuestions: [
-          { question: "Quel segment ciblez-vous en priorité ? Pourquoi ?", placeholder: "Segment prioritaire et justification...", type: 'textarea' },
-          { question: "Quelle est la taille estimée de ce segment ?", placeholder: "ex: 500 000 personnes en France", type: 'text' },
-        ],
-        estimatedMinutes: 13,
-      },
+            { question: "Quel est votre segment prioritaire et pourquoi ?", placeholder: "Mon segment prioritaire est... car...", type: "textarea" },
+            { question: "Quel segment allez-vous adresser en second ?", placeholder: "En second, j'adresserai...", type: "text" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai identifié 2-3 segments de clientèle", "J'ai détaillé le profil de mes clients", "J'ai identifié mes early adopters", "J'ai choisi mon marché cible prioritaire"],
-  },
-
-  9: {
-    stepNumber: 9,
-    title: "Proposition de valeur",
-    objective: "Définir la valeur unique que vous apportez à vos clients, sur les plans fonctionnel, émotionnel et social.",
-    whyImportant: "Votre proposition de valeur est la raison pour laquelle un client vous choisit plutôt qu'un concurrent. C'est le cœur de votre avantage concurrentiel.",
-    keyConcepts: [
-      { term: "Valeur fonctionnelle", definition: "L'utilité concrète de votre produit : il fait gagner du temps, de l'argent, ou résout un problème spécifique." },
-      { term: "Valeur émotionnelle", definition: "Le sentiment positif que votre produit procure : plaisir, fierté, sérénité." },
-      { term: "Valeur sociale", definition: "L'impact social ou environnemental positif de votre produit, valorisé par la communauté." },
+      checklist: [
+        "J'ai identifié au moins 2 segments de clientèle",
+        "J'ai rempli une fiche détaillée pour chaque segment",
+        "J'ai listé les pains, gains et jobs de chaque segment",
+        "J'ai priorisé mes segments"
+      ],
+      resources: [
+        { title: "Guide complet de la segmentation client", type: "article" },
+        { title: "Comment créer des buyer personas", type: "article" }
+      ],
+    },
+    9: {
+      stepNumber: 9,
+      title: "Canevas de propositions de valeur",
+      objective: "Concevoir une proposition de valeur pour chaque segment de clientèle, en détaillant comment vos produits et services créent de la valeur.",
+      whyImportant: "La proposition de valeur est le cœur de votre business model. C'est la raison pour laquelle un client vous choisit plutôt qu'un concurrent. Une proposition de valeur forte est le meilleur investissement marketing que vous puissiez faire.",
+      avantDeLire: {
+        description: "Le canevas de proposition de valeur (Value Proposition Canvas) est un outil qui vous aide à concevoir une offre parfaitement adaptée à votre segment client. Il se compose de deux parties : le profil client (pains, gains, jobs) que vous avez déjà créé, et la carte de valeur (produits et services, soulagement des douleurs, créateurs de gains).",
+        resultatsAttendus: "Un canevas de proposition de valeur rempli pour votre segment prioritaire, avec les produits/services, le soulagement des douleurs, les créateurs de gains et les valeurs ajoutées environnementale et sociale.",
+      },
+      etudeDeCas: "Pour son segment prioritaire (consommateurs urbains), Sophie a conçu : Produits (plateforme web + app mobile), Soulagement des douleurs (gain de temps, information centralisée, livraison flexible), Créateurs de gains (produits frais, traçabilité, impact local mesuré). Elle ajoute la valeur environnementale (réduction du gaspillage) et sociale (soutien aux producteurs locaux).",
+      conseils: [
+        "Une proposition de valeur par segment de clientèle",
+        "Assurez-vous que chaque élément de votre offre répond à un pain ou un gain spécifique",
+        "Soyez concret : évitez les formulations vagues comme « solution innovante »",
+        "Testez votre proposition de valeur auprès de vrais clients potentiels"
+      ],
+      keyConcepts: [
+      { term: "Proposition de valeur", definition: "L'ensemble des produits et services qui créent de la valeur pour un segment de clientèle spécifique." },
+      { term: "Soulagement des douleurs", definition: "Comment vos produits et services atténuent les difficultés spécifiques de vos clients." },
+      { term: "Créateurs de gains", definition: "Comment vos produits et services produisent les bénéfices attendus par vos clients." }
     ],
-    estimatedMinutes: 50,
-    subSections: [
+      estimatedMinutes: 50,
+      subSections: [
       {
-        key: 'valeur_fonctionnelle', label: "Valeur fonctionnelle", objective: "Définir l'utilité concrète de votre solution",
-        whyImportant: "La valeur fonctionnelle est le minimum attendu par vos clients. Sans elle, rien d'autre ne compte.",
-        tips: ["Listez les bénéfices concrets : gain de temps, d'argent, simplicité, qualité", "Quantifiez la valeur : 'fait gagner 2h par semaine' plutôt que 'fait gagner du temps'", "Comparez à l'existant : en quoi c'est mieux ?"],
-        examples: ["Notre plateforme fait gagner 30 minutes par jour aux consommateurs en regroupant tous les producteurs locaux au même endroit."],
+        key: "canevas_valeur",
+        label: "Canevas de proposition de valeur",
+        objective: "Remplir le canevas de proposition de valeur pour votre segment prioritaire",
+        whyImportant: "Le canevas vous force à être précis sur la valeur que vous créez et à vérifier l'adéquation avec les besoins de votre segment.",
+        tips: [
+        "Commencez par lister vos produits et services concrets",
+        "Pour chaque pain identifié, demandez-vous comment vous le soulagez",
+        "Pour chaque gain, demandez-vous comment vous le créez",
+        "Les valeurs environnementale et sociale sont vos différenciateurs"
+      ],
         guidedQuestions: [
-          { question: "Quels bénéfices concrets apportez-vous à vos clients ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quel problème spécifique résolvez-vous mieux que les alternatives ?", placeholder: "Notre avantage fonctionnel...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Remplissez le canevas de proposition de valeur", hint: "Détaillez vos produits et services, comment ils soulagent les douleurs et créent des gains pour votre segment prioritaire.", type: "value_proposition", key: "value_proposition_data" }
+          ],
+        estimatedMinutes: 35
       },
       {
-        key: 'valeur_emotionnelle', label: "Valeur émotionnelle", objective: "Identifier l'émotion positive que votre produit procure",
-        whyImportant: "Les gens achètent avec leurs émotions et justifient avec leur raison. La valeur émotionnelle est souvent le vrai moteur d'achat.",
-        tips: ["Quel sentiment votre client a-t-il en utilisant votre produit ?", "Fierté, soulagement, plaisir, sécurité, appartenance ?", "Racontez une histoire qui évoque cette émotion"],
-        examples: ["Nos clients ressentent de la fierté de contribuer à une alimentation plus durable, et de la sérénité de savoir ce qu'ils mangent."],
+        key: "adéquation",
+        label: "Vérification de l'adéquation",
+        objective: "Vérifier que votre proposition de valeur répond bien aux besoins de votre segment",
+        whyImportant: "Une proposition de valeur qui ne correspond pas aux besoins réels de vos clients est vouée à l'échec, quel que soit son intérêt intrinsèque.",
+        tips: [
+        "Reprenez les pains et gains de votre segment",
+        "Vérifiez que chaque élément de votre offre répond à au moins un besoin",
+        "Identifiez les besoins non couverts par votre offre actuelle"
+      ],
         guidedQuestions: [
-          { question: "Quelle émotion vos clients ressentiront-ils en utilisant votre solution ?", placeholder: "ex: fierté, sérénité, plaisir...", type: 'text' },
-          { question: "Comment renforcez-vous cette émotion dans votre expérience client ?", placeholder: "ex: storytelling, design, service personnalisé...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'valeur_sociale', label: "Valeur sociale et environnementale", objective: "Définir l'impact positif de votre projet",
-        whyImportant: "De plus en plus de clients choisissent des marques qui ont un impact positif. C'est un puissant facteur de différenciation.",
-        tips: ["Identifiez votre contribution sociale concrète", "Mesurez votre impact environnemental", "Communiquez de façon transparente sur votre impact"],
-        examples: ["Chaque commande permet de soutenir un producteur local. Nos clients font partie d'une communauté qui agit pour la planète."],
-        guidedQuestions: [
-          { question: "Quel est l'impact social positif de votre projet ?", placeholder: "Impact social...", type: 'textarea' },
-          { question: "Quel est l'impact environnemental positif ?", placeholder: "Impact environnemental...", type: 'textarea' },
-          { question: "Comment communiquerez-vous sur ces impacts ?", placeholder: "ex: rapport d'impact, labels, certifications...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'differenciation', label: "Différenciation", objective: "Identifier ce qui vous rend unique par rapport à la concurrence",
-        whyImportant: "Sans différenciation claire, vous êtes un concurrent parmi d'autres. Votre différence est votre raison d'être choisie.",
-        tips: ["Votre différence doit être perceptible par le client", "Un bon positionnement se résume en une phrase", "Évitez les différences trop faciles à copier"],
-        examples: ["Nous sommes la seule plateforme qui garantit l'origine locale à 100% et qui reverse 90% du prix au producteur."],
-        guidedQuestions: [
-          { question: "Qu'est-ce qui vous rend vraiment différent de vos concurrents ?", placeholder: "Notre différence fondamentale...", type: 'textarea' },
-          { question: "Pourquoi un client vous choisirait-il plutôt qu'un concurrent ?", placeholder: "Raison du choix...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
+            { question: "Votre proposition de valeur répond-elle aux besoins de votre segment ?", placeholder: "Oui, car... / Non, car...", type: "textarea" },
+            { question: "Quels besoins ne sont pas encore couverts par votre offre ?", placeholder: "Les besoins non couverts sont...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai défini ma valeur fonctionnelle", "J'ai identifié la valeur émotionnelle", "J'ai défini ma valeur sociale/environnementale", "J'ai formalisé ma différenciation"],
-  },
-
-  10: {
-    stepNumber: 10,
-    title: "Tester la proposition de valeur",
-    objective: "Confronter votre proposition de valeur à la réalité du terrain en recueillant les retours de vrais clients.",
-    whyImportant: "Une proposition de valeur qui n'a pas été testée n'est qu'une hypothèse. Les tests clients révèlent ce qui marche vraiment et ce qui doit être ajusté.",
-    keyConcepts: [
-      { term: "Test client", definition: "Mise en situation réelle de votre proposition de valeur auprès de clients potentiels." },
-      { term: "Feedback", definition: "Retour d'expérience du client sur votre proposition de valeur." },
-      { term: "Ajustement", definition: "Modification de votre offre basée sur les retours terrain." },
+      checklist: [
+        "J'ai rempli le canevas de proposition de valeur pour mon segment prioritaire",
+        "J'ai listé mes produits et services",
+        "J'ai décrit comment je soulage les douleurs",
+        "J'ai décrit comment je crée des gains",
+        "J'ai intégré les valeurs environnementale et sociale"
+      ],
+      resources: [
+        { title: "Guide du Value Proposition Canvas", type: "article" },
+        { title: "Exemples de propositions de valeur inspirantes", type: "article" }
+      ],
+    },
+    10: {
+      stepNumber: 10,
+      title: "Tester la proposition de valeur",
+      objective: "Concevoir et réaliser des tests pour valider (ou invalider) votre proposition de valeur auprès de vrais clients potentiels.",
+      whyImportant: "Tester tôt et souvent est le secret des projets qui réussissent. Un test bien conçu vous évite d'investir du temps et de l'argent dans une solution que personne ne veut. Mieux vaut échouer rapidement et à moindre coût.",
+      avantDeLire: {
+        description: "Le test de la proposition de valeur est une étape cruciale. Vous allez concevoir des fiches de découverte pour structurer vos entretiens, observations ou sondages. L'objectif est de collecter des preuves que votre proposition de valeur répond réellement aux besoins identifiés.",
+        resultatsAttendus: "Des fiches de découverte remplies pour chaque test réalisé, avec les hypothèses testées, les résultats clés, les insights et les actions à mener.",
+      },
+      etudeDeCas: "Sophie a créé une fiche de découverte pour tester l'hypothèse : « Les consommateurs urbains sont prêts à utiliser une plateforme pour acheter des produits locaux. » Elle a réalisé 5 entretiens. Résultat : 4 personnes sur 5 sont très intéressées. Insight : le prix est un facteur clé. Action : inclure une comparaison de prix dans la plateforme.",
+      conseils: [
+        "Testez une hypothèse à la fois pour des résultats clairs",
+        "Préparez un guide d'entretien mais restez flexible",
+        "Enregistrez les entretiens (avec accord) pour ne rien manquer",
+        "Cherchez à être infirmé : si vous cherchez à être confirmé, vous biaiserez vos résultats",
+        "Minimum 5 entretiens par segment pour commencer à voir des tendances"
+      ],
+      keyConcepts: [
+      { term: "Hypothèse", definition: "Une affirmation testable sur votre proposition de valeur, vos clients ou votre marché." },
+      { term: "Fiche de découverte", definition: "Un outil structuré pour documenter chaque test : hypothèse, méthode, résultats, insights et actions." },
+      { term: "Validation client", definition: "Le processus de collecte de preuves que votre proposition de valeur répond à un vrai besoin." }
     ],
-    estimatedMinutes: 60,
-    subSections: [
+      estimatedMinutes: 55,
+      subSections: [
       {
-        key: 'tests_clients', label: "Tests clients", objective: "Organiser des sessions de test de votre proposition de valeur",
-        whyImportant: "Un test bien conçu vous donne des informations fiables pour améliorer votre offre avant le lancement.",
-        tips: ["Testez auprès de 5 à 10 personnes de votre segment cible", "Préparez un script pour chaque test", "Observez les réactions, pas seulement les réponses"],
-        examples: ["Test : présenter une maquette de l'application à 10 utilisateurs cibles et observer leur navigation. Questions : 'Que cherchez-vous ?', 'Qu'est-ce qui vous paraît clair ou confus ?'"],
+        key: "hypotheses_test",
+        label: "Hypothèses à tester",
+        objective: "Formuler les hypothèses clés que vous devez valider",
+        whyImportant: "Sans hypothèses claires, vos tests n'auront pas de direction et vous ne saurez pas quoi conclure des résultats.",
+        tips: [
+        "Une hypothèse = une affirmation testable et falsifiable",
+        "Priorisez les hypothèses les plus risquées (celles dont dépend votre projet)",
+        "Formulez vos hypothèses simplement"
+      ],
+        examples: [
+        "« Les consommateurs urbains sont prêts à utiliser une plateforme pour acheter local »",
+        "« Les producteurs accepteront une commission de 15% sur les ventes »"
+      ],
         guidedQuestions: [
-          { question: "Comment allez-vous tester votre proposition de valeur ?", placeholder: "Méthode de test...", type: 'textarea' },
-          { question: "Auprès de combien de personnes allez-vous tester ?", placeholder: "ex: 10 à 15 personnes", type: 'text' },
-          { question: "Quel est votre script ou protocole de test ?", placeholder: "Déroulé du test...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
+            { question: "Quelles sont les hypothèses les plus importantes à tester ?", hint: "Priorisez les hypothèses sans lesquelles votre projet n'aurait pas de sens", placeholder: "Hypothèse 1 : ...", type: "textarea" },
+            { question: "Quelle est votre hypothèse la plus risquée ?", placeholder: "Mon hypothèse la plus risquée est...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'feedback_recolte', label: "Récolte des feedbacks", objective: "Collecter et organiser les retours des tests",
-        whyImportant: "Les feedbacks sont une mine d'or. Bien organisés, ils révèlent des tendances et des priorités d'amélioration.",
-        tips: ["Prenez des notes pendant chaque test", "Classez les feedbacks par thème", "Distinguez les problèmes bloquants des simples suggestions"],
-        examples: ["Feedback 1 : 'Je ne comprends pas comment fonctionne la livraison' → problème de clarté. Feedback 2 : 'J'aimerais pouvoir filtrer par distance' → suggestion d'amélioration."],
+        key: "fiches_decouverte",
+        label: "Fiches de découverte",
+        objective: "Créer et remplir des fiches de découverte pour chaque test",
+        whyImportant: "Les fiches de découverte structurent votre apprentissage et vous permettent de capitaliser sur chaque test réalisé.",
+        tips: [
+        "Une fiche = un test réalisé (entretien, observation ou sondage)",
+        "Soyez honnête dans les résultats : ne forcez pas les conclusions",
+        "Les insights sont vos interprétations : ce que vous en avez appris"
+      ],
         guidedQuestions: [
-          { question: "Quels sont les principaux retours que vous avez reçus ?", placeholder: "Retours positifs... Retours négatifs...", type: 'textarea' },
-          { question: "Quels sont les problèmes récurrents identifiés ?", placeholder: "Problèmes récurrents...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
+            { question: "Créez vos fiches de découverte pour tester vos hypothèses", hint: "Ajoutez une fiche par test. Précisez le type (entretien, observation, sondage), la date, la personne rencontrée, l'hypothèse testée, les résultats clés, les insights et les actions à mener.", type: "discovery_card", key: "discovery_cards_data" }
+          ],
+        estimatedMinutes: 30
       },
       {
-        key: 'ajustements', label: "Ajustements de la proposition de valeur", objective: "Modifier votre offre en fonction des retours clients",
-        whyImportant: "Un projet qui s'adapte aux retours terrain a bien plus de chances de réussir. La flexibilité est une force entrepreneuriale.",
-        tips: ["Priorisez les ajustements qui ont le plus d'impact perçu", "Ne changez pas tout : conservez ce qui fonctionne", "Testez à nouveau après ajustements"],
-        examples: ["Suite aux tests, nous avons simplifié le processus de commande de 5 à 3 étapes et ajouté un indicateur de distance clair."],
+        key: "synthese_apprentissages",
+        label: "Synthèse des apprentissages",
+        objective: "Tirer les enseignements de vos tests",
+        whyImportant: "Des tests sans synthèse sont une perte de temps. L'objectif est d'apprendre et d'ajuster votre projet.",
+        tips: [
+        "Qu'avez-vous appris de surprenant ?",
+        "Quelles hypothèses sont validées ? Lesquelles sont invalidées ?",
+        "Qu'allez-vous changer dans votre projet suite à ces tests ?"
+      ],
         guidedQuestions: [
-          { question: "Quels ajustements allez-vous apporter suite aux tests ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment allez-vous valider que ces ajustements sont les bons ?", placeholder: "ex: nouveau test, enquête de suivi...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
-      },
+            { question: "Qu'avez-vous appris de vos tests ?", placeholder: "J'ai appris que...", type: "textarea" },
+            { question: "Quelles hypothèses sont validées ou invalidées ?", placeholder: "Hypothèse [X] est validée car...", type: "textarea" },
+            { question: "Que devez-vous changer dans votre projet ?", placeholder: "Je dois changer...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai organisé des tests clients", "J'ai collecté les feedbacks", "J'ai analysé les retours", "J'ai défini les ajustements nécessaires"],
-  },
-
-  11: {
-    stepNumber: 11,
-    title: "Faire évoluer la proposition de valeur",
-    objective: "Savoir quand et comment faire pivoter votre proposition de valeur pour rester alignée avec les besoins du marché.",
-    whyImportant: "Parfois, les tests révèlent que votre proposition de valeur initiale n'est pas la bonne. Savoir pivoter est une compétence entrepreneuriale clé.",
-    keyConcepts: [
-      { term: "Pivot", definition: "Changement stratégique de votre proposition de valeur ou de votre modèle économique basé sur les apprentissages du terrain." },
-      { term: "Validation", definition: "Confirmation par des données que votre nouvelle proposition de valeur répond mieux aux besoins." },
-      { term: "Itération", definition: "Processus d'amélioration continue par cycles de test-apprentissage-ajustement." },
+      checklist: [
+        "J'ai formulé mes hypothèses clés",
+        "J'ai créé des fiches de découverte pour mes tests",
+        "J'ai réalisé au moins 3 entretiens ou observations",
+        "J'ai synthétisé mes apprentissages",
+        "J'ai identifié les ajustements à apporter à mon projet"
+      ],
+      resources: [
+        { title: "Guide des entretiens de validation client", type: "article" },
+        { title: "Modèle de fiche de découverte", type: "tool" }
+      ],
+    },
+    11: {
+      stepNumber: 11,
+      title: "Pivoter la proposition de valeur",
+      objective: "Analyser les résultats des tests et décider s'il faut ajuster (itérer) ou changer radicalement (pivoter) votre proposition de valeur.",
+      whyImportant: "Le pivot est une force, pas un échec. Les projets les plus réussis sont ceux qui savent s'adapter en fonction des retours du terrain. Pivoter au bon moment peut faire la différence entre le succès et l'échec.",
+      avantDeLire: {
+        description: "Après avoir testé votre proposition de valeur, vous avez des données. Parfois, elles confirment votre direction. Parfois, elles vous montrent que vous devez changer de cap. Dans cette étape, vous allez analyser ces résultats et décider si vous devez itérer (ajuster) ou pivoter (changer) votre proposition de valeur.",
+        resultatsAttendus: "Une décision claire : itérer ou pivoter, avec les ajustements concrets à apporter à votre proposition de valeur.",
+      },
+      etudeDeCas: "Les tests de Sophie ont montré que les consommateurs sont intéressés mais que la livraison est un frein majeur (coût et logistique). Elle a deux options : itérer (trouver un partenariat logistique) ou pivoter (passer d'une plateforme de vente à une plateforme de mise en relation sans transaction). Elle choisit d'itérer en intégrant un service de livraison mutualisée.",
+      conseils: [
+        "Ne pivotez pas après un seul test négatif : cherchez des tendances (3+ retours)",
+        "Un pivot n'est pas un abandon : c'est une adaptation basée sur des preuves",
+        "Documentez vos pivots : ils feront partie de votre histoire entrepreneuriale",
+        "Impliquez votre équipe dans la décision de pivoter"
+      ],
+      keyConcepts: [
+      { term: "Itération", definition: "Un ajustement mineur de votre proposition de valeur basé sur les retours clients, sans changer le cœur du projet." },
+      { term: "Pivot", definition: "Un changement fondamental dans votre proposition de valeur, votre cible ou votre modèle économique, basé sur les apprentissages du terrain." },
+      { term: "Décision data-driven", definition: "Une décision prise sur la base de données et de preuves, plutôt que sur l'intuition seule." }
     ],
-    estimatedMinutes: 45,
-    subSections: [
+      estimatedMinutes: 40,
+      subSections: [
       {
-        key: 'pivot_necessite', label: "Nécessité d'un pivot", objective: "Évaluer si un pivot est nécessaire",
-        whyImportant: "Pivoter trop tôt peut être une erreur, mais pivoter trop tard peut être fatal. Savoir reconnaître les signaux est crucial.",
-        tips: ["Signaux de pivot : feedbacks négatifs récurrents, faible engagement, aucun revenu", "Un pivot n'est pas un échec, c'est un apprentissage", "Différenciez un ajustement mineur d'un vrai pivot stratégique"],
-        examples: ["Après 20 entretiens, nous avons constaté que le problème principal n'était pas le prix mais le manque de confiance dans la qualité des produits. Nous avons donc pivoté vers un système de certification."],
+        key: "analyse_resultats",
+        label: "Analyse des résultats de test",
+        objective: "Analyser systématiquement les résultats de vos tests",
+        whyImportant: "Une analyse structurée vous permet de prendre une décision éclairée, sans vous laisser guider par vos émotions ou vos biais.",
+        tips: [
+        "Cherchez des tendances, pas des cas isolés",
+        "Distinguez les problèmes résolubles (itération) des problèmes de fond (pivot)",
+        "Sollicitez un regard extérieur pour éviter vos biais"
+      ],
         guidedQuestions: [
-          { question: "Votre proposition de valeur actuelle est-elle validée par le terrain ?", type: 'select', options: [{ label: 'Oui, pleinement', value: 'yes' }, { label: 'Partiellement, besoin d\'ajustements', value: 'partial' }, { label: 'Non, un pivot est nécessaire', value: 'pivot' }] },
-          { question: "Quels signaux vous indiquent qu'un changement est nécessaire ?", placeholder: "Signaux observés...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Quels sont les résultats globaux de vos tests ?", placeholder: "Dans l'ensemble, mes tests montrent que...", type: "textarea" },
+            { question: "Quels sont les problèmes majeurs identifiés par vos tests ?", placeholder: "Les problèmes majeurs sont...", type: "textarea" },
+            { question: "Ces problèmes sont-ils résolubles par des ajustements ou nécessitent-ils un changement plus profond ?", placeholder: "Je pense qu'il s'agit de... car...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'nouvelle_proposition', label: "Nouvelle proposition de valeur", objective: "Formuler une proposition de valeur révisée",
-        whyImportant: "Une nouvelle proposition de valeur doit intégrer les apprentissages du terrain tout en restant cohérente avec votre mission.",
-        tips: ["Repartez des besoins non satisfaits identifiés lors des tests", "Conservez ce qui fonctionne dans votre proposition actuelle", "Assurez-vous que la nouvelle proposition est testable rapidement"],
-        examples: ["Ancienne proposition : 'Des produits locaux livrés chez vous'. Nouvelle proposition : 'Des produits locaux certifiés qualité, avec traçabilité complète, livrés chez vous'."],
+        key: "decision_iterer_pivoter",
+        label: "Décision : itérer ou pivoter",
+        objective: "Prendre une décision claire sur la suite à donner à votre proposition de valeur",
+        whyImportant: "Une décision claire permet à toute votre équipe d'avancer dans la même direction. L'indécision est l'ennemi du progrès.",
+        tips: [
+        "Itérez si le cœur de votre proposition de valeur est validé",
+        "Pivotez si les tests montrent que votre hypothèse de base est invalide",
+        "Un pivot partiel (changer un aspect sans tout changer) est souvent la meilleure option"
+      ],
         guidedQuestions: [
-          { question: "Quelle est votre nouvelle proposition de valeur ?", placeholder: "Nouvelle proposition...", type: 'textarea' },
-          { question: "En quoi est-elle différente de la précédente ?", placeholder: "Différences clés...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Quelle est votre décision : itérer ou pivoter ?", hint: "Itérer = ajuster, Pivoter = changer fondamentalement", placeholder: "Je décide d'itérer/pivoter parce que...", type: "text" },
+            { question: "Quels sont les changements concrets à apporter ?", placeholder: "Je vais changer...", type: "textarea" },
+            { question: "Quelles sont les prochaines étapes après ce changement ?", placeholder: "Les prochaines étapes sont...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'validation_pivot', label: "Validation du pivot", objective: "Tester et valider votre nouvelle proposition de valeur",
-        whyImportant: "Un pivot non validé est juste une nouvelle hypothèse. Il doit être testé avec la même rigueur que la proposition initiale.",
-        tips: ["Testez rapidement avec un petit groupe", "Définissez des critères de succès clairs pour le pivot", "Soyez prêt à pivoter à nouveau si nécessaire"],
-        examples: ["Nous avons testé la nouvelle proposition auprès de 15 clients : 80% étaient intéressés contre 30% pour l'ancienne. Le pivot est validé."],
+        key: "plan_action_pivot",
+        label: "Plan d'action post-décision",
+        objective: "Planifier les actions concrètes suite à votre décision",
+        whyImportant: "Une décision sans plan d'action reste une intention. Un plan concret transforme votre décision en réalité.",
+        tips: [
+        "Définissez des actions immédiates (cette semaine)",
+        "Fixez une échéance pour la prochaine série de tests",
+        "Communiquez votre décision à vos parties prenantes"
+      ],
         guidedQuestions: [
-          { question: "Comment allez-vous tester votre nouvelle proposition ?", placeholder: "Plan de test...", type: 'textarea' },
-          { question: "Quels sont vos critères pour valider le pivot ?", placeholder: "ex: taux d'intérêt > 50%", type: 'text' },
-          { question: "Quel est votre plan si le pivot n'est pas validé ?", placeholder: "Plan B...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
-      },
+            { question: "Quelles sont les actions à réaliser cette semaine ?", placeholder: "Cette semaine, je vais...", type: "textarea" },
+            { question: "Quand ferez-vous de nouveaux tests pour valider les changements ?", placeholder: "Je ferai de nouveaux tests le...", type: "text" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai évalué la nécessité d'un pivot", "J'ai formulé une nouvelle proposition de valeur si nécessaire", "J'ai défini un plan de validation du pivot", "J'ai un plan B si le pivot échoue"],
-  },
-
-  12: {
-    stepNumber: 12,
-    title: "Relations clients, canaux et parcours client",
-    objective: "Définir comment vous allez interagir avec vos clients, par quels canaux, et cartographier leur parcours complet.",
-    whyImportant: "Le choix des canaux, du type de relation client et du parcours détermine votre budget marketing, votre image de marque et l'expérience client. Un parcours bien conçu augmente la conversion et la fidélisation.",
-    keyConcepts: [
-      { term: "Canal d'acquisition", definition: "Le moyen par lequel vous attirez de nouveaux clients (SEO, réseaux sociaux, bouche-à-oreille)." },
-      { term: "Parcours client", definition: "L'ensemble des étapes et interactions qu'un client traverse avec votre marque, de la découverte à la fidélisation." },
-      { term: "Point de contact", definition: "Chaque interaction entre le client et votre marque (site web, email, appel, réseau social)." },
+      checklist: [
+        "J'ai analysé les résultats de mes tests",
+        "J'ai pris une décision claire : itérer ou pivoter",
+        "J'ai listé les changements concrets à apporter",
+        "J'ai un plan d'action pour la semaine à venir"
+      ],
+      resources: [
+        { title: "Savoir pivoter au bon moment", type: "article" },
+        { title: "Exemples de pivots réussis", type: "article" }
+      ],
+    },
+    12: {
+      stepNumber: 12,
+      title: "Relations clients, canaux et parcours client",
+      objective: "Définir comment vous allez interagir avec vos clients (relations), comment vous allez les atteindre (canaux) et cartographier leur expérience complète (parcours client).",
+      whyImportant: "Une excellente proposition de valeur échouera si vos clients ne peuvent pas vous trouver, vous comprendre ou interagir facilement avec vous. La cohérence entre votre offre et votre expérience client est cruciale.",
+      avantDeLire: {
+        description: "Cette étape couvre trois piliers de votre relation client : (1) Les relations clients : comment vous interagissez avec chaque segment (acquisition, fidélisation, service), (2) Les canaux : comment vous atteignez vos clients (site web, magasin, réseau de partenaires), (3) Le parcours client : l'expérience complète de vos clients, de la découverte à l'après-vente.",
+        resultatsAttendus: "Une stratégie de relation client définie, les canaux de distribution identifiés et une cartographie du parcours client.",
+      },
+      etudeDeCas: "Sophie a défini : Relations clients (acquisition via réseaux sociaux et bouche-à-oreille, fidélisation via newsletter et programme de parrainage, service client via chat intégré), Canaux (plateforme web, application mobile, points de retrait chez les producteurs), Parcours client (découverte via Instagram, inscription sur la plateforme, première commande, livraison ou retrait, évaluation et partage).",
+      conseils: [
+        "Adaptez vos canaux à vos segments : vos clients sont-ils sur les réseaux sociaux, en magasin, ou les deux ?",
+        "Un parcours client simple et fluide est un avantage concurrentiel majeur",
+        "Testez vous-même le parcours client comme si vous étiez un client",
+        "Recueillez des feedbacks à chaque étape du parcours pour l'améliorer"
+      ],
+      keyConcepts: [
+      { term: "Relation client", definition: "La stratégie d'interaction avec vos clients : acquisition, fidélisation, service et communauté." },
+      { term: "Canaux de distribution", definition: "Les moyens par lesquels vous atteignez et servez vos clients (physiques, numériques, partenaires)." },
+      { term: "Parcours client", definition: "L'ensemble des étapes et points de contact entre un client et votre entreprise, de la découverte à l'après-vente." }
     ],
-    estimatedMinutes: 100,
-    subSections: [
+      estimatedMinutes: 45,
+      subSections: [
       {
-        key: 'type_relation', label: "Type de relation client", objective: "Définir la nature de la relation avec vos clients",
-        whyImportant: "Le type de relation impacte votre image, la fidélisation et vos coûts de service client.",
-        tips: ["Relation personnalisée = coûteuse mais forte fidélisation", "Relation automatisée = économique mais moins chaleureuse", "Relation communautaire = engageante mais nécessite de l'animation"],
-        examples: ["Nous optons pour une relation personnalisée avec un suivi dédié pour les producteurs (compte clé) et une relation automatisée pour les consommateurs (chatbot, FAQ)."],
+        key: "relations_clients",
+        label: "Relations clients",
+        objective: "Définir votre stratégie de relation client pour chaque segment",
+        whyImportant: "La relation client est un facteur clé de différenciation et de fidélisation. Une bonne relation transforme un client satisfait en ambassadeur.",
+        tips: [
+        "Distinguez acquisition, fidélisation et service client",
+        "Choisissez des canaux de relation cohérents avec votre marque",
+        "Automatisez ce qui peut l'être, mais gardez une touche humaine"
+      ],
+        examples: [
+        "Acquisition : réseaux sociaux + bouche-à-oreille",
+        "Fidélisation : newsletter hebdomadaire + programme de parrainage",
+        "Service : chat en ligne + email"
+      ],
         guidedQuestions: [
-          { question: "Quel type de relation souhaitez-vous avec vos clients ?", type: 'select', options: [{ label: 'Personnalisée (suivi dédié)', value: 'personalized' }, { label: 'Automatisée (self-service)', value: 'automated' }, { label: 'Communautaire (entraide entre clients)', value: 'community' }, { label: 'Mixte', value: 'mixed' }] },
-          { question: "Pourquoi ce choix correspond à votre proposition de valeur ?", placeholder: "Justification...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Comment allez-vous acquérir vos premiers clients ?", placeholder: "J'acquerrai mes clients via...", type: "textarea" },
+            { question: "Comment allez-vous les fidéliser ?", placeholder: "Je fidéliserai mes clients en...", type: "textarea" },
+            { question: "Comment assurerez-vous le service client ?", placeholder: "Le service client sera assuré par...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'canaux_acquisition', label: "Canaux d'acquisition", objective: "Identifier comment vous allez attirer de nouveaux clients",
-        whyImportant: "Choisir les bons canaux d'acquisition est essentiel pour optimiser votre budget marketing.",
-        tips: ["Testez 3 canaux en parallèle, gardez les 2 plus performants", "Le SEO est un investissement long terme", "Le bouche-à-oreille est le canal le plus efficace et le moins cher"],
-        examples: ["Canaux d'acquisition : 1) SEO/blog (40% du budget), 2) Réseaux sociaux/Instagram (30%), 3) Partenariats avec des influenceurs (30%)"],
+        key: "canaux",
+        label: "Canaux de distribution",
+        objective: "Identifier les canaux par lesquels vous allez atteindre vos clients",
+        whyImportant: "Le choix des canaux détermine votre visibilité, votre accessibilité et votre structure de coûts.",
+        tips: [
+        "Privilégiez les canaux où votre cible est déjà présente",
+        "Commencez par 1 ou 2 canaux, maîtrisez-les avant d'en ajouter",
+        "Pensez multicanaux mais pas forcément tous les canaux"
+      ],
+        examples: [
+        "Plateforme web (canal principal)",
+        "Application mobile",
+        "Points de retrait partenaires",
+        "Réseaux sociaux (Instagram, Facebook)"
+      ],
         guidedQuestions: [
-          { question: "Quels sont vos 3 canaux d'acquisition principaux ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quel est le coût estimé par canal ?", placeholder: "ex: SEO = 1000€/mois, Instagram = 500€/mois...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Quels canaux allez-vous utiliser pour atteindre vos clients ?", placeholder: "Mes canaux sont...", type: "textarea" },
+            { question: "Quel est votre canal principal et pourquoi ?", placeholder: "Mon canal principal est... car...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'canaux_distribution', label: "Canaux de distribution", objective: "Définir comment votre produit arrive chez le client",
-        whyImportant: "Le canal de distribution impacte votre marge, votre expérience client et votre capacité à livrer.",
-        tips: ["Direct (propre site) = meilleure marge mais nécessite du trafic", "Indirect (marketplaces) = volume mais marge réduite", "Le choix du canal dépend de votre produit et de vos clients"],
-        examples: ["Distribution : vente directe via notre site web (70%) et distribution via des marketplaces partenaires (30%)"],
+        key: "parcours_client",
+        label: "Parcours client",
+        objective: "Cartographier l'expérience complète de vos clients",
+        whyImportant: "Un parcours client bien conçu maximise la satisfaction et réduit les abandons. Chaque point de contact est une opportunité de créer de la valeur.",
+        tips: [
+        "Cartographiez le parcours du point de vue du client, pas du vôtre",
+        "Identifiez les moments de vérité (les étapes critiques)",
+        "Repérez les points de friction et d'abandon potentiels"
+      ],
         guidedQuestions: [
-          { question: "Comment votre produit ou service sera-t-il distribué ?", placeholder: "ex: site web, application, boutique physique, revendeurs...", type: 'textarea' },
-          { question: "Quel sera le modèle de distribution principal ?", type: 'select', options: [{ label: 'Direct (vente propre)', value: 'direct' }, { label: 'Indirect (revendeurs)', value: 'indirect' }, { label: 'Mixte', value: 'mixed' }] },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'canaux_communication', label: "Canaux de communication", objective: "Définir comment vous communiquez avec vos clients",
-        whyImportant: "Une communication cohérente sur tous les canaux renforce votre marque et votre relation client.",
-        tips: ["Choisissez les canaux où sont vos clients", "Adaptez votre message à chaque canal", "Gardez une cohérence de ton et d'image"],
-        examples: ["Communication : emailing (newsletter hebdomadaire), Instagram (contenu quotidien), blog (articles hebdomadaires), application (notifications push)."],
-        guidedQuestions: [
-          { question: "Par quels canaux communiquerez-vous avec vos clients ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "À quelle fréquence communiquerez-vous sur chaque canal ?", placeholder: "ex: newsletter hebdo, Instagram quotidien...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'parcours_decouverte', label: "Parcours de découverte", objective: "Cartographier comment les clients découvrent votre projet",
-        whyImportant: "La première impression est cruciale. Un parcours de découverte fluide augmente significativement les taux de conversion.",
-        tips: ["Identifiez tous les points de contact possibles", "Simplifiez au maximum la première interaction", "Mesurez le taux de conversion à chaque étape"],
-        examples: ["Découverte : publicité Instagram → atterrissage sur la page d'accueil → consultation des offres → inscription newsletter."],
-        guidedQuestions: [
-          { question: "Comment vos clients vous découvrent-ils ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quelle est la première action que vous voulez qu'ils fassent ?", placeholder: "ex: s'inscrire, télécharger, acheter...", type: 'text' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'parcours_achat', label: "Parcours d'achat", objective: "Optimiser le chemin jusqu'à l'achat",
-        whyImportant: "Chaque étape superflue entre la décision et l'achat fait perdre des clients. Un tunnel d'achat fluide maximise les conversions.",
-        tips: ["Limitez le nombre d'étapes (3-4 maximum)", "Proposez le guest checkout pour les nouveaux clients", "Rassurez : garanties, avis, politique de retour visibles"],
-        examples: ["Achat : sélection du produit → panier → informations livraison → paiement → confirmation. Objectif : < 3 minutes."],
-        guidedQuestions: [
-          { question: "Quelles sont les étapes du parcours d'achat ?", placeholder: "1. ... 2. ... 3. ... 4. ...", type: 'textarea' },
-          { question: "Où se situent les principaux freins à l'achat ?", placeholder: "Freins identifiés...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'parcours_fidelisation', label: "Parcours de fidélisation", objective: "Mettre en place des mécanismes de fidélisation",
-        whyImportant: "Fidéliser un client coûte 5 à 10 fois moins cher que d'en acquérir un nouveau. La fidélisation est le moteur de la croissance durable.",
-        tips: ["Mettez en place un programme de fidélité", "Sollicitez régulièrement les avis et feedbacks", "Créez une communauté autour de votre marque"],
-        examples: ["Fidélisation : programme de points (1€ = 10 points), parrainage (5€ offerts), newsletter personnalisée, accès VIP aux nouveautés."],
-        guidedQuestions: [
-          { question: "Comment allez-vous fidéliser vos clients après l'achat ?", placeholder: "Stratégie de fidélisation...", type: 'textarea' },
-          { question: "Quels avantages offrirez-vous aux clients fidèles ?", placeholder: "ex: programme de points, réduction, accès exclusif...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'points_contact', label: "Points de contact", objective: "Lister tous les points de contact avec vos clients",
-        whyImportant: "Chaque point de contact est une opportunité de renforcer votre relation client. Une expérience cohérente sur tous les points de contact est essentielle.",
-        tips: ["Listez tous les points de contact, même les plus petits", "Évaluez l'importance et la satisfaction pour chacun", "Assurez la cohérence entre tous les points de contact"],
-        examples: ["Points de contact : site web, application, email, téléphone, réseaux sociaux, point de vente, service après-vente, facture, emballage."],
-        guidedQuestions: [
-          { question: "Listez tous les points de contact avec vos clients", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment assurez-vous une expérience cohérente sur tous ces points ?", placeholder: "Stratégie de cohérence...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
+            { question: "Décrivez le parcours typique de votre client, de la découverte à l'après-vente", placeholder: "Étape 1 : Découverte via... Étape 2 : ...", type: "textarea" },
+            { question: "Quels sont les points de friction potentiels dans ce parcours ?", placeholder: "Les points de friction pourraient être...", type: "textarea" },
+            { question: "Comment allez-vous améliorer l'expérience client à chaque étape ?", placeholder: "Pour améliorer l'étape [X], je vais...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai défini le type de relation client", "J'ai choisi mes canaux d'acquisition, de distribution et de communication", "J'ai cartographié le parcours client complet", "J'ai listé tous les points de contact"],
-  },
-
-  13: {
-    stepNumber: 13,
-    title: "Activités clés et ressources clés",
-    objective: "Identifier les activités et ressources indispensables au fonctionnement de votre projet.",
-    whyImportant: "Sans les bonnes activités et ressources, même la meilleure proposition de valeur reste lettre morte. C'est le squelette opérationnel de votre projet.",
-    keyConcepts: [
-      { term: "Activités clés", definition: "Les actions les plus importantes que vous devez faire pour créer et délivrer votre valeur." },
-      { term: "Ressources clés", definition: "Les actifs (humains, financiers, matériels, intellectuels) nécessaires à votre activité." },
-      { term: "Compétences requises", definition: "Les savoir-faire indispensables au sein de votre équipe." },
+      checklist: [
+        "J'ai défini ma stratégie de relation client (acquisition, fidélisation, service)",
+        "J'ai identifié mes canaux de distribution",
+        "J'ai cartographié le parcours client",
+        "J'ai identifié les points de friction potentiels"
+      ],
+      resources: [
+        { title: "Guide des canaux de distribution pour startups", type: "article" },
+        { title: "Comment cartographier le parcours client", type: "article" }
+      ],
+    },
+    13: {
+      stepNumber: 13,
+      title: "Principales activités et ressources",
+      objective: "Identifier les activités clés que vous devez réaliser et les ressources nécessaires pour faire fonctionner votre entreprise.",
+      whyImportant: "Sans activités et ressources clairement identifiées, vous risquez de sous-estimer ce dont vous avez besoin pour opérer. Cette étape vous prépare à planifier et budgétiser efficacement.",
+      avantDeLire: {
+        description: "Les activités clés sont les actions les plus importantes que vous devez accomplir pour que votre entreprise fonctionne. Les ressources sont tout ce dont vous avez besoin : humain, financier, matériel, intellectuel. Ensemble, ils forment l'ossature de votre entreprise.",
+        resultatsAttendus: "Une liste des activités clés et des ressources nécessaires, avec une identification des ressources critiques et des lacunes potentielles.",
+      },
+      etudeDeCas: "Sophie a identifié ses activités clés : développement et maintenance de la plateforme, gestion des relations producteurs, marketing et acquisition d'utilisateurs, logistique et livraison. Ses ressources principales : développeur web (humain), investissement initial de 50 000€ (financier), locaux partagés (physique), algorithme de matching (intellectuel).",
+      conseils: [
+        "Distinguer ce qui est critique de ce qui est secondaire",
+        "Identifiez ce que vous devez faire en interne et ce que vous pouvez externaliser",
+        "Anticipez les ressources dont vous aurez besoin dans 6 mois, pas seulement aujourd'hui",
+        "Soyez réaliste sur le temps et l'argent nécessaires"
+      ],
+      keyConcepts: [
+      { term: "Activités clés", definition: "Les actions les plus importantes que votre entreprise doit accomplir pour fonctionner et créer de la valeur." },
+      { term: "Ressources", definition: "Les actifs nécessaires au fonctionnement de votre entreprise : humains, financiers, physiques et intellectuels." },
+      { term: "Externalisation", definition: "La délégation de certaines activités à des partenaires ou prestataires externes." }
     ],
-    estimatedMinutes: 45,
-    subSections: [
+      estimatedMinutes: 40,
+      subSections: [
       {
-        key: 'activites_cles', label: "Activités clés", objective: "Lister les 5 à 7 activités les plus importantes de votre projet",
-        whyImportant: "Se concentrer sur l'essentiel est la clé de l'efficacité entrepreneuriale. Les activités clés sont celles qui créent le plus de valeur.",
-        tips: ["Identifiez les activités qui créent directement de la valeur pour le client", "Distinguez les activités quotidiennes des activités stratégiques", "Priorisez : tout ne peut pas être prioritaire"],
-        examples: ["1) Développement de la plateforme, 2) Acquisition de producteurs partenaires, 3) Marketing digital, 4) Service client, 5) Logistique et livraison."],
+        key: "activites_cles",
+        label: "Activités clés",
+        objective: "Lister les activités indispensables au fonctionnement de votre entreprise",
+        whyImportant: "Sans activités clés identifiées, vous risquez d'oublier des aspects importants et de faire face à des surprises désagréables.",
+        tips: [
+        "Classez les activités par catégorie (production, marketing, ventes, administration)",
+        "Identifiez les activités que vous devez maîtriser en interne",
+        "Estimez le temps nécessaire pour chaque activité"
+      ],
+        examples: [
+        "Développement et maintenance de la plateforme",
+        "Gestion des relations avec les producteurs",
+        "Marketing et acquisition d'utilisateurs",
+        "Gestion des commandes et de la livraison"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont vos 5 à 7 activités clés ?", placeholder: "1. ... 2. ... 3. ... 4. ... 5. ...", type: 'textarea' },
-          { question: "Lesquelles de ces activités créent le plus de valeur ?", placeholder: "Activités à plus forte valeur...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Quelles sont les activités clés de votre entreprise ?", placeholder: "Mes activités clés sont...", type: "textarea" },
+            { question: "Parmi ces activités, lesquelles ferez-vous en interne et lesquelles externaliserez-vous ?", placeholder: "Je ferai en interne... J'externaliserai...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'ressources_cles', label: "Ressources clés", objective: "Identifier les ressources indispensables à votre activité",
-        whyImportant: "Sans les bonnes ressources, même les meilleures activités sont impossibles à réaliser.",
-        tips: ["Distinguer ressources humaines, financières, matérielles et intellectuelles", "Ce que vous avez déjà vs ce qu'il vous manque", "Certaines ressources peuvent être mutualisées ou louées"],
-        examples: ["Ressources : 1) développeur full-stack, 2) 50 000€ de trésorerie, 3) serveurs cloud, 4) marque déposée, 5) base de données producteurs."],
+        key: "ressources",
+        label: "Ressources nécessaires",
+        objective: "Identifier toutes les ressources dont vous avez besoin",
+        whyImportant: "Les ressources sont le carburant de votre entreprise. Les anticiper vous évite des blocages et des retards.",
+        tips: [
+        "Distinguez ressources humaines, financières, physiques et intellectuelles",
+        "Pour chaque ressource, estimez le coût et la disponibilité",
+        "Identifiez les ressources critiques sans lesquelles vous ne pouvez pas opérer"
+      ],
+        examples: [
+        "Humain : 1 développeur, 1 community manager",
+        "Financier : 50 000€ d'investissement initial",
+        "Physique : locaux partagés, serveurs",
+        "Intellectuel : algorithme de matching, bases de données producteurs"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les ressources clés dont vous avez besoin ?", placeholder: "Humaines : ... Financières : ... Matérielles : ... Intellectuelles : ...", type: 'textarea' },
-          { question: "Quelles ressources possédez-vous déjà ?", placeholder: "Ressources actuelles...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "De quelles ressources humaines avez-vous besoin ?", placeholder: "J'ai besoin de...", type: "textarea" },
+            { question: "De quelles ressources financières avez-vous besoin ?", placeholder: "J'ai besoin de... € pour...", type: "textarea" },
+            { question: "De quelles ressources physiques et intellectuelles avez-vous besoin ?", placeholder: "J'ai besoin de...", type: "textarea" },
+            { question: "Quelles sont les ressources les plus critiques pour démarrer ?", placeholder: "Les ressources critiques sont...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'competences_requises', label: "Compétences requises", objective: "Lister les compétences nécessaires au sein de l'équipe",
-        whyImportant: "Les compétences de votre équipe sont votre ressource la plus précieuse. Identifier les lacunes permet de recruter ou se former.",
-        tips: ["Listez les compétences techniques et non techniques", "Évaluez le niveau de maîtrise actuel (1-5)", "Priorisez les compétences critiques à acquérir en premier"],
-        examples: ["Compétences : développement web (niveau 3/5), marketing digital (niveau 4/5), gestion financière (niveau 2/5), relation commerciale (niveau 4/5)."],
+        key: "analyse_lacunes",
+        label: "Analyse des lacunes",
+        objective: "Identifier ce qui vous manque pour démarrer",
+        whyImportant: "Connaître vos lacunes vous permet de planifier comment les combler plutôt que de les subir.",
+        tips: [
+        "Soyez honnête sur ce qui vous manque",
+        "Pour chaque lacune, identifiez une solution possible",
+        "Certaines lacunes peuvent être comblées par des partenariats"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les compétences clés pour votre projet ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quelles compétences maîtrisez-vous déjà bien ?", placeholder: "Points forts...", type: 'textarea' },
-        ],
-        estimatedMinutes: 11,
-      },
-      {
-        key: 'besoins_technologiques', label: "Besoins technologiques", objective: "Identifier vos besoins en technologies et outils",
-        whyImportant: "Les bons outils technologiques peuvent décupler votre productivité. À l'inverse, une technologie inadaptée peut freiner votre croissance.",
-        tips: ["Distinguez les besoins immédiats des besoins futurs", "Préférez des solutions SaaS pour commencer (moins d'investissement)", "Anticipez les besoins d'intégration entre outils"],
-        examples: ["Besoins tech : site web (WordPress/Wix), CRM (HubSpot), outil emailing (Mailchimp), solution de paiement (Stripe), logiciel comptable."],
-        guidedQuestions: [
-          { question: "Quels sont vos besoins technologiques principaux ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quels outils allez-vous utiliser pour chaque besoin ?", placeholder: "ex: CRM = HubSpot, site = Webflow...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
-      },
+            { question: "Quelles sont les ressources ou compétences qui vous manquent actuellement ?", placeholder: "Il me manque...", type: "textarea" },
+            { question: "Comment allez-vous combler ces lacunes ?", placeholder: "Je vais combler ces lacunes en...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai listé mes activités clés", "J'ai identifié mes ressources clés", "J'ai évalué les compétences nécessaires", "J'ai défini mes besoins technologiques"],
-  },
-
-  14: {
-    stepNumber: 14,
-    title: "Écoconception et résultats environnementaux",
-    objective: "Intégrer les principes d'écoconception dans votre projet, mesurer leurs résultats et planifier les améliorations.",
-    whyImportant: "L'écoconception est un avantage concurrentiel et une responsabilité. 73% des consommateurs français déclarent vouloir consommer plus responsable. Mesurer vos résultats permet de communiquer de façon transparente.",
-    keyConcepts: [
-      { term: "Écoconception", definition: "Intégration des critères environnementaux dès la conception d'un produit ou service." },
-      { term: "Analyse de cycle de vie (ACV)", definition: "Méthode qui évalue l'impact environnemental d'un produit de l'extraction des matières premières à sa fin de vie." },
-      { term: "Bilan carbone", definition: "Mesure des émissions de gaz à effet de serre générées par votre activité, exprimée en tonnes équivalent CO2." },
+      checklist: [
+        "J'ai listé mes activités clés",
+        "J'ai identifié les activités à faire en interne et à externaliser",
+        "J'ai listé les ressources nécessaires (humaines, financières, physiques, intellectuelles)",
+        "J'ai identifié mes lacunes et un plan pour les combler"
+      ],
+      resources: [
+        { title: "Guide des ressources clés pour startups", type: "article" }
+      ],
+    },
+    14: {
+      stepNumber: 14,
+      title: "Écoconception de votre entreprise",
+      objective: "Intégrer les principes d'écoconception dans votre modèle d'affaires pour minimiser l'impact environnemental de votre entreprise.",
+      whyImportant: "L'écoconception n'est plus une option : c'est un avantage concurrentiel et une responsabilité. Les clients, investisseurs et partenaires exigent des entreprises durables. Intégrer l'écoconception dès le départ est bien plus efficace que de corriger après.",
+      avantDeLire: {
+        description: "L'écoconception consiste à intégrer l'environnement dès la conception de votre produit ou service. Cela concerne tous les aspects : matières premières, fabrication, transport, utilisation, fin de vie. Dans cette étape, vous allez analyser l'impact environnemental de votre projet et identifier des pistes d'amélioration.",
+        resultatsAttendus: "Une analyse de l'impact environnemental de votre projet dans les domaines clés (énergie, déchets, transport, etc.) et un plan d'actions pour réduire cet impact.",
+      },
+      etudeDeCas: "Sophie a identifié les impacts de sa plateforme : consommation électrique des serveurs, déchets d'emballages, émissions de la livraison. Elle a planifié des actions : serveurs verts (alimentés en énergie renouvelable), emballages recyclables, livraison mutualisée à vélo dans les villes, incitations aux producteurs pour des pratiques durables.",
+      conseils: [
+        "L'écoconception commence par la mesure : ce qui ne se mesure pas ne s'améliore pas",
+        "Cherchez des synergies : ce qui est bon pour la planète peut aussi réduire vos coûts",
+        "Impliquez vos fournisseurs et partenaires dans votre démarche",
+        "Communiquez transparentement sur vos efforts et vos progrès"
+      ],
+      keyConcepts: [
+      { term: "Écoconception", definition: "L'intégration systématique des aspects environnementaux dès la conception d'un produit ou service." },
+      { term: "Analyse de cycle de vie", definition: "Une méthode d'évaluation des impacts environnementaux d'un produit sur l'ensemble de son cycle de vie." },
+      { term: "Empreinte carbone", definition: "La mesure des émissions de gaz à effet de serre générées par votre activité." }
     ],
-    estimatedMinutes: 90,
-    subSections: [
+      estimatedMinutes: 45,
+      subSections: [
       {
-        key: 'impact_environnemental', label: "Impact environnemental", objective: "Identifier les impacts environnementaux de votre projet",
-        whyImportant: "On ne peut réduire que ce que l'on mesure. Identifier vos impacts est la première étape pour les réduire.",
-        tips: ["Pensez à toutes les étapes : matières premières, production, transport, usage, fin de vie", "Identifiez les 3 impacts les plus significatifs", "Impliquez votre équipe dans cette réflexion"],
-        examples: ["Impact 1 : émissions liées au transport des produits. Impact 2 : emballages plastiques. Impact 3 : consommation énergétique des serveurs."],
+        key: "analyse_impact",
+        label: "Analyse d'impact environnemental",
+        objective: "Identifier les principaux impacts environnementaux de votre projet",
+        whyImportant: "Vous ne pouvez réduire que ce que vous mesurez. Une analyse honnête est le point de départ de toute démarche d'écoconception.",
+        tips: [
+        "Pensez à tout le cycle de vie : matières premières, fabrication, transport, utilisation, fin de vie",
+        "Identifiez les 3 impacts les plus significatifs",
+        "Utilisez des outils comme le bilan carbone ou l'ACV simplifiée"
+      ],
         guidedQuestions: [
-          { question: "Quels sont les principaux impacts environnementaux de votre projet ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "À quelle étape du cycle de vie se situent les plus gros impacts ?", placeholder: "ex: production, transport, usage...", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
+            { question: "Quels sont les principaux impacts environnementaux de votre projet ?", placeholder: "Mes principaux impacts sont...", type: "textarea" },
+            { question: "À quelle étape du cycle de vie votre impact est-il le plus fort ?", placeholder: "L'étape la plus impactante est...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'ecoconception_produit', label: "Écoconception du produit", objective: "Concevoir votre produit ou service de façon écologique",
-        whyImportant: "L'écoconception réduit vos coûts (matières, énergie) et améliore votre image. C'est un cercle vertueux.",
-        tips: ["Privilégiez des matériaux durables et recyclés", "Concevez pour la réparabilité et la durabilité", "Optimisez la logistique pour réduire les transports"],
-        examples: ["Écoconception : emballages 100% recyclables et réutilisables, livraison en vélo électrique en ville, serveurs alimentés en énergie verte."],
+        key: "actions_ecoconception",
+        label: "Actions d'écoconception",
+        objective: "Identifier des actions concrètes pour réduire votre impact environnemental",
+        whyImportant: "Des actions concrètes transforment votre engagement environnemental en réalité. Chaque action compte.",
+        tips: [
+        "Commencez par les actions à fort impact et faible effort",
+        "Certaines actions d'écoconception réduisent aussi vos coûts",
+        "Fixez-vous des objectifs chiffrés (ex: -30% d'émissions en 2 ans)"
+      ],
         guidedQuestions: [
-          { question: "Comment pouvez-vous concevoir votre produit de façon plus écologique ?", placeholder: "Actions d'écoconception...", type: 'textarea' },
-          { question: "Quels matériaux ou processus plus durables pouvez-vous utiliser ?", placeholder: "Alternatives durables...", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
+            { question: "Quelles actions pouvez-vous mettre en place pour réduire votre impact ?", placeholder: "Je peux...", type: "textarea" },
+            { question: "Quelles sont les 3 actions prioritaires à mettre en œuvre ?", placeholder: "1. ... 2. ... 3. ...", type: "textarea" },
+            { question: "Comment mesurerez-vous l'efficacité de ces actions ?", placeholder: "Je mesurerai par...", type: "textarea" }
+          ],
+        estimatedMinutes: 20
       },
       {
-        key: 'analyse_cycle_vie', label: "Analyse de cycle de vie (ACV)", objective: "Évaluer l'impact environnemental sur tout le cycle de vie",
-        whyImportant: "L'ACV évite les déplacements de pollution : réduire un impact en augmenter un autre. C'est une vision systémique.",
-        tips: ["L'ACV complète nécessite un expert, mais vous pouvez faire une première évaluation simplifiée", "Concentrez-vous sur les phases à plus fort impact", "L'ACV aide à prioriser les actions d'écoconception"],
-        examples: ["ACV simplifiée : extraction (10% impact) → fabrication (30%) → transport (25%) → usage (20%) → fin de vie (15%). Priorité : fabrication et transport."],
+        key: "communication_durable",
+        label: "Communication et engagement",
+        objective: "Définir comment communiquer sur votre démarche d'écoconception",
+        whyImportant: "Communiquer sur vos engagements environnementaux renforce votre marque et attire les clients sensibles à ces enjeux. Attention au greenwashing.",
+        tips: [
+        "Soyez honnête : ne communiquez que sur ce que vous faites réellement",
+        "Utilisez des labels reconnus si disponibles",
+        "Partagez vos progrès et vos difficultés : la transparence est appréciée"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les étapes du cycle de vie de votre produit ?", placeholder: "1. ... 2. ... 3. ... 4. ... 5. ...", type: 'textarea' },
-          { question: "À quelle étape l'impact environnemental est-il le plus fort ?", placeholder: "Étape à plus fort impact...", type: 'text' },
-        ],
-        estimatedMinutes: 14,
-      },
-      {
-        key: 'bilan_carbone', label: "Bilan carbone", objective: "Calculer votre bilan carbone prévisionnel",
-        whyImportant: "Le bilan carbone est un indicateur clé pour mesurer et communiquer votre engagement environnemental.",
-        tips: ["Utilisez des outils gratuits comme le simulateur ADEME", "Distinguez scope 1 (direct), 2 (énergie), 3 (indirect)", "Actualisez votre bilan régulièrement"],
-        examples: ["Bilan carbone prévisionnel : 50 tonnes CO2eq/an. Scope 1 : 5t (véhicules). Scope 2 : 10t (électricité). Scope 3 : 35t (transport fournisseurs, déplacements clients)."],
-        guidedQuestions: [
-          { question: "Quel est votre bilan carbone prévisionnel estimé ?", placeholder: "Tonnes CO2eq...", type: 'text' },
-          { question: "Quels sont les principaux postes d'émissions ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-        ],
-        estimatedMinutes: 14,
-      },
-      {
-        key: 'ameliorations_identifiees', label: "Améliorations identifiées", objective: "Lister les opportunités d'amélioration environnementale",
-        whyImportant: "Chaque amélioration, même petite, contribue à réduire votre impact. L'écoconception est un chemin, pas une destination.",
-        tips: ["Classez les améliorations par impact et facilité de mise en œuvre", "Commencez par les actions à fort impact et faciles à mettre en place", "Impliquez vos parties prenantes dans cette démarche"],
-        examples: ["Améliorations : 1) Passer aux emballages 100% recyclés (fort impact, facile). 2) Optimiser les tournées de livraison (fort impact, moyen). 3) Certifier les fournisseurs (impact moyen, complexe)."],
-        guidedQuestions: [
-          { question: "Quelles améliorations environnementales avez-vous identifiées ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quelles sont les plus faciles à mettre en œuvre ?", placeholder: "Actions rapides...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
-      {
-        key: 'plan_ecoconception', label: "Plan d'écoconception", objective: "Établir une feuille de route pour réduire votre impact environnemental",
-        whyImportant: "Un plan structuré transforme vos intentions en actions concrètes avec des échéances et des responsables.",
-        tips: ["Fixez des objectifs chiffrés (ex: -30% d'émissions en 3 ans)", "Planifiez des actions par trimestre", "Désignez un responsable pour chaque action"],
-        examples: ["T1 2026 : audit emballages (responsable : Marie). T2 2026 : test emballages recyclés (Marie). T3 2026 : déploiement (équipe). Objectif : -50% plastique vierge."],
-        guidedQuestions: [
-          { question: "Quel est votre plan d'écoconception sur 12 mois ?", placeholder: "T1 : ... T2 : ... T3 : ... T4 : ...", type: 'textarea' },
-          { question: "Quels sont vos objectifs chiffrés de réduction d'impact ?", placeholder: "ex: -30% CO2, -50% plastique...", type: 'textarea' },
-        ],
-        estimatedMinutes: 13,
-      },
+            { question: "Comment allez-vous communiquer sur votre démarche environnementale ?", placeholder: "Je communiquerai sur...", type: "textarea" },
+            { question: "Quels labels ou certifications pourriez-vous viser ?", placeholder: "Je pourrais viser...", type: "text" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai identifié les impacts environnementaux de mon projet", "J'ai intégré des principes d'écoconception", "J'ai réalisé une ACV simplifiée", "J'ai estimé mon bilan carbone", "J'ai un plan d'écoconception chiffré"],
-  },
-
-  15: {
-    stepNumber: 15,
-    title: "Résumé des activités, ressources, canaux et relations",
-    objective: "Synthétiser l'ensemble des éléments opérationnels de votre projet pour vérifier leur cohérence.",
-    whyImportant: "Cette synthèse opérationnelle est le pont entre votre stratégie et votre exécution. Elle garantit que tous les éléments sont alignés et cohérents.",
-    keyConcepts: [
-      { term: "Cohérence opérationnelle", definition: "L'alignement entre vos ressources, vos activités et votre proposition de valeur." },
-      { term: "Synthèse stratégique", definition: "La capacité à résumer l'essentiel de votre modèle opérationnel en quelques points clés." },
+      checklist: [
+        "J'ai identifié les impacts environnementaux de mon projet",
+        "J'ai défini des actions concrètes pour réduire mon impact",
+        "J'ai priorisé 3 actions à mettre en œuvre",
+        "J'ai une stratégie de communication sur ma démarche environnementale"
+      ],
+      resources: [
+        { title: "Guide de l'écoconception pour les startups", type: "article" },
+        { title: "Calculateur d'empreinte carbone", type: "tool" },
+        { title: "Labels et certifications environnementales", type: "article" }
+      ],
+    },
+    15: {
+      stepNumber: 15,
+      title: "Résumé",
+      objective: "Synthétiser l'ensemble des étapes précédentes en un résumé cohérent du modèle d'affaires ébauché jusqu'à présent.",
+      whyImportant: "Cette étape de synthèse vous permet de prendre du recul sur l'ensemble de votre projet, d'identifier les incohérences et de préparer la transition vers les aspects financiers.",
+      avantDeLire: {
+        description: "Vous avez parcouru les premières étapes de votre parcours entrepreneurial. Il est temps de rassembler tout ce que vous avez appris et décidé jusqu'à présent. Ce résumé servira de pont entre la partie stratégique et la partie financière de votre projet.",
+        resultatsAttendus: "Un résumé complet de votre modèle d'affaires à ce stade : proposition de valeur, segments clients, parties prenantes, activités clés, ressources et engagements environnementaux.",
+      },
+      etudeDeCas: "Sophie a créé une fiche de synthèse : « Relocal - Plateforme connectant producteurs locaux et consommateurs urbains. Segments : consommateurs responsables, producteurs locaux, restaurants. Proposition de valeur : accès simplifié aux produits locaux avec livraison mutualisée. Parties prenantes clés : producteurs, mairies, associations. Activités : développement plateforme, relation producteurs, logistique. Impact environnemental mesuré et plan d'actions défini. »",
+      conseils: [
+        "Prenez le temps de relire l'ensemble de votre travail",
+        "Identifiez les incohérences ou les points à approfondir",
+        "Sollicitez un regard extérieur pour valider votre synthèse",
+        "Gardez ce résumé comme document de référence pour la suite"
+      ],
+      keyConcepts: [
+      { term: "Synthèse stratégique", definition: "Un document qui rassemble et articule les éléments clés de votre stratégie d'entreprise." },
+      { term: "Modèle d'affaires", definition: "La logique par laquelle votre entreprise crée, délivre et capture de la valeur." },
+      { term: "Cohérence stratégique", definition: "L'alignement logique entre tous les éléments de votre modèle d'affaires." }
     ],
-    estimatedMinutes: 30,
-    subSections: [
+      estimatedMinutes: 30,
+      subSections: [
       {
-        key: 'synthese_activites', label: "Synthèse des activités", objective: "Résumer les activités clés de votre projet",
-        whyImportant: "Une vision claire de vos activités permet de prioriser et de communiquer efficacement.",
-        tips: ["Listez les 5 activités qui créent le plus de valeur", "Vérifiez que chaque activité est liée à votre proposition de valeur", "Identifiez les activités critiques à ne pas déléguer"],
-        examples: ["Activités clés : 1) Développement plateforme, 2) Recrutement producteurs, 3) Marketing, 4) Service client, 5) Logistique."],
+        key: "resume_modele",
+        label: "Résumé du modèle d'affaires",
+        objective: "Synthétiser les éléments clés de votre modèle d'affaires",
+        whyImportant: "Un résumé clair vous permet de communiquer efficacement votre projet et de vérifier sa cohérence globale.",
+        tips: [
+        "Structurez votre résumé en sections claires",
+        "Soyez concis : l'essentiel en une page",
+        "Utilisez ce résumé comme base pour votre pitch"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont vos activités clés résumées ?", placeholder: "1. ... 2. ... 3. ... 4. ... 5. ...", type: 'textarea' },
-          { question: "Ces activités sont-elles alignées avec votre proposition de valeur ?", placeholder: "Analyse d'alignement...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
+            { question: "Résumez votre projet en 10 à 15 lignes", hint: "Incluez : problème, solution, segments, proposition de valeur, parties prenantes, activités clés", placeholder: "Mon projet...", type: "textarea" },
+            { question: "Quel est le principal avantage concurrentiel de votre projet ?", placeholder: "Mon avantage concurrentiel est...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'synthese_ressources', label: "Synthèse des ressources", objective: "Résumer les ressources nécessaires à votre projet",
-        whyImportant: "Connaître précisément vos besoins en ressources vous aide à planifier vos recrutements et vos investissements.",
-        tips: ["Distinguez les ressources déjà acquises de celles à obtenir", "Estimez le budget nécessaire pour chaque ressource manquante", "Priorisez les ressources critiques"],
-        examples: ["Ressources : équipe de 3 personnes, 80 000€ de financement, plateforme technique, réseau de 50 producteurs."],
+        key: "points_attention",
+        label: "Points d'attention et prochaines étapes",
+        objective: "Identifier ce qui reste à approfondir avant la partie financière",
+        whyImportant: "Un regard lucide sur les points faibles de votre projet vous permet de les adresser avant qu'ils ne deviennent des problèmes.",
+        tips: [
+        "Soyez honnête sur ce qui n'est pas encore clair",
+        "Priorisez les points à approfondir",
+        "Certains points s'éclairciront dans les étapes financières"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont vos ressources clés résumées ?", placeholder: "Humaines : ... Financières : ... Matérielles : ...", type: 'textarea' },
-          { question: "Quelles ressources vous manquent encore ?", placeholder: "Ressources à acquérir...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
-      },
-      {
-        key: 'synthese_canaux', label: "Synthèse des canaux et relations", objective: "Résumer vos canaux et votre stratégie relationnelle",
-        whyImportant: "Une stratégie de canaux et de relations cohérente garantit une expérience client harmonieuse.",
-        tips: ["Vérifiez que vos canaux sont adaptés à votre cible", "Assurez la cohérence entre vos canaux de communication et de distribution", "Votre stratégie relationnelle doit refléter vos valeurs"],
-        examples: ["Canaux : acquisition via SEO/réseaux sociaux, distribution directe, communication multicanal. Relation : personnalisée pour les producteurs, automatisée pour les consommateurs."],
-        guidedQuestions: [
-          { question: "Résumez votre stratégie de canaux et de relations", placeholder: "Synthèse...", type: 'textarea' },
-          { question: "Vos canaux sont-ils cohérents avec votre marché cible ?", placeholder: "Analyse de cohérence...", type: 'textarea' },
-        ],
-        estimatedMinutes: 10,
-      },
+            { question: "Quels sont les points qui restent à approfondir ?", placeholder: "Je dois encore approfondir...", type: "textarea" },
+            { question: "Quelles sont vos priorités pour les prochaines étapes ?", placeholder: "Mes priorités sont...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai synthétisé mes activités clés", "J'ai résumé mes besoins en ressources", "J'ai vérifié la cohérence de mes canaux", "L'ensemble opérationnel est cohérent avec ma stratégie"],
-  },
-
-  16: {
-    stepNumber: 16,
-    title: "Structure des coûts",
-    objective: "Identifier et estimer tous les coûts nécessaires au fonctionnement de votre projet.",
-    whyImportant: "Maîtriser ses coûts est aussi important que générer des revenus. 29% des startups échouent parce qu'elles manquent de trésorerie.",
-    keyConcepts: [
-      { term: "Coûts fixes", definition: "Charges qui ne varient pas avec le volume d'activité (loyer, salaires, assurances)." },
-      { term: "Coûts variables", definition: "Charges qui augmentent avec le volume d'activité (matières premières, commissions)." },
-      { term: "Seuil de rentabilité", definition: "Le chiffre d'affaires minimum à atteindre pour couvrir toutes les charges, sans perte ni bénéfice." },
+      checklist: [
+        "J'ai rédigé un résumé complet de mon modèle d'affaires",
+        "J'ai identifié mon avantage concurrentiel principal",
+        "J'ai listé les points à approfondir",
+        "J'ai défini mes priorités pour la suite"
+      ],
+    },
+    16: {
+      stepNumber: 16,
+      title: "Structure des coûts",
+      objective: "Identifier et estimer tous les coûts nécessaires au fonctionnement de votre entreprise.",
+      whyImportant: "Sans une compréhension claire de vos coûts, vous ne pouvez pas fixer vos prix, gérer votre trésorerie ou atteindre la rentabilité. La structure des coûts est le socle de votre santé financière.",
+      avantDeLire: {
+        description: "La structure des coûts regroupe toutes les dépenses nécessaires au fonctionnement de votre entreprise. On distingue les coûts fixes (indépendants de votre activité) et les coûts variables (liés à votre volume d'activité). Une bonne estimation vous permet de savoir combien vous devez vendre pour être rentable.",
+        resultatsAttendus: "Une liste détaillée de vos coûts fixes et variables, avec des estimations chiffrées et une identification des coûts les plus importants.",
+      },
+      etudeDeCas: "Sophie a listé ses coûts : Fixes (développeur 45k€/an, serveurs 3 600€/an, loyer 12 000€/an, assurances 2 400€/an) = 63 000€/an. Variables (commission aux producteurs 30%, frais de livraison 5€/commande, marketing 0,50€/acquisition) à ajuster selon le volume. Coût fixe total : environ 5 250€/mois.",
+      conseils: [
+        "Soyez exhaustif : n'oubliez pas les petites dépenses qui s'accumulent",
+        "Distinguer clairement coûts fixes et variables",
+        "Prévoyez une marge d'erreur de 20% sur vos estimations",
+        "Révisez régulièrement vos coûts à mesure que vous avancez"
+      ],
+      keyConcepts: [
+      { term: "Coûts fixes", definition: "Les dépenses qui ne varient pas avec votre volume d'activité (loyer, salaires, assurances)." },
+      { term: "Coûts variables", definition: "Les dépenses qui augmentent avec votre volume d'activité (matières premières, commissions, livraison)." },
+      { term: "Seuil de rentabilité", definition: "Le niveau d'activité à partir duquel vos revenus couvrent l'ensemble de vos coûts." }
     ],
-    estimatedMinutes: 55,
-    subSections: [
+      estimatedMinutes: 40,
+      subSections: [
       {
-        key: 'couts_fixes', label: "Coûts fixes", objective: "Lister et estimer vos charges fixes mensuelles",
-        whyImportant: "Les coûts fixes sont à payer quoi qu'il arrive. Les sous-estimer est l'une des principales causes de défaillance.",
-        tips: ["Listez TOUT : loyer, salaires, assurances, abonnements, services", "Ajoutez 20% de marge de sécurité", "Identifiez les coûts fixes que vous pourriez réduire en cas de besoin"],
-        examples: ["Coûts fixes mensuels : loyer 1500€, salaires 8000€, assurances 200€, abonnements 300€, services 500€ = 10 500€/mois."],
+        key: "couts_fixes",
+        label: "Coûts fixes",
+        objective: "Lister et estimer vos coûts fixes mensuels et annuels",
+        whyImportant: "Les coûts fixes sont votre « ticket d'entrée » mensuel. Les connaître vous permet de savoir combien vous devez générer chaque mois avant de commencer à dégager des bénéfices.",
+        tips: [
+        "Listez tous les postes de dépenses récurrents",
+        "Distinguer coûts fixes de structure et coûts fixes opérationnels",
+        "N'oubliez pas les assurances, abonnements, services"
+      ],
+        examples: [
+        "Loyer : 1 000€/mois",
+        "Salaire développeur : 3 750€/mois",
+        "Serveurs : 300€/mois",
+        "Assurances : 200€/mois",
+        "Abonnements SaaS : 150€/mois"
+      ],
         guidedQuestions: [
-          { question: "Quels sont vos coûts fixes mensuels estimés ?", placeholder: "Loyer : ... Salaires : ... Assurances : ... Abonnements : ... Autres : ...", type: 'textarea' },
-          { question: "Quel est le total de vos charges fixes mensuelles ?", placeholder: "ex: 10 500€/mois", type: 'text' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Quels sont vos coûts fixes mensuels ?", placeholder: "Loyer : ...€, Salaires : ...€, etc.", type: "textarea" },
+            { question: "Quel est votre coût fixe mensuel total estimé ?", placeholder: "Mon coût fixe mensuel total est d'environ...€", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'couts_variables', label: "Coûts variables", objective: "Estimer vos coûts variables par unité vendue",
-        whyImportant: "Les coûts variables déterminent votre marge brute. Plus ils sont faibles, plus chaque vente est rentable.",
-        tips: ["Calculez le coût variable unitaire de votre produit", "Identifiez les coûts variables qui augmentent avec la croissance", "Négociez avec vos fournisseurs pour réduire les coûts variables"],
-        examples: ["Coûts variables par commande : commission producteur 15%, emballage 2€, transport 5€, frais plateforme 3€ = 25% du prix de vente."],
+        key: "couts_variables",
+        label: "Coûts variables",
+        objective: "Lister et estimer vos coûts variables par unité vendue",
+        whyImportant: "Les coûts variables déterminent votre marge sur chaque vente. Plus ils sont faibles, plus chaque vente contribue à couvrir vos coûts fixes.",
+        tips: [
+        "Estimez le coût variable unitaire (par produit/service vendu)",
+        "Identifiez les coûts variables qui augmenteront avec la croissance",
+        "Calculez votre marge brute : prix de vente - coûts variables"
+      ],
+        examples: [
+        "Commission producteur : 30% du prix de vente",
+        "Frais de livraison : 5€ par commande",
+        "Coût d'acquisition client : 2€ par nouveau client"
+      ],
         guidedQuestions: [
-          { question: "Quels sont vos coûts variables par unité vendue ?", placeholder: "Commission : ... Emballage : ... Transport : ... Autres : ...", type: 'textarea' },
-          { question: "Quel est votre coût variable total en pourcentage du prix de vente ?", placeholder: "ex: 30% du prix de vente", type: 'text' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Quels sont vos coûts variables par unité vendue ?", placeholder: "Par unité vendue, j'ai...€ de coûts variables", type: "textarea" },
+            { question: "Quel est votre coût variable total pour une vente typique ?", placeholder: "Pour une vente typique de...€, les coûts variables sont de...€", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'investissements_initial', label: "Investissements initiaux", objective: "Lister les investissements nécessaires au démarrage",
-        whyImportant: "Les investissements initiaux sont votre ticket d'entrée. Les sous-estimer peut bloquer votre démarrage.",
-        tips: ["Distinguez investissements obligatoires (matériel, dépôt de garantie) et optionnels", "Prévoyez une réserve pour imprévus", "Étalez les investissements si possible"],
-        examples: ["Investissements : développement site (15 000€), matériel bureau (3000€), dépôt de garantie (3000€), stock initial (5000€), trésorerie de départ (10 000€) = 36 000€."],
+        key: "seuil_rentabilite",
+        label: "Seuil de rentabilité",
+        objective: "Calculer le nombre de ventes nécessaires pour atteindre la rentabilité",
+        whyImportant: "Le seuil de rentabilité est un indicateur clé pour savoir si votre modèle économique est viable et à partir de quand vous générerez des bénéfices.",
+        tips: [
+        "Seuil = Coûts fixes / (Prix de vente - Coûts variables unitaires)",
+        "Testez différents scénarios (optimiste, réaliste, pessimiste)",
+        "Plus le seuil est bas, plus votre modèle est résilient"
+      ],
         guidedQuestions: [
-          { question: "Quels sont les investissements nécessaires au lancement ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quel est le montant total des investissements ?", placeholder: "ex: 50 000€", type: 'text' },
-        ],
-        estimatedMinutes: 15,
-      },
-      {
-        key: 'seuil_rentabilite', label: "Seuil de rentabilité", objective: "Calculer le seuil de rentabilité de votre projet",
-        whyImportant: "Le seuil de rentabilité répond à la question cruciale : 'À partir de combien de ventes suis-je rentable ?'",
-        tips: ["Formule : charges fixes / (prix de vente - coût variable unitaire)", "Calculez aussi le nombre de clients nécessaires pour l'atteindre", "Un seuil bas signifie un risque plus faible"],
-        examples: ["Charges fixes annuelles : 126 000€. Marge unitaire : 15€. Seuil : 8400 ventes/an = 700/mois = 23/jour."],
-        guidedQuestions: [
-          { question: "Quel est votre seuil de rentabilité mensuel estimé ?", placeholder: "ex: 700 ventes/mois ou 50 000€ CA/mois", type: 'text' },
-          { question: "Combien de clients cela représente-t-il par mois ?", placeholder: "Nombre de clients nécessaire...", type: 'text' },
-        ],
-        estimatedMinutes: 10,
-      },
+            { question: "Quel est le prix de vente moyen de votre produit ou service ?", placeholder: "Prix moyen : ...€", type: "text" },
+            { question: "Quel est votre seuil de rentabilité mensuel estimé (nombre d'unités à vendre) ?", hint: "Coûts fixes mensuels / (Prix - Coûts variables unitaires)", placeholder: "Je dois vendre environ... unités par mois", type: "text" },
+            { question: "Ce seuil vous semble-t-il atteignable ?", placeholder: "Oui, car... / Non, car...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai listé mes coûts fixes mensuels", "J'ai estimé mes coûts variables", "J'ai listé mes investissements initiaux", "J'ai calculé mon seuil de rentabilité"],
-  },
-
-  17: {
-    stepNumber: 17,
-    title: "Flux de revenus",
-    objective: "Identifier et structurer vos sources de revenus pour assurer la viabilité financière de votre projet.",
-    whyImportant: "Sans revenus, pas d'entreprise. Diversifier vos sources de revenus réduit les risques et augmente la résilience de votre projet.",
-    keyConcepts: [
-      { term: "Flux de revenus", definition: "Les différentes sources de revenus de votre entreprise (vente, abonnement, commission, publicité)." },
-      { term: "Modèle de tarification", definition: "Comment vous fixez vos prix : coût + marge, prix de marché, valeur perçue, abonnement." },
-      { term: "Projection de revenus", definition: "Estimation chiffrée de vos revenus futurs sur 3 ans." },
+      checklist: [
+        "J'ai listé tous mes coûts fixes mensuels",
+        "J'ai listé mes coûts variables par unité vendue",
+        "J'ai calculé mon seuil de rentabilité",
+        "J'ai une vision claire de ma structure de coûts"
+      ],
+      resources: [
+        { title: "Guide de la structure des coûts pour startups", type: "article" },
+        { title: "Calculateur de seuil de rentabilité", type: "tool" }
+      ],
+    },
+    17: {
+      stepNumber: 17,
+      title: "Flux de revenus",
+      objective: "Définir comment votre entreprise va générer des revenus : sources de revenus, stratégie de prix et projections financières.",
+      whyImportant: "Votre entreprise doit générer plus de revenus que de coûts pour être viable. Comprendre vos sources de revenus et votre stratégie de prix est essentiel pour construire un modèle économique durable.",
+      avantDeLire: {
+        description: "Les flux de revenus décrivent comment votre entreprise capture de la valeur. Il existe plusieurs types de revenus : vente directe, abonnement, commission, publicité, etc. Dans cette étape, vous allez définir vos sources de revenus, votre stratégie de prix et projeter vos revenus attendus.",
+        resultatsAttendus: "Une stratégie de revenus claire avec les sources identifiées, la stratégie de prix définie et des projections de revenus à 1 an.",
+      },
+      etudeDeCas: "Sophie a défini ses sources de revenus : Commission de 15% sur chaque vente via la plateforme, Abonnement premium pour les producteurs (29,90€/mois pour des fonctionnalités avancées), Publicité ciblée (produits locaux). Prix : gratuits pour les consommateurs, commission pour les producteurs. Projection : objectif de 500 commandes/mois à 25€ de panier moyen = 1 875€/mois de commission en année 1.",
+      conseils: [
+        "Diversifiez vos sources de revenus sans les multiplier inutilement",
+        "Testez différents prix auprès de vos clients potentiels",
+        "La stratégie de prix peut évoluer : commencez simple et ajustez",
+        "Projetez vos revenus sur 12 mois avec des hypothèses claires"
+      ],
+      keyConcepts: [
+      { term: "Flux de revenus", definition: "Les différentes sources par lesquelles votre entreprise génère de l'argent." },
+      { term: "Stratégie de prix", definition: "La méthode par laquelle vous fixez le prix de vos produits ou services." },
+      { term: "Projection financière", definition: "Une estimation de vos revenus futurs basée sur des hypothèses et des données." }
     ],
-    estimatedMinutes: 50,
-    subSections: [
+      estimatedMinutes: 45,
+      subSections: [
       {
-        key: 'sources_revenus', label: "Sources de revenus", objective: "Identifier toutes vos sources de revenus potentielles",
-        whyImportant: "Des sources de revenus diversifiées réduisent la dépendance à un seul canal et sécurisent votre trésorerie.",
-        tips: ["Listez les sources directes (vente) et indirectes (commission, publicité)", "Un modèle freemium peut convertir des utilisateurs gratuits en payants", "Testez différents modèles pour trouver le plus rentable"],
-        examples: ["Sources : 1) Commission de 15% sur chaque transaction, 2) Abonnement premium producteurs (29€/mois), 3) Publicité ciblée, 4) Vente de données anonymisées."],
+        key: "sources_revenus",
+        label: "Sources de revenus",
+        objective: "Identifier toutes vos sources potentielles de revenus",
+        whyImportant: "Chaque source de revenus supplémentaire réduit votre dépendance à une seule source et augmente votre résilience financière.",
+        tips: [
+        "Une source de revenus = une proposition de valeur monétisée",
+        "Distinguer revenus récurrents (abonnements) et ponctuels (ventes)",
+        "Certaines sources peuvent être accessoires mais rentables"
+      ],
+        examples: [
+        "Commission sur les ventes (15%)",
+        "Abonnement premium producteurs (29,90€/mois)",
+        "Publicité ciblée",
+        "Partenariats avec des marques locales"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont vos sources de revenus potentielles ?", placeholder: "1. ... 2. ... 3. ... 4. ...", type: 'textarea' },
-          { question: "Quelle sera votre source de revenus principale ?", placeholder: "Source principale...", type: 'text' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Quelles sont vos sources de revenus ?", placeholder: "Mes sources de revenus sont...", type: "textarea" },
+            { question: "Quelle sera votre source de revenus principale ?", placeholder: "Ma source principale sera...", type: "text" },
+            { question: "Y a-t-il d'autres sources de revenus possibles à explorer plus tard ?", placeholder: "Plus tard, je pourrais aussi...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'modele_tarification', label: "Modèle de tarification", objective: "Définir votre stratégie de prix",
-        whyImportant: "Le prix est le signal de votre valeur. Un prix trop bas peut dévaloriser votre offre, un prix trop haut peut freiner l'adoption.",
-        tips: ["Étudiez les prix pratiqués par vos concurrents", "Testez différents prix auprès de clients potentiels", "Un prix juste = le client est satisfait ET vous dégagez une marge"],
-        examples: ["Tarification : commission de 15% sur chaque transaction (prix du marché). Abonnement premium à 29€/mois (vs 39€ chez le concurrent direct)."],
+        key: "strategie_prix",
+        label: "Stratégie de prix",
+        objective: "Définir comment vous allez fixer vos prix",
+        whyImportant: "Le prix est un signal de valeur. Un prix trop bas peut dévaloriser votre offre, un prix trop haut peut rebuter vos clients.",
+        tips: [
+        "Basez-vous sur la valeur perçue, pas seulement sur vos coûts",
+        "Analysez les prix de vos concurrents",
+        "Testez différents niveaux de prix (A/B testing si possible)"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre modèle de tarification ?", type: 'select', options: [{ label: 'Prix unique', value: 'fixed' }, { label: 'Abonnement', value: 'subscription' }, { label: 'Commission', value: 'commission' }, { label: 'Freemium', value: 'freemium' }, { label: 'Mixte', value: 'mixed' }] },
-          { question: "Comment avez-vous déterminé ce prix ?", placeholder: "Justification du prix...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
+            { question: "Comment allez-vous fixer vos prix ?", placeholder: "Je fixerai mes prix en fonction de...", type: "textarea" },
+            { question: "Quel est le prix de votre produit ou service principal ?", placeholder: "Mon prix est de...€", type: "text" },
+            { question: "Ce prix est-il cohérent avec votre proposition de valeur ?", placeholder: "Oui, car...", type: "textarea" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'projection_revenus', label: "Projection de revenus", objective: "Estimer vos revenus prévisionnels sur 3 ans",
-        whyImportant: "Les projections de revenus sont essentielles pour planifier votre croissance et rassurer vos investisseurs.",
-        tips: ["Faites 3 scénarios : pessimiste, réaliste, optimiste", "Basez-vous sur des hypothèses réalistes et justifiées", "Actualisez vos projections régulièrement"],
-        examples: ["Scénario réaliste : Année 1 : 50 000€ (500 clients), Année 2 : 200 000€ (2000 clients), Année 3 : 500 000€ (5000 clients)."],
+        key: "projections_revenus",
+        label: "Projections de revenus",
+        objective: "Estimer vos revenus attendus sur les 12 prochains mois",
+        whyImportant: "Les projections de revenus vous permettent de vérifier la viabilité financière de votre projet et de planifier votre trésorerie.",
+        tips: [
+        "Basez vos projections sur des hypothèses réalistes",
+        "Créez 3 scénarios : pessimiste, réaliste, optimiste",
+        "Mettez à jour vos projections chaque mois"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre chiffre d'affaires prévisionnel année 1 ?", placeholder: "CA année 1...", type: 'text' },
-          { question: "Quel est votre chiffre d'affaires prévisionnel année 2 ?", placeholder: "CA année 2...", type: 'text' },
-          { question: "Quel est votre chiffre d'affaires prévisionnel année 3 ?", placeholder: "CA année 3...", type: 'text' },
-          { question: "Quelles sont les hypothèses derrière ces projections ?", placeholder: "Hypothèses : nombre clients, prix, croissance...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
-      },
+            { question: "Quels sont vos objectifs de revenus pour les 12 prochains mois ?", placeholder: "Mois 1-3 : ...€, Mois 4-6 : ...€, Mois 7-12 : ...€", type: "textarea" },
+            { question: "Quelles hypothèses sous-tendent ces projections ?", placeholder: "Mes hypothèses sont...", type: "textarea" },
+            { question: "À partir de quand votre entreprise devient-elle rentable ?", placeholder: "Mon entreprise deviendra rentable en mois...", type: "text" }
+          ],
+        estimatedMinutes: 15
+      }
     ],
-    checklist: ["J'ai identifié mes sources de revenus", "J'ai défini mon modèle de tarification", "J'ai établi mes projections de revenus", "J'ai documenté mes hypothèses"],
-  },
-
-  18: {
-    stepNumber: 18,
-    title: "Résumé financier du modèle économique",
-    objective: "Synthétiser la structure financière de votre projet et vérifier sa viabilité économique.",
-    whyImportant: "Un résumé financier clair vous permet d'avoir une vision d'ensemble de votre santé financière et de communiquer avec des investisseurs ou banquiers.",
-    keyConcepts: [
-      { term: "Rentabilité", definition: "Capacité à dégager un bénéfice, lorsque les revenus dépassent les coûts." },
-      { term: "Plan de trésorerie", definition: "Prévision des entrées et sorties d'argent mois par mois." },
+      checklist: [
+        "J'ai identifié mes sources de revenus",
+        "J'ai défini ma stratégie de prix",
+        "J'ai réalisé des projections de revenus sur 12 mois",
+        "J'ai identifié quand mon entreprise deviendra rentable"
+      ],
+      resources: [
+        { title: "Guide des modèles de revenus pour startups", type: "article" },
+        { title: "Comment fixer le prix de votre produit", type: "article" }
+      ],
+    },
+    18: {
+      stepNumber: 18,
+      title: "Résumé financier",
+      objective: "Synthétiser les aspects financiers de votre projet : coûts, revenus, besoin de financement et indicateurs clés.",
+      whyImportant: "Un résumé financier clair est indispensable pour parler à des investisseurs, des banques ou des partenaires. C'est aussi un outil de pilotage essentiel pour vous-même.",
+      avantDeLire: {
+        description: "Le résumé financier rassemble les éléments clés de votre analyse financière : structure des coûts, flux de revenus, besoin de financement et principaux indicateurs. Ce document sera crucial si vous cherchez un financement ou un partenariat.",
+        resultatsAttendus: "Un résumé financier complet avec le coût fixe mensuel, le seuil de rentabilité, le besoin de financement et les principaux indicateurs financiers.",
+      },
+      etudeDeCas: "Sophie a résumé : Coût fixe mensuel : 5 250€. Seuil de rentabilité : 350 commandes/mois (panier moyen 25€, commission 15%). Revenu mensuel à 500 commandes : 1 875€. Besoin de financement initial : 50 000€ (développement + 6 mois de trésorerie). Marge brute : 15% du prix de vente.",
+      conseils: [
+        "Soyez précis et transparent dans vos chiffres",
+        "Préparez-vous à justifier chaque hypothèse",
+        "Un besoin de financement réaliste inspire confiance",
+        "Gardez vos documents financiers à jour et organisés"
+      ],
+      keyConcepts: [
+      { term: "Besoin de financement", definition: "Le montant d'argent nécessaire pour lancer et faire fonctionner votre entreprise jusqu'à ce qu'elle devienne rentable." },
+      { term: "Trésorerie", definition: "La différence entre les entrées et sorties d'argent à un moment donné." },
+      { term: "Marge brute", definition: "La différence entre le prix de vente et le coût variable unitaire, exprimée en pourcentage." }
     ],
-    estimatedMinutes: 35,
-    subSections: [
+      estimatedMinutes: 35,
+      subSections: [
       {
-        key: 'synthese_couts', label: "Synthèse des coûts", objective: "Résumer l'ensemble des coûts de votre projet",
-        whyImportant: "Une vision synthétique de vos coûts vous permet de prendre des décisions éclairées et d'identifier les économies possibles.",
-        tips: ["Reprenez les totaux de vos coûts fixes, variables et investissements", "Calculez le coût de revient unitaire de votre produit", "Identifiez les 3 plus gros postes de dépenses"],
-        examples: ["Coûts fixes : 10 500€/mois (126 000€/an). Coûts variables : 25% du prix. Investissement initial : 36 000€. Coût revient unitaire : 8€."],
+        key: "synthese_financiere",
+        label: "Synthèse financière",
+        objective: "Rassembler les chiffres clés de votre analyse financière",
+        whyImportant: "Avoir tous vos chiffres clés en un coup d'œil vous permet de prendre des décisions éclairées et de communiquer efficacement.",
+        tips: [
+        "Un tableau de synthèse avec les 5-10 chiffres les plus importants",
+        "Comparez avec des benchmarks du secteur si disponibles",
+        "Mettez en évidence les points forts et les points de vigilance"
+      ],
         guidedQuestions: [
-          { question: "Quel est le total de vos coûts fixes annuels ?", placeholder: "ex: 126 000€/an", type: 'text' },
-          { question: "Quels sont vos 3 plus gros postes de dépenses ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Quels sont vos chiffres financiers clés ?", placeholder: "Coûts fixes mensuels : ...€, Seuil de rentabilité : ... unités, Prix moyen : ...€, Marge brute : ...%", type: "textarea" },
+            { question: "Quel est votre besoin de financement estimé ?", placeholder: "J'ai besoin de...€ pour...", type: "text" }
+          ],
+        estimatedMinutes: 15
       },
       {
-        key: 'synthese_revenus', label: "Synthèse des revenus", objective: "Résumer vos prévisions de revenus",
-        whyImportant: "La confrontation de vos revenus à vos coûts vous dit si votre modèle économique est viable.",
-        tips: ["Comparez vos revenus prévisionnels à vos coûts totaux", "Calculez votre marge brute et votre marge nette", "Identifiez le poids de chaque source de revenus"],
-        examples: ["CA annuel cible : 200 000€. Marge brute : 150 000€ (75%). Marge nette : 24 000€ (12%). Source principale : commission (60%)."],
+        key: "plan_financement",
+        label: "Plan de financement",
+        objective: "Définir comment vous allez financer votre projet",
+        whyImportant: "Un plan de financement clair rassure vos interlocuteurs et vous permet de savoir où vous en êtes dans votre recherche de fonds.",
+        tips: [
+        "Distinguez les fonds déjà obtenus des fonds à rechercher",
+        "Listez les sources potentielles (épargne, prêts, subventions, investisseurs)",
+        "Préparez un argumentaire pour chaque source de financement"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre chiffre d'affaires total cible ?", placeholder: "ex: 200 000€/an", type: 'text' },
-          { question: "Quelle est la part de chaque source de revenus ?", placeholder: "Source A : ...% Source B : ...% Source C : ...%", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
+            { question: "Comment allez-vous financer votre projet ?", placeholder: "Je vais financer mon projet par...", type: "textarea" },
+            { question: "Quelles sources de financement allez-vous solliciter ?", placeholder: "Je vais solliciter...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'rentabilite_previsionnelle', label: "Rentabilité prévisionnelle", objective: "Évaluer quand votre projet deviendra rentable",
-        whyImportant: "Connaître votre point de rentabilité vous aide à gérer votre trésorerie et à savoir combien de temps vous devez tenir avant d'être rentable.",
-        tips: ["Calculez votre résultat net prévisionnel année par année", "Estimez votre besoin en fonds de roulement", "Préparez un plan de trésorerie sur 12 mois minimum"],
-        examples: ["Année 1 : -15 000€ (démarrage). Année 2 : -5000€ (quasi-équilibre). Année 3 : +30 000€ (rentabilité). Seuil de rentabilité : 18 mois."],
+        key: "indicateurs_pilotage",
+        label: "Indicateurs de pilotage financier",
+        objective: "Définir les indicateurs pour suivre votre santé financière",
+        whyImportant: "Ce qui ne se mesure pas ne s'améliore pas. Des indicateurs de pilotage vous permettent de détecter les problèmes avant qu'ils ne deviennent critiques.",
+        tips: [
+        "Choisissez 3 à 5 indicateurs clés à suivre chaque mois",
+        "Automatisez la collecte de données quand c'est possible",
+        "Fixez-vous des seuils d'alerte pour chaque indicateur"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre résultat net prévisionnel année 1 ?", placeholder: "ex: -15 000€", type: 'text' },
-          { question: "À quel horizon atteignez-vous la rentabilité ?", placeholder: "ex: 18 à 24 mois", type: 'text' },
-        ],
-        estimatedMinutes: 11,
-      },
+            { question: "Quels indicateurs financiers allez-vous suivre mensuellement ?", placeholder: "Je suivrai : chiffre d'affaires, marge brute, trésorerie, nombre de clients...", type: "textarea" },
+            { question: "Quels sont vos objectifs pour chaque indicateur à 6 mois ?", placeholder: "CA mensuel : ...€, Marge brute : ...%, Trésorerie : ...€", type: "textarea" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai synthétisé mes coûts totaux", "J'ai résumé mes prévisions de revenus", "J'ai évalué ma rentabilité prévisionnelle", "J'ai identifié mon besoin de trésorerie"],
-  },
-
-  19: {
-    stepNumber: 19,
-    title: "Préparer et réaliser les tests terrain",
-    objective: "Concevoir et mener des tests auprès de vrais clients pour valider vos hypothèses sur le terrain.",
-    whyImportant: "Les tests terrain sont le seul moyen de savoir si votre projet répond réellement aux besoins. 70% des startups qui échouent le font parce qu'elles n'ont pas validé leurs hypothèses auprès de vrais clients.",
-    keyConcepts: [
-      { term: "Test terrain", definition: "Validation de vos hypothèses entrepreneuriales auprès de clients réels dans leur environnement naturel." },
-      { term: "Hypothèse", definition: "Affirmation provisoire sur votre marché, vos clients ou votre produit que vous devez valider ou infirmer." },
-      { term: "Découverte client", definition: "Processus structuré d'entretiens et d'observations pour comprendre en profondeur vos clients." },
+      checklist: [
+        "J'ai rédigé la synthèse financière de mon projet",
+        "J'ai estimé mon besoin de financement",
+        "J'ai défini mon plan de financement",
+        "J'ai identifié les indicateurs clés à suivre"
+      ],
+      resources: [
+        { title: "Guide du résumé financier pour investisseurs", type: "article" },
+        { title: "Modèle de tableau de bord financier", type: "tool" }
+      ],
+    },
+    19: {
+      stepNumber: 19,
+      title: "Préparez le test !",
+      objective: "Préparer le test terrain de votre projet en définissant ce que vous allez tester, comment et avec quels critères de succès.",
+      whyImportant: "Un test bien préparé est un test qui produit des apprentissages utiles. La préparation est la clé pour tirer le maximum de chaque test et éviter de perdre du temps sur des expériences mal conçues.",
+      avantDeLire: {
+        description: "Vous êtes presque prêt à tester votre projet sur le terrain. Cette étape vous aide à définir précisément : quoi tester, auprès de qui, comment, et quels sont vos critères de succès. Une bonne préparation décuple la valeur de vos tests.",
+        resultatsAttendus: "Un plan de test complet avec les objectifs, la méthode, les participants, les critères de succès et le calendrier.",
+      },
+      etudeDeCas: "Sophie prépare son test MVP : Objectif : valider que 50 consommateurs utilisent la plateforme pour commander chez 10 producteurs. Méthode : MVP fonctionnel pendant 1 mois. Participants : 10 producteurs partenaires, 50 consommateurs ciblés via Instagram. Critères de succès : 30 commandes minimum, 80% de satisfaction. Calendrier : développement 2 semaines, test 1 mois, analyse 1 semaine.",
+      conseils: [
+        "Définissez des critères de succès clairs avant le test, pas après",
+        "Un test doit avoir une durée limitée dans le temps",
+        "Préparez des questions précises pour recueillir des feedbacks structurés",
+        "Anticipez les imprévus : que ferez-vous si le test échoue ?"
+      ],
+      keyConcepts: [
+      { term: "Produit Minimum Viable (MVP)", definition: "La version la plus simple de votre produit qui permet de tester votre proposition de valeur avec de vrais utilisateurs." },
+      { term: "Critères de succès", definition: "Les conditions mesurables qui déterminent si votre test est réussi ou non." },
+      { term: "Plan de test", definition: "Un document qui définit les objectifs, la méthode, les participants et le calendrier d'un test." }
     ],
-    estimatedMinutes: 120,
-    subSections: [
+      estimatedMinutes: 45,
+      subSections: [
       {
-        key: 'interviews_clients', label: "Interviews clients", objective: "Mener des entretiens individuels pour comprendre les besoins profonds",
-        whyImportant: "Les interviews sont l'outil de validation le plus puissant. Elles révèlent des insights que les questionnaires ne captent pas.",
-        tips: ["Menez au moins 10 entretiens par segment de clientèle", "Ne parlez pas de votre solution : concentrez-vous sur le problème", "Écoutez 80% du temps, parlez 20%"],
-        examples: ["Question d'interview : 'Racontez-moi la dernière fois que vous avez cherché à acheter local. Qu'est-ce qui s'est passé ?'"],
+        key: "objectifs_test",
+        label: "Objectifs du test",
+        objective: "Définir ce que vous voulez apprendre de votre test",
+        whyImportant: "Des objectifs clairs vous permettent de concevoir un test qui produit des résultats utiles et exploitables.",
+        tips: [
+        "Un test = une question précise à laquelle vous voulez répondre",
+        "Priorisez les questions les plus importantes pour votre projet",
+        "Évitez de vouloir tester trop de choses à la fois"
+      ],
         guidedQuestions: [
-          { question: "Combien d'entretiens prévoyez-vous de réaliser ?", placeholder: "ex: 15 entretiens", type: 'text' },
-          { question: "Quelles sont les questions clés de votre guide d'entretien ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment recruterez-vous les personnes à interroger ?", placeholder: "ex: via des groupes Facebook, réseau personnel, salons...", type: 'textarea' },
-        ],
-        estimatedMinutes: 30,
+            { question: "Quelle est la question principale à laquelle vous voulez répondre avec ce test ?", placeholder: "Je veux savoir si...", type: "text" },
+            { question: "Qu'allez-vous tester concrètement ?", placeholder: "Je vais tester...", type: "textarea" },
+            { question: "Qu'apprendrez-vous de ce test, quel qu'en soit le résultat ?", placeholder: "Quel que soit le résultat, j'apprendrai...", type: "textarea" }
+          ],
+        estimatedMinutes: 12
       },
       {
-        key: 'observations_terrain', label: "Observations terrain", objective: "Observer vos clients potentiels dans leur environnement réel",
-        whyImportant: "L'observation révèle des comportements que les gens n'expriment pas verbalement. C'est une source d'insights complémentaire aux interviews.",
-        tips: ["Observez sans intervenir pour ne pas influencer", "Prenez des notes détaillées sur les comportements", "Cherchez les écarts entre ce que les gens disent et ce qu'ils font"],
-        examples: ["Observation : passer une matinée au marché local pour voir comment les clients choisissent leurs produits et interagissent avec les producteurs."],
+        key: "methode_test",
+        label: "Méthode et participants",
+        objective: "Définir comment et auprès de qui vous allez tester",
+        whyImportant: "La méthode et les participants déterminent la qualité et la fiabilité de vos résultats.",
+        tips: [
+        "Choisissez une méthode adaptée à votre question (entretien, observation, test produit)",
+        "Recrutez des participants qui correspondent à votre cible",
+        "5 à 10 participants suffisent pour un premier test qualitatif"
+      ],
         guidedQuestions: [
-          { question: "Quels contextes d'observation sont pertinents pour votre projet ?", placeholder: "ex: marché, supermarché, salon, espace de coworking...", type: 'textarea' },
-          { question: "Quels comportements spécifiques souhaitez-vous observer ?", placeholder: "ex: comment ils comparent les prix, comment ils choisissent...", type: 'textarea' },
-        ],
-        estimatedMinutes: 25,
+            { question: "Quelle méthode allez-vous utiliser pour ce test ?", placeholder: "Je vais utiliser...", type: "textarea" },
+            { question: "Auprès de qui allez-vous tester ?", placeholder: "Je vais tester auprès de...", type: "textarea" },
+            { question: "Combien de participants prévoyez-vous ?", placeholder: "Je prévois... participants", type: "text" }
+          ],
+        estimatedMinutes: 12
       },
       {
-        key: 'questionnaires_sondages', label: "Questionnaires et sondages", objective: "Concevoir et diffuser un questionnaire pour collecter des données chiffrées",
-        whyImportant: "Les questionnaires permettent d'obtenir des données quantitatives sur un échantillon large pour valider statistiquement vos hypothèses.",
-        tips: ["Maximum 10 questions", "Utilisez Google Forms ou Typeform (gratuit)", "Diffusez sur les réseaux sociaux et forums spécialisés"],
-        examples: ["Question : 'Seriez-vous prêt à payer 5€/mois pour un service qui livre des produits locaux chez vous ?'"],
+        key: "criteres_succes",
+        label: "Critères de succès et calendrier",
+        objective: "Définir les conditions qui détermineront la réussite de votre test",
+        whyImportant: "Des critères de succès prédéfinis évitent les interprétations biaisées des résultats.",
+        tips: [
+        "Des critères de succès doivent être mesurables et objectifs",
+        "Distinguez les critères de validation et les critères d'apprentissage",
+        "Fixez une date butoir pour la fin du test"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les 5 à 8 questions clés de votre sondage ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Auprès de qui allez-vous diffuser ce questionnaire ?", placeholder: "ex: Groupes Facebook, Linkedin, forums, emailing...", type: 'textarea' },
-          { question: "Quel est votre objectif de réponses ?", hint: "100+ réponses pour des données significatives", placeholder: "ex: 200 réponses", type: 'text' },
-        ],
-        estimatedMinutes: 25,
-      },
-      {
-        key: 'validation_hypotheses', label: "Validation des hypothèses", objective: "Confronter vos hypothèses initiales aux données collectées",
-        whyImportant: "La validation terrain transforme vos suppositions en certitudes (ou vous force à revoir votre copie).",
-        tips: ["Listez toutes vos hypothèses de départ avant les tests", "Pour chaque hypothèse, notez si elle est validée ou non", "Soyez honnête : une hypothèse invalidée est un apprentissage précieux"],
-        examples: ["Hypothèse 1 : 'Les gens veulent des produits locaux' → validée (85% des répondants). Hypothèse 2 : 'Ils sont prêts à payer plus cher' → invalidée (prix max = prix supermarché)."],
-        guidedQuestions: [
-          { question: "Quelles étaient vos hypothèses de départ ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Les données collectées valident-elles ces hypothèses ?", placeholder: "Hypothèse 1 : validée/invalidée parce que...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
-      },
-      {
-        key: 'fiches_decouverte', label: "Fiches de découverte client", objective: "Synthétiser vos apprentissages terrain par fiche client",
-        whyImportant: "Les fiches de découverte client sont un outil structurant qui résume tout ce que vous avez appris sur vos segments de clientèle.",
-        tips: ["Créez une fiche par profil de client rencontré", "Incluez : besoins, frustrations, comportements, citations", "Partagez ces fiches avec votre équipe pour aligner tout le monde"],
-        examples: ["Fiche Sophie : 28 ans, urbaine, cherche gain de temps, frustrée par le manque d'offres locales fiables, citation : 'Je voudrais pouvoir commander en 2 clics'."],
-        guidedQuestions: [
-          { question: "Quels sont les profils clients types que vous avez découverts ?", placeholder: "Profil 1 : ... Profil 2 : ...", type: 'textarea' },
-          { question: "Quels sont les enseignements clés de chaque fiche ?", placeholder: "Enseignements...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
-      },
+            { question: "Quels sont vos critères de succès pour ce test ?", placeholder: "Le test sera réussi si...", type: "textarea" },
+            { question: "Quel est le calendrier de votre test ?", placeholder: "Préparation : ... Test : ... Analyse : ...", type: "textarea" },
+            { question: "Que ferez-vous si le test échoue ?", placeholder: "Si le test échoue, je...", type: "textarea" }
+          ],
+        estimatedMinutes: 12
+      }
     ],
-    checklist: ["J'ai mené des entretiens clients approfondis", "J'ai réalisé des observations terrain", "J'ai diffusé un questionnaire et obtenu des réponses", "J'ai validé ou invalidé mes hypothèses", "J'ai rédigé des fiches de découverte client"],
-  },
-
-  20: {
-    stepNumber: 20,
-    title: "Plans de mise en œuvre",
-    objective: "Élaborer les plans opérationnels, marketing, commercial et financier pour concrétiser votre projet.",
-    whyImportant: "Un projet sans plan de mise en œuvre reste une intention. Des plans concrets, avec des échéances et des responsables, transforment votre vision en réalité.",
-    keyConcepts: [
-      { term: "Plan opérationnel", definition: "Planning détaillé des actions à mener, avec des jalons et des responsables." },
-      { term: "Plan marketing", definition: "Stratégie et actions pour faire connaître votre offre et acquérir des clients." },
-      { term: "Plan financier", definition: "Budget prévisionnel incluant les investissements, les charges et les revenus attendus." },
+      checklist: [
+        "J'ai défini l'objectif principal de mon test",
+        "J'ai choisi une méthode de test adaptée",
+        "J'ai identifié les participants",
+        "J'ai défini mes critères de succès",
+        "J'ai un calendrier pour mon test"
+      ],
+      resources: [
+        { title: "Guide du MVP (Produit Minimum Viable)", type: "article" },
+        { title: "Comment concevoir un plan de test", type: "article" }
+      ],
+    },
+    20: {
+      stepNumber: 20,
+      title: "Indicateurs (KPIs)",
+      objective: "Définir les indicateurs clés de performance (KPIs) qui vous permettront de mesurer le succès de votre projet et d'ajuster votre stratégie.",
+      whyImportant: "Les KPIs sont votre tableau de bord de pilotage. Ils transforment des données brutes en informations actionnables. Sans KPIs, vous pilotez à l'aveugle. Avec des bons KPIs, vous détectez les problèmes tôt et saisissez les opportunités.",
+      avantDeLire: {
+        description: "Les KPIs (Key Performance Indicators) sont des mesures quantifiables qui vous indiquent si vous atteignez vos objectifs. Ils couvrent différents aspects : performance financière, satisfaction client, impact environnemental, efficacité opérationnelle. Choisissez vos KPIs avec soin : trop, vous vous noyez dans les données ; trop peu, vous manquez des signaux importants.",
+        resultatsAttendus: "Une liste de 8 à 12 KPIs couvrant les dimensions financière, client, impact et opérationnelle, avec les objectifs associés.",
+      },
+      etudeDeCas: "Sophie a défini ses KPIs : Financiers (CA mensuel, marge brute, trésorerie), Clients (nombre d'utilisateurs actifs, taux de rétention à 30 jours, NPS), Impact (tonnes de CO2 évitées, producteurs référencés, % de produits locaux), Opérationnels (nombre de commandes/jour, temps de livraison moyen, taux de disponibilité plateforme). Objectifs à 6 mois : 500 utilisateurs actifs, 30 producteurs, NPS > 40.",
+      conseils: [
+        "Limitez-vous à 8-12 KPIs maximum pour rester focus",
+        "Chaque KPI doit être lié à un objectif spécifique",
+        "Automatisez la collecte des données quand c'est possible",
+        "Révisez vos KPIs régulièrement : certains deviennent moins pertinents avec le temps",
+        "Partagez vos KPIs avec votre équipe pour l'alignement"
+      ],
+      keyConcepts: [
+      { term: "KPI (Key Performance Indicator)", definition: "Un indicateur quantifiable qui mesure la performance d'une activité par rapport à un objectif." },
+      { term: "Tableau de bord", definition: "Un outil de visualisation qui regroupe vos KPIs pour un suivi en temps réel." },
+      { term: "Objectif vs Réel", definition: "La comparaison entre vos objectifs fixés et les résultats réels, qui permet d'identifier les écarts et d'ajuster votre stratégie." }
     ],
-    estimatedMinutes: 120,
-    subSections: [
+      estimatedMinutes: 40,
+      subSections: [
       {
-        key: 'plan_operationnel', label: "Plan opérationnel", objective: "Définir les actions concrètes et leur calendrier",
-        whyImportant: "Un plan opérationnel détaillé est votre feuille de route quotidienne. Il transforme la stratégie en actions.",
-        tips: ["Découpez par phases : préparation, lancement, croissance", "Assignez un responsable et une date butoir à chaque action", "Prévoyez des points de revue réguliers"],
-        examples: ["Phase 1 (Mois 1-2) : développement MVP (responsable : CTO). Phase 2 (Mois 3) : test bêta (responsable : PM). Phase 3 (Mois 4) : lancement (toute l'équipe)."],
+        key: "kpis_financiers",
+        label: "KPIs financiers",
+        objective: "Définir les indicateurs de performance financière",
+        whyImportant: "Les KPIs financiers sont la mesure ultime de la viabilité de votre entreprise. Ils vous alertent rapidement en cas de dérive.",
+        tips: [
+        "Suivez au minimum : CA, marge brute, trésorerie",
+        "Un KPI financier sans objectif n'a pas de sens",
+        "Comparez toujours vos résultats à vos prévisions"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les grandes phases de votre mise en œuvre ?", placeholder: "Phase 1 : ... Phase 2 : ... Phase 3 : ...", type: 'textarea' },
-          { question: "Quel est le calendrier prévisionnel pour chaque phase ?", placeholder: "Mois 1-2 : ... Mois 3-4 : ... Mois 5-6 : ...", type: 'textarea' },
-          { question: "Qui est responsable de chaque action clé ?", placeholder: "Action : ... Responsable : ...", type: 'textarea' },
-        ],
-        estimatedMinutes: 25,
+            { question: "Quels sont vos KPIs financiers principaux ?", placeholder: "Mes KPIs financiers sont...", type: "textarea" },
+            { question: "Quels sont vos objectifs pour chaque KPI financier à 6 mois ?", placeholder: "CA : ...€/mois, Marge : ...%, Trésorerie : ...€", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'plan_marketing', label: "Plan marketing et acquisition", objective: "Définir votre stratégie pour attirer et convaincre vos clients",
-        whyImportant: "Le meilleur produit du monde ne sert à rien si personne ne le connaît. Un plan marketing structuré est indispensable.",
-        tips: ["Définissez vos objectifs d'acquisition par canal", "Calculez votre budget marketing mensuel", "Prévoyez des actions avant, pendant et après le lancement"],
-        examples: ["Objectifs : 1000 visiteurs/mois via SEO, 500 via Instagram, 200 via partenariats. Budget : 2000€/mois. Actions : 2 articles blog/semaine, 5 posts Instagram/jour."],
+        key: "kpis_clients",
+        label: "KPIs clients et satisfaction",
+        objective: "Définir les indicateurs de satisfaction et de fidélisation client",
+        whyImportant: "Des clients satisfaits sont votre meilleur moteur de croissance. La satisfaction client est un indicateur avancé de votre santé future.",
+        tips: [
+        "Le NPS (Net Promoter Score) est un bon indicateur global",
+        "Le taux de rétention est plus important que le nombre d'acquisitions",
+        "Un client satisfait mais qui ne revient pas est un signal d'alarme"
+      ],
         guidedQuestions: [
-          { question: "Quels sont vos objectifs marketing chiffrés ?", placeholder: "ex: 1000 visiteurs/mois, 100 leads/mois...", type: 'textarea' },
-          { question: "Quelles actions marketing prévoyez-vous ?", placeholder: "Action 1 : ... Action 2 : ... Action 3 : ...", type: 'textarea' },
-          { question: "Quel est votre budget marketing mensuel ?", placeholder: "ex: 3000€/mois", type: 'text' },
-        ],
-        estimatedMinutes: 20,
+            { question: "Comment mesurerez-vous la satisfaction de vos clients ?", placeholder: "Je mesurerai la satisfaction via...", type: "textarea" },
+            { question: "Quels sont vos objectifs de satisfaction client à 6 mois ?", placeholder: "NPS : ..., Taux de rétention : ...%", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'plan_commercial', label: "Plan commercial et vente", objective: "Structurer votre processus de vente pour convertir les prospects en clients",
-        whyImportant: "Sans processus de vente, vous laissez vos prospects s'échapper. Un plan commercial structuré augmente votre taux de conversion.",
-        tips: ["Définissez votre tunnel de vente (étapes de la découverte à l'achat)", "Formez-vous à la vente si ce n'est pas votre point fort", "Mesurez votre taux de conversion à chaque étape"],
-        examples: ["Tunnel : prospect intéressé → démo gratuite → proposition commerciale → signature → onboarding. Taux de conversion cible : 20%."],
+        key: "kpis_impact",
+        label: "KPIs d'impact",
+        objective: "Définir les indicateurs de votre impact environnemental et social",
+        whyImportant: "L'impact est au cœur de votre projet. Le mesurer vous permet de prouver votre valeur et d'améliorer continuellement votre contribution positive.",
+        tips: [
+        "Mesurez ce qui est directement lié à votre activité",
+        "Utilisez des référentiels reconnus quand c'est possible",
+        "L'impact se mesure dans le temps : comparez année après année"
+      ],
         guidedQuestions: [
-          { question: "Quelles sont les étapes de votre processus de vente ?", placeholder: "1. ... 2. ... 3. ... 4. ...", type: 'textarea' },
-          { question: "Quel est votre objectif de ventes mensuel ?", placeholder: "ex: 50 nouveaux clients/mois", type: 'text' },
-          { question: "Quels outils utiliserez-vous pour suivre vos ventes ?", placeholder: "ex: CRM HubSpot, tableau de bord...", type: 'textarea' },
-        ],
-        estimatedMinutes: 20,
+            { question: "Comment mesurerez-vous votre impact environnemental et social ?", placeholder: "Je mesurerai mon impact par...", type: "textarea" },
+            { question: "Quels sont vos objectifs d'impact à 1 an ?", placeholder: "Objectif : réduire de ...% / toucher ... personnes / ...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
       },
       {
-        key: 'plan_financier', label: "Plan financier et budget", objective: "Établir un budget prévisionnel détaillé pour les 12 à 18 prochains mois",
-        whyImportant: "Un plan financier solide vous permet d'anticiper vos besoins de trésorerie et d'éviter les mauvaises surprises.",
-        tips: ["Distinguez les dépenses une fois (investissements) et récurrentes", "Prévoyez un scénario pessimiste avec 20% de marge", "Suivez votre trésorerie chaque semaine"],
-        examples: ["Budget mensuel : salaires 10 000€, marketing 2000€, outils 500€, loyer 1500€ = 14 000€. Trésorerie disponible : 50 000€ = 3,5 mois d'autonomie."],
+        key: "tableau_bord",
+        label: "Tableau de bord",
+        objective: "Organiser vos KPIs dans un tableau de bord de pilotage",
+        whyImportant: "Un tableau de bord bien conçu vous donne une vue d'ensemble en un coup d'œil et vous permet de réagir rapidement.",
+        tips: [
+        "Utilisez un outil simple (Google Sheets, Notion) pour commencer",
+        "Mettez à jour vos données chaque semaine",
+        "Ajoutez des alertes visuelles (feux tricolores) pour les KPIs critiques"
+      ],
         guidedQuestions: [
-          { question: "Quel est votre budget mensuel prévisionnel ?", placeholder: "Poste 1 : ... Poste 2 : ... Poste 3 : ...", type: 'textarea' },
-          { question: "Quelle est votre autonomie de trésorerie estimée ?", placeholder: "ex: 6 mois", type: 'text' },
-        ],
-        estimatedMinutes: 20,
-      },
-      {
-        key: 'recherche_financement', label: "Recherche de financement", objective: "Identifier et contacter les sources de financement adaptées",
-        whyImportant: "La recherche de financement prend du temps. Anticiper les démarches augmente vos chances d'obtenir les fonds nécessaires.",
-        tips: ["Préparez un pitch deck de 10 slides", "Identifiez 20 investisseurs potentiels et personnalisez votre approche", "Les aides publiques (BPI, France Active) sont accessibles sans dilution"],
-        examples: ["Plan de financement : apport personnel 20%, love money 10%, BPI subvention 30%, prêt bancaire 40%. Échéancier : obtention dans 3-6 mois."],
-        guidedQuestions: [
-          { question: "Quelles sources de financement ciblez-vous ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quel montant total devez-vous lever ?", placeholder: "ex: 80 000€", type: 'text' },
-          { question: "À quel horizon ?", placeholder: "ex: D'ici 6 mois", type: 'text' },
-        ],
-        estimatedMinutes: 20,
-      },
-      {
-        key: 'gestion_ressources', label: "Gestion des ressources et recrutements", objective: "Planifier vos besoins en ressources humaines et matérielles",
-        whyImportant: "Les bonnes personnes au bon moment font la différence. Une planification des ressources évite les goulots d'étranglement.",
-        tips: ["Identifiez les compétences critiques à recruter en priorité", "Prévoyez un budget recrutement", "Envisagez le recours à des freelances pour les besoins ponctuels"],
-        examples: ["Recrutements : Mois 3 : développeur full-stack (CDI). Mois 6 : commercial (CDI). Mois 9 : community manager (freelance). Budget salaires : 15 000€/mois."],
-        guidedQuestions: [
-          { question: "Quels postes devez-vous recruter et quand ?", placeholder: "Poste : ... Quand : ...", type: 'textarea' },
-          { question: "Quels sont vos besoins en équipement et locaux ?", placeholder: "Besoins matériels...", type: 'textarea' },
-        ],
-        estimatedMinutes: 15,
-      },
+            { question: "Comment allez-vous organiser le suivi de vos KPIs ?", placeholder: "Je vais suivre mes KPIs dans...", type: "textarea" },
+            { question: "À quelle fréquence allez-vous revoir vos indicateurs ?", placeholder: "Je vais revoir mes indicateurs...", type: "text" },
+            { question: "Qui aura accès à ce tableau de bord ?", placeholder: "Mes KPIs seront partagés avec...", type: "text" }
+          ],
+        estimatedMinutes: 10
+      }
     ],
-    checklist: ["J'ai un plan opérationnel détaillé avec calendrier", "J'ai défini mon plan marketing et acquisition", "J'ai structuré mon processus de vente", "J'ai établi un budget prévisionnel", "J'ai identifié mes sources de financement", "J'ai planifié mes besoins en ressources"],
-  },
-
-  21: {
-    stepNumber: 21,
-    title: "Définition et suivi des indicateurs",
-    objective: "Définir et mettre en place les indicateurs clés de performance (KPI) pour suivre et améliorer votre projet.",
-    whyImportant: "Ce qui ne se mesure pas ne s'améliore pas. Les KPI sont votre tableau de bord de pilotage. Ils vous permettent de prendre des décisions éclairées et de corriger le cap rapidement.",
-    keyConcepts: [
-      { term: "KPI", definition: "Indicateur Clé de Performance. Une métrique quantifiable qui mesure l'efficacité d'une action ou l'atteinte d'un objectif." },
-      { term: "Tableau de bord", definition: "Outil de pilotage qui regroupe vos KPI principaux pour une vue d'ensemble de votre performance." },
-      { term: "Benchmark", definition: "Comparaison de vos indicateurs avec ceux de votre secteur ou de vos concurrents." },
-    ],
-    estimatedMinutes: 60,
-    subSections: [
-      {
-        key: 'kpi_financiers', label: "KPI financiers", objective: "Définir les indicateurs financiers clés de votre projet",
-        whyImportant: "Les KPI financiers sont la traduction chiffrée de votre santé économique. Ils sont indispensables pour piloter votre entreprise.",
-        tips: ["Suivez au minimum : CA mensuel, marge brute, trésorerie", "Comparez vos chiffres à vos prévisions", "Un KPI financier doit être suivi au moins une fois par mois"],
-        examples: ["KPI : CA mensuel (objectif : 15 000€), Marge brute (objectif : > 60%), Trésorerie disponible (alerte : < 3 mois), Coût d'acquisition client (objectif : < 20€)."],
-        guidedQuestions: [
-          { question: "Quels sont vos KPI financiers principaux ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Quels sont vos objectifs pour chaque KPI ?", placeholder: "KPI 1 : objectif X...", type: 'textarea' },
-          { question: "À quelle fréquence les suivrez-vous ?", placeholder: "ex: chaque semaine, chaque mois...", type: 'text' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'kpi_commerciaux', label: "KPI commerciaux et clients", objective: "Définir les indicateurs de performance commerciale et de satisfaction client",
-        whyImportant: "La satisfaction et la fidélisation client sont les meilleurs prédicteurs de la croissance à long terme.",
-        tips: ["Suivez le NPS (Net Promoter Score) pour mesurer la satisfaction", "Le taux de rétention est plus important que le nombre de nouveaux clients", "Un client satisfait en amène d'autres"],
-        examples: ["KPI : NPS (objectif : > 50), Taux de rétention mensuel (objectif : > 90%), Nombre de nouveaux clients/mois (objectif : 100), Taux de conversion (objectif : 5%)."],
-        guidedQuestions: [
-          { question: "Quels sont vos KPI commerciaux et clients ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment mesurez-vous la satisfaction client ?", placeholder: "ex: enquête NPS après chaque achat", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'kpi_environnementaux', label: "KPI environnementaux", objective: "Mesurer l'impact environnemental de votre activité",
-        whyImportant: "Si votre projet a une dimension environnementale, ces KPI sont essentiels pour mesurer votre contribution et communiquer de façon transparente.",
-        tips: ["Mesurez votre bilan carbone régulièrement", "Suivez votre consommation de ressources (eau, énergie, matières)", "Un impact positif mesuré est un avantage concurrentiel"],
-        examples: ["KPI : Empreinte carbone par produit (objectif : -10%/an), % d'emballages recyclés (objectif : 100%), Déchets évités (objectif : 1 tonne/an), Part des fournisseurs éco-certifiés (objectif : 80%)."],
-        guidedQuestions: [
-          { question: "Quels sont vos KPI environnementaux ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment collectez-vous les données pour ces indicateurs ?", placeholder: "ex: factures, relevés, enquêtes fournisseurs...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'kpi_sociaux', label: "KPI sociaux", objective: "Mesurer l'impact social et la performance RH de votre projet",
-        whyImportant: "La performance sociale est aussi importante que la performance financière pour un projet durable et responsable.",
-        tips: ["Suivez la satisfaction et le turnover de votre équipe", "Mesurez votre contribution sociale (emplois créés, diversité)", "Des KPI sociaux positifs renforcent votre marque employeur"],
-        examples: ["KPI : Taux de turnover (objectif : < 10%), Satisfaction équipe (objectif : > 4/5), Nombre d'emplois créés (objectif : 5 en année 1), Part de femmes dans l'équipe (objectif : 50%)."],
-        guidedQuestions: [
-          { question: "Quels sont vos KPI sociaux ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment mesurerez-vous l'impact social de votre projet ?", placeholder: "ex: nombre de bénéficiaires, emplois créés...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-      {
-        key: 'kpi_impact', label: "KPI d'impact global", objective: "Définir les indicateurs qui mesurent l'impact global de votre projet",
-        whyImportant: "Au-delà des KPI individuels, des indicateurs d'impact global vous donnent une vision d'ensemble de votre contribution.",
-        tips: ["Définissez 2-3 indicateurs d'impact global qui résument votre mission", "Un indicateur d'impact doit être simple à comprendre et à communiquer", "Utilisez ces indicateurs dans vos rapports et communications"],
-        examples: ["KPI impact : Nombre de producteurs locaux soutenus (objectif : 100), Tonnes de CO2 évitées (objectif : 500t), Taux de satisfaction des producteurs partenaires (objectif : > 90%)."],
-        guidedQuestions: [
-          { question: "Quels indicateurs mesurent le mieux l'impact global de votre projet ?", placeholder: "1. ... 2. ... 3. ...", type: 'textarea' },
-          { question: "Comment communiquerez-vous ces indicateurs à vos parties prenantes ?", placeholder: "ex: rapport d'impact annuel, page web dédiée...", type: 'textarea' },
-        ],
-        estimatedMinutes: 12,
-      },
-    ],
-    checklist: ["J'ai défini mes KPI financiers avec objectifs", "J'ai défini mes KPI commerciaux et clients", "J'ai défini mes KPI environnementaux", "J'ai défini mes KPI sociaux", "J'ai défini mes KPI d'impact global"],
-  },
+      checklist: [
+        "J'ai défini mes KPIs financiers",
+        "J'ai défini mes KPIs clients et satisfaction",
+        "J'ai défini mes KPIs d'impact",
+        "J'ai organisé mes KPIs dans un tableau de bord",
+        "Je sais à quelle fréquence je vais les suivre"
+      ],
+      resources: [
+        { title: "Guide des KPIs essentiels pour startups à impact", type: "article" },
+        { title: "Modèle de tableau de bord KPI", type: "tool" },
+        { title: "Comment définir des objectifs ambitieux mais réalistes", type: "article" }
+      ],
+    },
 };
