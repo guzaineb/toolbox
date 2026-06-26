@@ -1,23 +1,40 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project, ProjectStatus } from './project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto, UpdateProjectStatusDto } from './dto/update-project.dto';
 import { JourneyService } from '../journey/journey.service';
+import { Sector } from '../sectors/sector.entity';
+import { DevelopmentPhase } from '../development-phases/development-phase.entity';
 
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectRepository(Project)
     private projectRepo: Repository<Project>,
+    @InjectRepository(Sector)
+    private sectorRepo: Repository<Sector>,
+    @InjectRepository(DevelopmentPhase)
+    private phaseRepo: Repository<DevelopmentPhase>,
     private journeyService: JourneyService,
   ) {}
 
   async create(userId: string, dto: CreateProjectDto): Promise<Project> {
+    if (dto.sector_id) {
+      const sector = await this.sectorRepo.findOneBy({ id: dto.sector_id });
+      if (!sector) throw new BadRequestException('Secteur introuvable');
+    }
+    if (dto.development_phase_id) {
+      const phase = await this.phaseRepo.findOneBy({ id: dto.development_phase_id });
+      if (!phase) throw new BadRequestException('Phase de développement introuvable');
+    }
+
     const project = this.projectRepo.create({
       name: dto.name,
       description: dto.description,
+      sector: dto.sector_id ? { id: dto.sector_id } as Sector : undefined,
+      developmentPhase: dto.development_phase_id ? { id: dto.development_phase_id } as DevelopmentPhase : undefined,
       user_id: userId,
       status: ProjectStatus.DRAFT,
     });
@@ -53,6 +70,16 @@ export class ProjectsService {
 
   async update(id: string, userId: string, dto: UpdateProjectDto): Promise<Project> {
     await this.assertOwner(id, userId);
+
+    if (dto.sector_id) {
+      const sector = await this.sectorRepo.findOneBy({ id: dto.sector_id });
+      if (!sector) throw new BadRequestException('Secteur introuvable');
+    }
+    if (dto.development_phase_id) {
+      const phase = await this.phaseRepo.findOneBy({ id: dto.development_phase_id });
+      if (!phase) throw new BadRequestException('Phase de développement introuvable');
+    }
+
     const project = await this.findOne(id, userId);
     Object.assign(project, dto);
     return this.projectRepo.save(project);

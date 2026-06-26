@@ -27,7 +27,7 @@ export class MailService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ToolBox</title>
+        <title>projectStruct</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
           * {
@@ -177,14 +177,14 @@ export class MailService {
       <body style="margin:0;padding:32px 16px;background-color:#0a0a0a;">
         <div class="container">
           <div class="header">
-            <div class="logo">Tool<span>box</span></div>
+            <div class="logo">Project<span>Struct</span></div>
             <div class="tagline">construire · connecter · développer</div>
           </div>
           <div class="content">
             ${content}
           </div>
           <div class="footer">
-            <div class="footer-text">© 2025 ToolBox – Tous droits réservés</div>
+            <div class="footer-text">© 2026 projectStruct – Tous droits réservés</div>
             <div class="footer-text" style="margin-top:8px;">L'écosystème d'innovation MENA</div>
           </div>
         </div>
@@ -204,7 +204,7 @@ export class MailService {
         </div>
         <h1 style="font-size:24px;color:#ffffff;margin-bottom:8px;">Vérifiez votre email</h1>
         <p style="color:#9bb2a8;font-size:14px;margin-bottom:24px;">
-          Bienvenue sur ToolBox. Utilisez le code ci-dessous<br>
+          Bienvenue sur projectStruct. Utilisez le code ci-dessous<br>
           ou cliquez sur le bouton pour activer votre compte.
         </p>
       </div>
@@ -229,9 +229,9 @@ export class MailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      from: `"projectStruct" <${this.configService.get<string>('MAIL_FROM')}>`,
       to: email,
-      subject: '🔐 Vérifiez votre compte ToolBox',
+      subject: '🔐 Vérifiez votre compte projectStruct',
       html: this.getBaseTemplate(content),
     });
   }
@@ -266,7 +266,7 @@ export class MailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      from: `"projectStruct" <${this.configService.get<string>('MAIL_FROM')}>`,
       to: email,
       subject: `📩 Invitation à rejoindre ${incubatorName}`,
       html: this.getBaseTemplate(content),
@@ -314,9 +314,9 @@ export class MailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      from: `"projectStruct" <${this.configService.get<string>('MAIL_FROM')}>`,
       to: email,
-      subject: `${isApproved ? '✓ Document approuvé' : '✗ Document rejeté'} – ToolBox`,
+      subject: `${isApproved ? '✓ Document approuvé' : '✗ Document rejeté'} – projectStruct`,
       html: this.getBaseTemplate(content),
     });
   }
@@ -348,9 +348,9 @@ export class MailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      from: `"projectStruct" <${this.configService.get<string>('MAIL_FROM')}>`,
       to: email,
-      subject: '🔐 Réinitialisez votre mot de passe ToolBox',
+      subject: '🔐 Réinitialisez votre mot de passe projectStruct',
       html: this.getBaseTemplate(content),
     });
   }

@@ -35,8 +35,8 @@ export function LoginSVG() {
       <g style={{ transformOrigin: '180px 200px' }}>
         <circle cx="180" cy="200" r="60" fill="#162d1f" stroke="#2d7a52" strokeWidth="1"/>
         <text x="180" y="220" textAnchor="middle" dominantBaseline="middle" fontFamily="Syne" fontSize="24" fontWeight="700" letterSpacing=".5">
-    <tspan fill="#a0e0b8">Tool</tspan>
-    <tspan fill="#c9a84c">Box</tspan>
+    <tspan fill="#a0e0b8">Project</tspan>
+    <tspan fill="#c9a84c">Struct</tspan>
   </text>  </g>
       <line x1="180" y1="152" x2="180" y2="80" stroke="#2d7a52" strokeWidth=".7" opacity=".4"/>
       <line x1="180" y1="248" x2="180" y2="340" stroke="#2d7a52" strokeWidth=".7" opacity=".3"/>
@@ -85,8 +85,8 @@ export function RegisterSVG() {
       </g>
 <g className="animate-pulse-slow" style={{ transformOrigin: "180px 220px" }}>
   <text x="180" y="220" textAnchor="middle" dominantBaseline="middle" fontFamily="Syne" fontSize="24" fontWeight="700" letterSpacing=".5">
-    <tspan fill="#a0e0b8">Tool</tspan>
-    <tspan fill="#c9a84c">Box</tspan>
+    <tspan fill="#a0e0b8">Project</tspan>
+    <tspan fill="#c9a84c">Struct</tspan>
   </text>
 </g>
       {/* Particules animées */}
