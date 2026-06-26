@@ -32,6 +32,16 @@ export interface Project {
       last_name: string;
     };
   };
+  sector_id?: string;
+  sector?: {
+    id: string;
+    name: string;
+  } | null;
+  development_phase_id?: string;
+  developmentPhase?: {
+    id: string;
+    name: string;
+  } | null;
   steps?: ProjectStep[];
   documents?: ProjectDocument[];
   reviews?: Review[];
@@ -77,11 +87,15 @@ export interface Review {
 export interface CreateProjectDto {
   name: string;
   description?: string;
+  sector_id?: string;
+  development_phase_id?: string;
 }
 
 export interface UpdateProjectDto {
   name?: string;
   description?: string;
+  sector_id?: string;
+  development_phase_id?: string;
 }
 
 export interface CreateReviewDto {

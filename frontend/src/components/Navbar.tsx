@@ -56,8 +56,8 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
         <a href="/" className="font-syne text-lg font-bold flex items-center gap-2 no-underline">
           <svg viewBox="0 0 120 30" className="h-6 w-auto">
             <text x="0" y="20" fontFamily="Syne, sans-serif" fontSize="20" fontWeight="700" letterSpacing="0.5">
-              <tspan fill={scrolled ? '#1D9E75' : '#a0e0b8'}>Tool</tspan>
-              <tspan fill={scrolled ? '#c9a84c' : '#c9a84c'}>Box</tspan>
+              <tspan fill={scrolled ? '#1D9E75' : '#a0e0b8'}>Project</tspan>
+              <tspan fill={scrolled ? '#c9a84c' : '#c9a84c'}>Struct</tspan>
             </text>
           </svg>
         </a>
