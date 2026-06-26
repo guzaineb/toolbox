@@ -19,7 +19,7 @@ export default function Hero() {
         </h1>
 
         <p className="text-base sm:text-lg text-ink2 leading-relaxed max-w-[560px] mx-auto mb-10">
-          ToolBox guide les porteurs de projet étape par étape. Structuration intelligente,
+          ProjectStruct guide les porteurs de projet étape par étape. Structuration intelligente,
           livrables standardisés, décision facilitée pour les incubateurs.
         </p>
 

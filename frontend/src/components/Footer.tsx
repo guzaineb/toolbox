@@ -5,8 +5,8 @@ export default function Footer() {
         <div className="flex items-center gap-2">
           <svg viewBox="0 0 100 24" className="h-5 w-auto">
             <text x="0" y="16" fontFamily="Syne, sans-serif" fontSize="16" fontWeight="700">
-              <tspan fill="#1D9E75">Tool</tspan>
-              <tspan fill="#c9a84c">Box</tspan>
+              <tspan fill="#1D9E75">Project</tspan>
+              <tspan fill="#c9a84c">Struct</tspan>
             </text>
           </svg>
           <span className="text-xs text-ink3">© 2025 ToolBox</span>

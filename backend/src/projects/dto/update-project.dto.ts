@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ProjectStatus } from '../project.entity';
 
 export class UpdateProjectDto {
@@ -9,6 +9,14 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsUUID()
+  sector_id?: string;
+
+  @IsOptional()
+  @IsUUID()
+  development_phase_id?: string;
 }
 
 export class UpdateProjectStatusDto {

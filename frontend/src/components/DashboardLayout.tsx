@@ -110,8 +110,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex items-center gap-2">
                 <div className="w-[8px] h-[8px] rounded-full bg-moss" />
                 <span className="font-syne text-xl font-bold tracking-tight">
-                  <span className="text-moss">Tool</span>
-                  <span className="text-amber">Box</span>
+                  <span className="text-moss">Project</span>
+                  <span className="text-amber">Struct</span>
                 </span>
               </div>
               <div className="text-xs text-ink3 mt-1 capitalize flex items-center gap-1">
@@ -215,8 +215,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
             <div className="hidden sm:flex items-center text-sm text-ink3">
               <span className="font-syne font-bold">
-                <span className="text-moss">Tool</span>
-                <span className="text-amber">Box</span>
+                <span className="text-moss">Project</span>
+                <span className="text-amber">Struct</span>
               </span>
               <ChevronRight size={14} className="mx-1.5 opacity-50" />
               <span className="capitalize">{currentRoleLabel}</span>

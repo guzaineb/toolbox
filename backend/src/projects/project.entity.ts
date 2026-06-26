@@ -5,7 +5,8 @@ import { ProjectDocument } from '../documents/project-document.entity';
 import { Review } from '../reviews/review.entity';
 import { ProgressHistory } from '../progress/progress-history.entity';
 import { Notification } from '../notifications/notification.entity';
-
+import { Sector } from '../sectors/sector.entity';             
+import { DevelopmentPhase } from '../development-phases/development-phase.entity'; 
 export enum ProjectStatus {
   DRAFT = 'draft',
   IN_PROGRESS = 'in_progress',
@@ -31,6 +32,22 @@ export class Project {
 
   @Column({ type: 'uuid' })
   user_id: string;
+
+  // ---- NOUVEAUX CHAMPS ----
+  @Column({ type: 'uuid', nullable: true })
+  sector_id: string;
+
+  @ManyToOne(() => Sector, { eager: true })
+  @JoinColumn({ name: 'sector_id' })
+  sector: Sector;
+
+  @Column({ type: 'uuid', nullable: true })
+  development_phase_id: string;
+
+  @ManyToOne(() => DevelopmentPhase, { eager: true })
+  @JoinColumn({ name: 'development_phase_id' })
+  developmentPhase: DevelopmentPhase;
+  // ---- FIN NOUVEAUX CHAMPS ----
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'user_id' })

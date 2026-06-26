@@ -24,6 +24,8 @@ import { VersionsModule } from './versions/versions.module';
 import { BmcModule } from './bmc/bmc.module';
 import { SharesModule } from './shares/shares.module';
 import { ExportsModule } from './exports/exports.module';
+import { SectorsModule } from './sectors/sectors.module';
+import { DevelopmentPhasesModule } from './development-phases/development-phases.module';
 
 @Module({
   imports: [
@@ -46,6 +48,7 @@ import { ExportsModule } from './exports/exports.module';
     UploadsModule, ProjectsModule, JourneyModule, DocumentsModule,
     ReviewsModule, ProgressModule, AiAssistantModule, NotificationsModule,
     VersionsModule, BmcModule, SharesModule, ExportsModule,
+    SectorsModule, DevelopmentPhasesModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

@@ -8,7 +8,7 @@ import {
   Layers, Share2, Download, FileText,
 } from 'lucide-react'
 import { Button, Card, Badge, ErrorAlert, SuccessAlert, Progress } from '@/components/shared/ui'
-import { PhaseNavigator } from '@/components/journey/PhaseNavigator'
+import { PhaseNavigatorNavbar } from '@/components/journey/PhaseNavigatorNavbar'
 import { StepGuide } from '@/components/step-editor/StepGuide'
 import { SubSectionCard } from '@/components/step-editor/SubSectionCard'
 import { AIAssistantPanel } from '@/components/step-editor/AIAssistantPanel'
@@ -100,13 +100,16 @@ export default function StepEditorPage() {
     }
   }, [projectId, stepNumber])
 
-  const doSave = useCallback(async (auto = false) => {
+  const doSave = useCallback(async () => {
     if (!step) return
     setSaveStatus('saving')
     setError(null)
     try {
-      const newStatus = step.status === 'not_started' ? 'in_progress' : step.status
-      await updateStepApi({ content: formContent, status: newStatus })
+      const payload: Record<string, any> = { content: formContent }
+      if (step.status === 'not_started') {
+        payload.status = 'in_progress'
+      }
+      await updateStepApi(payload)
       setSaveStatus('saved')
       setLastSaved(new Date())
       setSuccess('Sauvegardé avec succès')
@@ -126,7 +129,7 @@ export default function StepEditorPage() {
 
   const handleSave = async () => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    await doSave(false)
+    await doSave()
   }
 
   const COMPLEX_TYPES = ['pestel_v2', 'stakeholder_matrix', 'customer_segment', 'value_proposition', 'discovery_card'];
@@ -177,10 +180,14 @@ export default function StepEditorPage() {
   const handleSubmit = async () => {
     if (!validateBeforeSubmit()) return
 
-    await doSave(false)
     setSaving(true)
     setError(null)
     try {
+      if (step?.status === 'submitted' || step?.status === 'approved') {
+        await updateStepApi({ content: formContent, status: 'in_progress' })
+      } else {
+        await doSave()
+      }
       const updated = await projectService.submitStep(projectId, stepNumber)
       setStep(updated)
       setSuccess('Étape soumise avec succès !')
@@ -252,6 +259,12 @@ export default function StepEditorPage() {
               >
                 <ArrowLeft size={14} /> Retour
               </button>
+              <div className="w-[1px] h-[24px] bg-border mx-2" />
+              <PhaseNavigatorNavbar
+                currentStepNumber={stepNumber}
+                steps={allSteps}
+                projectId={projectId}
+              />
             </div>
 
             <div className="flex items-center gap-3">
@@ -278,7 +291,7 @@ export default function StepEditorPage() {
                 size="sm"
                 onClick={handleSubmit}
                 loading={saving}
-                disabled={step.status === 'approved' || step.status === 'submitted'}
+                disabled={step.status === 'approved'}
               >
                 <Send size={12} /> Soumettre
               </Button>
@@ -290,15 +303,6 @@ export default function StepEditorPage() {
       {/* Main content */}
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
         <div className="flex gap-6 items-start">
-          {/* Left sidebar - Phase Navigator */}
-          <div className="w-[240px] flex-shrink-0 sticky top-[72px] space-y-4">
-            <PhaseNavigator
-              currentStepNumber={stepNumber}
-              steps={allSteps}
-              projectId={projectId}
-            />
-          </div>
-
           {/* Center - form content */}
           <div className="flex-1 min-w-0 max-w-[720px]">
             {/* Step header */}
@@ -400,7 +404,7 @@ export default function StepEditorPage() {
                       size="sm"
                       onClick={handleSubmit}
                       loading={saving}
-                      disabled={step.status === 'approved' || step.status === 'submitted'}
+                      disabled={step.status === 'approved'}
                     >
                       <Send size={12} /> Soumettre
                     </Button>

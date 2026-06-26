@@ -42,7 +42,7 @@ export default function ProjectOwnerDashboard() {
           <EmptyState
             icon={<FolderKanban size={28} />}
             title="Aucun projet pour le moment"
-            description="Créez votre premier projet et commencez votre parcours entrepreneurial guidé en 13 étapes."
+            description="Créez votre premier projet et commencez votre parcours entrepreneurial guidé en 21 étapes."
             action={
               <Button variant="primary" onClick={() => router.push('/dashboard/project-owner/projects/create')}>
                 <Plus size={14} /> Créer mon projet
