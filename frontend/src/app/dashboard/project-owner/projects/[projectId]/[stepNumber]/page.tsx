@@ -68,13 +68,82 @@ export default function StepEditorPage() {
   }, [fetchStep])
 
   useEffect(() => {
-    if (step?.content) {
-      setFormContent(step.content)
-      if (step.validation_errors?.length) {
-        setValidationErrors(step.validation_errors)
+    if (!step?.content) return;
+
+    const dimLabels: Record<string, string> = {
+      politique: 'Politique', economique: 'Économique', socioculturel: 'Socioculturel',
+      technologique: 'Technologique', environnemental: 'Environnemental', legal: 'Légal',
+    };
+
+    const getRecap = (sourceStep: number, sourceSectionKey: string): string => {
+      const src = allSteps.find(s => s.step_number === sourceStep);
+      const section = src?.content?.[sourceSectionKey];
+      if (!section) return '';
+      if (typeof section === 'string') return section;
+      if (Array.isArray(section)) {
+        return section.map(item => JSON.stringify(item, null, 2)).join('\n');
+      }
+
+      const PESTEL_KEYS = ['politique', 'economique', 'socioculturel', 'technologique', 'environnemental', 'legal'];
+      const isPestelData = PESTEL_KEYS.some(k => section[k] && typeof section[k] === 'object' && ('quoi' in section[k] ));
+      if (isPestelData) {
+        return Object.entries(section).map(([dim, data]: [string, any]) => {
+          const label = dimLabels[dim] || dim;
+          const parts: string[] = [];
+          if (data?.quoi) parts.push(` ${data.quoi}`);
+         
+          return `${label}\n${parts.join('\n')}`;
+        }).join('\n\n');
+      }
+
+      if (Array.isArray(section.stakeholder_matrix_data)) {
+        return section.stakeholder_matrix_data.map((s: any) =>
+          `${s.name || '?'} — Influence: ${s.influence || '-'} / Impact: ${s.impact || '-'}`
+        ).join('\n');
+      }
+      if (Array.isArray(section.customer_segments_data)) {
+        return section.customer_segments_data.map((s: any) =>
+          `${s.name || '?'} : ${s.description || ''}`
+        ).join('\n');
+      }
+      const pestelData = section.pestel_v2_data;
+      if (pestelData && typeof pestelData === 'object') {
+        return Object.entries(pestelData).map(([dim, data]: [string, any]) => {
+          const label = dimLabels[dim] || dim;
+          const parts: string[] = [];
+          if (data?.quoi) parts.push(`Quoi : ${data.quoi}`);
+          if (data?.comment) parts.push(`Comment : ${data.comment}`);
+          return `${label}\n${parts.join('\n')}`;
+        }).join('\n\n');
+      }
+      return Object.entries(section)
+        .filter(([k]) => !k.startsWith('_') && !k.endsWith('_data'))
+        .map(([, v]) => String(v))
+        .filter(Boolean)
+        .join('\n');
+    };
+
+    let initialContent: Record<string, any> = { ...step.content };
+
+    const subs = pedagogicalContent?.subSections || [];
+    for (const section of subs) {
+      for (const gq of section.guidedQuestions) {
+        if (gq.type === 'step_recap' && gq.sourceStep && gq.sourceSectionKey) {
+          const recapValue = getRecap(gq.sourceStep, gq.sourceSectionKey);
+          if (recapValue) {
+            const sectionContent = { ...(initialContent[section.key] || {}) };
+            sectionContent[gq.question] = recapValue;
+            initialContent[section.key] = sectionContent;
+          }
+        }
       }
     }
-  }, [step, stepNumber])
+
+    setFormContent(initialContent);
+    if (step.validation_errors?.length) {
+      setValidationErrors(step.validation_errors);
+    }
+  }, [step, stepNumber, allSteps, pedagogicalContent])
 
   const clearMessages = useCallback(() => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
@@ -133,6 +202,7 @@ export default function StepEditorPage() {
   }
 
   const COMPLEX_TYPES = ['pestel_v2', 'stakeholder_matrix', 'customer_segment', 'value_proposition', 'discovery_card'];
+  const RECAP_TYPES = ['step_recap'];
 
   const isSectionFilled = (section: typeof subSections[0]): boolean => {
     const sectionContent = formContent[section.key]
@@ -152,6 +222,15 @@ export default function StepEditorPage() {
       }
       return false
     }
+    const hasRecapType = section.guidedQuestions.some(gq => RECAP_TYPES.includes(gq.type))
+    if (hasRecapType) {
+      const nonRecap = section.guidedQuestions.filter(gq => !RECAP_TYPES.includes(gq.type) && !COMPLEX_TYPES.includes(gq.type))
+      if (nonRecap.length === 0) return true
+      return nonRecap.some(gq => {
+        const val = sectionContent?.[gq.question]
+        return val !== undefined && val !== '' && !(Array.isArray(val) && val.length === 0)
+      })
+    }
     return typeof sectionContent === 'object' && Object.values(sectionContent).some((v: any) => v && v !== '')
   }
 
@@ -165,6 +244,7 @@ export default function StepEditorPage() {
       const sectionContent = formContent[section.key]
       const emptyQuestions = section.guidedQuestions.filter((gq) => {
         if (COMPLEX_TYPES.includes(gq.type)) return false
+        if (RECAP_TYPES.includes(gq.type)) return false
         const val = sectionContent?.[gq.question]
         return val === undefined || val === '' || (Array.isArray(val) && val.length === 0)
       })
