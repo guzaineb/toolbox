@@ -43,11 +43,12 @@ export function PESTELAnalysisV2({
   onChange,
 }: PESTELAnalysisV2Props) {
   const [expanded, setExpanded] = useState(true);
+  const safeValue = value || {} as PESTELData;
 
   const updateDimension = (key: string, field: 'quoi' | 'comment', val: string) => {
-    const current: PESTELDimension = value[key as keyof PESTELData] || { quoi: '', comment: '' };
+    const current: PESTELDimension = safeValue[key as keyof PESTELData] || { quoi: '', comment: '' };
     onChange({
-      ...value,
+      ...safeValue,
       [key]: { ...current, [field]: val },
     });
   };
@@ -78,7 +79,7 @@ export function PESTELAnalysisV2({
           <div className="grid grid-cols-2 gap-3">
             {DIMENSIONS.map((dim) => {
               const colors = DIMENSION_COLORS[dim.key] || DIMENSION_COLORS.politique;
-              const dimValue: PESTELDimension = value[dim.key as keyof PESTELData] || { quoi: '', comment: '' };
+              const dimValue: PESTELDimension = safeValue[dim.key as keyof PESTELData] || { quoi: '', comment: '' };
 
               return (
                 <div

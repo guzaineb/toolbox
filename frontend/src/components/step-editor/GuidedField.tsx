@@ -10,6 +10,7 @@ import { CustomerSegmentCard } from './CustomerSegmentCard';
 import { ValuePropositionCanvas } from './ValuePropositionCanvas';
 import { DiscoveryCard } from './DiscoveryCard';
 import { BMCEditor } from './BMCEditor';
+import { StepRecapField } from './StepRecapField';
 
 export function GuidedField({
   question, value, onChange, depth = 0,
@@ -96,6 +97,15 @@ export function GuidedField({
         hint={question.hint}
         value={value}
         onChange={onChange}
+      />
+    );
+  }
+
+  if (question.type === 'step_recap') {
+    return (
+      <StepRecapField
+        label={question.question}
+        value={value || ''}
       />
     );
   }
