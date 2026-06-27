@@ -8,135 +8,78 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
     1: {
       stepNumber: 1,
       title: "Esquissez votre idée d'entreprise",
-      objective: "Définir les contours de votre projet en clarifiant le nom, la description, l'inspiration et le secteur d'activité.",
-      whyImportant: "Une idée bien esquissée est le socle de tout le parcours entrepreneurial. Prendre le temps de poser les bases vous évite des erreurs stratégiques coûteuses et vous donne une direction claire.",
+      objective: "Définir les contours de votre projet en décrivant l'idée initiale, l'offre, les clients et les partenaires potentiels.",
+      whyImportant: "Chaque entrepreneur a, par définition, une idée d'entreprise en tête. À ce tout premier stade de la méthodologie, nous profilerons les contours de cette idée, en répondant à des questions simples structurées autour de l'ossature de ce qui deviendra le canevas de notre entreprise verte.",
       avantDeLire: {
-        description: "Dans cette étape, vous allez donner une première forme concrète à votre idée. Ne cherchez pas la perfection : l'objectif est d'écrire ce qui vous vient, même si c'est encore flou. Vous aurez tout le parcours pour affiner.",
-        resultatsAttendus: "Un nom provisoire, une description claire de votre idée, l'histoire de son inspiration et le secteur d'activité identifié.",
+        description: "Chaque entrepreneur a, par définition, une idée d'entreprise en tête. À ce tout premier stade de la méthodologie, nous profilerons les contours de cette idée, en répondant pour cela à quelques questions simples structurées autour de l'ossature de ce qui deviendra le canevas de notre entreprise verte dans les chapitres qui suivent. Cet exercice vise par conséquent à comprendre les différentes composantes de l'idée, ainsi qu'à préparer le travail à accomplir.",
+        resultatsAttendus: "Une description de l'idée d'entreprise initiale, caractérisée autour des produits et/ou services que l'entrepreneur veut offrir, des clients potentiels visés et des partenaires susceptibles de collaborer avec l'entreprise.",
       },
-      etudeDeCas: "Sophie, 32 ans, a eu l'idée de créer une plateforme de mise en relation entre producteurs locaux et consommateurs après avoir vu un documentaire sur le gaspillage alimentaire. Elle a noté son idée dans un carnet : « Relocal » la plateforme qui connecte les producteurs locaux aux consommateurs urbains. Elle a précisé son secteur (agroalimentaire, numérique) et a commencé à en parler autour d'elle pour tester le concept.",
+      etudeDeCas: "Pour vous aider, chaque exercice de votre parcours de développement du modèle d'affaires vert est illustré par un cas pratique : Entreprise de services énergétiques dans les zones rurales en Algérie (ESCO).\n\n1. Quelle est votre idée d'entreprise initiale ?\nApprovisionnement des zones rurales en énergie solaire, ce qui contribuera à réduire la pauvreté dans ces zones.\n\n2. Qu'allez-vous offrir (produit, service) ?\nJe proposerai la livraison, l'installation et la maintenance de systèmes photovoltaïques solaires.\n\n3. Qui pourraient être vos clients ?\nMes clients peuvent être les ménages disposant de ressources et les petites entreprises.\n\n4. Et vos partenaires ?\nMes partenaires pourraient être le gouvernement, les communautés locales, les fournisseurs et les techniciens.",
       conseils: [
-        "Ne cherchez pas le nom parfait dès le départ : un nom provisoire suffit pour commencer",
-        "Parlez de votre idée à 5 personnes de confiance pour recueillir leurs premières réactions",
-        "Notez tout, même les idées qui vous semblent farfelues : elles peuvent contenir une pépite",
-        "Restez ouvert : votre idée va évoluer tout au long de ce parcours"
+        "Soyez prêt(e) à modifier votre idée de départ !",
+        "Pourquoi voulez-vous créer une entreprise ? Quels sont les moteurs de ce projet ?",
+        "Existe-t-il un meilleur moyen d'atteindre mes objectifs ?",
+        "Faites preuve d'ouverture d'esprit et modifiez votre idée initiale si nécessaire"
       ],
       keyConcepts: [
       { term: "Idée d'entreprise", definition: "Le concept de base de ce que vous voulez créer, sans être encore un business model détaillé." },
-      { term: "Secteur d'activité", definition: "Le domaine économique dans lequel vous allez exercer (ex: agriculture, numérique, services)." },
-      { term: "Proposition de valeur", definition: "La promesse de valeur que vous ferez à vos futurs clients." }
+      { term: "Produit/Service", definition: "Ce que vous allez offrir à vos clients pour résoudre leurs problèmes." },
+      { term: "Parties prenantes", definition: "Les personnes ou organisations qui interagissent avec votre projet (clients, partenaires, fournisseurs)." }
     ],
       estimatedMinutes: 40,
       subSections: [
       {
-        key: "nom_provisoire",
-        label: "Nom provisoire du projet",
-        objective: "Trouver un nom temporaire pour votre projet",
-        whyImportant: "Le nom est la première identité de votre projet. Même provisoire, il vous aide à incarner votre idée et à en parler autour de vous.",
+        key: "esquisse_idee",
+        label: "Esquissez votre idée d'entreprise",
+        objective: "Décrire votre idée initiale en répondant aux questions fondamentales",
+        whyImportant: "Cet exercice vise à comprendre les différentes composantes de l'idée, ainsi qu'à préparer le travail à accomplir pour la suite du parcours.",
         tips: [
-        "Choisissez un nom simple, facile à retenir et à prononcer",
-        "Évitez les noms trop génériques ou déjà utilisés",
-        "Testez-le verbalement auprès de votre entourage"
+        "Soyez ouvert à modifier votre idée de départ",
+        "Ne cherchez pas la perfection, l'objectif est de noter ce qui vous vient",
+        "Parlez de votre idée autour de vous pour recueillir les premières réactions"
       ],
         examples: [
-        "« Relocal » pour une plateforme de mise en relation locale",
-        "« Vert-Connect » pour un réseau d'entreprises écoresponsables"
+        "Une entreprise de services énergétiques solaires dans les zones rurales"
       ],
         guidedQuestions: [
-            { question: "Quel nom provisoire donnez-vous à votre projet ?", hint: "Vous pourrez le changer plus tard", placeholder: "ex: Relocal", type: "text" },
-            { question: "Pourquoi ce nom vous semble-t-il approprié ?", placeholder: "expliquez votre choix...", type: "text" }
+            { question: "Quelle est votre idée d'entreprise initiale ?", hint: "Décrivez brièvement le concept", placeholder: "Mon idée est de...", type: "textarea" },
+            { question: "Qu'allez-vous offrir (produit, service) ?", placeholder: "Je vais offrir...", type: "textarea" },
+            { question: "Qui peuvent être vos clients ?", placeholder: "Mes clients peuvent être...", type: "textarea" },
+            { question: "Qui peuvent être vos partenaires ?", placeholder: "Mes partenaires peuvent être...", type: "textarea" }
           ],
-        estimatedMinutes: 5
-      },
-      {
-        key: "description_idee",
-        label: "Description de l'idée",
-        objective: "Décrire votre idée de façon claire et concise",
-        whyImportant: "Une description claire vous permet de partager votre vision facilement et d'obtenir des retours utiles.",
-        tips: [
-        "Commencez par le problème que vous voulez résoudre",
-        "Expliquez votre solution en une phrase",
-        "Terminez par l'impact que vous souhaitez avoir"
-      ],
-        examples: [
-        "Relocal est une plateforme web qui connecte les producteurs locaux avec les consommateurs urbains pour réduire le gaspillage alimentaire et soutenir l'économie locale."
-      ],
-        guidedQuestions: [
-            { question: "Décrivez votre idée en 5 à 10 lignes", hint: "Imaginez que vous la présentez à un inconnu", placeholder: "Mon idée consiste à...", type: "textarea" },
-            { question: "Quel est le concept central en une phrase ?", placeholder: "ex: Une plateforme de mise en relation entre...", type: "text" }
-          ],
-        estimatedMinutes: 10
-      },
-      {
-        key: "inspiration",
-        label: "Inspiration et origine du projet",
-        objective: "Expliquer ce qui vous a poussé à créer ce projet",
-        whyImportant: "Votre histoire personnelle donne du sens à votre projet et constitue un moteur puissant dans les moments difficiles.",
-        tips: [
-        "Racontez une expérience personnelle qui a déclenché l'idée",
-        "Citez des personnes ou des situations qui vous ont inspiré",
-        "Soyez authentique : les histoires vraies touchent les gens"
-      ],
-        examples: [
-        "Après avoir vu un documentaire sur le gaspillage alimentaire et découvert que 30% de la production locale est perdue faute de distribution, j'ai eu envie d'agir."
-      ],
-        guidedQuestions: [
-            { question: "Qu'est-ce qui vous a inspiré à créer ce projet ?", placeholder: "Mon inspiration vient de...", type: "textarea" },
-            { question: "Y a-t-il une expérience personnelle à l'origine de cette idée ?", placeholder: "racontez votre histoire...", type: "textarea" }
-          ],
-        estimatedMinutes: 10
-      },
-      {
-        key: "secteur_activite",
-        label: "Secteur d'activité",
-        objective: "Identifier le ou les secteurs d'activité de votre projet",
-        whyImportant: "Le secteur d'activité détermine les règles, les obligations légales et les opportunités de votre projet.",
-        tips: [
-        "Identifiez le secteur principal (ex: agriculture, numérique, services)",
-        "Certains projets sont transverses : notez tous les secteurs concernés",
-        "Renseignez-vous sur les spécificités réglementaires de votre secteur"
-      ],
-        examples: [
-        "Secteur principal : agroalimentaire. Secondaire : numérique (plateforme SaaS)."
-      ],
-        guidedQuestions: [
-            { question: "Dans quel(s) secteur(s) d'activité vous situez-vous ?", placeholder: "ex: agriculture, numérique, artisanat, services...", type: "text" },
-            { question: "Y a-t-il des réglementations spécifiques à connaître dans ce secteur ?", hint: "Agréments, diplômes, normes...", placeholder: "ex: certification bio, agrément sanitaire...", type: "textarea" }
-          ],
-        estimatedMinutes: 15
+        estimatedMinutes: 30
       }
     ],
       checklist: [
-        "J'ai un nom provisoire pour mon projet",
-        "Je peux décrire mon idée en 5 à 10 lignes",
-        "J'ai identifié l'origine et l'inspiration de mon projet",
-        "J'ai défini mon secteur d'activité"
+        "J'ai décrit mon idée d'entreprise initiale",
+        "J'ai identifié ce que j'offre (produit/service)",
+        "J'ai identifié mes clients potentiels",
+        "J'ai identifié mes partenaires potentiels"
       ],
       resources: [
-        { title: "Comment trouver le bon nom pour votre entreprise", type: "article" },
-        { title: "Carte des secteurs d'activité - INSEE", type: "tool" }
+        { title: "Guide pour esquisser une idée d'entreprise", type: "article" }
       ],
     },
     2: {
       stepNumber: 2,
       title: "Identifier les problèmes et les besoins",
-      objective: "Analyser en profondeur les problèmes que rencontre votre cible et les besoins non satisfaits auxquels votre projet pourrait répondre.",
-      whyImportant: "Un projet qui résout un problème réel a 5 fois plus de chances de succès. Comprendre les besoins profonds de vos futurs clients est la clé d'une proposition de valeur pertinente.",
+      objective: "Comprendre le POURQUOI de votre idée d'affaires initiale en identifiant les défis environnementaux, sociaux, les besoins clients et les motivations de l'équipe.",
+      whyImportant: "Il n'y a pas de projet isolé, tout est interconnecté. Comprendre les moteurs qui animent le projet constitue une condition préalable pour toute entreprise afin de définir un cap et une raison d'être.",
       avantDeLire: {
-        description: "Avant de construire votre solution, il est essentiel de bien comprendre le problème. Dans cette étape, vous allez explorer les difficultés rencontrées par votre cible, les solutions existantes et identifier les opportunités.",
-        resultatsAttendus: "Une liste des problèmes clés identifiés, une cartographie des solutions existantes et une analyse des besoins non satisfaits.",
+        description: "Après avoir décrit votre idée d'entreprise initiale, c'est le moment de vous poser des questions : Pourquoi voudrais-je la développer ? Quels sont les problèmes ou les défis que je veux relever ? Quels sont les besoins des clients potentiels que j'aimerais satisfaire ?",
+        resultatsAttendus: "Décrire les facteurs auxquels notre entreprise est soumise, les forces de changement qui l'affectent, ainsi que les moteurs (problèmes et besoins) qui nous poussent à développer l'idée.",
       },
-      etudeDeCas: "Sophie a interrogé 15 consommateurs et 8 producteurs locaux. Elle a découvert que les consommateurs veulent acheter local mais ne savent pas où trouver les producteurs. Les producteurs, eux, n'ont pas les moyens de commercialiser leurs produits en ville. Le vrai problème n'est pas l'offre ou la demande, mais l'absence de connexion entre les deux.",
+      etudeDeCas: "Identifier les problèmes et les besoins\n\nDéfis environnementaux :\n- Bruit des générateurs.\n- Émissions de gaz provenant de la combustion de carburant et de kérosène.\n- Fuites de pétrole.\n\nDéfis sociaux :\n- Faible accès à l'électricité.\n- Mauvaises conditions de vie des populations rurales.\n- Problèmes de santé liés aux dégâts environnementaux.\n- Faible offre d'emploi en raison de la situation.\n\nBesoins des clients :\nIls ont besoin d'un approvisionnement stable en électricité car la disponibilité du combustible pour faire fonctionner les générateurs d'électricité des ménages est peu fiable et difficile, et les prix du combustible sont très instables.\n\nMotivations personnelles/professionnelles :\n- Améliorer les conditions de vie des proches.\n- Besoin d'un emploi.",
       conseils: [
-        "Ne vous fiez pas à vos seules intuitions : allez parler à des personnes réelles",
-        "Écoutez plus que vous ne parlez lors de vos entretiens",
-        "Cherchez à comprendre le « pourquoi » derrière chaque problème",
-        "Notez les contradictions : elles révèlent souvent des opportunités cachées"
+        "Il est extrêmement important que vous vérifiiez que ces problèmes sont réels. Évitez de perdre du temps à élaborer une solution dont personne n'a besoin.",
+        "Apprenez à vous connaître et à identifier vos limites avant de vous lancer",
+        "Est-ce que je peux lancer et gérer mon entreprise tout(e) seul(e) ? Il est toujours souhaitable de s'entourer de personnes susceptibles de jeter un regard objectif",
+        "Soyez un entrepreneur vert : votre objectif premier est de créer une valeur ajoutée économique en abordant un problème environnemental"
       ],
       keyConcepts: [
-      { term: "Problème douloureux", definition: "Une difficulté réelle et persistante rencontrée par votre cible, pour laquelle elle est prête à payer pour une solution." },
-      { term: "Besoins non satisfaits", definition: "Des attentes ou désirs que les solutions actuelles ne comblent pas entièrement." },
-      { term: "Entretien exploratoire", definition: "Une conversation structurée avec une personne de votre cible pour comprendre ses problèmes et besoins en profondeur." }
+      { term: "Moteurs du projet", definition: "Les forces (environnementales, sociales, clients, personnelles) qui poussent à développer l'idée d'entreprise." },
+      { term: "Défis environnementaux", definition: "Les problèmes écologiques auxquels votre entreprise verte cherche à s'attaquer." },
+      { term: "Besoins du marché", definition: "Les besoins non satisfaits des clients potentiels qui représentent une opportunité." }
     ],
       estimatedMinutes: 50,
       subSections: [
@@ -150,229 +93,154 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         "Distinguer les symptômes des causes profondes",
         "Validez chaque problème avec au moins 3 personnes de votre cible"
       ],
-        examples: [
-        "Les consommateurs urbains n'ont pas accès aux produits locaux frais",
-        "Les producteurs locaux n'ont pas de canal de distribution vers la ville"
-      ],
         guidedQuestions: [
-            { question: "Quels sont les principaux problèmes que vous avez identifiés ?", placeholder: "Problème 1 : ...", type: "textarea" },
-            { question: "Comment savez-vous que ce sont de vrais problèmes ?", hint: "Quelles preuves avez-vous ? Entretiens, observations, données ?", placeholder: "J'ai interrogé... observé...", type: "textarea" },
-            { question: "Quel est le problème le plus urgent à résoudre ?", placeholder: "Le problème prioritaire est...", type: "text" }
+            { question: "Votre idée s'attaque-t-elle à de réels défis environnementaux ? Lesquels ?", placeholder: "Défis environnementaux :...", type: "textarea" },
+            { question: "Votre idée s'attaque-t-elle à de véritables défis sociaux ? Lesquels ?", placeholder: "Défis sociaux :...", type: "textarea" },
+            { question: "Quels sont les principaux besoins de vos clients potentiels ?", placeholder: "Besoins des clients :...", type: "textarea" },
+            { question: "Quels sont les facteurs personnels ou professionnels qui sous-tendent l'idée d'entreprise ?", placeholder: "Motivations personnelles :...", type: "textarea" }
           ],
-        estimatedMinutes: 15
-      },
-      {
-        key: "solutions_existantes",
-        label: "Solutions existantes",
-        objective: "Analyser les solutions déjà disponibles sur le marché",
-        whyImportant: "Connaître les alternatives de vos futurs clients vous aide à positionner votre solution et à identifier les lacunes du marché.",
-        tips: [
-        "Ne négligez pas les solutions « low-tech » ou artisanales",
-        "Analysez les forces et faiblesses de chaque alternative",
-        "Demandez à votre cible ce qui lui manque dans les solutions actuelles"
-      ],
-        examples: [
-        "Les marchés physiques (limitée en heures et en lieux)",
-        "Les AMAP (engagement contraignant pour le consommateur)",
-        "La vente directe à la ferme (nécessite une voiture)"
-      ],
-        guidedQuestions: [
-            { question: "Comment vos futurs clients résolvent-ils ce problème aujourd'hui ?", placeholder: "Actuellement, ils...", type: "textarea" },
-            { question: "Quels sont les inconvénients des solutions actuelles ?", placeholder: "Les solutions existantes ne permettent pas de...", type: "textarea" }
-          ],
-        estimatedMinutes: 15
-      },
-      {
-        key: "opportunites",
-        label: "Opportunités identifiées",
-        objective: "Identifier les opportunités là où les besoins ne sont pas satisfaits",
-        whyImportant: "Les plus grandes opportunités d'innovation se trouvent là où les solutions actuelles échouent à satisfaire les besoins.",
-        tips: [
-        "Cherchez les frustrations exprimées par votre cible",
-        "Un « j'aimerais bien mais... » est souvent une opportunité",
-        "Les compromis que font vos clients sont des signaux forts"
-      ],
-        examples: [
-        "Aucune solution ne permet une connexion directe et en temps réel entre producteurs et consommateurs urbains"
-      ],
-        guidedQuestions: [
-            { question: "Quelles opportunités voyez-vous dans les lacunes identifiées ?", placeholder: "L'opportunité que j'identifie est...", type: "textarea" },
-            { question: "Pourquoi personne n'a-t-il encore résolu ce problème ?", hint: "Barrières techniques, financières, réglementaires ?", placeholder: "Peut-être parce que...", type: "textarea" }
-          ],
-        estimatedMinutes: 20
+        estimatedMinutes: 40
       }
     ],
       checklist: [
-        "J'ai identifié au moins 3 problèmes réels de ma cible",
-        "J'ai analysé les solutions existantes sur le marché",
-        "J'ai validé mes hypothèses auprès de personnes de ma cible",
-        "J'ai repéré des opportunités concrètes"
+        "J'ai identifié les défis environnementaux auxquels mon projet s'attaque",
+        "J'ai identifié les défis sociaux auxquels mon projet s'attaque",
+        "J'ai identifié les besoins de mes clients potentiels",
+        "J'ai identifié mes motivations personnelles et professionnelles"
       ],
       resources: [
-        { title: "Comment mener un entretien exploratoire", type: "article" },
-        { title: "Guide d'analyse des besoins clients", type: "article" }
+        { title: "Guide d'analyse des problèmes et besoins", type: "article" }
       ],
     },
     3: {
       stepNumber: 3,
       title: "Comprendre le contexte (PESTEL)",
-      objective: "Analyser les facteurs externes (Politique, Économique, Socioculturel, Technologique, Environnemental, Légal) qui influencent votre projet.",
-      whyImportant: "Votre projet n'existe pas en vase clos. Les facteurs externes peuvent créer des opportunités ou des menaces. Les ignorer, c'est prendre le risque d'être surpris par des événements que vous auriez pu anticiper.",
+      objective: "Analyser les facteurs externes (Politique, Économique, Social, Technologique, Environnemental, Légal) qui influencent votre projet.",
+      whyImportant: "Les entreprises opèrent dans un contexte particulier façonné par le pays ou la région. Les forces de changement (PESTEL) ont un impact sur une entreprise. Les entreprises qui en tiennent compte sont en mesure d'anticiper des opportunités et d'éviter les menaces.",
       avantDeLire: {
-        description: "L'analyse PESTEL est un outil stratégique qui vous aide à comprendre l'environnement dans lequel votre projet va évoluer. Pour chaque dimension, demandez-vous : quels sont les facteurs clés ? Et quel est leur impact sur mon projet ?",
-        resultatsAttendus: "Une analyse complète des 6 dimensions PESTEL avec pour chacune les facteurs identifiés et leur impact potentiel sur votre projet.",
+        description: "Faites un brainstorming : Réfléchissez aux conditions, changements et tendances du contexte local, régional et mondial qui peuvent affecter votre entreprise. Établissez des priorités : Sélectionnez les catégories PESTEL les plus pertinentes (cinq au maximum). Décrivez et confrontez : Pour chaque catégorie, décrivez comment elle affectera votre projet et comment vous y ferez face.",
+        resultatsAttendus: "Une analyse PESTEL avec pour chaque dimension retenue les facteurs identifiés, leur impact sur le projet et les actions pour y faire face.",
       },
-      etudeDeCas: "Sophie a réalisé son PESTEL : Politique (soutien gouvernemental à l'agriculture locale), Économique (inflation qui pousse aux circuits courts), Socioculturel (prise de conscience écologique), Technologique (applications de mise en relation matures), Environnemental (urgence climatique favorable aux circuits courts), Légal (réglementations sur la vente alimentaire). Elle a ainsi identifié que le contexte était très favorable à son projet.",
+      etudeDeCas: "Analyse PESTEL - ESCO Algérie\n\nAspects environnementaux : réduction de la disponibilité des métaux et accumulation des déchets toxiques.\nComment : La pénurie de tellurure de cadmium, de séléniure de gallium peut affecter la production de panneaux solaires et faire augmenter leurs coûts. Il sera nécessaire de gérer la fin de vie des panneaux solaires.\n\nAspects politiques : politiques d'électrification rurale et planification.\nComment : Il est primordial d'associer le gouvernement au projet dès son élaboration, et d'être attentif aux nouveaux cadres réglementaires.\n\nAspects technologiques : amélioration de l'efficacité des panneaux solaires et déficit de techniciens qualifiés.\nComment : L'augmentation de l'efficacité pourra améliorer la profitabilité, tandis que la pénurie de techniciens exigera d'en former.\n\nAspects économiques : difficultés d'accès au crédit.\nComment : Il sera essentiel de collaborer avec les banques.",
       conseils: [
-        "Ne vous limitez pas à une seule source d'information : croisez les données",
-        "Pour chaque facteur, distinguez l'impact à court terme et à long terme",
-        "Impliquez des personnes d'horizons différents pour enrichir l'analyse",
-        "Mettez à jour votre analyse PESTEL régulièrement (au moins une fois par an)"
+        "Les aspects environnementaux sont essentiels pour les entreprises vertes - les ressources naturelles limitées peuvent limiter le développement",
+        "La disponibilité limitée des ressources : la surexploitation, l'épuisement des combustibles fossiles",
+        "La génération croissante de déchets et d'émissions - les composés synthétiques ne peuvent souvent pas être réintégrés dans les cycles de la nature",
+        "Certaines des principales tendances : démographie, production et demande d'énergie, changement climatique, biodiversité, accès à l'eau"
       ],
       keyConcepts: [
-      { term: "Analyse PESTEL", definition: "Un outil d'analyse macro-environnementale qui examine six catégories de facteurs externes influençant une entreprise." },
-      { term: "Facteurs clés", definition: "Les éléments spécifiques dans chaque dimension PESTEL qui ont un impact significatif sur votre projet." },
-      { term: "Opportunités et menaces", definition: "Les facteurs externes positifs (opportunités) ou négatifs (menaces) que votre analyse PESTEL révèle." }
+      { term: "Analyse PESTEL", definition: "Un outil d'analyse macro-environnementale qui examine six catégories de facteurs externes : Politique, Économique, Social, Technologique, Environnemental, Légal." },
+      { term: "Forces de changement", definition: "Les facteurs qui ont un impact sur une entreprise et permettent d'anticiper des opportunités et d'éviter des menaces." },
+      { term: "Limites environnementales", definition: "Les ressources naturelles limitées qui peuvent restreindre le développement des entreprises (disponibilité des ressources, génération de déchets)." }
     ],
       estimatedMinutes: 55,
       subSections: [
       {
         key: "analyse_pestel",
-        label: "Analyse PESTEL complète",
-        objective: "Examiner chaque dimension PESTEL et son impact sur votre projet",
-        whyImportant: "Une analyse PESTEL approfondie vous permet d'anticiper les évolutions de votre environnement et d'ajuster votre stratégie en conséquence.",
+        label: "Analyse PESTEL",
+        objective: "Examiner chaque dimension PESTEL : son impact sur votre projet et comment y faire face",
+        whyImportant: "Les entreprises qui tiennent compte des facteurs PESTEL sont en mesure d'anticiper des opportunités et d'éviter les menaces potentielles.",
         tips: [
-        "Commencez par les dimensions les plus pertinentes pour votre secteur",
-        "Utilisez des sources fiables (INSEE, rapports ministériels, études de marché)",
-        "Distinguer les tendances lourdes (certaines) des signaux faibles (incertains mais importants)"
+        "Établissez des priorités : sélectionnez les catégories les plus pertinentes (5 max)",
+        "Pour chaque catégorie, décrivez comment elle affectera votre projet et comment vous y ferez face",
+        "Les aspects environnementaux sont essentiels pour les entreprises vertes"
       ],
         examples: [
-        "Politique : subventions pour l'agriculture locale, objectifs de souveraineté alimentaire",
-        "Technologique : démocratisation des plateformes de mise en relation, paiement mobile"
+        "Politique : politiques d'électrification rurale",
+        "Économique : difficultés d'accès au crédit",
+        "Social : accès à l'électricité dans les zones rurales",
+        "Technologique : amélioration de l'efficacité des panneaux solaires",
+        "Environnemental : réduction de la disponibilité des métaux",
+        "Légal : normes environnementales"
       ],
         guidedQuestions: [
-            { question: "Analyse PESTEL de votre projet", hint: "Remplissez les 6 dimensions (Politique, Économique, Socioculturel, Technologique, Environnemental, Légal) avec les facteurs identifiés et leur impact sur votre projet.", type: "pestel_v2", key: "pestel_v2_data" }
+            { question: "Analyse PESTEL", hint: "Remplissez les dimensions PESTEL avec ce qui peut affecter votre projet (Quoi ?) et comment vous y ferez face (Comment ?).", type: "pestel_v2", key: "pestel_v2_data" }
           ],
         estimatedMinutes: 40
-      },
-      {
-        key: "synthese_pestel",
-        label: "Synthèse de l'analyse PESTEL",
-        objective: "Tirer les enseignements principaux de votre analyse",
-        whyImportant: "Une analyse sans synthèse n'a pas de valeur opérationnelle. L'objectif est d'identifier les implications concrètes pour votre projet.",
-        tips: [
-        "Identifiez les 3 facteurs les plus importants pour votre projet",
-        "Distinguer les opportunités à saisir des menaces à anticiper",
-        "Traduisez chaque conclusion en action concrète"
-      ],
-        examples: [
-        "Opportunité : forte demande sociétale pour le local => argument marketing puissant",
-        "Menace : inflation des coûts logistiques => optimiser la chaîne d'approvisionnement"
-      ],
-        guidedQuestions: [
-            { question: "Quels sont les 3 facteurs PESTEL les plus importants pour votre projet ?", placeholder: "1. ... 2. ... 3. ...", type: "textarea" },
-            { question: "Quelles opportunités pouvez-vous saisir ?", placeholder: "Je peux saisir l'opportunité de...", type: "textarea" },
-            { question: "Quelles menaces devez-vous anticiper ?", placeholder: "Je dois anticiper...", type: "textarea" }
-          ],
-        estimatedMinutes: 15
       }
     ],
       checklist: [
-        "J'ai analysé les 6 dimensions PESTEL",
-        "J'ai identifié les facteurs clés pour chaque dimension",
-        "J'ai évalué l'impact de chaque facteur sur mon projet",
-        "J'ai synthétisé les opportunités et les menaces principales"
+        "J'ai analysé les dimensions PESTEL pertinentes pour mon projet",
+        "Pour chaque dimension, j'ai décrit l'impact sur mon projet",
+        "J'ai identifié comment faire face à chaque facteur",
+        "J'ai priorisé les dimensions les plus importantes"
       ],
       resources: [
-        { title: "Guide complet de l'analyse PESTEL", type: "article" },
-        { title: "Sources de données macro-économiques - INSEE", type: "tool" }
+        { title: "Guide complet de l'analyse PESTEL", type: "article" }
       ],
     },
     4: {
       stepNumber: 4,
       title: "Fixez vos objectifs",
-      objective: "Définir des objectifs clairs et mesurables pour votre projet, en utilisant la méthode SMART et en les alignant avec votre vision.",
-      whyImportant: "Des objectifs bien définis sont votre boussole. Ils vous permettent de prendre des décisions cohérentes, de motiver votre équipe et de mesurer vos progrès. Sans objectifs, vous avancez sans direction.",
+      objective: "Transformer les problèmes et besoins identifiés en objectifs spécifiques pour chaque conducteur (environnemental, social, client, personnel).",
+      whyImportant: "Pour étayer le chemin de notre vision, les moteurs sont traduits en objectifs de l'entreprise. Les objectifs constituent à la fois le résultat concret de l'étape et les porte-étendards du projet.",
       avantDeLire: {
-        description: "Fixer des objectifs, c'est transformer votre vision en cibles concrètes. Dans cette étape, vous allez définir des objectifs à court, moyen et long terme en utilisant la méthode SMART (Spécifique, Mesurable, Atteignable, Réaliste, Temporellement défini).",
-        resultatsAttendus: "Une liste d'objectifs SMART à différents horizons temporels, alignés avec votre vision globale.",
+        description: "Révisez le travail de l'exercice 2 décrivant les principaux conducteurs de votre projet. Une fois que vous avez validé la description des conducteurs, fixez des objectifs pour chaque conducteur en recadrant les problèmes et les besoins en objectifs spécifiques pour les résoudre.",
+        resultatsAttendus: "Des objectifs définis pour chaque conducteur : défis environnementaux, sociaux, besoins clients, motivations personnelles.",
       },
-      etudeDeCas: "Sophie s'est fixé trois objectifs : (1) CT : Tester sa plateforme avec 10 producteurs et 50 consommateurs dans les 3 mois, (2) MT : Atteindre 100 producteurs et 1000 consommateurs en 1 an, (3) LT : Devenir la référence de la distribution locale dans sa région en 3 ans. Chaque objectif est SMART : spécifique, mesurable, atteignable, réaliste et temporellement défini.",
+      etudeDeCas: "Fixez vos objectifs - ESCO Algérie\n\nDéfis sociaux : Peu d'opportunités d'emploi → Objectif : Améliorer le développement socioéconomique dans les zones rurales.\n\nBesoins des clients : Instabilité de l'approvisionnement électrique → Objectif : Fournir de l'électricité aux populations rurales.\n\nDéfis environnementaux : Électricité produite très loin, émissions sonores et de gaz → Objectif : Fournir une électricité propre par le développement de petites infrastructures.\n\nMotivations d'équipe : Conditions de vie précaires → Objectif : Améliorer les conditions de vie de l'entourage et le développement socioéconomique.",
       conseils: [
-        "Commencez par des objectifs à court terme : ils sont plus faciles à définir et motivants",
-        "Impliquez votre équipe ou vos partenaires dans la définition des objectifs",
-        "Révisez vos objectifs régulièrement : ils doivent évoluer avec votre projet",
-        "Célébrez les petites victoires : chaque objectif atteint est un pas de plus"
+        "Voyez grand ! Se fixer des objectifs ambitieux peut nous pousser à atteindre des sommets plus élevés",
+        "Rappelez-vous du contexte dans lequel vous opérez lors de la définition des objectifs (PESTEL)",
+        "Chaque objectif doit découler directement d'un problème ou besoin identifié"
       ],
       keyConcepts: [
-      { term: "Objectif SMART", definition: "Un objectif Spécifique, Mesurable, Atteignable, Réaliste et Temporellement défini." },
-      { term: "Court / Moyen / Long terme", definition: "Horizons temporels typiques : CT (< 6 mois), MT (6-24 mois), LT (> 24 mois)." },
-      { term: "Alignement stratégique", definition: "La cohérence entre vos objectifs quotidiens, votre mission et votre vision à long terme." }
+      { term: "Objectifs", definition: "Les résultats concrets que l'entreprise cherche à atteindre, découlant directement des moteurs identifiés." },
+      { term: "Conducteurs du projet", definition: "Les moteurs (environnementaux, sociaux, clients, personnels) qui poussent à développer l'idée d'entreprise." },
+      { term: "Alignement", definition: "La cohérence entre les problèmes identifiés, les objectifs fixés et la mission de l'entreprise." }
     ],
       estimatedMinutes: 40,
       subSections: [
       {
-        key: "objectifs_ct",
-        label: "Objectifs à court terme",
-        objective: "Définir vos objectifs pour les 6 prochains mois",
-        whyImportant: "Les objectifs à court terme créent une dynamique positive et vous permettent de valider rapidement vos hypothèses.",
+        key: "objectifs_environnementaux",
+        label: "Objectifs environnementaux",
+        objective: "Transformer les défis environnementaux en objectifs concrets",
+        whyImportant: "Les défis environnementaux sont au coeur d'une entreprise verte. Les transformer en objectifs permet de mesurer votre impact.",
         tips: [
-        "Concentrez-vous sur l'essentiel : moins d'objectifs, mais tenus",
-        "Chaque objectif doit avoir un responsable et une date butoir",
-        "Prévoyez des indicateurs simples pour mesurer le progrès"
-      ],
-        examples: [
-        "Lancer un MVP avec 10 producteurs partenaires d'ici 3 mois",
-        "Réaliser 30 entretiens clients d'ici fin du mois"
+        "Reprenez les défis environnementaux identifiés à l'étape 2",
+        "Formulez chaque défi comme un objectif à atteindre",
+        "Soyez spécifique et mesurable"
       ],
         guidedQuestions: [
-            { question: "Quels sont vos objectifs pour les 6 prochains mois ?", hint: "Soyez SMART : Spécifique, Mesurable, Atteignable, Réaliste, Temporel", placeholder: "Objectif 1 : d'ici [date], je veux [chiffre] [action]", type: "textarea" },
-            { question: "Comment mesurerez-vous l'atteinte de ces objectifs ?", placeholder: "Je mesurerai par...", type: "textarea" }
-          ],
-        estimatedMinutes: 12
-      },
-      {
-        key: "objectifs_mt",
-        label: "Objectifs à moyen terme",
-        objective: "Définir vos objectifs pour les 6 à 24 prochains mois",
-        whyImportant: "Les objectifs à moyen terme relient vos actions quotidiennes à votre vision à long terme.",
-        tips: [
-        "Projetez-vous à 18-24 mois",
-        "Ces objectifs doivent être ambitieux mais crédibles",
-        "Ils doivent découler logiquement de vos objectifs CT"
-      ],
-        examples: [
-        "Atteindre 100 producteurs et 1000 consommateurs d'ici 1 an",
-        "Atteindre la rentabilité d'ici 18 mois"
-      ],
-        guidedQuestions: [
-            { question: "Où voulez-vous être dans 1 à 2 ans ?", placeholder: "Dans 2 ans, j'aurai...", type: "textarea" },
-            { question: "Quelles étapes clés devez-vous franchir pour y arriver ?", placeholder: "Les étapes clés sont...", type: "textarea" }
+            { question: "Quels défis environnementaux votre idée d'entreprise relève-t-elle ?", placeholder: "Problèmes et besoins environnementaux...", type: "textarea" },
+            { question: "Pouvez-vous fixer un ou plusieurs objectifs spécifiques pour y faire face ?", placeholder: "Objectifs (Environnement) :...", type: "textarea" }
           ],
         estimatedMinutes: 10
       },
       {
-        key: "objectifs_lt",
-        label: "Objectifs à long terme",
-        objective: "Définir votre vision à 3-5 ans",
-        whyImportant: "Le long terme donne un cap à votre projet et vous aide à prendre des décisions cohérentes aujourd'hui.",
+        key: "objectifs_sociaux",
+        label: "Objectifs sociaux",
+        objective: "Transformer les défis sociaux en objectifs concrets",
+        whyImportant: "Les entreprises vertes sont créées pour répondre à des défis sociaux. Des objectifs clairs permettent de mesurer l'impact social.",
         tips: [
-        "Imaginez l'impact que vous voulez avoir sur le monde",
-        "Ces objectifs peuvent être plus qualitatifs",
-        "Ils doivent vous motiver et inspirer votre équipe"
-      ],
-        examples: [
-        "Devenir la référence de la distribution locale dans toute la région",
-        "Créer un impact mesurable sur la réduction du gaspillage alimentaire"
+        "Reprenez les défis sociaux identifiés à l'étape 2",
+        "Imaginez l'impact positif que vous voulez avoir sur la société",
+        "Assurez-vous que les objectifs sont alignés avec vos valeurs"
       ],
         guidedQuestions: [
-            { question: "Quelle est votre ambition à 3-5 ans ?", placeholder: "Dans 5 ans, mon projet aura...", type: "textarea" },
-            { question: "Quel impact voulez-vous avoir sur le monde ?", placeholder: "Je veux contribuer à...", type: "textarea" }
+            { question: "Quels défis sociaux votre idée d'entreprise relève-t-elle ?", placeholder: "Problèmes et besoins sociaux...", type: "textarea" },
+            { question: "Pouvez-vous fixer un ou plusieurs objectifs spécifiques pour y faire face ?", placeholder: "Objectifs (Social) :...", type: "textarea" }
           ],
         estimatedMinutes: 10
       },
       {
-        key: "alignement_objectifs",
+        key: "objectifs_clients",
+        label: "Objectifs clients",
+        objective: "Transformer les besoins clients en objectifs de satisfaction",
+        whyImportant: "Les clients sont les engrenages qui font fonctionner le moteur économique de votre entreprise.",
+        tips: [
+        "Reprenez les besoins clients identifiés à l'étape 2",
+        "Un client satisfait est la meilleure publicité pour votre entreprise",
+        "Les objectifs doivent répondre aux besoins réels exprimés"
+      ],
+        guidedQuestions: [
+            { question: "Quels sont les besoins des clients auxquels votre idée d'entreprise répond ?", placeholder: "Problèmes et besoins clients...", type: "textarea" },
+            { question: "Pouvez-vous fixer un ou plusieurs objectifs spécifiques pour y faire face ?", placeholder: "Objectifs (Besoins) :...", type: "textarea" }
+          ],
+        estimatedMinutes: 10
+      },
+      {
+        key: "objectifs_personnels",
         label: "Alignement des objectifs",
         objective: "Vérifier la cohérence entre vos différents objectifs",
         whyImportant: "Des objectifs contradictoires vous dispersent. L'alignement garantit que chaque action vous rapproche de votre vision.",
@@ -405,18 +273,18 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
     5: {
       stepNumber: 5,
       title: "Synthétiser une mission et une vision",
-      objective: "Formuler la mission (ce que vous faites aujourd'hui) et la vision (ce que vous voulez devenir) de votre projet.",
-      whyImportant: "Mission et vision sont le cœur de votre projet. Elles communiquent votre raison d'être, inspirent votre équipe, attirent vos partenaires et guident vos décisions stratégiques.",
+      objective: "Fusionner vos objectifs en une mission globale et définir une vision à long terme pour votre entreprise.",
+      whyImportant: "En fusionnant et résumant les objectifs en une déclaration unique, brève et élégante, nous définissons la mission de notre projet, laquelle doit incarner son essence et sa raison d'être. La vision émerge naturellement comme une instance temporelle de la mission.",
       avantDeLire: {
-        description: "La mission répond à la question « Pourquoi notre entreprise existe-t-elle ? » tandis que la vision répond à « Quel monde voulons-nous créer ? ». Prenez le temps de formuler ces deux énoncés : ils vous accompagneront tout au long de votre aventure entrepreneuriale.",
-        resultatsAttendus: "Un énoncé de mission clair et inspirant, et une vision ambitieuse qui définit votre impact à long terme.",
+        description: "Dans les cases ci-dessous, synthétisez les objectifs en une mission et envisagez votre entreprise sur le long terme en définissant une vision.",
+        resultatsAttendus: "Une déclaration de mission qui incarne l'essence du projet et une vision qui décrit la réalisation à moyen-long terme.",
       },
-      etudeDeCas: "Sophie a formulé sa mission : « Connecter producteurs locaux et consommateurs urbains pour une alimentation plus durable et accessible. » Sa vision : « Un monde où chaque repas contribue à une économie locale prospère et à une planète en meilleure santé. » Ces énoncés l'aident à communiquer son projet et à prendre des décisions cohérentes.",
+      etudeDeCas: "ESCO Algérie\n\nÉnoncé de vision : Fournir aux populations rurales une électricité solaire photovoltaïque, durablement et à un prix abordable.\n\nDéclaration de mission : Une Algérie rurale avec de la lumière et de meilleures conditions de vie !",
       conseils: [
-        "Soyez authentique : votre mission doit refléter vos vraies valeurs",
-        "Une bonne mission tient en une phrase (parfois deux)",
-        "Testez vos énoncés auprès de votre entourage : que comprennent-ils ?",
-        "Votre vision doit être ambitieuse mais pas irréaliste"
+        "Assurez-vous que les objectifs environnementaux et sociaux sont inclus dans votre déclaration de mission",
+        "Les objectifs environnementaux et sociaux sont les principaux objectifs de votre entreprise verte",
+        "Pour atteindre ses objectifs environnementaux et sociaux, votre entreprise doit être financièrement durable et rentable",
+        "La vision décrit la manière dont nous envisageons notre projet à moyen et long terme"
       ],
       keyConcepts: [
       { term: "Mission", definition: "La raison d'être de votre entreprise aujourd'hui : ce que vous faites, pour qui et pourquoi." },
@@ -426,158 +294,94 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
       estimatedMinutes: 35,
       subSections: [
       {
-        key: "mission",
-        label: "Énoncé de mission",
-        objective: "Formuler la mission de votre projet",
-        whyImportant: "La mission est votre raison d'être. Elle donne du sens à votre travail et attire les personnes qui partagent vos valeurs.",
+        key: "synthese_mission_vision",
+        label: "Mission et vision",
+        objective: "Synthétiser les objectifs en une mission et définir une vision long terme",
+        whyImportant: "En fusionnant les objectifs en une déclaration unique, nous définissons la mission qui incarne l'essence et la raison d'être du projet.",
         tips: [
-        "Structure : « Nous existons pour [action] afin de [impact] »",
-        "Soyez précis sur ce que vous faites et pour qui",
-        "Évitez le jargon : une mission doit être comprise par tous"
+        "Assurez-vous que les objectifs environnementaux et sociaux sont inclus",
+        "La mission doit être simple et élégante",
+        "La vision décrit la réalisation à moyen-long terme"
       ],
         examples: [
-        "« Connecter producteurs locaux et consommateurs urbains pour une alimentation plus durable et accessible. »"
+        "Mission : Une Algérie rurale avec de la lumière et de meilleures conditions de vie !",
+        "Vision : Fournir aux populations rurales une électricité solaire photovoltaïque, durablement et à un prix abordable."
       ],
         guidedQuestions: [
-            { question: "Quelle est la raison d'être de votre projet ?", hint: "Pourquoi votre projet existe-t-il ? Quel problème résout-il ?", placeholder: "Mon projet existe pour...", type: "textarea" },
-            { question: "À qui profite votre projet ?", placeholder: "Mon projet profite à...", type: "text" },
-            { question: "Quelle est votre mission en une phrase ?", placeholder: "Notre mission est de...", type: "text" }
+            { question: "Objectifs environnementaux", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_environnementaux" },
+            { question: "Objectifs sociaux", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_sociaux" },
+            { question: "Besoins des clients", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_clients" },
+            { question: "Raisons personnelles", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_personnels" },
+            { question: "Mission", hint: "Synthétisez vos objectifs en une phrase globale, simple et élégante", placeholder: "Notre mission est...", type: "textarea" },
+            { question: "Vision", hint: "Envisagez vos réalisations à moyen-long terme. Que souhaitez-vous atteindre ?", placeholder: "Notre vision est...", type: "textarea" }
           ],
-        estimatedMinutes: 15
-      },
-      {
-        key: "vision",
-        label: "Énoncé de vision",
-        objective: "Formuler la vision à long terme de votre projet",
-        whyImportant: "La vision est votre étoile polaire. Elle vous motive dans les moments difficiles et inspire votre entourage à vous rejoindre.",
-        tips: [
-        "Imaginez le monde idéal que vous voulez créer",
-        "Soyez ambitieux mais concret",
-        "Une bonne vision donne envie de participer à l'aventure"
-      ],
-        examples: [
-        "« Un monde où chaque repas contribue à une économie locale prospère et à une planète en meilleure santé. »"
-      ],
-        guidedQuestions: [
-            { question: "Quel est le monde idéal que vous voulez créer ?", placeholder: "J'imagine un monde où...", type: "textarea" },
-            { question: "Quel impact voulez-vous avoir sur la société ou l'environnement ?", placeholder: "Je veux avoir un impact sur...", type: "textarea" },
-            { question: "Quelle est votre vision en une phrase ?", placeholder: "Ma vision est...", type: "text" }
-          ],
-        estimatedMinutes: 15
-      },
-      {
-        key: "valeurs",
-        label: "Valeurs fondamentales",
-        objective: "Identifier les valeurs qui guideront votre projet",
-        whyImportant: "Les valeurs sont le cadre de référence pour toutes vos décisions. Elles définissent votre culture d'entreprise et votre identité.",
-        tips: [
-        "Choisissez 3 à 5 valeurs maximum",
-        "Chaque valeur doit se traduire par des comportements concrets",
-        "Impliquez votre équipe dans le choix des valeurs"
-      ],
-        examples: [
-        "Authenticité, Durabilité, Proximité, Transparence, Innovation responsable"
-      ],
-        guidedQuestions: [
-            { question: "Quelles sont les valeurs les plus importantes pour votre projet ?", placeholder: "Mes valeurs sont...", type: "text" },
-            { question: "Comment ces valeurs se traduiront-elles dans votre quotidien ?", placeholder: "La valeur [X] se traduira par...", type: "textarea" }
-          ],
-        estimatedMinutes: 5
+        estimatedMinutes: 30
       }
     ],
       checklist: [
-        "J'ai formulé un énoncé de mission clair",
-        "J'ai formulé une vision inspirante",
-        "J'ai identifié mes valeurs fondamentales",
-        "Mes énoncés sont compréhensibles par une personne extérieure"
+        "J'ai synthétisé mes objectifs en une mission claire",
+        "J'ai défini une vision à long terme",
+        "La mission inclut les objectifs environnementaux et sociaux",
+        "La mission et la vision sont cohérentes entre elles"
       ],
       resources: [
-        { title: "Comment rédiger une mission et une vision percutantes", type: "article" },
-        { title: "Exemples de mission et vision d'entreprises à impact", type: "article" }
+        { title: "Comment rédiger une mission et une vision percutantes", type: "article" }
       ],
     },
     6: {
       stepNumber: 6,
       title: "Résumé du contexte et des objectifs",
-      objective: "Synthétiser l'ensemble des analyses précédentes (problèmes, PESTEL, objectifs, mission, vision) en un résumé cohérent.",
-      whyImportant: "Un résumé clair vous permet d'avoir une vue d'ensemble de votre projet et de communiquer efficacement avec vos parties prenantes. C'est aussi un point de référence pour la suite du parcours.",
+      objective: "Consolider l'ensemble des analyses précédentes en un résumé complet : problèmes, PESTEL, objectifs, mission et vision.",
+      whyImportant: "Ce résumé sert de document de référence pour la suite du parcours et permet de communiquer efficacement avec les parties prenantes.",
       avantDeLire: {
-        description: "Cette étape de synthèse est cruciale. Vous allez rassembler tout ce que vous avez appris et décidé jusqu'à présent pour créer un document de référence. Ce résumé vous servira de fil conducteur pour les étapes suivantes.",
-        resultatsAttendus: "Un document de synthèse reprenant votre contexte, vos objectifs, votre mission et votre vision, prêt à être partagé.",
+        description: "Voici un résumé de votre analyse concernant le contexte et les problèmes et besoins abordés par votre projet, ainsi que les objectifs, la mission et la vision de votre entreprise durable. Revoyez-la et apportez les changements nécessaires.",
+        resultatsAttendus: "Un résumé complet reprenant les problèmes, le contexte PESTEL, les objectifs, la mission et la vision.",
       },
-      etudeDeCas: "Sophie a rédigé une fiche de synthèse : « Relocal connecte producteurs locaux et consommateurs urbains pour réduire le gaspillage alimentaire. Contexte favorable (PESTEL). Objectifs : test 10/50 en 3 mois, 100/1000 en 1 an, référence régionale en 3 ans. Mission et vision définies. » Elle utilise cette fiche pour présenter son projet à des partenaires potentiels.",
+      etudeDeCas: "ESCO Algérie - Résumé\n\nProblèmes et besoins :\n- Environnementaux : Bruit des générateurs, émissions de gaz, fuites de carburant.\n- Sociaux : Médiocrité de l'accès à l'électricité, rareté des opportunités d'emploi.\n- Besoins du client : Approvisionnement stable en électricité.\n\nComprendre le contexte :\n1. Environnementaux : réduction de la disponibilité des métaux.\n2. Politiques : politiques d'électrification rurale.\n3. Technologiques : amélioration de l'efficacité des panneaux.\n4. Économiques : difficultés d'accès au crédit.\n\nObjectifs :\n1. Fournir une électricité propre.\n2. Fournir une électricité fiable aux populations rurales.\n3. Améliorer le développement socioéconomique.\n\nDéclaration de vision : Fournir aux populations rurales une électricité solaire photovoltaïque, durablement et à un prix abordable.\n\nDéclaration de mission : Une Algérie rurale avec de la lumière et de meilleures conditions de vie !",
       conseils: [
-        "Faites relire votre résumé par quelqu'un qui ne connaît pas votre projet",
-        "Gardez votre résumé à jour : il évoluera avec votre projet",
-        "Utilisez-le comme support de présentation rapide (elevator pitch)",
-        "Conservez une copie physique et numérique"
+        "Prenez le temps de relire l'ensemble de votre travail",
+        "Identifiez les incohérences ou les points à approfondir",
+        "Sollicitez un regard extérieur pour valider votre synthèse",
+        "Gardez ce résumé comme document de référence pour la suite"
       ],
       keyConcepts: [
-      { term: "Synthèse stratégique", definition: "Un document concis qui rassemble les éléments clés de votre analyse et de votre stratégie." },
-      { term: "Elevator pitch", definition: "Une présentation ultra-courte (30-60 secondes) de votre projet, comme si vous étiez dans un ascenseur." },
-      { term: "Cohérence stratégique", definition: "L'alignement logique entre votre analyse, vos objectifs, votre mission et votre vision." }
+      { term: "Synthèse stratégique", definition: "Un document qui rassemble et articule les éléments clés de votre analyse et de votre stratégie." },
+      { term: "Cohérence stratégique", definition: "L'alignement logique entre les problèmes identifiés, les objectifs, la mission et la vision." }
     ],
       estimatedMinutes: 30,
       subSections: [
       {
-        key: "resume_contexte",
-        label: "Résumé du contexte",
-        objective: "Synthétiser votre analyse du contexte et des problèmes identifiés",
-        whyImportant: "Un résumé clair du contexte permet à toute personne de comprendre rapidement les fondements de votre projet.",
+        key: "resume_complet",
+        label: "Résumé du contexte et des objectifs",
+        objective: "Consolider tous les éléments en un résumé cohérent",
+        whyImportant: "Un résumé clair permet d'avoir une vue d'ensemble et de partager votre projet efficacement.",
         tips: [
-        "Restez concis : 5 à 10 lignes maximum",
+        "Restez concis mais complet",
         "N'incluez que l'essentiel",
         "Utilisez un langage simple et direct"
       ],
         guidedQuestions: [
-            { question: "Résumez le contexte de votre projet en 5 à 10 lignes", hint: "Problème identifié, opportunité, contexte PESTEL", placeholder: "Mon projet s'inscrit dans un contexte où...", type: "textarea" },
-            { question: "Quel est le problème principal que vous résolvez ?", placeholder: "Le problème principal est...", type: "text" }
+            { question: "Problèmes et besoins (environnementaux)", type: "step_recap", sourceStep: 2, sourceSectionKey: "problemes_environnementaux" },
+            { question: "Problèmes et besoins (sociaux)", type: "step_recap", sourceStep: 2, sourceSectionKey: "besoins_sociaux" },
+            { question: "Problèmes et besoins (besoins du client)", type: "step_recap", sourceStep: 2, sourceSectionKey: "besoins_clients" },
+            { question: "Objectifs du projet (Environnement)", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_environnementaux" },
+            { question: "Objectifs du projet (Social)", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_sociaux" },
+            { question: "Objectifs du projet (Besoins du client)", type: "step_recap", sourceStep: 4, sourceSectionKey: "objectifs_clients" },
+            { question: "PESTEL", type: "step_recap", sourceStep: 3, sourceSectionKey: "analyse_pestel" },
+            { question: "Déclaration de vision", type: "step_recap", sourceStep: 5, sourceSectionKey: "synthese_mission_vision" },
+            { question: "Déclaration de mission", type: "step_recap", sourceStep: 5, sourceSectionKey: "synthese_mission_vision" }
           ],
-        estimatedMinutes: 10
-      },
-      {
-        key: "resume_objectifs",
-        label: "Résumé des objectifs",
-        objective: "Synthétiser vos objectifs SMART",
-        whyImportant: "Avoir une vue claire de vos objectifs vous permet de prioriser vos actions et de mesurer vos progrès.",
-        tips: [
-        "Listez vos objectifs par horizon temporel",
-        "Un objectif = une ligne",
-        "Ajoutez une date butoir pour chaque objectif"
-      ],
-        guidedQuestions: [
-            { question: "Quels sont vos objectifs clés résumés ?", placeholder: "CT : ... MT : ... LT : ...", type: "textarea" },
-            { question: "Comment saurez-vous que vous avez réussi ?", placeholder: "Je saurai que j'ai réussi quand...", type: "textarea" }
-          ],
-        estimatedMinutes: 10
-      },
-      {
-        key: "resume_mission_vision",
-        label: "Mission, vision et valeurs",
-        objective: "Rassembler vos énoncés de mission, vision et valeurs",
-        whyImportant: "Ces énoncés sont l'identité de votre projet. Les avoir tous au même endroit facilite leur communication.",
-        tips: [
-        "Mission et vision doivent tenir sur un post-it",
-        "Vos valeurs doivent être mémorables",
-        "Testez votre pitch auprès de 3 personnes"
-      ],
-        guidedQuestions: [
-            { question: "Quelle est votre mission ?", placeholder: "Notre mission est...", type: "text" },
-            { question: "Quelle est votre vision ?", placeholder: "Notre vision est...", type: "text" },
-            { question: "Quelles sont vos valeurs ?", placeholder: "Nos valeurs sont...", type: "text" },
-            { question: "Rédigez votre elevator pitch", hint: "30 secondes pour convaincre", placeholder: "Imaginez que vous êtes dans un ascenseur avec un investisseur...", type: "textarea" }
-          ],
-        estimatedMinutes: 10
+        estimatedMinutes: 30
       }
     ],
       checklist: [
-        "J'ai rédigé un résumé clair du contexte de mon projet",
-        "J'ai synthétisé mes objectifs par horizon temporel",
-        "J'ai rassemblé ma mission, ma vision et mes valeurs",
-        "J'ai un elevator pitch prêt à être partagé"
+        "J'ai résumé les problèmes et besoins (environnementaux, sociaux, clients)",
+        "J'ai résumé les objectifs du projet",
+        "J'ai résumé l'analyse PESTEL",
+        "J'ai inclus ma déclaration de vision et de mission"
       ],
       resources: [
-        { title: "Comment rédiger un elevator pitch percutant", type: "article" }
+        { title: "Guide de synthèse stratégique", type: "article" }
       ],
     },
     7: {
@@ -589,7 +393,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Les parties prenantes ne sont pas seulement vos clients. Ce sont toutes les personnes ou organisations qui ont un intérêt dans votre projet : partenaires, fournisseurs, investisseurs, collectivités, associations, etc. Dans cette étape, vous allez les identifier, évaluer leur influence et planifier votre engagement.",
         resultatsAttendus: "Une matrice des parties prenantes avec pour chacune : nom, niveau d'influence, niveau d'impact, effets sur le projet et actions à entreprendre.",
       },
-      etudeDeCas: "Sophie a identifié ses parties prenantes : producteurs locaux (influence forte, impact fort), consommateurs urbains (influence moyenne, impact fort), mairies (influence moyenne, impact moyen), associations environnementales (influence faible, impact moyen), investisseurs (influence forte, impact faible). Pour chacune, elle a noté les actions à mener : contacter la mairie pour un partenariat, rencontrer des associations pour des recommandations.",
+      etudeDeCas: "ESCO Algérie - Parties prenantes : Population rurale (influence faible, impact fort), Gouvernement (influence forte, impact fort), Fournisseurs de panneaux solaires (influence forte, impact moyen), Banques (influence forte, impact moyen), Techniciens/installateurs (influence moyenne, impact fort), Communautés locales (influence moyenne, impact moyen). Actions : associer le gouvernement dès le début, collaborer avec les banques pour le crédit, former des techniciens locaux.",
       conseils: [
         "Ne vous limitez pas aux parties prenantes évidentes",
         "Impliquez tôt les parties prenantes à forte influence",
@@ -655,7 +459,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Un segment de clientèle est un groupe de personnes ou d'organisations qui partagent des besoins, des comportements ou des caractéristiques communes. Dans cette étape, vous allez créer des fiches pour chaque segment, détaillant leurs difficultés (pains), leurs bénéfices recherchés (gains) et leurs tâches à accomplir (jobs).",
         resultatsAttendus: "Des fiches segment client complètes avec nom, description, pains, gains, jobs et archétype pour chaque segment identifié.",
       },
-      etudeDeCas: "Sophie a identifié 3 segments : (1) Consommateurs urbains responsables : veulent acheter local mais manquent de temps et d'information, (2) Producteurs locaux : cherchent à commercialiser leurs produits sans intermédiaires coûteux, (3) Restaurants et cantines : veulent sourcer des produits locaux de façon fiable. Chaque segment a des pains, gains et jobs spécifiques.",
+      etudeDeCas: "ESCO Algérie a identifié 2 segments : (1) Ménages ruraux disposant de ressources : ont besoin d'électricité fiable, subissent les coupures et le bruit des générateurs, (2) Petites entreprises rurales : cherchent une énergie abordable pour leurs activités. Chaque segment a des pains (coût, fiabilité) et des gains (indépendance énergétique, réduction des coûts) spécifiques.",
       conseils: [
         "Commencez par 2-3 segments maximum, vous pourrez en ajouter plus tard",
         "Un segment est valide si vous pouvez répondre à ses besoins de façon unique",
@@ -722,7 +526,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Le canevas de proposition de valeur (Value Proposition Canvas) est un outil qui vous aide à concevoir une offre parfaitement adaptée à votre segment client. Il se compose de deux parties : le profil client (pains, gains, jobs) que vous avez déjà créé, et la carte de valeur (produits et services, soulagement des douleurs, créateurs de gains).",
         resultatsAttendus: "Un canevas de proposition de valeur rempli pour votre segment prioritaire, avec les produits/services, le soulagement des douleurs, les créateurs de gains et les valeurs ajoutées environnementale et sociale.",
       },
-      etudeDeCas: "Pour son segment prioritaire (consommateurs urbains), Sophie a conçu : Produits (plateforme web + app mobile), Soulagement des douleurs (gain de temps, information centralisée, livraison flexible), Créateurs de gains (produits frais, traçabilité, impact local mesuré). Elle ajoute la valeur environnementale (réduction du gaspillage) et sociale (soutien aux producteurs locaux).",
+      etudeDeCas: "ESCO Algérie a conçu pour son segment prioritaire (ménages ruraux) : Produits (livraison, installation et maintenance de systèmes photovoltaïques), Soulagement des douleurs (fin des coupures, silence, absence d'émissions), Créateurs de gains (électricité propre et abordable, autonomie énergétique). Valeur environnementale (réduction des émissions de gaz) et sociale (amélioration des conditions de vie, création d'emplois locaux).",
       conseils: [
         "Une proposition de valeur par segment de clientèle",
         "Assurez-vous que chaque élément de votre offre répond à un pain ou un gain spécifique",
@@ -790,7 +594,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Le test de la proposition de valeur est une étape cruciale. Vous allez concevoir des fiches de découverte pour structurer vos entretiens, observations ou sondages. L'objectif est de collecter des preuves que votre proposition de valeur répond réellement aux besoins identifiés.",
         resultatsAttendus: "Des fiches de découverte remplies pour chaque test réalisé, avec les hypothèses testées, les résultats clés, les insights et les actions à mener.",
       },
-      etudeDeCas: "Sophie a créé une fiche de découverte pour tester l'hypothèse : « Les consommateurs urbains sont prêts à utiliser une plateforme pour acheter des produits locaux. » Elle a réalisé 5 entretiens. Résultat : 4 personnes sur 5 sont très intéressées. Insight : le prix est un facteur clé. Action : inclure une comparaison de prix dans la plateforme.",
+      etudeDeCas: "ESCO Algérie a créé une fiche de découverte pour tester l'hypothèse : « Les ménages ruraux sont prêts à payer pour l'installation de panneaux solaires. » 5 entretiens réalisés. Résultat : 4 ménages sur 5 sont très intéressés mais le coût initial est un frein. Insight : un système de micocredit ou paiement échelonné est nécessaire. Action : contacter les banques pour un partenariat de financement.",
       conseils: [
         "Testez une hypothèse à la fois pour des résultats clairs",
         "Préparez un guide d'entretien mais restez flexible",
@@ -879,7 +683,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Après avoir testé votre proposition de valeur, vous avez des données. Parfois, elles confirment votre direction. Parfois, elles vous montrent que vous devez changer de cap. Dans cette étape, vous allez analyser ces résultats et décider si vous devez itérer (ajuster) ou pivoter (changer) votre proposition de valeur.",
         resultatsAttendus: "Une décision claire : itérer ou pivoter, avec les ajustements concrets à apporter à votre proposition de valeur.",
       },
-      etudeDeCas: "Les tests de Sophie ont montré que les consommateurs sont intéressés mais que la livraison est un frein majeur (coût et logistique). Elle a deux options : itérer (trouver un partenariat logistique) ou pivoter (passer d'une plateforme de vente à une plateforme de mise en relation sans transaction). Elle choisit d'itérer en intégrant un service de livraison mutualisée.",
+      etudeDeCas: "Les tests de l'ESCO Algérie ont montré que les ménages sont intéressés mais que le coût initial des panneaux est un frein majeur. Deux options : itérer (mettre en place un système de paiement échelonné) ou pivoter (passer d'un modèle de vente à un modèle de location). L'ESCO choisit d'itérer en proposant un micocredit avec les banques partenaires.",
       conseils: [
         "Ne pivotez pas après un seul test négatif : cherchez des tendances (3+ retours)",
         "Un pivot n'est pas un abandon : c'est une adaptation basée sur des preuves",
@@ -964,7 +768,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Cette étape couvre trois piliers de votre relation client : (1) Les relations clients : comment vous interagissez avec chaque segment (acquisition, fidélisation, service), (2) Les canaux : comment vous atteignez vos clients (site web, magasin, réseau de partenaires), (3) Le parcours client : l'expérience complète de vos clients, de la découverte à l'après-vente.",
         resultatsAttendus: "Une stratégie de relation client définie, les canaux de distribution identifiés et une cartographie du parcours client.",
       },
-      etudeDeCas: "Sophie a défini : Relations clients (acquisition via réseaux sociaux et bouche-à-oreille, fidélisation via newsletter et programme de parrainage, service client via chat intégré), Canaux (plateforme web, application mobile, points de retrait chez les producteurs), Parcours client (découverte via Instagram, inscription sur la plateforme, première commande, livraison ou retrait, évaluation et partage).",
+      etudeDeCas: "ESCO Algérie a défini : Relations clients (acquisition via les communautés locales et les associations, fidélisation via le service après-vente et la maintenance, service client via une équipe technique itinérante), Canaux (équipes commerciales terrain, partenariats avec les collectivités, bouche-à-oreille), Parcours client (sensibilisation via les associations, prise de contact, évaluation des besoins, installation, suivi et maintenance).",
       conseils: [
         "Adaptez vos canaux à vos segments : vos clients sont-ils sur les réseaux sociaux, en magasin, ou les deux ?",
         "Un parcours client simple et fluide est un avantage concurrentiel majeur",
@@ -1060,7 +864,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Les activités clés sont les actions les plus importantes que vous devez accomplir pour que votre entreprise fonctionne. Les ressources sont tout ce dont vous avez besoin : humain, financier, matériel, intellectuel. Ensemble, ils forment l'ossature de votre entreprise.",
         resultatsAttendus: "Une liste des activités clés et des ressources nécessaires, avec une identification des ressources critiques et des lacunes potentielles.",
       },
-      etudeDeCas: "Sophie a identifié ses activités clés : développement et maintenance de la plateforme, gestion des relations producteurs, marketing et acquisition d'utilisateurs, logistique et livraison. Ses ressources principales : développeur web (humain), investissement initial de 50 000€ (financier), locaux partagés (physique), algorithme de matching (intellectuel).",
+      etudeDeCas: "ESCO Algérie a identifié ses activités clés : approvisionnement et installation de panneaux solaires, maintenance préventive et curative, formation des techniciens locaux, relations avec les collectivités. Ses ressources principales : techniciens qualifiés (humain), investissement initial de 100 000€ (financier), entrepôt de stockage (physique), savoir-faire technique et certifications (intellectuel).",
       conseils: [
         "Distinguer ce qui est critique de ce qui est secondaire",
         "Identifiez ce que vous devez faire en interne et ce que vous pouvez externaliser",
@@ -1156,7 +960,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "L'écoconception consiste à intégrer l'environnement dès la conception de votre produit ou service. Cela concerne tous les aspects : matières premières, fabrication, transport, utilisation, fin de vie. Dans cette étape, vous allez analyser l'impact environnemental de votre projet et identifier des pistes d'amélioration.",
         resultatsAttendus: "Une analyse de l'impact environnemental de votre projet dans les domaines clés (énergie, déchets, transport, etc.) et un plan d'actions pour réduire cet impact.",
       },
-      etudeDeCas: "Sophie a identifié les impacts de sa plateforme : consommation électrique des serveurs, déchets d'emballages, émissions de la livraison. Elle a planifié des actions : serveurs verts (alimentés en énergie renouvelable), emballages recyclables, livraison mutualisée à vélo dans les villes, incitations aux producteurs pour des pratiques durables.",
+      etudeDeCas: "ESCO Algérie a identifié les impacts de son activité : fabrication des panneaux (métaux rares), transport, fin de vie des panneaux. Plan d'actions : choisir des fournisseurs respectueux des normes environnementales, optimiser les tournées d'installation, mettre en place un programme de recyclage des panneaux en fin de vie, former les utilisateurs à l'entretien.",
       conseils: [
         "L'écoconception commence par la mesure : ce qui ne se mesure pas ne s'améliore pas",
         "Cherchez des synergies : ce qui est bon pour la planète peut aussi réduire vos coûts",
@@ -1241,7 +1045,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Vous avez parcouru les premières étapes de votre parcours entrepreneurial. Il est temps de rassembler tout ce que vous avez appris et décidé jusqu'à présent. Ce résumé servira de pont entre la partie stratégique et la partie financière de votre projet.",
         resultatsAttendus: "Un résumé complet de votre modèle d'affaires à ce stade : proposition de valeur, segments clients, parties prenantes, activités clés, ressources et engagements environnementaux.",
       },
-      etudeDeCas: "Sophie a créé une fiche de synthèse : « Relocal - Plateforme connectant producteurs locaux et consommateurs urbains. Segments : consommateurs responsables, producteurs locaux, restaurants. Proposition de valeur : accès simplifié aux produits locaux avec livraison mutualisée. Parties prenantes clés : producteurs, mairies, associations. Activités : développement plateforme, relation producteurs, logistique. Impact environnemental mesuré et plan d'actions défini. »",
+      etudeDeCas: "ESCO Algérie - Résumé : Installation de systèmes photovoltaïques solaires pour les zones rurales en Algérie. Segments : ménages ruraux, petites entreprises. Proposition de valeur : électricité propre, fiable et abordable. Parties prenantes clés : gouvernement, banques, fournisseurs, communautés locales. Activités : installation, maintenance, formation. Impact environnemental : réduction des émissions de gaz et du bruit des générateurs.",
       conseils: [
         "Prenez le temps de relire l'ensemble de votre travail",
         "Identifiez les incohérences ou les points à approfondir",
@@ -1294,6 +1098,9 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         "J'ai listé les points à approfondir",
         "J'ai défini mes priorités pour la suite"
       ],
+      resources: [
+        { title: "Guide de synthèse stratégique", type: "article" }
+      ],
     },
     16: {
       stepNumber: 16,
@@ -1304,7 +1111,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "La structure des coûts regroupe toutes les dépenses nécessaires au fonctionnement de votre entreprise. On distingue les coûts fixes (indépendants de votre activité) et les coûts variables (liés à votre volume d'activité). Une bonne estimation vous permet de savoir combien vous devez vendre pour être rentable.",
         resultatsAttendus: "Une liste détaillée de vos coûts fixes et variables, avec des estimations chiffrées et une identification des coûts les plus importants.",
       },
-      etudeDeCas: "Sophie a listé ses coûts : Fixes (développeur 45k€/an, serveurs 3 600€/an, loyer 12 000€/an, assurances 2 400€/an) = 63 000€/an. Variables (commission aux producteurs 30%, frais de livraison 5€/commande, marketing 0,50€/acquisition) à ajuster selon le volume. Coût fixe total : environ 5 250€/mois.",
+      etudeDeCas: "ESCO Algérie a listé ses coûts : Fixes (salaires techniciens 60 000€/an, location entrepôt 6 000€/an, assurances 3 000€/an, véhicules 9 000€/an) = 78 000€/an. Variables (panneaux solaires 3 000€/installation, onduleurs 500€, câblage 200€, frais de déplacement 100€/installation). Coût fixe total : environ 6 500€/mois.",
       conseils: [
         "Soyez exhaustif : n'oubliez pas les petites dépenses qui s'accumulent",
         "Distinguer clairement coûts fixes et variables",
@@ -1400,7 +1207,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Les flux de revenus décrivent comment votre entreprise capture de la valeur. Il existe plusieurs types de revenus : vente directe, abonnement, commission, publicité, etc. Dans cette étape, vous allez définir vos sources de revenus, votre stratégie de prix et projeter vos revenus attendus.",
         resultatsAttendus: "Une stratégie de revenus claire avec les sources identifiées, la stratégie de prix définie et des projections de revenus à 1 an.",
       },
-      etudeDeCas: "Sophie a défini ses sources de revenus : Commission de 15% sur chaque vente via la plateforme, Abonnement premium pour les producteurs (29,90€/mois pour des fonctionnalités avancées), Publicité ciblée (produits locaux). Prix : gratuits pour les consommateurs, commission pour les producteurs. Projection : objectif de 500 commandes/mois à 25€ de panier moyen = 1 875€/mois de commission en année 1.",
+      etudeDeCas: "ESCO Algérie a défini ses sources de revenus : Vente de systèmes photovoltaïques (6 000€/installation), Installation (1 500€), Maintenance annuelle (300€/client), Location de systèmes (100€/mois). Prix : vente directe ou location avec option d'achat. Projection : objectif de 10 installations/mois à 7 500€ de revenu moyen = 75 000€/mois de chiffre d'affaires en année 1.",
       conseils: [
         "Diversifiez vos sources de revenus sans les multiplier inutilement",
         "Testez différents prix auprès de vos clients potentiels",
@@ -1492,7 +1299,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Le résumé financier rassemble les éléments clés de votre analyse financière : structure des coûts, flux de revenus, besoin de financement et principaux indicateurs. Ce document sera crucial si vous cherchez un financement ou un partenariat.",
         resultatsAttendus: "Un résumé financier complet avec le coût fixe mensuel, le seuil de rentabilité, le besoin de financement et les principaux indicateurs financiers.",
       },
-      etudeDeCas: "Sophie a résumé : Coût fixe mensuel : 5 250€. Seuil de rentabilité : 350 commandes/mois (panier moyen 25€, commission 15%). Revenu mensuel à 500 commandes : 1 875€. Besoin de financement initial : 50 000€ (développement + 6 mois de trésorerie). Marge brute : 15% du prix de vente.",
+      etudeDeCas: "ESCO Algérie a résumé : Coût fixe mensuel : 6 500€. Seuil de rentabilité : 4 installations/mois (prix moyen 7 500€, marge 35%). Revenu mensuel à 10 installations : 75 000€. Besoin de financement initial : 120 000€ (stock + trésorerie). Marge brute : 35% du prix de vente.",
       conseils: [
         "Soyez précis et transparent dans vos chiffres",
         "Préparez-vous à justifier chaque hypothèse",
@@ -1575,7 +1382,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Vous êtes presque prêt à tester votre projet sur le terrain. Cette étape vous aide à définir précisément : quoi tester, auprès de qui, comment, et quels sont vos critères de succès. Une bonne préparation décuple la valeur de vos tests.",
         resultatsAttendus: "Un plan de test complet avec les objectifs, la méthode, les participants, les critères de succès et le calendrier.",
       },
-      etudeDeCas: "Sophie prépare son test MVP : Objectif : valider que 50 consommateurs utilisent la plateforme pour commander chez 10 producteurs. Méthode : MVP fonctionnel pendant 1 mois. Participants : 10 producteurs partenaires, 50 consommateurs ciblés via Instagram. Critères de succès : 30 commandes minimum, 80% de satisfaction. Calendrier : développement 2 semaines, test 1 mois, analyse 1 semaine.",
+      etudeDeCas: "ESCO Algérie prépare son test terrain : Objectif : installer 5 systèmes photovoltaïques dans un village pilote et valider la satisfaction des ménages. Méthode : démonstration, installation test, suivi pendant 2 mois. Participants : 5 ménages sélectionnés avec la communauté locale. Critères de succès : 100% des systèmes fonctionnels, 80% de satisfaction, 3 recommandations. Calendrier : 1 mois de préparation, 2 mois de test, 2 semaines d'analyse.",
       conseils: [
         "Définissez des critères de succès clairs avant le test, pas après",
         "Un test doit avoir une durée limitée dans le temps",
@@ -1662,7 +1469,7 @@ export const STEP_PEDAGOGICAL_CONTENT_V2: Record<number, StepPedagogicalContent>
         description: "Les KPIs (Key Performance Indicators) sont des mesures quantifiables qui vous indiquent si vous atteignez vos objectifs. Ils couvrent différents aspects : performance financière, satisfaction client, impact environnemental, efficacité opérationnelle. Choisissez vos KPIs avec soin : trop, vous vous noyez dans les données ; trop peu, vous manquez des signaux importants.",
         resultatsAttendus: "Une liste de 8 à 12 KPIs couvrant les dimensions financière, client, impact et opérationnelle, avec les objectifs associés.",
       },
-      etudeDeCas: "Sophie a défini ses KPIs : Financiers (CA mensuel, marge brute, trésorerie), Clients (nombre d'utilisateurs actifs, taux de rétention à 30 jours, NPS), Impact (tonnes de CO2 évitées, producteurs référencés, % de produits locaux), Opérationnels (nombre de commandes/jour, temps de livraison moyen, taux de disponibilité plateforme). Objectifs à 6 mois : 500 utilisateurs actifs, 30 producteurs, NPS > 40.",
+      etudeDeCas: "ESCO Algérie a défini ses KPIs : Financiers (CA mensuel, marge brute, trésorerie), Clients (nombre de clients équipés, taux de satisfaction, taux de référencement), Impact (tonnes de CO2 évitées, emplois créés, ménages électrifiés), Opérationnels (nombre d'installations/mois, délai d'installation moyen, taux de panne). Objectifs à 6 mois : 50 clients équipés, 95% de satisfaction, 20 tonnes de CO2 évitées.",
       conseils: [
         "Limitez-vous à 8-12 KPIs maximum pour rester focus",
         "Chaque KPI doit être lié à un objectif spécifique",

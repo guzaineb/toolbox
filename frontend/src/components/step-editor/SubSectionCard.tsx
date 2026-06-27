@@ -20,8 +20,12 @@ export function SubSectionCard({
   const ref = useRef<HTMLDivElement>(null);
 
   const COMPLEX_TYPES = ['pestel_v2', 'stakeholder_matrix', 'customer_segment', 'value_proposition', 'discovery_card'];
+  const RECAP_TYPES = ['step_recap'];
 
   const filledCount = section.guidedQuestions.filter((gq) => {
+    if (RECAP_TYPES.includes(gq.type)) {
+      return true;
+    }
     if (COMPLEX_TYPES.includes(gq.type)) {
       const val = content[section.key];
       if (gq.type === 'pestel_v2') {
@@ -50,6 +54,9 @@ export function SubSectionCard({
 
   const handleFieldChange = (questionText: string, value: any, gqType?: string) => {
     const sectionKey = section.key;
+    if (gqType && RECAP_TYPES.includes(gqType)) {
+      return;
+    }
     if (gqType && COMPLEX_TYPES.includes(gqType)) {
       onChange(sectionKey, value);
       return;

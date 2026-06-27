@@ -3,9 +3,11 @@ export interface GuidedQuestion {
   hint?: string;
   placeholder?: string;
   key?: string;
-  type: 'text' | 'textarea' | 'select' | 'number' | 'swot' | 'pestel' | 'pestel_v2' | 'stakeholder_matrix' | 'customer_segment' | 'value_proposition' | 'discovery_card' | 'bmc';
+  type: 'text' | 'textarea' | 'select' | 'number' | 'swot' | 'pestel' | 'pestel_v2' | 'stakeholder_matrix' | 'customer_segment' | 'value_proposition' | 'discovery_card' | 'bmc' | 'step_recap';
   options?: { label: string; value: string }[];
   subQuestions?: GuidedQuestion[];
+  sourceStep?: number;
+  sourceSectionKey?: string;
 }
 
 export interface SubSectionContent {
