@@ -1,14 +1,36 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, FileDown } from 'lucide-react'
 import { GbmStepper } from '@/components/gbm/GbmStepper'
 import { Button } from '@/components/shared/ui'
+import { gbmService } from '@/services/gbm.service'
 
 export default function GbmPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.projectId as string
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  const handleDownloadPdf = async () => {
+    setPdfLoading(true)
+    try {
+      const blob = await gbmService.downloadBmcPdf(projectId)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `bmc-${projectId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      // silent
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
@@ -16,10 +38,13 @@ export default function GbmPage() {
         <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="font-syne text-lg font-extrabold text-ink">Modèle d&apos;Affaires Vert</h1>
           <p className="text-xs text-ink3">4 phases · 20 étapes</p>
         </div>
+        <Button variant="outline" onClick={handleDownloadPdf} loading={pdfLoading}>
+          <FileDown size={14} /> Télécharger BMC (PDF)
+        </Button>
       </div>
       <GbmStepper projectId={projectId} />
     </div>

@@ -1,8 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { DeepseekService } from './deepseek.service';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+
+  constructor(private readonly deepseek: DeepseekService) {}
 
   async generateSummary(
     projectId: string,
@@ -12,7 +15,7 @@ export class AiService {
     const prompt = this.buildPrompt(stepKey, context);
 
     try {
-      const response = await this.callOpenAI(prompt);
+      const response = await this.callAi(prompt);
       return response;
     } catch (error) {
       this.logger.error(`AI generation failed for step ${stepKey}: ${error.message}`);
@@ -24,7 +27,7 @@ export class AiService {
     const prompt = `Analyse les incohérences potentielles dans le GBM du projet ${projectId} (données non fournies ici). Retourne une liste JSON des incohérences détectées.`;
 
     try {
-      const response = await this.callOpenAI(prompt);
+      const response = await this.callAi(prompt);
       try {
         const parsed = JSON.parse(response);
         return Array.isArray(parsed) ? parsed : [response];
@@ -34,6 +37,15 @@ export class AiService {
     } catch {
       return [];
     }
+  }
+
+  private async callAi(prompt: string): Promise<string> {
+    if (process.env.DEEPSEEK_API_KEY) {
+      const result = await this.deepseek.generate(prompt, { temperature: 0.7, maxTokens: 1000 });
+      return result.content;
+    }
+
+    return this.callOpenAI(prompt);
   }
 
   private buildPrompt(stepKey: string, context: Record<string, any>): string {
@@ -58,33 +70,49 @@ export class AiService {
   private async callOpenAI(prompt: string): Promise<string> {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      this.logger.warn('OPENAI_API_KEY not set, using fallback');
+      this.logger.warn('No API key configured (neither DEEPSEEK_API_KEY nor OPENAI_API_KEY)');
       return this.simulateResponse(prompt);
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: 'Tu es un assistant expert en entrepreneuriat vert et en développement durable.' },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
+    const models = ['gpt-4o-mini', 'gpt-3.5-turbo', 'gpt-4'];
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    for (const model of models) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: 'Tu es un assistant expert en entrepreneuriat vert et en développement durable.' },
+              { role: 'user', content: prompt },
+            ],
+            temperature: 0.7,
+            max_tokens: 1000,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return data.choices[0]?.message?.content || '';
+        }
+
+        if (response.status === 404 || response.status === 401) {
+          this.logger.warn(`OpenAI model ${model} not available (${response.status}), trying next`);
+          continue;
+        }
+
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      } catch (error) {
+        if (error.message?.includes('OpenAI API error')) throw error;
+        this.logger.warn(`OpenAI model ${model} failed: ${error.message}, trying next`);
+      }
     }
 
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
+    throw new Error('All OpenAI models failed');
   }
 
   private simulateResponse(prompt: string): string {
@@ -92,6 +120,6 @@ export class AiService {
   }
 
   private fallbackSummary(stepKey: string, context: Record<string, any>): string {
-    return `Résumé généré automatiquement pour l'étape ${stepKey}. Les données seront enrichies lorsque le service IA sera configuré avec une clé API OpenAI valide.`;
+    return `Résumé généré automatiquement pour l'étape ${stepKey}. Les données seront enrichies lorsque le service IA sera configuré avec une clé API valide.`;
   }
 }

@@ -1,15 +1,20 @@
 import {
-  Controller, Get, Patch, Post, Delete, Param, Body, Query, Req,
+  Controller, Get, Patch, Post, Delete, Param, Body, Query, Req, Res,
   UseGuards, ParseUUIDPipe,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GbmService } from './gbm.service';
+import { BmcPdfService } from './bmc-pdf.service';
 import { ProjectIdParam, GbmStepParams, GbmItemParams } from './dto/gbm-params.dto';
 
 @Controller('projects/:projectId/gbm')
 @UseGuards(JwtAuthGuard)
 export class GbmController {
-  constructor(private readonly gbmService: GbmService) {}
+  constructor(
+    private readonly gbmService: GbmService,
+    private readonly bmcPdfService: BmcPdfService,
+  ) {}
 
   @Get('step/:stepId')
   async getStep(
@@ -75,5 +80,20 @@ export class GbmController {
     @Param() params: ProjectIdParam,
   ) {
     return this.gbmService.initializeProjectSteps(params.projectId, req.user.id);
+  }
+
+  @Get('bmc-pdf')
+  async downloadBmcPdf(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.bmcPdfService.generate(params.projectId, req.user.id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="bmc-${params.projectId}.pdf"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
   }
 }
