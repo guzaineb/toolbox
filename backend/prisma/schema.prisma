@@ -1,0 +1,767 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================
+// ENUMS
+// ===========================
+enum StepStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum CohortStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  ARCHIVED
+}
+
+enum ParticipationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum FundingPhase {
+  IDEATION
+  VALIDATION
+  EARLY_STAGE
+  GROWTH
+  SCALING
+}
+
+enum ImpactPeriod {
+  MENSUEL
+  TRIMESTRIEL
+  ANNUEL
+}
+
+// ===========================
+// CORE — Projects
+// ===========================
+model Project {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  owner_id        String
+  gbm_reviewed_at DateTime?
+  is_gbm_reviewed Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Phase 1
+  idea_sketch              IdeaSketch?
+  problems_needs           ProblemsNeeds?
+  pestel                   Pestel?
+  objective                Objective?
+  mission_vision           MissionVision?
+  context_summary          ContextSummary?
+
+  // Phase 2
+  stakeholder              Stakeholder[]
+  stakeholder_map          StakeholderMap[]
+  customer_segment         CustomerSegment[]
+  value_proposition        ValueProposition?
+  test_discovery           TestDiscovery[]
+  value_proposition_pivot  ValuePropositionPivot?
+  customer_relations_channel CustomerRelationsChannel?
+  customer_journey         CustomerJourney[]
+  key_activities_resource  KeyActivitiesResource?
+  eco_design               EcoDesign?
+  eco_design_result        EcoDesignResult?
+  summary_activity         SummaryActivity?
+  cost_structure           CostStructure?
+  revenue_stream           RevenueStream?
+  cost_revenue_summary     CostRevenueSummary?
+
+  // Phase 3
+  test_preparation         TestPreparation?
+
+  // Phase 4
+  indicator                Indicator?
+
+  // Business Plan
+  management_plan          ManagementPlan?
+  marketing_plan           MarketingPlan?
+  financial_plan           FinancialPlan?
+  legal_plan               LegalPlan?
+  kpi                      Kpi?
+  executive_summary        ExecutiveSummary?
+
+  // Modules transverses
+  funding_assessment       FundingAssessment?
+  market_access            MarketAccess?
+  impact_measure           ImpactMeasure?
+
+  // Relations
+  step_progresses        StepProgress[]
+  ai_interactions        AiInteraction[]
+  cohort_participations  CohortParticipation[]
+
+  @@index([name])
+  @@index([owner_id])
+  @@map("projects")
+}
+
+// ===========================
+// CORE — Step Progress
+// ===========================
+model StepProgress {
+  id           String     @id @default(uuid())
+  project_id   String
+  step_key     String
+  status       StepStatus @default(NOT_STARTED)
+  completed_at DateTime?
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, step_key])
+  @@index([project_id])
+  @@index([step_key])
+  @@index([status])
+  @@map("step_progress")
+}
+
+// ===========================
+// CORE — Cohorts
+// ===========================
+model Cohort {
+  id          String       @id @default(uuid())
+  name        String
+  program     String?
+  description String?
+  capacity    Int?
+  start_date  DateTime?
+  end_date    DateTime?
+  status      CohortStatus @default(DRAFT)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  participations CohortParticipation[]
+
+  @@index([status])
+  @@map("cohorts")
+}
+
+model CohortParticipation {
+  id           String             @id @default(uuid())
+  cohort_id    String
+  project_id   String
+  status       ParticipationStatus @default(PENDING)
+  applied_at   DateTime           @default(now())
+  invited_at   DateTime?
+  responded_at DateTime?
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
+
+  cohort  Cohort  @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([cohort_id, project_id])
+  @@index([cohort_id])
+  @@index([project_id])
+  @@index([status])
+  @@map("cohort_participations")
+}
+
+// ===========================
+// CORE — AI Interactions
+// ===========================
+model AiInteraction {
+  id          String   @id @default(uuid())
+  project_id  String
+  step_key    String?
+  prompt      String
+  response    String
+  model       String   @default("gpt-4")
+  tokens_used Int?
+  duration_ms Int?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([step_key])
+  @@map("ai_interactions")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 1 : Ébaucher & Définir
+// ===========================
+
+// Étape 1 — Esquissez votre idée d'entreprise
+model IdeaSketch {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  idea_initial     String?
+  product_service  String?
+  customers        String?
+  partners         String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("idea_sketches")
+}
+
+// Étape 2 — Identifier les problèmes et les besoins
+model ProblemsNeeds {
+  id                      String   @id @default(uuid())
+  project_id              String   @unique
+  environmental_challenges String?
+  social_challenges       String?
+  customer_needs          String?
+  team_motivations        String?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("problems_needs")
+}
+
+// Étape 3 — Comprendre le contexte (PESTEL)
+model Pestel {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  political_what   String?
+  political_how    String?
+  economic_what    String?
+  economic_how     String?
+  social_what      String?
+  social_how       String?
+  technological_what String?
+  technological_how  String?
+  environmental_what String?
+  environmental_how  String?
+  legal_what       String?
+  legal_how        String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("pestels")
+}
+
+// Étape 4 — Fixez vos objectifs
+model Objective {
+  id                       String   @id @default(uuid())
+  project_id               String   @unique
+  environmental_problems   String?
+  environmental_objectives String?
+  social_problems          String?
+  social_objectives        String?
+  customer_problems        String?
+  customer_objectives      String?
+  team_problems            String?
+  team_objectives          String?
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("objectives")
+}
+
+// Étape 5 — Synthétiser une mission et une vision
+model MissionVision {
+  id         String   @id @default(uuid())
+  project_id String   @unique
+  mission    String?
+  vision     String?
+  values     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("mission_visions")
+}
+
+// Étape 6 — Résumé du contexte et des objectifs (AI-generated)
+model ContextSummary {
+  id             String   @id @default(uuid())
+  project_id     String   @unique
+  summary_text   String?
+  generated_by_ai Boolean @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("context_summaries")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 2 : Construire
+// ===========================
+
+// Étape 7a — Identifier et cartographier les parties prenantes
+model Stakeholder {
+  id                  String   @id @default(uuid())
+  project_id          String
+  name                String?
+  role                String?
+  interest            String?
+  influence           String?
+  engagement_strategy String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("stakeholders")
+}
+
+// Étape 7b — Cartes des parties prenantes (donnant-donnant)
+model StakeholderMap {
+  id              String   @id @default(uuid())
+  project_id      String
+  stakeholder_name String?
+  contribution    String?
+  reward          String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("stakeholder_maps")
+}
+
+// Étape 8 — Segments de clientèle
+model CustomerSegment {
+  id              String   @id @default(uuid())
+  project_id      String
+  segment_name    String?
+  description     String?
+  pains           String?
+  gains           String?
+  functions       String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("customer_segments")
+}
+
+// Étape 9 — Canevas de propositions de valeur
+model ValueProposition {
+  id                  String   @id @default(uuid())
+  project_id          String   @unique
+  environmental_value String?
+  social_value        String?
+  pain_relievers      String?
+  gain_creators       String?
+  products_services   String?
+  value_added         String?
+  innovation_value    String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("value_propositions")
+}
+
+// Étape 10 — Tester la proposition de valeur
+model TestDiscovery {
+  id          String   @id @default(uuid())
+  project_id  String
+  hypothesis  String?
+  test_method String?
+  results     String?
+  learnings   String?
+  validated   Boolean?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("test_discoveries")
+}
+
+// Étape 11 — Pivoter la proposition de valeur
+model ValuePropositionPivot {
+  id                    String   @id @default(uuid())
+  project_id            String   @unique
+  initial_assumptions   String?
+  test_results          String?
+  pivot_decision        String?
+  new_value_proposition String?
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("value_proposition_pivots")
+}
+
+// Étape 12a — Relations avec les clients et canaux
+model CustomerRelationsChannel {
+  id                     String   @id @default(uuid())
+  project_id             String   @unique
+  customer_relationships String?
+  channels               String?
+  distribution_strategy  String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("customer_relations_channels")
+}
+
+// Étape 12b — Parcours du client
+model CustomerJourney {
+  id                String   @id @default(uuid())
+  project_id        String
+  stage_name        String?
+  touchpoints       String?
+  customer_emotions String?
+  improvement_ideas String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("customer_journeys")
+}
+
+// Étape 13 — Principales activités et ressources
+model KeyActivitiesResource {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  key_activities    String?
+  key_resources     String?
+  strategic_partners String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("key_activities_resources")
+}
+
+// Étape 14a — Écoconception de votre entreprise
+model EcoDesign {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  equipe_eco      String?
+  projet_eco      String?
+  contexte_eco    String?
+  vision_durable  String?
+  cycle_de_vie    Json?
+  performance_eco String?
+  strategies_eco  Json?
+  plan_action_eco Json?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("eco_designs")
+}
+
+// Étape 14b — Résultats de l'écoconception
+model EcoDesignResult {
+  id                  String   @id @default(uuid())
+  project_id          String   @unique
+  eco_results         String?
+  performance_analysis String?
+  improvements        String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("eco_design_results")
+}
+
+// Étape 15 — Résumé des activités et ressources (AI-generated)
+model SummaryActivity {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  activities_summary String?
+  key_achievements String?
+  next_steps       String?
+  generated_by_ai  Boolean @default(false)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("summary_activities")
+}
+
+// Étape 16 — Structure des coûts
+model CostStructure {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  fixed_costs       String?
+  variable_costs    String?
+  cost_drivers      String?
+  breakeven_analysis String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("cost_structures")
+}
+
+// Étape 17 — Flux de revenus
+model RevenueStream {
+  id                 String   @id @default(uuid())
+  project_id         String   @unique
+  revenue_sources    String?
+  pricing_strategy   String?
+  revenue_projections String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("revenue_streams")
+}
+
+// Étape 18 — Résumé des coûts et flux de recettes (AI-generated)
+model CostRevenueSummary {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  cost_summary    String?
+  revenue_summary String?
+  financial_health String?
+  generated_by_ai Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("cost_revenue_summaries")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 3 : Tester
+// ===========================
+
+// Étape 19 — Préparez le test !
+model TestPreparation {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  test_objectives  String?
+  test_method     String?
+  success_criteria String?
+  resources_needed String?
+  timeline        String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("test_preparations")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 4 : Mesurer & Améliorer
+// ===========================
+
+// Étape 20 — Indicateurs
+model Indicator {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  environmental_kpis String?
+  social_kpis      String?
+  economic_kpis    String?
+  measurement_method String?
+  review_frequency String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("indicators")
+}
+
+// ===========================
+// MODULE 2 — Plan d'Affaires Vert
+// ===========================
+model ManagementPlan {
+  id                      String   @id @default(uuid())
+  project_id              String   @unique
+  problemes_gestion       String?
+  ressources_humaines     String?
+  actifs_physiques        String?
+  ressources_intellectuelles String?
+  production_fournisseurs String?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("management_plans")
+}
+
+model MarketingPlan {
+  id                     String   @id @default(uuid())
+  project_id             String   @unique
+  clients_valeur         String?
+  analyse_marche         String?
+  concurrents            String?
+  offre_prix             String?
+  branding_positionnement String?
+  canaux_communication   String?
+  relation_client        String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("marketing_plans")
+}
+
+model FinancialPlan {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  point_depart      String?
+  couts_configuration Float?
+  capital           Float?
+  compte_resultat   Json?
+  cash_flow         Json?
+  bilan             Json?
+  seuil_rentabilite Float?
+  revenus_3ans      Json?
+  autres_mesures    String?
+  rapport_financier String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("financial_plans")
+}
+
+model LegalPlan {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  statut_juridique String?
+  immatriculation  String?
+  contrats         String?
+  assurances       String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("legal_plans")
+}
+
+model Kpi {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  kpis              Json?
+  objectifs_mesure  String?
+  revues_performance String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("kpis")
+}
+
+model ExecutiveSummary {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  resume_executif String?
+  generated_by_ai Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("executive_summaries")
+}
+
+// ===========================
+// MODULE 4 — Accès au Financement
+// ===========================
+model FundingAssessment {
+  id                     String       @id @default(uuid())
+  project_id             String       @unique
+  reponses_questionnaire Json?
+  score_maturite         Int?
+  phase_maturite         FundingPhase?
+  opportunites_financement Json?
+  opportunites_pays      String?
+  strategie_levee_fonds  String?
+  completed_at           DateTime?
+  created_at             DateTime     @default(now())
+  updated_at             DateTime     @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("funding_assessments")
+}
+
+// ===========================
+// MODULE 5 — Accès au Marché
+// ===========================
+model MarketAccess {
+  id                  String   @id @default(uuid())
+  project_id          String   @unique
+  essence_marque      String?
+  alignement_objectifs String?
+  positionnement      String?
+  identite_visuelle   String?
+  narration           String?
+  messages_cles       Json?
+  canaux_marketing    Json?
+  partenariats_market Json?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("market_accesses")
+}
+
+// ===========================
+// MODULE 6 — Mesure de l'Impact
+// ===========================
+model ImpactMeasure {
+  id                  String       @id @default(uuid())
+  project_id          String       @unique
+  kpis_environnementaux Json?
+  kpis_sociaux        Json?
+  kpis_economiques    Json?
+  methode_mesure      String?
+  periode_mesure      ImpactPeriod?
+  objectifs_impact    Json?
+  resultats_actuels   Json?
+  rapport_impact      String?
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("impact_measures")
+}
