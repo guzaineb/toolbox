@@ -1,10 +1,7 @@
 
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ExpertProfile } from './expert-profile.entity';
-import { Repository,In } from 'typeorm';
-import { ExpertiseArea } from './expertise-area.entity';
-import { ExpertProfileExpertiseArea } from './expert-profile-expertise-area.entity';
+import { PrismaService } from '../prisma/prisma.service';
+import { ExpertiseArea } from '@prisma/client';
 import { ExpertScoringService } from './services/expert-scoring.service';
 import { ExpertRecommendationService } from './services/expert-recommendation.service';
 import { CreateExpertDto } from './dto/create-expert.dto';
@@ -17,34 +14,29 @@ import { PublicExpertProfileDto } from './dto/public-expert-profile.dto';
 @Injectable()
 export class ExpertService {
   constructor(
-    @InjectRepository(ExpertProfile)
-    private expertRepo: Repository<ExpertProfile>,
-    @InjectRepository(ExpertiseArea)
-    private areaRepo: Repository<ExpertiseArea>,
-    @InjectRepository(ExpertProfileExpertiseArea)
-    private expertiseConnRepo: Repository<ExpertProfileExpertiseArea>,
+    private prisma: PrismaService,
     private scoringService: ExpertScoringService,
     private recommendationService: ExpertRecommendationService,
   ) {}
 
-  async create(userId: string, dto: CreateExpertDto): Promise<ExpertProfile> {
+  async create(userId: string, dto: CreateExpertDto) {
     const existing = await this.findByUser(userId);
     if (existing) {
       throw new ConflictException('Un profil expert existe déjà pour cet utilisateur.');
     }
 
-    const expert = this.expertRepo.create({
-      user: { id: userId },
-      headline: dto.headline,
-      bio: dto.bio,
-      organization: dto.organization,
-      position: dto.position,
-      years_of_experience: dto.years_of_experience,
-      linkedin_url: dto.linkedin_url,
-      availability_status: 'available',
+    const savedExpert = await this.prisma.expertProfile.create({
+      data: {
+        user_id: userId,
+        headline: dto.headline,
+        bio: dto.bio,
+        organization: dto.organization,
+        position: dto.position,
+        years_of_experience: dto.years_of_experience,
+        linkedin_url: dto.linkedin_url,
+        availability_status: 'available',
+      },
     });
-
-    const savedExpert = await this.expertRepo.save(expert);
 
     if (dto.expertiseAreaIds?.length) {
       await this.addExpertiseBatch(userId, dto.expertiseAreaIds);
@@ -53,52 +45,46 @@ export class ExpertService {
     return this.findById(savedExpert.id);
   }
 
-  async findByUser(userId: string): Promise<ExpertProfile | null> {
-    return this.expertRepo.findOne({
-      where: { user: { id: userId } },
-      relations: this.getDefaultRelations(),
+  async findByUser(userId: string) {
+    return this.prisma.expertProfile.findUnique({
+      where: { user_id: userId },
+      include: this.getDefaultInclude(),
     });
   }
 
-  async findById(id: string): Promise<ExpertProfile> {
-    const profile = await this.expertRepo.findOne({
+  async findById(id: string) {
+    const profile = await this.prisma.expertProfile.findUnique({
       where: { id },
-      relations: this.getDefaultRelations(),
+      include: this.getDefaultInclude(),
     });
     if (!profile) throw new NotFoundException(`Expert #${id} introuvable.`);
     return profile;
   }
 
-  async findAll(filters?: ExpertFiltersDto): Promise<ExpertProfile[]> {
-    const query = this.expertRepo
-      .createQueryBuilder('expert')
-      .leftJoinAndSelect('expert.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .leftJoinAndSelect('expert.expertiseConnections', 'connections')
-      .leftJoinAndSelect('connections.expertiseArea', 'expertiseArea');
+  async findAll(filters?: ExpertFiltersDto) {
+    const where: any = {};
 
     if (filters?.availability) {
-      query.andWhere('expert.availability_status = :availability', {
-        availability: filters.availability,
-      });
+      where.availability_status = filters.availability;
     }
 
     if (filters?.expertiseAreaId) {
-      query.andWhere('expertiseArea.id = :areaId', {
-        areaId: filters.expertiseAreaId,
-      });
+      where.expertiseConnections = {
+        some: { expertise_area_id: filters.expertiseAreaId },
+      };
     }
 
     if (filters?.minYears) {
-      query.andWhere('expert.years_of_experience >= :minYears', {
-        minYears: filters.minYears,
-      });
+      where.years_of_experience = { gte: filters.minYears };
     }
 
-    return query.getMany();
+    return this.prisma.expertProfile.findMany({
+      where,
+      include: this.getDefaultInclude(),
+    });
   }
 
-  async upsert(userId: string, dto: UpdateExpertDto): Promise<ExpertProfile> {
+  async upsert(userId: string, dto: UpdateExpertDto) {
     const existing = await this.findByUser(userId);
 
     if (!existing) {
@@ -108,7 +94,7 @@ export class ExpertService {
       return this.create(userId, dto as CreateExpertDto);
     }
 
-    await this.updateProfileFields(existing, dto);
+    await this.updateProfileFields(existing.id, dto);
 
     if (dto.expertiseAreaIds !== undefined) {
       await this.updateExpertiseAreas(existing.id, dto.expertiseAreaIds);
@@ -119,12 +105,14 @@ export class ExpertService {
 
   async deleteProfile(userId: string): Promise<void> {
     const profile = await this.findByUserOrFail(userId);
-    await this.expertiseConnRepo.delete({ expertProfile: { id: profile.id } });
-    await this.expertRepo.remove(profile);
+    await this.prisma.expertProfileExpertiseArea.deleteMany({
+      where: { expert_profile_id: profile.id },
+    });
+    await this.prisma.expertProfile.delete({ where: { id: profile.id } });
   }
 
-  async getAllAreas(): Promise<ExpertiseArea[]> {
-    return this.areaRepo.find({ order: { category: 'ASC', name: 'ASC' } });
+  async getAllAreas() {
+    return this.prisma.expertiseArea.findMany({ orderBy: [{ category: 'asc' }, { name: 'asc' }] });
   }
 
   async getAreasGroupedByCategory(): Promise<Record<string, ExpertiseArea[]>> {
@@ -136,49 +124,40 @@ export class ExpertService {
       return acc;
     }, {} as Record<string, ExpertiseArea[]>);
   }
-async addExpertise(userId: string, dto: AddExpertiseDto): Promise<ExpertProfileExpertiseArea> {
+async addExpertise(userId: string, dto: AddExpertiseDto) {
   const profile = await this.findByUserOrFail(userId);
   
-  const area = await this.areaRepo.findOne({ 
-    where: { id: dto.expertiseAreaId } 
-  });
-  
+  const area = await this.prisma.expertiseArea.findUnique({ where: { id: dto.expertiseAreaId } });
   if (!area) {
     throw new NotFoundException(`Domaine d'expertise #${dto.expertiseAreaId} introuvable.`);
   }
   
-  const existingConnection = await this.expertiseConnRepo.findOne({
+  const existingConnection = await this.prisma.expertProfileExpertiseArea.findFirst({
     where: {
-      expertProfile: { id: profile.id },
-      expertiseArea: { id: area.id }
-    }
+      expert_profile_id: profile.id,
+      expertise_area_id: area.id,
+    },
   });
 
   if (existingConnection) {
     throw new ConflictException('Ce domaine d\'expertise est déjà associé au profil.');
   }
   
-  const connection = new ExpertProfileExpertiseArea();
-  connection.expertProfile = profile;
-  connection.expertiseArea = area;
-  
-  // CORRECTION 1: Valeurs par défaut si non fournies
-  connection.level = dto.level !== undefined && dto.level !== null 
-    ? dto.level 
-    : 'intermediate';
-  
-  // CORRECTION 2: Permettre la valeur 0
-  connection.years_of_experience = dto.years_of_experience !== undefined && dto.years_of_experience !== null
-    ? dto.years_of_experience
-    : (profile.years_of_experience !== undefined && profile.years_of_experience !== null
-        ? profile.years_of_experience
-        : 0);
-
-  return this.expertiseConnRepo.save(connection);
+  return this.prisma.expertProfileExpertiseArea.create({
+    data: {
+      expert_profile_id: profile.id,
+      expertise_area_id: area.id,
+      level: dto.level !== undefined && dto.level !== null ? dto.level : 'intermediate',
+      years_of_experience: dto.years_of_experience !== undefined && dto.years_of_experience !== null
+        ? dto.years_of_experience
+        : (profile.years_of_experience ?? 0),
+    },
+    include: { expertiseArea: true },
+  });
 }
 
-async addMultipleExpertise(userId: string, expertiseList: AddExpertiseDto[]): Promise<ExpertProfileExpertiseArea[]> {
-  const results: ExpertProfileExpertiseArea[] = [];
+async addMultipleExpertise(userId: string, expertiseList: AddExpertiseDto[]) {
+  const results: any[] = [];
   const errors: string[] = [];
   
   for (const dto of expertiseList) {
@@ -187,16 +166,13 @@ async addMultipleExpertise(userId: string, expertiseList: AddExpertiseDto[]): Pr
       results.push(result);
     } catch (error) {
       if (error instanceof ConflictException) {
-        console.log(`Expertise ${dto.expertiseAreaId} already exists, skipping...`);
         errors.push(`Expertise ${dto.expertiseAreaId} existe déjà`);
         continue;
       }
-      console.error(`Erreur lors de l'ajout de l'expertise ${dto.expertiseAreaId}:`, error);
       throw error;
     }
   }
   
-  // CORRECTION 3: Retourner une erreur si aucune expertise n'a été ajoutée
   if (results.length === 0 && errors.length > 0) {
     throw new BadRequestException(`Aucune expertise n'a pu être ajoutée: ${errors.join(', ')}`);
   }
@@ -205,68 +181,73 @@ async addMultipleExpertise(userId: string, expertiseList: AddExpertiseDto[]): Pr
 }
 
 async updateExpertiseAreas(profileId: string, areaIds: string[]): Promise<void> {
-  // CORRECTION 4: Ne rien faire si areaIds est undefined ou null
-  if (!areaIds) {
-    return;
-  }
-  
+  if (!areaIds) return;
+
   if (areaIds.length > 0) {
-    const areas = await this.areaRepo.findBy({ id: In(areaIds) });
-    
-    for (const area of areas) {
-      const connection = new ExpertProfileExpertiseArea();
-      connection.expertProfile = { id: profileId } as ExpertProfile;
-      connection.expertiseArea = area;
-      connection.level = 'intermediate';
-      connection.years_of_experience = 0;
-      
-      await this.expertiseConnRepo.save(connection);
+    for (const areaId of areaIds) {
+      const existing = await this.prisma.expertProfileExpertiseArea.findFirst({
+        where: { expert_profile_id: profileId, expertise_area_id: areaId },
+      });
+      if (!existing) {
+        await this.prisma.expertProfileExpertiseArea.create({
+          data: {
+            expert_profile_id: profileId,
+            expertise_area_id: areaId,
+            level: 'intermediate',
+            years_of_experience: 0,
+          },
+        });
+      }
     }
   }
 }
 
-async updateExpertiseLevel( userId: string, expertiseAreaId: string,level?: string,yearsOfExperience?: number): Promise<ExpertProfileExpertiseArea> {
+async updateExpertiseLevel( userId: string, expertiseAreaId: string, level?: string, yearsOfExperience?: number) {
   const profile = await this.findByUserOrFail(userId);
-  const connection = await this.expertiseConnRepo.findOne({
+  const connection = await this.prisma.expertProfileExpertiseArea.findFirst({
     where: {
-      expertProfile: { id: profile.id },
-      expertiseArea: { id: expertiseAreaId },
+      expert_profile_id: profile.id,
+      expertise_area_id: expertiseAreaId,
     },
-    relations: ['expertiseArea'],
+    include: { expertiseArea: true },
   });
 
   if (!connection) {
     throw new NotFoundException('Ce domaine d\'expertise n\'est pas associé au profil.');
   }
-    if (level !== undefined && level !== null) {
-    connection.level = level;
-  }
-  
-  if (yearsOfExperience !== undefined && yearsOfExperience !== null) {
-    connection.years_of_experience = yearsOfExperience;
-  }
 
-  return this.expertiseConnRepo.save(connection);
+  return this.prisma.expertProfileExpertiseArea.update({
+    where: { id: connection.id },
+    data: {
+      level: level ?? undefined,
+      years_of_experience: yearsOfExperience ?? undefined,
+    },
+    include: { expertiseArea: true },
+  });
 }
 
   async removeExpertise(userId: string, expertiseAreaId: string): Promise<void> {
     const profile = await this.findByUserOrFail(userId);
-    const result = await this.expertiseConnRepo.delete({
-      expertProfile: { id: profile.id },
-      expertiseArea: { id: expertiseAreaId },
+    const connection = await this.prisma.expertProfileExpertiseArea.findFirst({
+      where: {
+        expert_profile_id: profile.id,
+        expertise_area_id: expertiseAreaId,
+      },
     });
 
-    if (result.affected === 0) {
+    if (!connection) {
       throw new NotFoundException('Ce domaine d\'expertise n\'est pas associé au profil.');
     }
+
+    await this.prisma.expertProfileExpertiseArea.delete({ where: { id: connection.id } });
   }
 
-  async getExpertiseWithDetails(userId: string): Promise<ExpertProfileExpertiseArea[]> {
+  async getExpertiseWithDetails(userId: string) {
     const profile = await this.findByUserOrFail(userId);
-    return this.expertiseConnRepo.find({
-      where: { expertProfile: { id: profile.id } },
-      relations: ['expertiseArea'],
-      order: { expertiseArea: { category: 'ASC', name: 'ASC' } } as any,
+    return this.prisma.expertProfileExpertiseArea.findMany({
+      where: { expert_profile_id: profile.id },
+      include: { expertiseArea: true },
+      orderBy: { expertiseArea: { category: 'asc', name: 'asc' } },
     });
   }
 
@@ -283,8 +264,8 @@ async updateExpertiseLevel( userId: string, expertiseAreaId: string,level?: stri
   }
 
 
-async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
-  const profile = await this.findById(id);
+async getPublicProfile(id: string) {
+  const profile: any = await this.findById(id);
   
   return plainToClass(PublicExpertProfileDto, {
     id: profile.id,
@@ -303,7 +284,7 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
         last_name: profile.user.profile.last_name,
       } : undefined,
     } : undefined,
-    expertiseAreas: profile.expertiseConnections?.map(conn => ({
+    expertiseAreas: profile.expertiseConnections?.map((conn: any) => ({
       id: conn.expertiseArea.id,
       name: conn.expertiseArea.name,
       category: conn.expertiseArea.category,
@@ -318,18 +299,21 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
   }
 
   async getExpertiseStatistics(): Promise<any> {
-    return this.expertiseConnRepo
-      .createQueryBuilder('conn')
-      .leftJoin('conn.expertiseArea', 'area')
-      .select('area.name', 'name')
-      .addSelect('area.category', 'category')
-      .addSelect('COUNT(conn.id)', 'count')
-      .addSelect('AVG(conn.years_of_experience)', 'avgYears')
-      .groupBy('area.id')
-      .addGroupBy('area.name')
-      .addGroupBy('area.category')
-      .orderBy('count', 'DESC')
-      .getRawMany();
+    const stats = await this.prisma.expertProfileExpertiseArea.groupBy({
+      by: ['expertise_area_id'],
+      _count: { id: true },
+      _avg: { years_of_experience: true },
+    });
+
+    const areas = await this.prisma.expertiseArea.findMany();
+    const areaMap = new Map(areas.map(a => [a.id, a]));
+
+    return stats.map(s => ({
+      name: areaMap.get(s.expertise_area_id)?.name || '',
+      category: areaMap.get(s.expertise_area_id)?.category || '',
+      count: s._count.id,
+      avgYears: s._avg.years_of_experience,
+    })).sort((a, b) => b.count - a.count);
   }
 
   async recommendJuryForProject(projectId: string, limit: number = 3) {
@@ -339,11 +323,14 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
   async recommendCoachsForCohort(cohortId: string, limit: number = 3, excludeIds: string[] = []) {
     return this.recommendationService.recommendCoachs(cohortId, limit, excludeIds);
   }
-  private getDefaultRelations(): string[] {
-    return ['user', 'user.profile', 'expertiseConnections', 'expertiseConnections.expertiseArea'];
+  private getDefaultInclude(): any {
+    return {
+      user: { include: { profile: true } },
+      expertiseConnections: { include: { expertiseArea: true } },
+    };
   }
 
-  private async findByUserOrFail(userId: string): Promise<ExpertProfile> {
+  private async findByUserOrFail(userId: string) {
     const profile = await this.findByUser(userId);
     if (!profile) {
       throw new NotFoundException('Profil expert introuvable. Créez d\'abord votre profil.');
@@ -351,22 +338,26 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
     return profile;
   }
 
-  private async updateProfileFields(profile: ExpertProfile, dto: UpdateExpertDto): Promise<void> {
+  private async updateProfileFields(profileId: string, dto: UpdateExpertDto): Promise<void> {
     const updatableFields: (keyof UpdateExpertDto)[] = [
       'headline', 'bio', 'organization', 'position',
       'years_of_experience', 'linkedin_url', 'availability_status'
     ];
 
+    const data: any = {};
     for (const field of updatableFields) {
       if (dto[field] !== undefined) {
-        (profile as any)[field] = dto[field];
+        data[field] = dto[field];
       }
     }
 
-    await this.expertRepo.save(profile);
+    await this.prisma.expertProfile.update({
+      where: { id: profileId },
+      data,
+    });
   }
 
- 
+  
   private async addExpertiseBatch(userId: string, areaIds: string[]): Promise<void> {
     for (const areaId of areaIds) {
       await this.addExpertise(userId, {
@@ -377,8 +368,8 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
     }
   }
 
-  private async validateArea(areaId: string): Promise<ExpertiseArea> {
-    const area = await this.areaRepo.findOne({ where: { id: areaId } });
+  private async validateArea(areaId: string) {
+    const area = await this.prisma.expertiseArea.findUnique({ where: { id: areaId } });
     if (!area) {
       throw new NotFoundException(`Domaine d'expertise #${areaId} introuvable.`);
     }
@@ -386,10 +377,10 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
   }
 
   private async checkDuplicateExpertise(profileId: string, areaId: string): Promise<void> {
-    const existing = await this.expertiseConnRepo.findOne({
+    const existing = await this.prisma.expertProfileExpertiseArea.findFirst({
       where: {
-        expertProfile: { id: profileId },
-        expertiseArea: { id: areaId },
+        expert_profile_id: profileId,
+        expertise_area_id: areaId,
       },
     });
 
@@ -398,14 +389,14 @@ async getPublicProfile(id: string): Promise<PublicExpertProfileDto> {
     }
   }
 
-  private async findExpertiseConnection(userId: string, expertiseAreaId: string): Promise<ExpertProfileExpertiseArea> {
+  private async findExpertiseConnection(userId: string, expertiseAreaId: string) {
     const profile = await this.findByUserOrFail(userId);
-    const connection = await this.expertiseConnRepo.findOne({
+    const connection = await this.prisma.expertProfileExpertiseArea.findFirst({
       where: {
-        expertProfile: { id: profile.id },
-        expertiseArea: { id: expertiseAreaId },
+        expert_profile_id: profile.id,
+        expertise_area_id: expertiseAreaId,
       },
-      relations: ['expertiseArea'],
+      include: { expertiseArea: true },
     });
 
     if (!connection) {

@@ -1,14 +1,12 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { RagDocument, RagQueryResult } from './interfaces/ai.types';
 
-interface EmbeddingFunction {
-  generate(texts: string[]): Promise<number[][]>;
-}
-
 interface ChromaCollection {
   add: (args: { ids: string[]; embeddings: number[][]; metadatas: Record<string, any>[]; documents: string[] }) => Promise<any>;
+  update: (args: { ids: string[]; embeddings?: number[][]; metadatas?: Record<string, any>[]; documents?: string[] }) => Promise<any>;
   query: (args: { queryEmbeddings: number[][]; nResults: number; include: string[] }) => Promise<any>;
   count: () => Promise<number>;
+  delete: (args: { ids?: string[] }) => Promise<any>;
 }
 
 interface ChromaClientInstance {
@@ -18,49 +16,57 @@ interface ChromaClientInstance {
 }
 
 @Injectable()
-export class RagService implements OnModuleDestroy {
-  private readonly logger = new Logger(RagService.name);
+export class ChromaService implements OnModuleDestroy {
+  private readonly logger = new Logger(ChromaService.name);
   private client: ChromaClientInstance | null = null;
   private collections = new Map<string, ChromaCollection>();
-  private embeddingFn: EmbeddingFunction | null = null;
   private isInitialized = false;
 
   async onModuleDestroy() {
     this.collections.clear();
     this.client = null;
-    this.embeddingFn = null;
   }
 
   private async ensureInitialized(): Promise<void> {
     if (this.isInitialized) return;
 
-    const chromaUrl = process.env.CHROMA_DB_URL || 'http://localhost:8000';
+    const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
     try {
-      // @ts-ignore
       const { ChromaClient } = await import('chromadb');
       this.client = new ChromaClient({ path: chromaUrl }) as unknown as ChromaClientInstance;
+      this.logger.log(`ChromaService connected at ${chromaUrl}`);
     } catch {
-      this.logger.warn(`ChromaDB client not available (install chromadb package). Using mock client.`);
+      this.logger.warn('chromadb package not available. Using mock client.');
       this.client = this.createMockClient();
     }
 
-    this.embeddingFn = await this.createEmbeddingFunction();
     this.isInitialized = true;
-    this.logger.log(`RAG service initialized with ChromaDB at ${chromaUrl}`);
   }
 
   private createMockClient(): ChromaClientInstance {
     const collections = new Map<string, ChromaCollection>();
+    const store = new Map<string, { id: string; embedding: number[]; metadata: Record<string, any>; document: string }[]>();
 
     return {
       getOrCreateCollection: async ({ name, metadata }) => {
         let col = collections.get(name);
         if (!col) {
           const docs: any[] = [];
+          store.set(name, docs);
           col = {
             add: async ({ ids, embeddings, metadatas, documents }) => {
               for (let i = 0; i < ids.length; i++) {
                 docs.push({ id: ids[i], embedding: embeddings[i], metadata: metadatas[i], document: documents[i] });
+              }
+            },
+            update: async ({ ids, embeddings, metadatas, documents }) => {
+              for (let i = 0; i < ids.length; i++) {
+                const idx = docs.findIndex(d => d.id === ids[i]);
+                if (idx >= 0) {
+                  if (embeddings) docs[idx].embedding = embeddings[i];
+                  if (metadatas) docs[idx].metadata = metadatas[i];
+                  if (documents) docs[idx].document = documents[i];
+                }
               }
             },
             query: async ({ queryEmbeddings, nResults }) => {
@@ -76,6 +82,14 @@ export class RagService implements OnModuleDestroy {
               };
             },
             count: async () => docs.length,
+            delete: async ({ ids }) => {
+              if (ids) {
+                for (const id of ids) {
+                  const idx = docs.findIndex(d => d.id === id);
+                  if (idx >= 0) docs.splice(idx, 1);
+                }
+              }
+            },
           };
           collections.set(name, col);
         }
@@ -83,82 +97,20 @@ export class RagService implements OnModuleDestroy {
       },
       createCollection: async ({ name, metadata }) => {
         if (!collections.has(name)) {
+          store.set(name, []);
           collections.set(name, {
             add: async () => {},
+            update: async () => {},
             query: async () => ({ ids: [[]], documents: [[]], metadatas: [[]], distances: [[]] }),
             count: async () => 0,
+            delete: async () => {},
           });
         }
         return collections.get(name)!;
       },
       deleteCollection: async ({ name }) => {
         collections.delete(name);
-      },
-    };
-  }
-
-  private async createEmbeddingFunction(): Promise<EmbeddingFunction> {
-    if (process.env.OPENAI_API_KEY) {
-      this.logger.log('Using OpenAI embeddings');
-      return this.createOpenAIEmbeddingFunction();
-    }
-
-    try {
-      this.logger.log('Attempting to use @xenova/transformers for local embeddings');
-      return await this.createLocalEmbeddingFunction();
-    } catch {
-      this.logger.warn('No embedding provider available, using fallback identity embeddings');
-      return this.createFallbackEmbeddingFunction();
-    }
-  }
-
-  private createOpenAIEmbeddingFunction(): EmbeddingFunction {
-    const apiKey = process.env.OPENAI_API_KEY;
-    return {
-      generate: async (texts: string[]): Promise<number[][]> => {
-        const response = await fetch('https://api.openai.com/v1/embeddings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'text-embedding-3-small',
-            input: texts,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`OpenAI embedding error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.data
-          .sort((a: any, b: any) => a.index - b.index)
-          .map((d: any) => d.embedding);
-      },
-    };
-  }
-
-  private async createLocalEmbeddingFunction(): Promise<EmbeddingFunction> {
-    // @ts-ignore
-    const { pipeline } = await import('@xenova/transformers');
-    const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-
-    return {
-      generate: async (texts: string[]): Promise<number[][]> => {
-        const results = await Promise.all(
-          texts.map(text => extractor(text, { pooling: 'mean', normalize: true }))
-        );
-        return results.map(r => Array.from(r.data) as number[]);
-      },
-    };
-  }
-
-  private createFallbackEmbeddingFunction(): EmbeddingFunction {
-    return {
-      generate: async (texts: string[]): Promise<number[][]> => {
-        return texts.map(() => Array(384).fill(0));
+        store.delete(name);
       },
     };
   }
@@ -189,50 +141,47 @@ export class RagService implements OnModuleDestroy {
     return collection;
   }
 
-  async indexDocument(projectId: string, content: string, metadata: Record<string, any> = {}): Promise<void> {
-    const collection = await this.getCollection(projectId);
-    const embeddingFn = this.embeddingFn!;
-
-    const id = `${projectId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const embeddings = await embeddingFn.generate([content]);
-
-    await collection.add({
-      ids: [id],
-      embeddings,
-      metadatas: [metadata],
-      documents: [content],
-    });
-
-    this.logger.log(`Indexed document ${id} for project ${projectId}`);
-  }
-
-  async indexDocuments(projectId: string, documents: RagDocument[]): Promise<void> {
+  async addDocuments(projectId: string, documents: RagDocument[], embeddings: number[][]): Promise<void> {
     if (documents.length === 0) return;
 
     const collection = await this.getCollection(projectId);
-    const embeddingFn = this.embeddingFn!;
-    const texts = documents.map(d => d.content);
-
-    const embeddings = await embeddingFn.generate(texts);
 
     await collection.add({
       ids: documents.map(d => d.id),
       embeddings,
       metadatas: documents.map(d => d.metadata),
-      documents: texts,
+      documents: documents.map(d => d.content),
     });
 
-    this.logger.log(`Indexed ${documents.length} documents for project ${projectId}`);
+    this.logger.log(`Added ${documents.length} documents to project ${projectId}`);
   }
 
-  async query(projectId: string, queryText: string, nResults: number = 5): Promise<RagQueryResult> {
+  async updateDocuments(projectId: string, ids: string[], documents: string[], embeddings?: number[][], metadatas?: Record<string, any>[]): Promise<void> {
     const collection = await this.getCollection(projectId);
-    const embeddingFn = this.embeddingFn!;
 
-    const queryEmbedding = await embeddingFn.generate([queryText]);
+    await collection.update({
+      ids,
+      ...(embeddings && { embeddings }),
+      ...(metadatas && { metadatas }),
+      ...(documents && { documents }),
+    });
+
+    this.logger.log(`Updated ${ids.length} documents for project ${projectId}`);
+  }
+
+  async deleteDocuments(projectId: string, ids: string[]): Promise<void> {
+    const collection = await this.getCollection(projectId);
+
+    await collection.delete({ ids });
+
+    this.logger.log(`Deleted ${ids.length} documents from project ${projectId}`);
+  }
+
+  async query(projectId: string, queryEmbedding: number[], nResults: number = 5): Promise<RagQueryResult> {
+    const collection = await this.getCollection(projectId);
 
     const results = await collection.query({
-      queryEmbeddings: queryEmbedding,
+      queryEmbeddings: [queryEmbedding],
       nResults,
       include: ['documents', 'metadatas', 'distances'],
     });
@@ -263,8 +212,7 @@ export class RagService implements OnModuleDestroy {
   async countDocuments(projectId: string): Promise<number> {
     try {
       const collection = await this.getCollection(projectId);
-      const count = await collection.count();
-      return count;
+      return await collection.count();
     } catch {
       return 0;
     }

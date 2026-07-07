@@ -1,15 +1,11 @@
-// services/expert-recommendation.service.ts
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ExpertProfile } from '../expert-profile.entity';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ExpertScoringService } from './expert-scoring.service';
 
 @Injectable()
 export class ExpertRecommendationService {
   constructor(
-    @InjectRepository(ExpertProfile)
-    private expertRepo: Repository<ExpertProfile>,
+    private prisma: PrismaService,
     private scoringService: ExpertScoringService,
   ) {}
 
@@ -17,7 +13,7 @@ export class ExpertRecommendationService {
     projectId: string,
     limit: number = 3,
     options?: { minScore?: number; excludeIds?: string[] }
-  ): Promise<ExpertProfile[]> {
+  ) {
     const project = await this.getProjectRequirements(projectId);
     const experts = await this.getAvailableExperts(options?.excludeIds);
 
@@ -46,7 +42,7 @@ export class ExpertRecommendationService {
     cohortId: string,
     limit: number = 3,
     excludeIds: string[] = []
-  ): Promise<ExpertProfile[]> {
+  ) {
     const cohort = await this.getCohortRequirements(cohortId);
     const experts = await this.getAvailableExperts(excludeIds);
 
@@ -67,8 +63,11 @@ export class ExpertRecommendationService {
     limit: number;
     sortBy: 'score' | 'experience' | 'availability';
   }): Promise<any[]> {
-    const experts = await this.expertRepo.find({
-      relations: ['user', 'user.profile', 'expertiseConnections', 'expertiseConnections.expertiseArea'],
+    const experts = await this.prisma.expertProfile.findMany({
+      include: {
+        user: { include: { profile: true } },
+        expertiseConnections: { include: { expertiseArea: true } },
+      },
     });
 
     const scored = await Promise.all(
@@ -86,11 +85,11 @@ export class ExpertRecommendationService {
       })
     );
 
-    const sortFunctions = {
+    const sortFunctions: any = {
       score: (a, b) => b.score - a.score,
       experience: (a, b) => (b.years_of_experience || 0) - (a.years_of_experience || 0),
       availability: (a, b) => {
-        const order = { available: 3, busy: 2, unavailable: 1 };
+        const order: any = { available: 3, busy: 2, unavailable: 1 };
         return order[b.availability_status] - order[a.availability_status];
       },
     };
@@ -98,24 +97,22 @@ export class ExpertRecommendationService {
     return scored.sort(sortFunctions[options.sortBy]).slice(0, options.limit);
   }
 
-  private async getAvailableExperts(excludeIds?: string[]): Promise<ExpertProfile[]> {
-    const query = this.expertRepo
-      .createQueryBuilder('expert')
-      .leftJoinAndSelect('expert.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .leftJoinAndSelect('expert.expertiseConnections', 'connections')
-      .leftJoinAndSelect('connections.expertiseArea', 'expertiseArea')
-      .where('expert.availability_status = :status', { status: 'available' });
-
+  private async getAvailableExperts(excludeIds?: string[]) {
+    const where: any = { availability_status: 'available' };
     if (excludeIds?.length) {
-      query.andWhere('expert.id NOT IN (:...excludeIds)', { excludeIds });
+      where.id = { notIn: excludeIds };
     }
 
-    return query.getMany();
+    return this.prisma.expertProfile.findMany({
+      where,
+      include: {
+        user: { include: { profile: true } },
+        expertiseConnections: { include: { expertiseArea: true } },
+      },
+    });
   }
 
   private async getProjectRequirements(projectId: string): Promise<any> {
-    // À implémenter selon votre modèle Project
     return {
       requiredAreas: ['area1', 'area2'],
       minYearsExperience: 3,
@@ -123,7 +120,6 @@ export class ExpertRecommendationService {
   }
 
   private async getCohortRequirements(cohortId: string): Promise<any> {
-    // À implémenter selon votre modèle Cohort
     return {
       requiredAreas: ['mentoring', 'coaching'],
       minYearsExperience: 5,

@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DeepseekService } from './deepseek.service';
+import { LlmService } from './llm.service';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(private readonly deepseek: DeepseekService) {}
+  constructor(private readonly llm: LlmService) {}
 
   async generateSummary(
     projectId: string,
@@ -15,8 +15,8 @@ export class AiService {
     const prompt = this.buildPrompt(stepKey, context);
 
     try {
-      const response = await this.callAi(prompt);
-      return response;
+      const response = await this.llm.generate(prompt, { temperature: 0.7, maxTokens: 1000 });
+      return response.content;
     } catch (error) {
       this.logger.error(`AI generation failed for step ${stepKey}: ${error.message}`);
       return this.fallbackSummary(stepKey, context);
@@ -27,25 +27,16 @@ export class AiService {
     const prompt = `Analyse les incohérences potentielles dans le GBM du projet ${projectId} (données non fournies ici). Retourne une liste JSON des incohérences détectées.`;
 
     try {
-      const response = await this.callAi(prompt);
+      const response = await this.llm.generate(prompt, { temperature: 0.7, maxTokens: 1000 });
       try {
-        const parsed = JSON.parse(response);
-        return Array.isArray(parsed) ? parsed : [response];
+        const parsed = JSON.parse(response.content);
+        return Array.isArray(parsed) ? parsed : [response.content];
       } catch {
-        return [response];
+        return [response.content];
       }
     } catch {
       return [];
     }
-  }
-
-  private async callAi(prompt: string): Promise<string> {
-    if (process.env.DEEPSEEK_API_KEY) {
-      const result = await this.deepseek.generate(prompt, { temperature: 0.7, maxTokens: 1000 });
-      return result.content;
-    }
-
-    return this.callOpenAI(prompt);
   }
 
   private buildPrompt(stepKey: string, context: Record<string, any>): string {
@@ -65,58 +56,6 @@ export class AiService {
       default:
         return `Génère une analyse contextuelle pour l'étape ${stepKey} avec les données : ${JSON.stringify(context)}.`;
     }
-  }
-
-  private async callOpenAI(prompt: string): Promise<string> {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      this.logger.warn('No API key configured (neither DEEPSEEK_API_KEY nor OPENAI_API_KEY)');
-      return this.simulateResponse(prompt);
-    }
-
-    const models = ['gpt-4o-mini', 'gpt-3.5-turbo', 'gpt-4'];
-
-    for (const model of models) {
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: 'Tu es un assistant expert en entrepreneuriat vert et en développement durable.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.7,
-            max_tokens: 1000,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return data.choices[0]?.message?.content || '';
-        }
-
-        if (response.status === 404 || response.status === 401) {
-          this.logger.warn(`OpenAI model ${model} not available (${response.status}), trying next`);
-          continue;
-        }
-
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-      } catch (error) {
-        if (error.message?.includes('OpenAI API error')) throw error;
-        this.logger.warn(`OpenAI model ${model} failed: ${error.message}, trying next`);
-      }
-    }
-
-    throw new Error('All OpenAI models failed');
-  }
-
-  private simulateResponse(prompt: string): string {
-    return `[Simulation IA] Résumé généré automatiquement. Prompt : ${prompt.substring(0, 100)}...`;
   }
 
   private fallbackSummary(stepKey: string, context: Record<string, any>): string {

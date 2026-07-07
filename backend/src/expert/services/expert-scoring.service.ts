@@ -1,7 +1,4 @@
-// services/expert-scoring.service.ts
 import { Injectable } from '@nestjs/common';
-import { ExpertProfile } from '../expert-profile.entity';
-import { ExpertProfileExpertiseArea } from '../expert-profile-expertise-area.entity';
 import { ExpertScore, ScoreDetails } from '../interfaces/score-details.interface';
 import { ProjectMatch, MatchDetails } from '../interfaces/match-details.interface';
 
@@ -38,8 +35,8 @@ export class ExpertScoringService {
   // ==================== SCORES AVEC DÉTAILS ====================
 
   computeExpertScore(
-    profile: ExpertProfile,
-    expertises: ExpertProfileExpertiseArea[]
+    profile: any,
+    expertises: any[]
   ): ExpertScore {
     const experienceScore = this.computeExperienceScore(profile.years_of_experience || 0);
     const diversityScore = this.computeDiversityScore(expertises.length);
@@ -60,8 +57,8 @@ export class ExpertScoringService {
   }
 
   matchWithProject(
-    profile: ExpertProfile,
-    expertises: ExpertProfileExpertiseArea[],
+    profile: any,
+    expertises: any[],
     requirements: { requiredAreas: string[]; minYearsExperience: number }
   ): ProjectMatch {
     const skillsMatch = this.computeSkillsMatch(expertises, requirements.requiredAreas);
@@ -88,8 +85,8 @@ export class ExpertScoringService {
     };
   }
 
-  computeCoachScore(profile: ExpertProfile): number {
-    const pedagogyScore = this.computePedagogyScore(profile.bio);
+  computeCoachScore(profile: any): number {
+    const pedagogyScore = this.computePedagogyScore(profile.bio ?? undefined);
     const seniorityScore = this.computeSeniorityScore(profile.years_of_experience || 0);
     const availabilityScore = this.getRawAvailabilityScore(profile.availability_status);
     const diversityScore = Math.min((profile.expertiseConnections?.length || 0) * 5, this.WEIGHTS.COACH_DIVERSITY_MAX);
@@ -111,7 +108,7 @@ export class ExpertScoringService {
     return { count, score };
   }
 
-  private computeLevelsScore(expertises: ExpertProfileExpertiseArea[]): {
+  private computeLevelsScore(expertises: any[]): {
     average: number;
     score: number;
   } {
@@ -136,10 +133,10 @@ export class ExpertScoringService {
   }
 
   private computeSkillsMatch(
-    expertises: ExpertProfileExpertiseArea[],
+    expertises: any[],
     requiredAreas: string[]
   ): { matched: number; required: number; score: number } {
-    const expertAreaIds = new Set(expertises.map(e => e.expertiseArea.id));
+    const expertAreaIds = new Set(expertises.map((e: any) => e.expertiseArea?.id));
     const matched = requiredAreas.filter(id => expertAreaIds.has(id)).length;
     const score = (matched / requiredAreas.length) * this.WEIGHTS.MATCH_SKILLS;
 

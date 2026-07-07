@@ -9,8 +9,7 @@ import { UsersModule } from './users/users.module';
 import { ExpertModule } from './expert/expert.module';
 import { ProjectOwnerModule } from './project-owner/project-owner.module';
 import { ProfilesModule } from './profiles/profiles.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { MailService } from './mail/mail.service';
 import { UploadsModule } from './uploads/uploads.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -25,19 +24,6 @@ import { ImpactModule } from './impact/impact.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST'),
-        port: +config.get('DB_PORT'),
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
-      }),
-      inject: [ConfigService],
-    }),
     PrismaModule,
     IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule,
     AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule,

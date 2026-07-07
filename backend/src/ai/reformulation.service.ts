@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeepseekService } from './deepseek.service';
+import { LlmService } from './llm.service';
 
 const STEP_CONCEPTS: Record<string, string> = {
   gbm_1: 'Esquisse d\'idée — définition du concept de base, produit/service, clients et partenaires',
@@ -31,7 +31,7 @@ export class ReformulationService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly deepseek: DeepseekService,
+    private readonly llm: LlmService,
   ) {}
 
   async reformulateStep(
@@ -70,7 +70,7 @@ La reformulation doit être en français, bien structurée (titres, paragraphes)
 
 Retourne UNIQUEMENT un objet JSON avec les clés : reformulated_text, key_strengths (array), improvement_axes (array), reflection_questions (array)`;
 
-    const response = await this.deepseek.generate(prompt, { temperature: 0.6 });
+    const response = await this.llm.generate(prompt, { temperature: 0.6 });
 
     let parsed: any = {};
     try {
@@ -110,7 +110,7 @@ Consignes :
 - Ajoute une brève explication du concept si pertinent
 - Maximum 300 mots`;
 
-    const response = await this.deepseek.generate(prompt, { temperature: 0.5 });
+    const response = await this.llm.generate(prompt, { temperature: 0.5 });
 
     return {
       original: text,

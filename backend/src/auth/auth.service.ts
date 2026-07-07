@@ -1,9 +1,7 @@
 import { Injectable, BadRequestException, UnauthorizedException,} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from '../users/user.entity';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -12,25 +10,22 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 @Injectable()
 export class AuthService {
   constructor(
+    private prisma: PrismaService,
     private mailService: MailService,
     private usersService: UsersService,
     private jwtService: JwtService,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
   ) {}
 
   async register(registerDto: CreateUserDto) {
     const verificationToken = uuidv4();
-    // ✅ FIX: verificationCode était généré mais jamais passé à usersService.create()
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const codeExpires = new Date();
     codeExpires.setHours(codeExpires.getHours() + 1);
 
-    // ✅ FIX: signature corrigée — on passe les 4 arguments requis par UsersService.create()
     const user = await this.usersService.create(
       registerDto,
       verificationToken,
-      verificationCode,   // ← était manquant avant
+      verificationCode,
       codeExpires,
     );
 
@@ -45,8 +40,6 @@ export class AuthService {
       );
     } catch (error) {
       console.error('Erreur envoi email:', error);
-      // ✅ Note: on ne throw pas ici pour ne pas bloquer l'inscription
-      // mais en production, envisagez une queue (Bull/Redis) pour retry
     }
 
     return {
@@ -61,26 +54,29 @@ export class AuthService {
 
     const decodedToken = decodeURIComponent(token.trim());
 
-    // ✅ update() direct évite les problèmes de nullable avec save()
-    const result = await this.usersRepository.update(
-      { verification_token: decodedToken },
-      {
+    const user = await this.prisma.user.findFirst({
+      where: { verification_token: decodedToken },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Token de vérification invalide ou déjà utilisé.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
         is_verified: true,
         verification_token: null,
         verification_code: null,
         verification_code_expires: null,
       },
-    );
-
-    if (!result.affected || result.affected === 0) {
-      throw new BadRequestException('Token de vérification invalide ou déjà utilisé.');
-    }
+    });
 
     return { message: 'Email vérifié avec succès.' };
   }
 
   async verifyCode(email: string, code: string): Promise<{ message: string }> {
-    const user = await this.usersRepository.findOne({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       throw new BadRequestException('Utilisateur introuvable');
@@ -101,28 +97,27 @@ export class AuthService {
       throw new BadRequestException('Code expiré. Demandez un nouveau lien.');
     }
 
-    await this.usersRepository.update(
-      { email },
-      {
+    await this.prisma.user.update({
+      where: { email },
+      data: {
         is_verified: true,
         verification_token: null,
         verification_code: null,
         verification_code_expires: null,
       },
-    );
+    });
 
     return { message: 'Email vérifié avec succès.' };
   }
 
-  async validateUser(email: string, password: string): Promise<Partial<User>> {
+  async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    // ✅ Recharge depuis la base pour avoir is_verified et role à jour
-    const freshUser = await this.usersRepository.findOne({
+    const freshUser = await this.prisma.user.findUnique({
       where: { id: user.id },
     });
 
@@ -141,11 +136,10 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    // ✅ Mise à jour de last_login_at
-    await this.usersRepository.update(
-      { id: freshUser.id },
-      { last_login_at: new Date() },
-    );
+    await this.prisma.user.update({
+      where: { id: freshUser.id },
+      data: { last_login_at: new Date() },
+    });
 
     const {
       password_hash,
@@ -158,20 +152,18 @@ export class AuthService {
     return result;
   }
 
-  async login(user: Partial<User>) {
+  async login(user: { id: string; email: string; role: any }) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     return {
       id: user.id,
       email: user.email,
       role: user.role,
-      // ✅ Le role est inclus dans le JWT payload pour les guards
       access_token: this.jwtService.sign(payload),
     };
   }
 async forgotPassword(email: string): Promise<{ message: string }> {
-  const user = await this.usersRepository.findOne({ where: { email } });
+  const user = await this.prisma.user.findUnique({ where: { email } });
   if (!user) {
-    // Sécurité : on répond pareil même si l'email n'existe pas
     return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
   }
 
@@ -179,23 +171,23 @@ async forgotPassword(email: string): Promise<{ message: string }> {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1);
 
-  await this.usersRepository.update(user.id, {
-    resetPasswordToken: token,
-    resetPasswordExpires: expires,
+  await this.prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    },
   });
 
-  // Envoi de l'email
   await this.mailService.sendResetPasswordEmail(user.email, token);
 
   return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
 }
 
 async resetPassword(token: string, newPassword: string) {
-  console.log('Token reçu:', token);
-  const user = await this.usersRepository.findOne({
+  const user = await this.prisma.user.findFirst({
     where: { resetPasswordToken: token },
   });
-  console.log('Utilisateur trouvé:', user?.id, user?.resetPasswordExpires);
   if (!user) {
     throw new BadRequestException('Token invalide ou expiré.');
   }
@@ -205,10 +197,13 @@ async resetPassword(token: string, newPassword: string) {
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await this.usersRepository.update(user.id, {
-    password_hash: hashedPassword,
-    resetPasswordToken: null,
-    resetPasswordExpires: null,
+  await this.prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password_hash: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
   });
 
   return { message: 'Mot de passe mis à jour avec succès.' };

@@ -10,6 +10,33 @@ datasource db {
 // ===========================
 // ENUMS
 // ===========================
+enum UserRole {
+  admin
+  expert
+  project_owner
+  incubator_membre
+}
+
+enum MemberRole {
+  admin
+  program_manager
+  cohort_manager
+  review_manager
+  member
+  viewer
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum IncubatorStatus {
+  active
+  suspended
+}
+
 enum StepStatus {
   NOT_STARTED
   IN_PROGRESS
@@ -44,6 +71,236 @@ enum ImpactPeriod {
   MENSUEL
   TRIMESTRIEL
   ANNUEL
+}
+
+// ===========================
+// IDENTITY — Users & Profiles
+// ===========================
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  password_hash           String
+  is_active               Boolean   @default(true)
+  is_verified             Boolean   @default(false)
+  verification_token      String?
+  verification_code       String?
+  verification_code_expires DateTime?
+  last_login_at           DateTime?
+  resetPasswordToken      String?
+  resetPasswordExpires    DateTime?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  role                    UserRole?
+  profile_id              String?   @unique
+
+  profile              UserProfile?             @relation(fields: [profile_id], references: [id])
+  projectOwnerProfile  ProjectOwnerProfile?
+  expertProfile        ExpertProfile?
+  incubatorMembers     IncubatorMember[]
+  documents            IncubatorDocument[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                 String   @id @default(uuid())
+  first_name         String
+  last_name          String
+  phone              String?
+  avatar_url         String?
+  birth_date         DateTime?
+  country            String?
+  city               String?
+  address            String?
+  bio                String?
+  preferred_language String   @default("fr")
+  linkedin           String?
+
+  user User?
+
+  @@map("user_profiles")
+}
+
+// ===========================
+// EXPERT
+// ===========================
+model ExpertiseArea {
+  id       String @id @default(uuid())
+  name     String
+  category String?
+
+  expertiseConnections ExpertProfileExpertiseArea[]
+
+  @@map("expertise_areas")
+}
+
+model ExpertProfile {
+  id                  String  @id @default(uuid())
+  headline            String
+  bio                 String?
+  organization        String?
+  position            String?
+  years_of_experience Int?
+  linkedin_url        String?
+  availability_status String  @default("available")
+  user_id             String  @unique
+
+  user                User                          @relation(fields: [user_id], references: [id])
+  expertiseConnections ExpertProfileExpertiseArea[]
+
+  @@map("expert_profiles")
+}
+
+model ExpertProfileExpertiseArea {
+  id                String   @id @default(uuid())
+  level             String?
+  years_of_experience Int?   @default(0)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  expert_profile_id String
+  expertise_area_id String
+
+  expertProfile  ExpertProfile  @relation(fields: [expert_profile_id], references: [id], onDelete: Cascade)
+  expertiseArea  ExpertiseArea  @relation(fields: [expertise_area_id], references: [id], onDelete: Cascade)
+
+  @@unique([expert_profile_id, expertise_area_id])
+  @@map("expert_profile_expertise_areas")
+}
+
+// ===========================
+// INCUBATORS
+// ===========================
+model Incubator {
+  id                  String            @id @default(uuid())
+  name                String
+  legal_name          String?
+  slug                String            @unique
+  description         String?
+  foundation_date     DateTime?
+  organization_type   String?
+  registration_number String?
+  tax_id              String?
+  email               String?
+  phone               String?
+  website_url         String?
+  address             String?
+  country             String?
+  city                String?
+  logo_url            String?
+  verification_status VerificationStatus @default(pending)
+  status              IncubatorStatus    @default(active)
+  created_by_user_id  String
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  members     IncubatorMember[]
+  documents   IncubatorDocument[]
+  invitations IncubatorInvitation[]
+
+  @@map("incubators")
+}
+
+model IncubatorMember {
+  id                  String       @id @default(uuid())
+  user_id             String
+  incubator_id        String
+  role                MemberRole   @default(member)
+  job_title           String?
+  department          String?
+  bio                 String?
+  status              String       @default("active")
+  is_primary_contact  Boolean      @default(false)
+  can_manage_programs Boolean      @default(false)
+  can_manage_cohorts  Boolean      @default(false)
+  can_manage_members  Boolean      @default(false)
+
+  user      User      @relation(fields: [user_id], references: [id])
+  incubator Incubator @relation(fields: [incubator_id], references: [id])
+
+  @@unique([user_id, incubator_id])
+  @@map("incubator_members")
+}
+
+model IncubatorInvitation {
+  id           String   @id @default(uuid())
+  token        String   @unique
+  incubator_id String
+  email        String
+  role         String
+  job_title    String?
+  expires_at   DateTime
+  created_at   DateTime @default(now())
+
+  incubator Incubator @relation(fields: [incubator_id], references: [id])
+
+  @@map("incubator_invitations")
+}
+
+model IncubatorDocument {
+  id                  String             @id @default(uuid())
+  incubator_id        String
+  document_type       String
+  file_url            String
+  verification_status VerificationStatus @default(pending)
+  rejection_reason    String?
+  uploaded_by_user_id String
+  uploaded_at         DateTime           @default(now())
+
+  incubator       Incubator @relation(fields: [incubator_id], references: [id])
+  uploaded_by_user User     @relation(fields: [uploaded_by_user_id], references: [id])
+
+  @@map("incubator_documents")
+}
+
+// ===========================
+// PROJECT OWNER
+// ===========================
+model ProjectOwnerProfile {
+  id                              String   @id @default(uuid())
+  current_status                  String?
+  education_level                 String?
+  field_of_study                  String?
+  occupation                      String?
+  linkedin_url                    String?
+  entrepreneurial_experience_level Int      @default(0)
+  has_previous_startup            Boolean  @default(false)
+  user_id                         String   @unique
+  created_at                      DateTime @default(now())
+  updated_at                      DateTime @updatedAt
+
+  user        User                     @relation(fields: [user_id], references: [id])
+  skills      ProjectOwnerSkill[]
+  experiences ProjectOwnerExperience[]
+
+  @@map("project_owner_profiles")
+}
+
+model ProjectOwnerSkill {
+  id                       String   @id @default(uuid())
+  skill_name               String
+  level                    String?
+  project_owner_profile_id String
+  created_at               DateTime @default(now())
+
+  profile ProjectOwnerProfile @relation(fields: [project_owner_profile_id], references: [id], onDelete: Cascade)
+
+  @@map("project_owner_skills")
+}
+
+model ProjectOwnerExperience {
+  id                       String   @id @default(uuid())
+  title                    String
+  organization             String
+  description              String?
+  start_date               String?
+  end_date                 String?
+  project_owner_profile_id String
+  created_at               DateTime @default(now())
+
+  profile ProjectOwnerProfile @relation(fields: [project_owner_profile_id], references: [id], onDelete: Cascade)
+
+  @@map("project_owner_experiences")
 }
 
 // ===========================

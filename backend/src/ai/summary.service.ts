@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeepseekService } from './deepseek.service';
+import { LlmService } from './llm.service';
+import { ChromaService } from './chroma.service';
+import { EmbeddingsService } from './embeddings.service';
+import { RagDocument } from './interfaces/ai.types';
 
 @Injectable()
 export class SummaryService {
@@ -8,7 +11,9 @@ export class SummaryService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly deepseek: DeepseekService,
+    private readonly llm: LlmService,
+    private readonly chroma: ChromaService,
+    private readonly embeddings: EmbeddingsService,
   ) {}
 
   async generateContextSummary(projectId: string): Promise<{ summaryText: string }> {
@@ -56,7 +61,7 @@ VALEURS : ${project.mission_vision?.values || 'Non renseigné'}
 
 Rédige un résumé de contexte professionnel et concis (300-400 mots) qui synthétise le projet, son environnement, ses objectifs et sa vision. Structure le texte en 3 paragraphes : 1) Contexte et problématique, 2) Objectifs et stratégie, 3) Mission et vision.`;
 
-    const response = await this.deepseek.generate(prompt);
+    const response = await this.llm.generate(prompt);
 
     const saved = await this.prisma.contextSummary.upsert({
       where: { project_id: projectId },
@@ -70,6 +75,8 @@ Rédige un résumé de contexte professionnel et concis (300-400 mots) qui synth
         generated_by_ai: true,
       },
     });
+
+    await this.indexInChroma(projectId, 'context_summary', saved.summary_text || '');
 
     return { summaryText: saved.summary_text || '' };
   }
@@ -109,7 +116,7 @@ Rédige un résumé structuré avec 3 sections :
 
 Retourne UNIQUEMENT un objet JSON valide avec les clés : activities_summary, key_achievements, next_steps`;
 
-    const response = await this.deepseek.generate(prompt, { temperature: 0.5 });
+    const response = await this.llm.generate(prompt, { temperature: 0.5 });
 
     let parsed: { activities_summary?: string; key_achievements?: string; next_steps?: string } = {};
     try {
@@ -138,6 +145,8 @@ Retourne UNIQUEMENT un objet JSON valide avec les clés : activities_summary, ke
         generated_by_ai: true,
       },
     });
+
+    await this.indexInChroma(projectId, 'activity_summary', saved.activities_summary || '');
 
     return {
       activitiesSummary: saved.activities_summary || '',
@@ -170,7 +179,7 @@ PROJECTIONS : ${project.revenue_stream?.revenue_projections || 'Non renseigné'}
 
 Retourne UNIQUEMENT un objet JSON avec les clés : cost_summary, revenue_summary, financial_health`;
 
-    const response = await this.deepseek.generate(prompt, { temperature: 0.3 });
+    const response = await this.llm.generate(prompt, { temperature: 0.3 });
 
     let parsed: { cost_summary?: string; revenue_summary?: string; financial_health?: string } = {};
     try {
@@ -195,6 +204,8 @@ Retourne UNIQUEMENT un objet JSON avec les clés : cost_summary, revenue_summary
         generated_by_ai: true,
       },
     });
+
+    await this.indexInChroma(projectId, 'cost_revenue_summary', `Coûts: ${saved.cost_summary || ''}. Revenus: ${saved.revenue_summary || ''}. Santé: ${saved.financial_health || ''}`);
 
     return {
       costSummary: saved.cost_summary || '',
@@ -230,7 +241,7 @@ IMPACT ENVIRONNEMENTAL : ${project.impact_measure?.rapport_impact || 'Non rensei
 
 Rédige un executive summary professionnel de 400-500 mots destiné à des investisseurs. Structure : 1) Vision et proposition de valeur, 2) Modèle d'affaires et avantage concurrentiel, 3) Projections financières, 4) Impact environnemental et social.`;
 
-    const response = await this.deepseek.generate(prompt, { temperature: 0.4 });
+    const response = await this.llm.generate(prompt, { temperature: 0.4 });
 
     const saved = await this.prisma.executiveSummary.upsert({
       where: { project_id: projectId },
@@ -245,6 +256,25 @@ Rédige un executive summary professionnel de 400-500 mots destiné à des inves
       },
     });
 
+    await this.indexInChroma(projectId, 'executive_summary', saved.resume_executif || '');
+
     return { executiveSummary: saved.resume_executif || '' };
+  }
+
+  private async indexInChroma(projectId: string, stepKey: string, content: string): Promise<void> {
+    if (!content || content.trim().length < 10) return;
+
+    try {
+      const embeddings = await this.embeddings.generate([content]);
+      const documents: RagDocument[] = [{
+        id: `${projectId}_${stepKey}_${Date.now()}`,
+        content: `[${stepKey}] ${content}`,
+        metadata: { project_id: projectId, step_key: stepKey },
+      }];
+      await this.chroma.addDocuments(projectId, documents, embeddings);
+      this.logger.log(`Indexed ${stepKey} in Chroma for project ${projectId}`);
+    } catch (error) {
+      this.logger.warn(`Failed to index ${stepKey} in Chroma: ${error.message}`);
+    }
   }
 }

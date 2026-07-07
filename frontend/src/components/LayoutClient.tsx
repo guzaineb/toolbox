@@ -15,7 +15,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
       <a href="#" className="nav-btn nav-btn-primary">Commencer →</a>
     </div>
       <nav className="bg-white shadow p-4 flex justify-between">
-        <Link href="/" className="font-bold text-xl">ToolBox</Link>
+        <Link href="/" className="font-bold text-xl">ProjectStruct</Link>
         <div>
           {user ? (
             <>

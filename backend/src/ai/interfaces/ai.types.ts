@@ -1,15 +1,15 @@
-export interface DeepseekMessage {
+export interface LlmMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-export interface DeepseekOptions {
+export interface LlmOptions {
   model?: string;
   temperature?: number;
   maxTokens?: number;
 }
 
-export interface DeepseekResponse {
+export interface LlmResponse {
   content: string;
   model: string;
   usage?: {
@@ -45,4 +45,10 @@ export interface ChatbotRequest {
   projectId: string;
   question: string;
   conversationHistory?: { role: 'user' | 'assistant'; content: string }[];
+}
+
+export interface ChromaDocument {
+  id: string;
+  content: string;
+  metadata: Record<string, any>;
 }

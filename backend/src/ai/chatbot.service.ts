@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeepseekService } from './deepseek.service';
-import { RagService } from './rag.service';
+import { LlmService } from './llm.service';
+import { ChromaService } from './chroma.service';
+import { EmbeddingsService } from './embeddings.service';
 import { RagDocument } from './interfaces/ai.types';
 
 @Injectable()
@@ -10,8 +11,9 @@ export class ChatbotService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly deepseek: DeepseekService,
-    private readonly rag: RagService,
+    private readonly llm: LlmService,
+    private readonly chroma: ChromaService,
+    private readonly embeddings: EmbeddingsService,
   ) {}
 
   async ask(
@@ -19,8 +21,8 @@ export class ChatbotService {
     question: string,
     conversationHistory?: { role: 'user' | 'assistant'; content: string }[],
   ): Promise<{ answer: string; sources: RagDocument[]; contextUsed: boolean }> {
-    const [ragResults, project] = await Promise.all([
-      this.rag.query(projectId, question, 5).catch(() => ({ documents: [], distances: [] })),
+    const [queryEmbedding, project] = await Promise.all([
+      this.embeddings.generate([question]).then(e => e[0]).catch(() => null),
       this.prisma.project.findUnique({
         where: { id: projectId },
         include: {
@@ -33,6 +35,12 @@ export class ChatbotService {
         },
       }),
     ]);
+
+    let ragResults: { documents: RagDocument[]; distances: number[] } = { documents: [], distances: [] };
+
+    if (queryEmbedding) {
+      ragResults = await this.chroma.query(projectId, queryEmbedding, 5).catch(() => ({ documents: [], distances: [] }));
+    }
 
     const contextParts: string[] = [];
 
@@ -94,7 +102,7 @@ Règles :
 
     messages.push({ role: 'user', content: question });
 
-    const response = await this.deepseek.chat(messages, { temperature: 0.5, maxTokens: 1000 });
+    const response = await this.llm.chat(messages, { temperature: 0.5, maxTokens: 1000 });
 
     return {
       answer: response.content,
@@ -168,8 +176,11 @@ Règles :
       throw new Error(`Aucune donnée à indexer pour le projet ${projectId}`);
     }
 
-    await this.rag.deleteProjectCollection(projectId).catch(() => {});
-    await this.rag.indexDocuments(projectId, documents);
+    const texts = documents.map(d => d.content);
+    const embeddings = await this.embeddings.generate(texts);
+
+    await this.chroma.deleteProjectCollection(projectId).catch(() => {});
+    await this.chroma.addDocuments(projectId, documents, embeddings);
 
     this.logger.log(`Indexed ${documents.length} documents for project ${projectId}`);
     return { documentsIndexed: documents.length };
