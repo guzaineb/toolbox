@@ -289,7 +289,8 @@ export class GbmService {
 
   private async generateAiSummary(projectId: string, stepKey: string, record: any) {
     try {
-      const summary = await this.ai.generateSummary(projectId, stepKey, record);
+      const context = await this.buildAiContext(projectId, stepKey);
+      const summary = await this.ai.generateSummary(projectId, stepKey, context);
 
       const config = getStepConfig(stepKey);
       if (!config) return;
@@ -304,13 +305,81 @@ export class GbmService {
         data: {
           project_id: projectId,
           step_key: stepKey,
-          prompt: `Generate ${stepKey} summary`,
+          prompt: `Génération du résumé pour ${stepKey} avec les données complètes du projet`,
           response: summary,
           model: 'gpt-4',
         },
       });
     } catch (error) {
       // AI generation is non-blocking; log and continue
+    }
+  }
+
+  private async buildAiContext(projectId: string, stepKey: string): Promise<Record<string, any>> {
+    const base = { project_id: projectId };
+
+    switch (stepKey) {
+      case 'gbm_6': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            idea_sketch: true,
+            problems_needs: true,
+            pestel: true,
+            objective: true,
+            mission_vision: true,
+          },
+        });
+        return {
+          ...base,
+          idea_sketch: data?.idea_sketch || {},
+          problems_needs: data?.problems_needs || {},
+          pestel: data?.pestel || {},
+          objective: data?.objective || {},
+          mission_vision: data?.mission_vision || {},
+        };
+      }
+
+      case 'gbm_15': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            key_activities_resource: true,
+            eco_design: true,
+            eco_design_result: true,
+            stakeholder: true,
+            customer_segment: true,
+            value_proposition: true,
+          },
+        });
+        return {
+          ...base,
+          key_activities_resource: data?.key_activities_resource || {},
+          eco_design: data?.eco_design || {},
+          eco_design_result: data?.eco_design_result || {},
+          stakeholder: data?.stakeholder || [],
+          customer_segment: data?.customer_segment || [],
+          value_proposition: data?.value_proposition || {},
+        };
+      }
+
+      case 'gbm_18': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            cost_structure: true,
+            revenue_stream: true,
+          },
+        });
+        return {
+          ...base,
+          cost_structure: data?.cost_structure || {},
+          revenue_stream: data?.revenue_stream || {},
+        };
+      }
+
+      default:
+        return base;
     }
   }
 
