@@ -73,6 +73,12 @@ enum ImpactPeriod {
   ANNUEL
 }
 
+enum DocumentStatus {
+  NOT_GENERATED
+  GENERATED
+  UPDATED
+}
+
 // ===========================
 // IDENTITY — Users & Profiles
 // ===========================
@@ -359,6 +365,12 @@ model Project {
   funding_assessment       FundingAssessment?
   market_access            MarketAccess?
   impact_measure           ImpactMeasure?
+
+  // Analyse SWOT
+  swot_analysis            SwotAnalysis?
+
+  // Documents générés
+  generated_documents      GeneratedDocument[]
 
   // Relations
   step_progresses        StepProgress[]
@@ -1021,4 +1033,42 @@ model ImpactMeasure {
   project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
 
   @@map("impact_measures")
+}
+
+// ===========================
+// MODULE — Analyse SWOT (AI-generated)
+// ===========================
+model SwotAnalysis {
+  id           String   @id @default(uuid())
+  project_id   String   @unique
+  strengths    String?
+  weaknesses   String?
+  opportunities String?
+  threats      String?
+  generated_at DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("swot_analyses")
+}
+
+// ===========================
+// MODULE — Documents générés
+// ===========================
+model GeneratedDocument {
+  id            String         @id @default(uuid())
+  project_id    String
+  document_key  String
+  title         String
+  status        DocumentStatus @default(NOT_GENERATED)
+  content       String?
+  generated_at  DateTime?
+  updated_at    DateTime       @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, document_key])
+  @@index([project_id])
+  @@map("generated_documents")
 }

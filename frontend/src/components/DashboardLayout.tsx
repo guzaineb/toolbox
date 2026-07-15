@@ -58,7 +58,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const NAV_ITEMS = [
     { href: '/dashboard/profile', label: 'Mon profil', icon: User },
-    ...(isProjectOwner ? [{ href: '/dashboard/project-owner', label: 'porteur de projet profil ', icon: FolderKanban }] : []),
+    ...(isProjectOwner ? [{ href: '/dashboard/project-owner', label: 'porteur de projet profil ', icon: User } ,
+      {href: '/dashboard/project-owner/projects', label: 'Mes Projets ', icon: FolderKanban
+    }] : []),
     ...(isExpert ? [{ href: '/dashboard/expert', label: 'Expertise', icon: GraduationCap }] : []),
     ...(isIncubatorMember
       ? [

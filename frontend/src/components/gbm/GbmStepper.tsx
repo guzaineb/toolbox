@@ -15,6 +15,7 @@ const PHASES = [
   { phase: 2, name: 'Construire', color: '#c9a84c' },
   { phase: 3, name: 'Tester', color: '#4a7db5' },
   { phase: 4, name: 'Mesurer & Améliorer', color: '#8b5cf6' },
+  { phase: 5, name: 'Synthèse', color: '#e11d48' },
 ]
 
 interface GbmStepperProps {
@@ -37,7 +38,7 @@ export function GbmStepper({ projectId }: GbmStepperProps) {
 
   const stepInfo = GBM_STEP_LABELS[currentStep]
   const isOneToOne = !['gbm_7a','gbm_7b','gbm_8','gbm_10','gbm_12b'].includes(currentStep)
-  const isAiStep = ['gbm_6','gbm_15','gbm_18'].includes(currentStep)
+  const isAiStep = ['gbm_6','gbm_15','gbm_18','gbm_21'].includes(currentStep)
 
   const stepKeys = Object.keys(GBM_STEP_LABELS)
 
@@ -222,7 +223,7 @@ export function GbmStepper({ projectId }: GbmStepperProps) {
       </div>
 
       {/* Review section — bottom of last phase */}
-      {stepInfo.phase === 4 && currentStep === stepKeys[stepKeys.length - 1] && (
+      {stepInfo.phase === 5 && currentStep === stepKeys[stepKeys.length - 1] && (
         <Card className="p-5 border-2 border-amber/30 bg-amber-light/20">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -561,6 +562,14 @@ function getStepFields(stepId: string): { key: string; label: string; type: 'tex
       { key: 'economic_kpis', label: 'KPIs économiques — Indicateurs de performance économique', type: 'textarea' },
       { key: 'measurement_method', label: 'Méthode de mesure — Comment seront collectées les données ?', type: 'textarea' },
       { key: 'review_frequency', label: 'Fréquence de révision — Mensuelle, trimestrielle, annuelle ?', type: 'textarea' },
+    ],
+
+    // ── Phase 5 — Synthèse ──
+    gbm_21: [
+      { key: 'strengths', label: 'Forces — Points forts du projet identifiés par l\'IA', type: 'textarea' },
+      { key: 'weaknesses', label: 'Faiblesses — Points de vigilance identifiés par l\'IA', type: 'textarea' },
+      { key: 'opportunities', label: 'Opportunités — Leviers de croissance identifiés par l\'IA', type: 'textarea' },
+      { key: 'threats', label: 'Menaces — Risques identifiés par l\'IA', type: 'textarea' },
     ],
   }
   return registry[stepId] || []

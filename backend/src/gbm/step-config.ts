@@ -42,6 +42,9 @@ export const GBM_STEPS: StepConfig[] = [
 
   // ── Phase 4 — Mesurer & Améliorer (1 étape) ──
   { stepKey: 'gbm_20',  phase: 4, title: 'Indicateurs',                                 model: 'indicator',               relation: 'one-to-one' },
+
+  // ── Phase 5 — Synthèse (1 étape) ──
+  { stepKey: 'gbm_21',  phase: 5, title: 'Analyse SWOT',                                model: 'swotAnalysis',            relation: 'one-to-one', aiGenerated: true },
 ];
 
 export function getStepConfig(stepKey: string): StepConfig | undefined {

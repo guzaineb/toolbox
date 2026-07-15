@@ -40,7 +40,7 @@ export default function GbmPage() {
         </button>
         <div className="flex-1">
           <h1 className="font-syne text-lg font-extrabold text-ink">Modèle d&apos;Affaires Vert</h1>
-          <p className="text-xs text-ink3">4 phases · 20 étapes</p>
+          <p className="text-xs text-ink3">5 phases · 21 étapes</p>
         </div>
         <Button variant="outline" onClick={handleDownloadPdf} loading={pdfLoading}>
           <FileDown size={14} /> Télécharger BMC (PDF)

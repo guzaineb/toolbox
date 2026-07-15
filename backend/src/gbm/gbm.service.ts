@@ -176,7 +176,7 @@ export class GbmService {
     const blocked = projectSteps.filter(s => s.status === 'BLOCKED').length;
     const notStarted = projectSteps.filter(s => s.status === 'NOT_STARTED' || !s.status).length;
 
-    const phaseBreakdown = [1, 2, 3, 4].map(phase => {
+    const phaseBreakdown = [1, 2, 3, 4, 5].map(phase => {
       const phaseStepKeys = GBM_STEPS.filter(s => s.phase === phase).map(s => s.stepKey);
       const phaseSteps = projectSteps.filter(s => phaseStepKeys.includes(s.step_key));
       const phaseTotal = phaseStepKeys.length;
@@ -283,6 +283,9 @@ export class GbmService {
 
       // Phase 4
       indicator: ['environmental_kpis', 'social_kpis', 'economic_kpis', 'measurement_method', 'review_frequency'],
+
+      // Phase 5
+      swotAnalysis: ['strengths', 'weaknesses', 'opportunities', 'threats'],
     };
     return fieldMap[modelName] || [];
   }
@@ -378,6 +381,43 @@ export class GbmService {
         };
       }
 
+      case 'gbm_21': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            idea_sketch: true,
+            problems_needs: true,
+            pestel: true,
+            objective: true,
+            mission_vision: true,
+            stakeholder: true,
+            customer_segment: true,
+            value_proposition: true,
+            test_discovery: true,
+            key_activities_resource: true,
+            eco_design: true,
+            cost_structure: true,
+            revenue_stream: true,
+          },
+        });
+        return {
+          ...base,
+          idea_sketch: data?.idea_sketch || {},
+          problems_needs: data?.problems_needs || {},
+          pestel: data?.pestel || {},
+          objective: data?.objective || {},
+          mission_vision: data?.mission_vision || {},
+          stakeholder: data?.stakeholder || [],
+          customer_segment: data?.customer_segment || [],
+          value_proposition: data?.value_proposition || {},
+          test_discovery: data?.test_discovery || [],
+          key_activities_resource: data?.key_activities_resource || {},
+          eco_design: data?.eco_design || {},
+          cost_structure: data?.cost_structure || {},
+          revenue_stream: data?.revenue_stream || {},
+        };
+      }
+
       default:
         return base;
     }
@@ -388,6 +428,7 @@ export class GbmService {
       case 'gbm_6':  return { summary_text: summary, generated_by_ai: true };
       case 'gbm_15': return { activities_summary: summary, generated_by_ai: true };
       case 'gbm_18': return { cost_summary: summary, generated_by_ai: true };
+      case 'gbm_21': return { strengths: summary, generated_by_ai: true };
       default: return {};
     }
   }

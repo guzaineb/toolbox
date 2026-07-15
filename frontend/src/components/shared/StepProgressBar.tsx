@@ -32,13 +32,14 @@ const STATUS_COLOR: Record<StepStatus, string> = {
   BLOCKED:     'bg-red/20 text-red',
 }
 
-const PHASE_COLORS = ['#2d7a52', '#c9a84c', '#4a7db5', '#8b5cf6']
+const PHASE_COLORS = ['#2d7a52', '#c9a84c', '#4a7db5', '#8b5cf6', '#e11d48']
 
 const PHASE_STEP_MAP: Record<number, string[]> = {
   1: ['gbm_1','gbm_2','gbm_3','gbm_4','gbm_5','gbm_6'],
   2: ['gbm_7a','gbm_7b','gbm_8','gbm_9','gbm_10','gbm_11','gbm_12a','gbm_12b','gbm_13','gbm_14a','gbm_14b','gbm_15','gbm_16','gbm_17','gbm_18'],
   3: ['gbm_19'],
   4: ['gbm_20'],
+  5: ['gbm_21'],
 }
 
 export function StepProgressBar({ steps, currentStep, onStepClick, phases }: StepProgressBarProps) {

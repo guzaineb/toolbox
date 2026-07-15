@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, TreePine, BarChart3, Leaf, DollarSign,
-  Target, LineChart, Loader2, ChevronRight, Check,
+  Target, LineChart, Loader2, ChevronRight, Check, FileText,
 } from 'lucide-react'
 import { Card, CardHeader, Badge, Progress, Button } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
@@ -26,6 +26,7 @@ const MODULES = [
   { key: 'funding',      label: 'Accès au Financement',       icon: DollarSign, color: 'text-blue-600',  bg: 'bg-blue-50' },
   { key: 'market',       label: 'Accès au Marché',            icon: Target,     color: 'text-purple-600',bg: 'bg-purple-50' },
   { key: 'impact',       label: 'Mesure de l\'Impact',        icon: LineChart,  color: 'text-orange-600',bg: 'bg-orange-50' },
+  { key: 'documents',    label: 'Documents',                   icon: FileText,   color: 'text-teal-600',  bg: 'bg-teal-50' },
 ]
 
 export default function ProjectDashboardPage() {
@@ -102,7 +103,7 @@ export default function ProjectDashboardPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         {MODULES.map(mod => {
           const Icon = mod.icon
-          const isLocked = mod.key !== 'gbm' && !project.is_gbm_reviewed
+          const isLocked = !['gbm', 'documents'].includes(mod.key) && !project.is_gbm_reviewed
           return (
             <Card
               key={mod.key}

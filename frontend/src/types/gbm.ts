@@ -223,6 +223,16 @@ export interface Indicator {
   review_frequency?: string
 }
 
+// ── Phase 5 — Synthèse ──
+export interface SwotAnalysis {
+  strengths?: string
+  weaknesses?: string
+  opportunities?: string
+  threats?: string
+  generated_at?: string
+  updated_at?: string
+}
+
 export const GBM_STEP_LABELS: Record<string, { title: string; phase: number; phaseName: string }> = {
   // Phase 1 — Ébaucher & Définir
   gbm_1:   { title: "Étape 1 — Esquissez votre idée d'entreprise",         phase: 1, phaseName: 'Ébaucher & Définir' },
@@ -254,4 +264,7 @@ export const GBM_STEP_LABELS: Record<string, { title: string; phase: number; pha
 
   // Phase 4 — Mesurer & Améliorer
   gbm_20:  { title: 'Étape 20 — Indicateurs',                               phase: 4, phaseName: 'Mesurer & Améliorer' },
+
+  // Phase 5 — Synthèse
+  gbm_21:  { title: 'Étape 21 — Analyse SWOT',                              phase: 5, phaseName: 'Synthèse' },
 }

@@ -37,6 +37,9 @@ export const ALL_STEPS: StepTemplate[] = [
   // ── GBM Phase 4 — Mesurer & Améliorer ──
   { stepKey: 'gbm_20',  title: 'Indicateurs',                                      module: 'GBM', phase: 4 },
 
+  // ── GBM Phase 5 — Synthèse ──
+  { stepKey: 'gbm_21',  title: 'Analyse SWOT',                                        module: 'GBM', phase: 5 },
+
   // ── Modules transverses ──
   { stepKey: 'eco_design', title: 'Éco-conception approfondie',                    module: 'Éco-conception', phase: 0 },
   { stepKey: 'funding',     title: 'Accès au Financement',                          module: 'Financement',    phase: 0 },

@@ -20,6 +20,8 @@ import { EcoDesignModule } from './eco-design/eco-design.module';
 import { FundingModule } from './funding/funding.module';
 import { MarketModule } from './market/market.module';
 import { ImpactModule } from './impact/impact.module';
+import { SwotModule } from './swot/swot.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { ImpactModule } from './impact/impact.module';
     ProjectsModule,
     GbmModule, BusinessPlanModule, EcoDesignModule,
     FundingModule, MarketModule, ImpactModule,
+    SwotModule, DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
