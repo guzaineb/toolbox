@@ -247,7 +247,7 @@ async updateExpertiseLevel( userId: string, expertiseAreaId: string, level?: str
     return this.prisma.expertProfileExpertiseArea.findMany({
       where: { expert_profile_id: profile.id },
       include: { expertiseArea: true },
-      orderBy: { expertiseArea: { category: 'asc', name: 'asc' } },
+      orderBy: [{ expertiseArea: { category: 'asc' } }, { expertiseArea: { name: 'asc' } }],
     });
   }
 

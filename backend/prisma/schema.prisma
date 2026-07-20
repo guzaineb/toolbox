@@ -79,6 +79,21 @@ enum DocumentStatus {
   UPDATED
 }
 
+enum ParticipationOrigin {
+  APPLICATION
+  INVITATION
+}
+
+enum CohortExpertRole {
+  JURY
+  COACH
+}
+
+enum CohortExpertStatus {
+  ACTIVE
+  INACTIVE
+}
+
 // ===========================
 // IDENTITY — Users & Profiles
 // ===========================
@@ -104,6 +119,10 @@ model User {
   expertProfile        ExpertProfile?
   incubatorMembers     IncubatorMember[]
   documents            IncubatorDocument[]
+  cohortExperts        CohortExpert[]           @relation("ExpertUser")
+  assignedCohorts      CohortExpert[]           @relation("AssignedBy")
+  evaluations          Evaluation[]
+  coachings            Coaching[]
 
   @@map("users")
 }
@@ -203,6 +222,7 @@ model Incubator {
   members     IncubatorMember[]
   documents   IncubatorDocument[]
   invitations IncubatorInvitation[]
+  cohorts     Cohort[]
 
   @@map("incubators")
 }
@@ -376,6 +396,8 @@ model Project {
   step_progresses        StepProgress[]
   ai_interactions        AiInteraction[]
   cohort_participations  CohortParticipation[]
+  evaluations            Evaluation[]
+  coachings              Coaching[]
 
   @@index([name])
   @@index([owner_id])
@@ -405,33 +427,40 @@ model StepProgress {
 // CORE — Cohorts
 // ===========================
 model Cohort {
-  id          String       @id @default(uuid())
-  name        String
-  program     String?
-  description String?
-  capacity    Int?
-  start_date  DateTime?
-  end_date    DateTime?
-  status      CohortStatus @default(DRAFT)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
+  id                   String        @id @default(uuid())
+  name                 String
+  program              String?
+  description          String?
+  capacity             Int?
+  current_participants Int           @default(0)
+  application_deadline DateTime?
+  start_date           DateTime?
+  end_date             DateTime?
+  status               CohortStatus  @default(DRAFT)
+  incubator_id         String?
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
 
+  incubator      Incubator?          @relation(fields: [incubator_id], references: [id])
   participations CohortParticipation[]
+  experts        CohortExpert[]
 
   @@index([status])
+  @@index([incubator_id])
   @@map("cohorts")
 }
 
 model CohortParticipation {
-  id           String             @id @default(uuid())
+  id           String              @id @default(uuid())
   cohort_id    String
   project_id   String
   status       ParticipationStatus @default(PENDING)
-  applied_at   DateTime           @default(now())
+  origin       ParticipationOrigin @default(APPLICATION)
+  applied_at   DateTime            @default(now())
   invited_at   DateTime?
   responded_at DateTime?
-  created_at   DateTime           @default(now())
-  updated_at   DateTime           @updatedAt
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
 
   cohort  Cohort  @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
   project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
@@ -441,6 +470,69 @@ model CohortParticipation {
   @@index([project_id])
   @@index([status])
   @@map("cohort_participations")
+}
+
+// ===========================
+// CORE — Cohort Experts
+// ===========================
+model CohortExpert {
+  id              String            @id @default(uuid())
+  cohort_id       String
+  expert_user_id  String
+  role            CohortExpertRole
+  status          CohortExpertStatus @default(ACTIVE)
+  assigned_by     String
+  assigned_at     DateTime          @default(now())
+
+  cohort      Cohort @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  expertUser  User   @relation("ExpertUser", fields: [expert_user_id], references: [id])
+  assignedBy  User   @relation("AssignedBy", fields: [assigned_by], references: [id])
+
+  @@unique([cohort_id, expert_user_id, role])
+  @@index([cohort_id])
+  @@index([expert_user_id])
+  @@map("cohort_experts")
+}
+
+// ===========================
+// CORE — Evaluations (Jury)
+// ===========================
+model Evaluation {
+  id            String   @id @default(uuid())
+  project_id    String
+  jury_user_id  String
+  score         Float
+  comment       String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  project   Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  juryUser  User    @relation(fields: [jury_user_id], references: [id])
+
+  @@unique([project_id, jury_user_id])
+  @@index([project_id])
+  @@index([jury_user_id])
+  @@map("evaluations")
+}
+
+// ===========================
+// CORE — Coachings
+// ===========================
+model Coaching {
+  id            String   @id @default(uuid())
+  project_id    String
+  coach_user_id String
+  feedback      String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  project    Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  coachUser  User    @relation(fields: [coach_user_id], references: [id])
+
+  @@unique([project_id, coach_user_id])
+  @@index([project_id])
+  @@index([coach_user_id])
+  @@map("coachings")
 }
 
 // ===========================

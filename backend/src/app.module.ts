@@ -22,6 +22,11 @@ import { MarketModule } from './market/market.module';
 import { ImpactModule } from './impact/impact.module';
 import { SwotModule } from './swot/swot.module';
 import { DocumentsModule } from './documents/documents.module';
+import { CohortsModule } from './cohorts/cohorts.module';
+import { CohortParticipationsModule } from './cohort-participations/cohort-participations.module';
+import { CohortExpertsModule } from './cohort-experts/cohort-experts.module';
+import { EvaluationsModule } from './evaluations/evaluations.module';
+import { CoachingsModule } from './coachings/coachings.module';
 
 @Module({
   imports: [
@@ -34,6 +39,11 @@ import { DocumentsModule } from './documents/documents.module';
     GbmModule, BusinessPlanModule, EcoDesignModule,
     FundingModule, MarketModule, ImpactModule,
     SwotModule, DocumentsModule,
+    CohortsModule,
+    CohortParticipationsModule,
+    CohortExpertsModule,
+    EvaluationsModule,
+    CoachingsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
