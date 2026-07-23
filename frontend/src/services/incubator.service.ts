@@ -1,5 +1,5 @@
 import api from './api';
-import {Incubator,CreateIncubatorDto,UpdateIncubatorDto,UpdateStatusDto,UpdateVerificationDto,} from '@/types/incubator';
+import {Incubator,CreateIncubatorDto,UpdateIncubatorDto,UpdateStatusDto,UpdateVerificationDto,IncubatorDashboard,} from '@/types/incubator';
 
 class IncubatorService {
   private static instance: IncubatorService;
@@ -56,6 +56,12 @@ class IncubatorService {
   // Changer le statut de vérification (approuvé / rejeté)
   async updateVerification(id: string, data: UpdateVerificationDto): Promise<Incubator> {
     const response = await api.patch(`/incubators/${id}/verification`, data);
+    return response.data;
+  }
+
+  // Dashboard KPIs
+  async getDashboard(id: string): Promise<IncubatorDashboard> {
+    const response = await api.get(`/incubators/${id}/dashboard`);
     return response.data;
   }
 }

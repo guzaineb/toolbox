@@ -101,12 +101,168 @@ export class IncubatorsService {
     });
   }
 
+  async getDashboard(incubatorId: string, userId: string) {
+    await this.assertCanAccessDashboard(incubatorId, userId);
+
+    const now = new Date();
+
+    const [cohorts, allParticipations, cohortExperts, evaluations, coachings] =
+      await Promise.all([
+        this.prisma.cohort.findMany({
+          where: { incubator_id: incubatorId },
+          select: {
+            id: true,
+            status: true,
+            capacity: true,
+            current_participants: true,
+          },
+        }),
+        this.prisma.cohortParticipation.findMany({
+          where: { cohort: { incubator_id: incubatorId } },
+          select: {
+            status: true,
+            applied_at: true,
+            responded_at: true,
+            project_id: true,
+          },
+        }),
+        this.prisma.cohortExpert.findMany({
+          where: { cohort: { incubator_id: incubatorId }, status: 'ACTIVE' },
+          select: { expert_user_id: true, role: true },
+        }),
+        this.prisma.evaluation.findMany({
+          where: {
+            project: {
+              cohort_participations: {
+                some: { cohort: { incubator_id: incubatorId } },
+              },
+            },
+          },
+          select: { id: true },
+        }),
+        this.prisma.coaching.findMany({
+          where: {
+            project: {
+              cohort_participations: {
+                some: { cohort: { incubator_id: incubatorId } },
+              },
+            },
+          },
+          select: { id: true },
+        }),
+      ]);
+
+    const totalCohorts = cohorts.length;
+    const cohortsByStatus = {
+      open: cohorts.filter((c) => c.status === 'OPEN').length,
+      in_progress: cohorts.filter((c) => c.status === 'IN_PROGRESS').length,
+      archived: cohorts.filter((c) => c.status === 'ARCHIVED').length,
+    };
+
+    const cohortsWithCapacity = cohorts.filter((c) => c.capacity);
+    const averageFillRate =
+      cohortsWithCapacity.length > 0
+        ? Math.round(
+            cohortsWithCapacity.reduce(
+              (sum, c) => sum + c.current_participants / c.capacity!,
+              0,
+            ) / cohortsWithCapacity.length * 100,
+          )
+        : 0;
+
+    const totalParticipations = allParticipations.length;
+    const participationStatusCounts = {
+      PENDING: allParticipations.filter((p) => p.status === 'PENDING').length,
+      ACCEPTED: allParticipations.filter((p) => p.status === 'ACCEPTED').length,
+      REJECTED: allParticipations.filter((p) => p.status === 'REJECTED').length,
+      WITHDRAWN: allParticipations.filter((p) => p.status === 'WITHDRAWN').length,
+    };
+    const acceptanceRate =
+      participationStatusCounts.ACCEPTED + participationStatusCounts.REJECTED > 0
+        ? Math.round(
+            (participationStatusCounts.ACCEPTED /
+              (participationStatusCounts.ACCEPTED + participationStatusCounts.REJECTED)) *
+              100,
+          )
+        : 0;
+
+    const uniqueExperts = new Set(
+      cohortExperts.map((e) => e.expert_user_id),
+    ).size;
+    const juryCount = cohortExperts.filter((e) => e.role === 'JURY').length;
+    const coachCount = cohortExperts.filter((e) => e.role === 'COACH').length;
+
+    const respondedParticipations = allParticipations.filter(
+      (p) => p.responded_at && p.applied_at,
+    );
+    const averageDecisionDelay =
+      respondedParticipations.length > 0
+        ? Math.round(
+            respondedParticipations.reduce(
+              (sum, p) =>
+                sum +
+                (new Date(p.responded_at!).getTime() -
+                  new Date(p.applied_at).getTime()),
+              0,
+            ) / respondedParticipations.length /
+              (1000 * 60 * 60 * 24),
+          )
+        : 0;
+
+    const activeProjectIds = new Set(
+      allParticipations
+        .filter((p) => p.status === 'ACCEPTED')
+        .map((p) => p.project_id),
+    );
+
+    return {
+      cohorts: {
+        total: totalCohorts,
+        ...cohortsByStatus,
+        averageFillRate,
+      },
+      participations: {
+        total: totalParticipations,
+        acceptanceRate,
+        statusCounts: participationStatusCounts,
+      },
+      experts: {
+        total: uniqueExperts,
+        jury: juryCount,
+        coach: coachCount,
+      },
+      averageDecisionDelay,
+      activeProjects: activeProjectIds.size,
+      evaluations: evaluations.length,
+      coachings: coachings.length,
+    };
+  }
+
   private async assertAdmin(incubatorId: string, userId: string): Promise<void> {
     const member = await this.prisma.incubatorMember.findFirst({
       where: { incubator_id: incubatorId, user_id: userId, role: 'admin' },
     });
     if (!member) {
       throw new ForbiddenException("Vous n'êtes pas administrateur de cet incubateur");
+    }
+  }
+
+  private async assertCanAccessDashboard(
+    incubatorId: string,
+    userId: string,
+  ): Promise<void> {
+    const member = await this.prisma.incubatorMember.findUnique({
+      where: {
+        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+      },
+    });
+    if (!member) {
+      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
+    }
+    if (member.role !== 'admin' && !member.can_manage_cohorts) {
+      throw new ForbiddenException(
+        'Permissions insuffisantes pour accéder au dashboard',
+      );
     }
   }
 }

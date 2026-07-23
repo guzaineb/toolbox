@@ -169,6 +169,37 @@ export class CohortsService {
     return this.changeStatus(id, CohortStatus.ARCHIVED, userId);
   }
 
+  async closeCohortsAutomatically(): Promise<string[]> {
+    const now = new Date();
+
+    const openCohorts = await this.prisma.cohort.findMany({
+      where: { status: CohortStatus.OPEN },
+      select: {
+        id: true,
+        capacity: true,
+        current_participants: true,
+        application_deadline: true,
+      },
+    });
+
+    const idsToClose = openCohorts
+      .filter((c) => {
+        if (c.capacity && c.current_participants >= c.capacity) return true;
+        if (c.application_deadline && c.application_deadline < now) return true;
+        return false;
+      })
+      .map((c) => c.id);
+
+    if (idsToClose.length === 0) return [];
+
+    await this.prisma.cohort.updateMany({
+      where: { id: { in: idsToClose }, status: CohortStatus.OPEN },
+      data: { status: CohortStatus.CLOSED },
+    });
+
+    return idsToClose;
+  }
+
   async getProgress(id: string) {
     const cohort = await this.prisma.cohort.findUnique({
       where: { id },

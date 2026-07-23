@@ -150,6 +150,9 @@ export default function IncubatorDetailPage() {
           <Link href={`/dashboard/incubator/${incubatorId}/documents`}>
             <Button variant="ghost" size="sm"><FileCheck size={13} /> Documents</Button>
           </Link>
+            <Link href={`/dashboard/incubator/${incubatorId}/cohorts`}>
+            <Button variant="ghost" size="sm"><FileCheck size={13} />Cohorts </Button>
+          </Link>
           <Link href={`/dashboard/incubator/${incubatorId}/edit`}>
             <Button variant="primary" size="sm"><Settings size={13} /> Paramètres</Button>
           </Link>

@@ -79,3 +79,32 @@ export interface UpdateStatusDto {
 export interface UpdateVerificationDto {
   verification_status: 'approved' | 'rejected';
 }
+
+export interface IncubatorDashboard {
+  cohorts: {
+    total: number;
+    open: number;
+    in_progress: number;
+    archived: number;
+    averageFillRate: number;
+  };
+  participations: {
+    total: number;
+    acceptanceRate: number;
+    statusCounts: {
+      PENDING: number;
+      ACCEPTED: number;
+      REJECTED: number;
+      WITHDRAWN: number;
+    };
+  };
+  experts: {
+    total: number;
+    jury: number;
+    coach: number;
+  };
+  averageDecisionDelay: number;
+  activeProjects: number;
+  evaluations: number;
+  coachings: number;
+}
