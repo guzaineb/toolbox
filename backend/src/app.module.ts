@@ -27,6 +27,7 @@ import { CohortParticipationsModule } from './cohort-participations/cohort-parti
 import { CohortExpertsModule } from './cohort-experts/cohort-experts.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
 import { CoachingsModule } from './coachings/coachings.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CoachingsModule } from './coachings/coachings.module';
     CohortExpertsModule,
     EvaluationsModule,
     CoachingsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

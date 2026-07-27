@@ -25,6 +25,25 @@ class CohortService {
     return CohortService.instance;
   }
 
+  // ==================== SEARCH ====================
+
+  async searchProjects(query: string): Promise<Array<{ id: string; name: string; description?: string; owner_id: string }>> {
+    if (!query.trim()) return [];
+    const response = await api.get(`/projects/search?q=${encodeURIComponent(query.trim())}`);
+    return response.data;
+  }
+
+  async searchExperts(query: string): Promise<Array<{
+    id: string;
+    email: string;
+    profile?: { first_name: string; last_name: string };
+    expertProfile?: { headline?: string; availability_status?: string };
+  }>> {
+    if (!query.trim()) return [];
+    const response = await api.get(`/experts/search?q=${encodeURIComponent(query.trim())}`);
+    return response.data;
+  }
+
   // ==================== COHORTS ====================
 
   async getOpenCohorts(): Promise<Cohort[]> {

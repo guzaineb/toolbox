@@ -12,6 +12,7 @@ import {
   Badge, Button, Card, CardHeader, ErrorAlert, SuccessAlert,
   Field, Input, Select, Textarea,
 } from '@/components/shared/ui'
+import { SearchAutocomplete } from '@/components/shared/SearchAutocomplete'
 import {
   Cohort, CohortParticipation, CohortExpert,
   COHORT_STATUS_LABELS, COHORT_STATUS_COLORS,
@@ -24,6 +25,20 @@ import {
 
 type Tab = 'info' | 'participations' | 'experts'
 
+interface ProjectSearchResult {
+  id: string
+  name: string
+  description?: string
+  owner_id: string
+}
+
+interface ExpertSearchResult {
+  id: string
+  email: string
+  profile?: { first_name: string; last_name: string }
+  expertProfile?: { headline?: string; availability_status?: string }
+}
+
 /* ═════════════════════════════════════
    MODALE : INVITER UN PROJET
 ═════════════════════════════════════ */
@@ -32,16 +47,16 @@ function InviteProjectModal({
 }: {
   cohortId: string; onClose: () => void; onSuccess: () => void
 }) {
-  const [projectId, setProjectId] = useState('')
+  const [selectedProject, setSelectedProject] = useState<ProjectSearchResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
-    if (!projectId.trim()) { setError('ID du projet requis'); return }
+    if (!selectedProject) { setError('Sélectionnez un projet'); return }
     setError(null)
     setLoading(true)
     try {
-      await cohortService.inviteToCohort(cohortId, projectId.trim())
+      await cohortService.inviteToCohort(cohortId, selectedProject.id)
       onSuccess()
       onClose()
     } catch (err: any) {
@@ -59,8 +74,21 @@ function InviteProjectModal({
         </CardHeader>
         <div className="p-6">
           {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
-          <Field label="ID du projet">
-            <Input placeholder="UUID du projet" value={projectId} onChange={(e) => setProjectId(e.target.value)} autoFocus />
+          <Field label="Rechercher un projet par nom" required>
+            <SearchAutocomplete
+              onSearch={cohortService.searchProjects.bind(cohortService)}
+              onSelect={(item: ProjectSearchResult) => setSelectedProject(item)}
+              renderOption={(item: ProjectSearchResult) => (
+                <div>
+                  <div className="font-medium">{item.name}</div>
+                  {item.description && <div className="text-ink3 text-[11px] truncate mt-0.5">{item.description}</div>}
+                </div>
+              )}
+              renderSelected={(item: ProjectSearchResult) => (
+                <span className="font-medium">{item.name}</span>
+              )}
+              placeholder="Tapez le nom d'un projet..."
+            />
           </Field>
           <div className="flex gap-3 mt-6">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>
@@ -80,17 +108,17 @@ function AssignExpertModal({
 }: {
   cohortId: string; onClose: () => void; onSuccess: () => void
 }) {
-  const [expertUserId, setExpertUserId] = useState('')
+  const [selectedExpert, setSelectedExpert] = useState<ExpertSearchResult | null>(null)
   const [role, setRole] = useState<'JURY' | 'COACH'>('JURY')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
-    if (!expertUserId.trim()) { setError("ID de l'expert requis"); return }
+    if (!selectedExpert) { setError("Sélectionnez un expert"); return }
     setError(null)
     setLoading(true)
     try {
-      await cohortService.assignExpert(cohortId, { expertUserId: expertUserId.trim(), role })
+      await cohortService.assignExpert(cohortId, { expertUserId: selectedExpert.id, role })
       onSuccess()
       onClose()
     } catch (err: any) {
@@ -108,8 +136,32 @@ function AssignExpertModal({
         </CardHeader>
         <div className="p-6">
           {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
-          <Field label="ID de l'expert">
-            <Input placeholder="UUID de l'utilisateur expert" value={expertUserId} onChange={(e) => setExpertUserId(e.target.value)} autoFocus />
+          <Field label="Rechercher un expert par email" required>
+            <SearchAutocomplete
+              onSearch={cohortService.searchExperts.bind(cohortService)}
+              onSelect={(item: ExpertSearchResult) => setSelectedExpert(item)}
+              renderOption={(item: ExpertSearchResult) => {
+                const name = item.profile
+                  ? `${item.profile.first_name} ${item.profile.last_name}`
+                  : item.email
+                return (
+                  <div>
+                    <div className="font-medium">{name}</div>
+                    <div className="text-ink3 text-[11px]">{item.email}</div>
+                    {item.expertProfile?.headline && (
+                      <div className="text-ink3 text-[10px] mt-0.5">{item.expertProfile.headline}</div>
+                    )}
+                  </div>
+                )
+              }}
+              renderSelected={(item: ExpertSearchResult) => {
+                const name = item.profile
+                  ? `${item.profile.first_name} ${item.profile.last_name}`
+                  : item.email
+                return <span className="font-medium">{name} ({item.email})</span>
+              }}
+              placeholder="Tapez un email..."
+            />
           </Field>
           <Field label="Rôle">
             <Select value={role} onChange={(e) => setRole(e.target.value as 'JURY' | 'COACH')}>

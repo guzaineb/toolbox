@@ -94,6 +94,15 @@ enum CohortExpertStatus {
   INACTIVE
 }
 
+enum NotificationType {
+  APPLICATION_SUBMITTED
+  INVITATION_RECEIVED
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  INVITATION_ACCEPTED
+  INVITATION_REJECTED
+}
+
 // ===========================
 // IDENTITY — Users & Profiles
 // ===========================
@@ -123,6 +132,7 @@ model User {
   assignedCohorts      CohortExpert[]           @relation("AssignedBy")
   evaluations          Evaluation[]
   coachings            Coaching[]
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -1163,4 +1173,26 @@ model GeneratedDocument {
   @@unique([project_id, document_key])
   @@index([project_id])
   @@map("generated_documents")
+}
+
+// ===========================
+// MODULE — Notifications in-app
+// ===========================
+model Notification {
+  id         String           @id @default(uuid())
+  user_id    String
+  title      String
+  message    String
+  type       NotificationType
+  is_read    Boolean          @default(false)
+  link       String?
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@index([user_id, is_read])
+  @@index([created_at])
+  @@map("notifications")
 }

@@ -28,4 +28,17 @@ export class ProjectsService {
     if (project.owner_id !== userId) throw new ForbiddenException('Vous n\'êtes pas le propriétaire de ce projet');
     return project;
   }
+
+  async search(query: string) {
+    if (!query || query.trim().length === 0) return [];
+
+    return this.prisma.project.findMany({
+      where: {
+        name: { contains: query.trim(), mode: 'insensitive' },
+      },
+      select: { id: true, name: true, description: true, owner_id: true },
+      take: 20,
+      orderBy: { name: 'asc' },
+    });
+  }
 }

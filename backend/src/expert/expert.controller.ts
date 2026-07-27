@@ -93,6 +93,11 @@ export class ExpertController {
     return this.service.findAll(filters);
   }
 
+  @Get('search')
+  searchByEmail(@Query('q') query: string) {
+    return this.service.searchByEmail(query);
+  }
+
   @Get(':id')
   findOneExpert(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getPublicProfile(id);

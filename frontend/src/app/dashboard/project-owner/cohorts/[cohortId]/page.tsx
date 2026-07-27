@@ -102,6 +102,8 @@ export default function PorteurCohortDetailPage() {
         <CardHeader icon={<Users size={13} />} title="Détails" />
         <div className="divide-y divide-border">
           {[
+             { label: 'Programme', value: cohort.program || '—' },
+            { label: 'Description', value: cohort.description || '—' },
             { label: 'Capacité', value: cohort.capacity ? `${cohort.current_participants}/${cohort.capacity}` : 'Illimité' },
             { label: 'Date limite', value: cohort.application_deadline ? new Date(cohort.application_deadline).toLocaleDateString('fr-FR') : '—' },
             { label: 'Début', value: cohort.start_date ? new Date(cohort.start_date).toLocaleDateString('fr-FR') : '—' },

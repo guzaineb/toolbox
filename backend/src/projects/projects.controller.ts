@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Param, Body, Req, UseGuards,
+  Controller, Get, Post, Param, Body, Query, Req, UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProjectsService } from './projects.service';
@@ -20,6 +20,11 @@ export class ProjectsController {
   @Get()
   async findAll(@Req() req: { user: { id: string } }) {
     return this.projectsService.findByOwner(req.user.id);
+  }
+
+  @Get('search')
+  async search(@Query('q') query: string) {
+    return this.projectsService.search(query);
   }
 
   @Get(':projectId')

@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   ChevronRight,
+  Bell,
 } from 'lucide-react';
+import { NotificationsBell } from '@/components/NotificationsBell';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -58,6 +60,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const NAV_ITEMS = [
     { href: '/dashboard/profile', label: 'Mon profil', icon: User },
+    { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
     ...(isProjectOwner ? [{ href: '/dashboard/project-owner', label: 'porteur de projet profil ', icon: User } ,
       {href: '/dashboard/project-owner/projects', label: 'Mes Projets ', icon: FolderKanban
     }] : []),
@@ -204,6 +207,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <NotificationsBell />
             <Badge variant="green" className="hidden sm:flex gap-1 items-center">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

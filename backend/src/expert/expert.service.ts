@@ -389,6 +389,26 @@ async getPublicProfile(id: string) {
     }
   }
 
+  async searchByEmail(query: string) {
+    if (!query || query.trim().length === 0) return [];
+
+    return this.prisma.user.findMany({
+      where: {
+        role: 'expert',
+        email: { contains: query.trim(), mode: 'insensitive' },
+        expertProfile: { isNot: null },
+      },
+      select: {
+        id: true,
+        email: true,
+        profile: { select: { first_name: true, last_name: true } },
+        expertProfile: { select: { headline: true, availability_status: true } },
+      },
+      take: 20,
+      orderBy: { email: 'asc' },
+    });
+  }
+
   private async findExpertiseConnection(userId: string, expertiseAreaId: string) {
     const profile = await this.findByUserOrFail(userId);
     const connection = await this.prisma.expertProfileExpertiseArea.findFirst({
