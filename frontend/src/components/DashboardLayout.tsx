@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from '@/components/shared/ui';
 import {
-  LayoutDashboard, User, Factory, Plus,
+  User, Factory, Plus,
   Users,
   FolderKanban,
   GraduationCap,
@@ -16,6 +16,10 @@ import {
   X,
   ChevronRight,
   Bell,
+  Calendar,
+  Target,
+  Briefcase,
+  Pencil,
 } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
 
@@ -58,19 +62,38 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isProjectOwner = userRole === 'project_owner';
   const isIncubatorMember = userRole === 'incubator_membre';
 
-  const NAV_ITEMS = [
-    { href: '/dashboard/profile', label: 'Mon profil', icon: User },
-    { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
-    ...(isProjectOwner ? [{ href: '/dashboard/project-owner', label: 'porteur de projet profil ', icon: User } ,
-      {href: '/dashboard/project-owner/projects', label: 'Mes Projets ', icon: FolderKanban
-    }] : []),
-    ...(isExpert ? [{ href: '/dashboard/expert', label: 'Expertise', icon: GraduationCap }] : []),
-    ...(isIncubatorMember
-      ? [
-        { href: '/dashboard/incubator', label: 'Incubateur', icon: Factory },
-        ]
-      : []),
-    ...(isAdmin ? [{ href: '/dashboard/admin', label: 'Administration', icon: Settings }] : []),
+  const NAV_ITEMS: { href: string; label: string; icon: any; section?: string }[] = [
+    { href: '/dashboard/profile', label: 'Mon profil', icon: User, section: 'general' },
+
+
+    ...(isAdmin ? [
+      { href: '/dashboard/admin', label: 'Administration', icon: Settings, section: 'admin' },
+      { href: '/dashboard/admin/experts', label: 'Experts', icon: GraduationCap, section: 'admin' },
+      { href: '/dashboard/admin/project-owners', label: 'Porteurs de projet', icon: Briefcase, section: 'admin' },
+    ] : []),
+
+    ...(isExpert ? [
+      { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert' },
+      { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert' },
+      { href: '/dashboard/expert/cohots', label: 'cohots', icon: Pencil, section: 'expert' },
+      { href: '/dashboard/expert/evatuation', label: 'evatuation', icon: Pencil, section: 'expert' },
+      { href: '/dashboard/expert/coachings', label: 'coachings', icon: Pencil, section: 'expert' },
+
+
+
+    ] : []),
+
+    ...(isProjectOwner ? [
+      { href: '/dashboard/project-owner', label: 'Mon profil', icon: User, section: 'porteur' },
+      { href: '/dashboard/project-owner/projects', label: 'Mes projets', icon: FolderKanban, section: 'porteur' },
+      { href: '/dashboard/project-owner/participations', label: 'Participations', icon: Calendar, section: 'porteur' },
+      { href: '/dashboard/project-owner/cohorts', label: 'Cohortes', icon: Users, section: 'porteur' },
+    ] : []),
+
+    ...(isIncubatorMember ? [
+      { href: '/dashboard/incubator', label: 'Incubateurs', icon: Factory, section: 'incubator' },
+      { href: '/dashboard/incubator/create', label: 'Créer un incubateur', icon: Plus, section: 'incubator' },
+    ] : []),
   ];
 
   const firstName = user.profile?.first_name || '';
@@ -109,10 +132,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center justify-between">
             <div>
               <div className="font-display text-xl font-bold tracking-tight">
-                <div className="font-display text-xl font-bold tracking-tight">
-                  <span className="text-moss">Tool</span>
-                  <span className="text-amber">Box</span>
-                </div>
+                <span className="text-moss">Project</span>
+                <span className="text-amber">Struct</span>
               </div>
               <div className="text-xs text-ink-3 mt-1 capitalize flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -130,33 +151,61 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <div className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider px-3 mb-3">
-            Menu principal
-          </div>
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.map((item, idx) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || (item.href !== '/dashboard/profile' && pathname.startsWith(item.href) && item.href !== '/dashboard');
+            const showSectionHeader = idx === 0 || item.section !== NAV_ITEMS[idx - 1]?.section;
+            const sectionLabels: Record<string, string> = {
+              general: 'Mon espace',
+              admin: 'Administration',
+              expert: 'Expertise',
+              porteur: 'Porteur de projet',
+              incubator: 'Incubateur',
+            };
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                  transition-all duration-200 relative
-                  ${isActive
-                    ? 'bg-accent/10 text-accent shadow-sm'
-                    : 'text-ink-2 hover:bg-moss-light hover:text-ink'
-                  }
-                `}
-              >
-                <Icon size={18} className={isActive ? 'text-accent' : 'text-ink-3 group-hover:text-ink'} />
-                <span>{item.label}</span>
-                {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
-              </Link>
+              <div key={item.href}>
+                {showSectionHeader && item.section && (
+                  <div className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider px-3 mt-4 mb-2 first:mt-0">
+                    {sectionLabels[item.section] || item.section}
+                  </div>
+                )}
+                <Link
+                  href={item.href}
+                  className={`
+                    group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                    transition-all duration-200 relative
+                    ${isActive
+                      ? 'bg-accent/10 text-accent shadow-sm'
+                      : 'text-ink-2 hover:bg-moss-light hover:text-ink'
+                    }
+                  `}
+                >
+                  <Icon size={18} className={isActive ? 'text-accent' : 'text-ink-3 group-hover:text-ink'} />
+                  <span>{item.label}</span>
+                  {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                </Link>
+              </div>
             );
           })}
+
+          <div className="border-t border-border my-3" />
+
+          <Link
+            href="/dashboard/notifications"
+            className={`
+              group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+              transition-all duration-200 relative
+              ${pathname === '/dashboard/notifications'
+                ? 'bg-accent/10 text-accent shadow-sm'
+                : 'text-ink-2 hover:bg-moss-light hover:text-ink'
+              }
+            `}
+          >
+            <Bell size={18} className={pathname === '/dashboard/notifications' ? 'text-accent' : 'text-ink-3 group-hover:text-ink'} />
+            <span>Notifications</span>
+          </Link>
         </nav>
-  
+
 
         {/* User footer */}
         <div className="p-4 border-t border-border mt-auto">
@@ -164,8 +213,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="w-[72px] h-[72px] rounded-full flex-shrink-0 flex items-center justify-center
           bg-gradient-to-br from-moss to-[#1a5c3a] shadow-[0_0_0_3px_rgba(45,122,82,0.2),0_2px_12px_rgba(45,122,82,0.15)]
           font-syne text-[22px] font-extrabold text-[#a0e0b8]">
-          {initials}
-        </div>
+              {initials}
+            </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate text-ink">{fullName || 'Utilisateur'}</div>
               <div className="text-xs text-ink-3 capitalize truncate">

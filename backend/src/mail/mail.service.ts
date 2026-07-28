@@ -236,9 +236,9 @@ export class MailService {
     });
   }
 
-  async sendInvitation(email: string, incubatorName: string, token: string): Promise<void> {
+  async sendInvitation(email: string, incubatorName: string, token: string, incubatorId: string): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const inviteUrl = `${frontendUrl}/accept-invite?token=${token}`;
+    const inviteUrl = `${frontendUrl}/accept-invite?token=${token}&incubatorId=${incubatorId}`;
 
     const content = `
       <div style="text-align:center;">

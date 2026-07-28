@@ -117,7 +117,7 @@ export default function AdminExpertsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Link href={`/admin/experts/${expert.id}`}>
+                    <Link href={`/dashboard/expert/profile/${expert.id}`}>
                       <button className="p-2 text-gray-600 hover:text-gray-900">
                         <Eye className="w-4 h-4" />
                       </button>

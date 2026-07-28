@@ -3,9 +3,9 @@
 import { ReactNode } from 'react';
 import { RoleGuard } from '@/components/RoleGuard';
 
-export default function ExpertLayout({ children }: { children: ReactNode }) {
+export default function IncubatorLayout({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard allowedRoles={['expert']}>
+    <RoleGuard allowedRoles={['incubator_membre']}>
       {children}
     </RoleGuard>
   );

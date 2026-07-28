@@ -146,7 +146,7 @@ export class IncubatorMembersService {
       },
     });
 
-    await this.emailService.sendInvitation(dto.email, incubator.name, token);
+    await this.emailService.sendInvitation(dto.email, incubator.name, token, incubatorId);
 
     return {
       message: `Invitation envoyée à ${dto.email}`,

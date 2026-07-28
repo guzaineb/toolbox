@@ -121,7 +121,7 @@ export function useAuth() {
   const logout = useCallback(() => {
     storage.remove('access_token');
     setUser(null);
-    router.push('/auth/login');
+    router.push('/login');
   }, [router]);
 
   const redirectToDashboard = useCallback(

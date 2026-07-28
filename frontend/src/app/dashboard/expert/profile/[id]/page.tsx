@@ -42,8 +42,8 @@ export default function PublicExpertProfilePage() {
         <div className="text-6xl mb-4">😕</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Expert non trouvé</h1>
         <p className="text-gray-600 mb-6">{error || "Le profil demandé n'existe pas"}</p>
-        <Link href="/dashboard/experts" className="text-gray-600 hover:text-gray-900">
-          ← Voir tous les experts
+        <Link href="/dashboard/expert" className="text-gray-600 hover:text-gray-900">
+          ← Retour au tableau de bord
         </Link>
       </div>
     );
@@ -51,9 +51,9 @@ export default function PublicExpertProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
-      <Link href="/dashboard/experts" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6">
+      <Link href="/dashboard/expert" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6">
         <ArrowLeft className="w-4 h-4" />
-        Tous les experts
+        Retour au tableau de bord
       </Link>
 
       {/* En-tête du profil */}

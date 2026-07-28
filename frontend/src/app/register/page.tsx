@@ -9,7 +9,7 @@ import LeftPanel from "@/components/auth/LeftPanel";
 import RightPanel from "@/components/auth/RightPanel";
 import { cn } from "@/lib/utils";
 import { AuthTranslation, authTranslations, Lang } from "@/i18n/auth";
-import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/lib/countries ";
+import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/lib/countries";
 import { StepIndicator } from "@/components/auth/StepIndicator";
 import { StepAccount } from "@/components/auth/StepAccount";
 import { StepProfile } from "@/components/auth/StepProfile";
