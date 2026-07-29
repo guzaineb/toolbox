@@ -5,9 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CohortStatus } from '@prisma/client';
 import { CreateCohortDto } from './dto/create-cohort.dto';
 import { UpdateCohortDto } from './dto/update-cohort.dto';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 const ALLOWED_TRANSITIONS: Record<string, CohortStatus[]> = {
   DRAFT: [CohortStatus.OPEN, CohortStatus.ARCHIVED],
@@ -19,12 +23,16 @@ const ALLOWED_TRANSITIONS: Record<string, CohortStatus[]> = {
 
 @Injectable()
 export class CohortsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
 
   async create(incubatorId: string, dto: CreateCohortDto, userId: string) {
     await this.assertCanManageCohorts(incubatorId, userId);
 
-    return this.prisma.cohort.create({
+    const cohort = await this.prisma.cohort.create({
       data: {
         name: dto.name,
         program: dto.program,
@@ -39,6 +47,34 @@ export class CohortsService {
         status: CohortStatus.DRAFT,
       },
     });
+
+    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
+    const members = await this.prisma.incubatorMember.findMany({
+      where: { incubator_id: incubatorId, status: 'active' },
+      select: { user_id: true },
+    });
+    const memberIds = members.map(m => m.user_id);
+    if (memberIds.length > 0) {
+      const { title, message } = this.messageBuilder.cohortCreated({
+        cohortName: cohort.name,
+        incubatorName: incubator?.name ?? 'Incubateur',
+      });
+      this.eventEmitter.emit(
+        NotificationEvent.COHORT_CREATED,
+        {
+          event: NotificationEvent.COHORT_CREATED,
+          recipients: memberIds.map(id => ({ userId: id })),
+          title,
+          message,
+          link: `/incubator/${incubatorId}/cohorts/${cohort.id}`,
+          senderId: userId,
+          resourceType: 'COHORT',
+          resourceId: cohort.id,
+        } as NotificationPayload,
+      );
+    }
+
+    return cohort;
   }
 
   async findAllByIncubator(incubatorId: string) {
@@ -154,7 +190,38 @@ export class CohortsService {
   }
 
   async publish(id: string, userId: string) {
-    return this.changeStatus(id, CohortStatus.OPEN, userId);
+    const cohort = await this.changeStatus(id, CohortStatus.OPEN, userId);
+
+    const incubatorName = cohort.incubator_id
+      ? (await this.prisma.incubator.findUnique({ where: { id: cohort.incubator_id }, select: { name: true } }))?.name
+      : undefined;
+
+    const members = cohort.incubator_id ? await this.prisma.incubatorMember.findMany({
+      where: { incubator_id: cohort.incubator_id, status: 'active' },
+      select: { user_id: true },
+    }) : [];
+    const memberIds = members.map(m => m.user_id);
+    if (memberIds.length > 0) {
+      const { title, message } = this.messageBuilder.applicationOpen({
+        cohortName: cohort.name,
+        incubatorName: incubatorName ?? 'Incubateur',
+      });
+      this.eventEmitter.emit(
+        NotificationEvent.APPLICATION_OPEN,
+        {
+          event: NotificationEvent.APPLICATION_OPEN,
+          recipients: memberIds.map(id => ({ userId: id })),
+          title,
+          message,
+          link: `/incubator/${cohort.incubator_id}/cohorts/${cohort.id}`,
+          senderId: userId,
+          resourceType: 'COHORT',
+          resourceId: cohort.id,
+        } as NotificationPayload,
+      );
+    }
+
+    return cohort;
   }
 
   async start(id: string, userId: string) {

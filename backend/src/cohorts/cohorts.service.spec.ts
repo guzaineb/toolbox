@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CohortsService } from './cohorts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CohortStatus } from '@prisma/client';
@@ -20,6 +21,8 @@ describe('CohortsService', () => {
   };
 
   beforeEach(async () => {
+    const eventEmitter = { emit: jest.fn() };
+
     prisma = {
       cohort: {
         findMany: jest.fn(),
@@ -30,6 +33,7 @@ describe('CohortsService', () => {
       },
       incubatorMember: {
         findUnique: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
     };
 
@@ -37,6 +41,7 @@ describe('CohortsService', () => {
       providers: [
         CohortsService,
         { provide: PrismaService, useValue: prisma },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 

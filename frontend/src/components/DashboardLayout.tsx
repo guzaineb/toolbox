@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
+import { useUnreadCount } from '@/hooks/useNotifications';
+import { useNotificationSocket } from '@/hooks/useNotificationSocket';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from '@/components/shared/ui';
@@ -20,6 +22,8 @@ import {
   Target,
   Briefcase,
   Pencil,
+  ClipboardCheck,
+  Presentation,
 } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
 
@@ -32,6 +36,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: unreadData } = useUnreadCount();
+  const sidebarUnread = unreadData?.count ?? 0;
+  useNotificationSocket();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -75,9 +82,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(isExpert ? [
       { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert' },
       { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert' },
-      { href: '/dashboard/expert/cohots', label: 'cohots', icon: Pencil, section: 'expert' },
-      { href: '/dashboard/expert/evatuation', label: 'evatuation', icon: Pencil, section: 'expert' },
-      { href: '/dashboard/expert/coachings', label: 'coachings', icon: Pencil, section: 'expert' },
+      { href: '/dashboard/expert/cohorts', label: 'cohots', icon: Users, section: 'expert' },
+      { href: '/dashboard/expert/evaluations', label: 'evatuation', icon: ClipboardCheck, section: 'expert' },
+      { href: '/dashboard/expert/coachings', label: 'coachings', icon: Presentation, section: 'expert' },
 
 
 
@@ -203,6 +210,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <Bell size={18} className={pathname === '/dashboard/notifications' ? 'text-accent' : 'text-ink-3 group-hover:text-ink'} />
             <span>Notifications</span>
+            {sidebarUnread > 0 && (
+              <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red text-white text-[9px] font-bold px-1">
+                {sidebarUnread > 99 ? '99+' : sidebarUnread}
+              </span>
+            )}
           </Link>
         </nav>
 

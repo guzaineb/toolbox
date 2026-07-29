@@ -5,12 +5,18 @@ import { UpdateMemberDto } from './dto/update-member.dto';
 import { AcceptInviteDto, InviteMemberDto } from './dto/invite-member.dto';
 import * as crypto from 'crypto';
 import { MailService } from 'src/mail/mail.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class IncubatorMembersService {
   constructor(
     private prisma: PrismaService,
     private emailService: MailService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async addMember(
@@ -31,7 +37,7 @@ export class IncubatorMembersService {
     const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId } });
     if (!incubator) throw new BadRequestException('Incubateur introuvable');
 
-    return this.prisma.incubatorMember.create({
+    const result = await this.prisma.incubatorMember.create({
       data: {
         user_id: dto.userId,
         incubator_id: incubatorId,
@@ -41,6 +47,23 @@ export class IncubatorMembersService {
         status: 'active',
       },
     });
+
+    const { title, message } = this.messageBuilder.memberJoined({ incubatorName: incubator.name });
+    this.eventEmitter.emit(
+      NotificationEvent.MEMBER_JOINED,
+      {
+        event: NotificationEvent.MEMBER_JOINED,
+        recipients: [{ userId: dto.userId }],
+        title,
+        message,
+        link: `/incubator/${incubatorId}`,
+        senderId: currentUserId,
+        resourceType: 'INCUBATOR',
+        resourceId: incubatorId,
+      } as NotificationPayload,
+    );
+
+    return result;
   }
 
   async findByIncubator(incubatorId: string) {
@@ -84,10 +107,28 @@ export class IncubatorMembersService {
       }
     }
 
-    return this.prisma.incubatorMember.update({
+    const result = await this.prisma.incubatorMember.update({
       where: { id: memberId },
       data: dto as any,
     });
+
+    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
+    const { title, message } = this.messageBuilder.memberUpdated({ incubatorName: incubator?.name ?? 'Incubateur' });
+    this.eventEmitter.emit(
+      NotificationEvent.MEMBER_UPDATED,
+      {
+        event: NotificationEvent.MEMBER_UPDATED,
+        recipients: [{ userId: member.user_id }],
+        title,
+        message,
+        link: `/incubator/${incubatorId}`,
+        senderId: currentUserId,
+        resourceType: 'INCUBATOR',
+        resourceId: incubatorId,
+      } as NotificationPayload,
+    );
+
+    return result;
   }
 
   async removeMember(memberId: string, incubatorId: string, currentUserId: string): Promise<{ message: string }> {
@@ -110,7 +151,24 @@ export class IncubatorMembersService {
       throw new BadRequestException("Vous ne pouvez pas vous retirer vous-même");
     }
 
+    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
     await this.prisma.incubatorMember.delete({ where: { id: memberId } });
+
+    const { title, message } = this.messageBuilder.memberRemoved({ incubatorName: incubator?.name ?? 'Incubateur' });
+    this.eventEmitter.emit(
+      NotificationEvent.MEMBER_LEFT,
+      {
+        event: NotificationEvent.MEMBER_LEFT,
+        recipients: [{ userId: member.user_id }],
+        title,
+        message,
+        link: `/incubator/${incubatorId}`,
+        senderId: currentUserId,
+        resourceType: 'INCUBATOR',
+        resourceId: incubatorId,
+      } as NotificationPayload,
+    );
+
     return { message: 'Membre supprimé' };
   }
 

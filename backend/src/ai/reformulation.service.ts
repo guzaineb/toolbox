@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LlmService } from './llm.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 const STEP_CONCEPTS: Record<string, string> = {
   gbm_1: 'Esquisse d\'idée — définition du concept de base, produit/service, clients et partenaires',
@@ -32,6 +36,8 @@ export class ReformulationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly llm: LlmService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async reformulateStep(
@@ -77,6 +83,28 @@ Retourne UNIQUEMENT un objet JSON avec les clés : reformulated_text, key_streng
       parsed = JSON.parse(response.content);
     } catch {
       parsed = { reformulated_text: response.content, key_strengths: [], improvement_axes: [], reflection_questions: [] };
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { owner_id: true },
+    });
+
+    if (project) {
+      const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Reformulation IA' });
+      this.eventEmitter.emit(
+        NotificationEvent.AI_RESPONSE_READY,
+        {
+          event: NotificationEvent.AI_RESPONSE_READY,
+          recipients: [{ userId: project.owner_id }],
+          title,
+          message,
+          link: `/project-owner/projects/${projectId}/documents`,
+          senderId: project.owner_id,
+          resourceType: 'PROJECT',
+          resourceId: projectId,
+        } as NotificationPayload,
+      );
     }
 
     return {

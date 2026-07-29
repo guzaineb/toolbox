@@ -1,18 +1,43 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
 
   async create(userId: string, data: { name: string; description?: string }) {
-    return this.prisma.project.create({
+    const project = await this.prisma.project.create({
       data: {
         name: data.name,
         description: data.description,
         owner_id: userId,
       },
     });
+
+    const { title, message } = this.messageBuilder.projectCreated({ projectName: project.name });
+    this.eventEmitter.emit(
+      NotificationEvent.PROJECT_CREATED,
+      {
+        event: NotificationEvent.PROJECT_CREATED,
+        recipients: [{ userId }],
+        title,
+        message,
+        link: `/project-owner/projects/${project.id}`,
+        senderId: userId,
+        resourceType: 'PROJECT',
+        resourceId: project.id,
+      } as NotificationPayload,
+    );
+
+    return project;
   }
 
   async findByOwner(userId: string) {

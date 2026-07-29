@@ -5,6 +5,10 @@ import { StepStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { AiService } from '../ai/ai.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 import { GBM_STEPS, getStepConfig, StepConfig } from './step-config';
 import { ALL_STEPS } from './step-registry';
 
@@ -14,6 +18,8 @@ export class GbmService {
     private readonly prisma: PrismaService,
     private readonly projects: ProjectsService,
     private readonly ai: AiService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async ensureProjectOwnership(projectId: string, userId: string) {
@@ -155,6 +161,21 @@ export class GbmService {
         is_gbm_reviewed: true,
       },
     });
+
+    const { title, message } = this.messageBuilder.stepCompleted();
+    this.eventEmitter.emit(
+      NotificationEvent.STEP_COMPLETED,
+      {
+        event: NotificationEvent.STEP_COMPLETED,
+        recipients: [{ userId }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/gbm`,
+        senderId: userId,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
 
     return { message: 'GBM review completed', gbm_reviewed_at: new Date() };
   }

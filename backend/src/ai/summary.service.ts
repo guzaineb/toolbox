@@ -4,6 +4,10 @@ import { LlmService } from './llm.service';
 import { ChromaService } from './chroma.service';
 import { EmbeddingsService } from './embeddings.service';
 import { RagDocument } from './interfaces/ai.types';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class SummaryService {
@@ -14,6 +18,8 @@ export class SummaryService {
     private readonly llm: LlmService,
     private readonly chroma: ChromaService,
     private readonly embeddings: EmbeddingsService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async generateContextSummary(projectId: string): Promise<{ summaryText: string }> {
@@ -77,6 +83,21 @@ Rédige un résumé de contexte professionnel et concis (300-400 mots) qui synth
     });
 
     await this.indexInChroma(projectId, 'context_summary', saved.summary_text || '');
+
+    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé de contexte IA' });
+    this.eventEmitter.emit(
+      NotificationEvent.AI_RESPONSE_READY,
+      {
+        event: NotificationEvent.AI_RESPONSE_READY,
+        recipients: [{ userId: project.owner_id }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/documents`,
+        senderId: project.owner_id,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
 
     return { summaryText: saved.summary_text || '' };
   }
@@ -148,6 +169,21 @@ Retourne UNIQUEMENT un objet JSON valide avec les clés : activities_summary, ke
 
     await this.indexInChroma(projectId, 'activity_summary', saved.activities_summary || '');
 
+    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé d\'activité IA' });
+    this.eventEmitter.emit(
+      NotificationEvent.AI_RESPONSE_READY,
+      {
+        event: NotificationEvent.AI_RESPONSE_READY,
+        recipients: [{ userId: project.owner_id }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/documents`,
+        senderId: project.owner_id,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
+
     return {
       activitiesSummary: saved.activities_summary || '',
       keyAchievements: saved.key_achievements || '',
@@ -207,6 +243,21 @@ Retourne UNIQUEMENT un objet JSON avec les clés : cost_summary, revenue_summary
 
     await this.indexInChroma(projectId, 'cost_revenue_summary', `Coûts: ${saved.cost_summary || ''}. Revenus: ${saved.revenue_summary || ''}. Santé: ${saved.financial_health || ''}`);
 
+    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé coûts/revenus IA' });
+    this.eventEmitter.emit(
+      NotificationEvent.AI_RESPONSE_READY,
+      {
+        event: NotificationEvent.AI_RESPONSE_READY,
+        recipients: [{ userId: project.owner_id }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/documents`,
+        senderId: project.owner_id,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
+
     return {
       costSummary: saved.cost_summary || '',
       revenueSummary: saved.revenue_summary || '',
@@ -257,6 +308,21 @@ Rédige un executive summary professionnel de 400-500 mots destiné à des inves
     });
 
     await this.indexInChroma(projectId, 'executive_summary', saved.resume_executif || '');
+
+    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé exécutif IA' });
+    this.eventEmitter.emit(
+      NotificationEvent.AI_RESPONSE_READY,
+      {
+        event: NotificationEvent.AI_RESPONSE_READY,
+        recipients: [{ userId: project.owner_id }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/documents`,
+        senderId: project.owner_id,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
 
     return { executiveSummary: saved.resume_executif || '' };
   }

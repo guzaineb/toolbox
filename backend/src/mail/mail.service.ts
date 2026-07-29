@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { NotificationType } from '@prisma/client';
+import { NOTIFICATION_EMAIL_TEMPLATES } from './notification-email.templates';
 
 @Injectable()
 export class MailService {
@@ -321,6 +323,28 @@ export class MailService {
     });
   }
 
+  async sendGenericEmail(params: {
+    to: string;
+    subject: string;
+    message: string;
+    link?: string;
+  }): Promise<void> {
+    const content = `
+      <div style="text-align:center;">
+        <h1 style="font-size:20px;color:#ffffff;margin-bottom:16px;">${params.subject}</h1>
+        <p style="color:#9bb2a8;font-size:14px;margin-bottom:24px;">${params.message}</p>
+        ${params.link ? `<a href="${params.link}" class="btn">Voir les détails →</a>` : ''}
+      </div>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      to: params.to,
+      subject: params.subject,
+      html: this.getBaseTemplate(content),
+    });
+  }
+
   async sendResetPasswordEmail(email: string, token: string): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/auth/reset?token=${encodeURIComponent(token)}`;
@@ -351,6 +375,52 @@ export class MailService {
       from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
       to: email,
       subject: '🔐 Réinitialisez votre mot de passe ToolBox',
+      html: this.getBaseTemplate(content),
+    });
+  }
+
+  // ─── Notification email ──────────────────────────────────────────────
+  async sendNotificationEmail(params: {
+    to: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    link?: string;
+    userName?: string;
+  }): Promise<void> {
+    const config = NOTIFICATION_EMAIL_TEMPLATES[params.type];
+    if (!config) {
+      await this.sendGenericEmail({
+        to: params.to,
+        subject: params.title,
+        message: params.message,
+        link: params.link,
+      });
+      return;
+    }
+
+    const content = `
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,${config.gradientFrom},${config.gradientTo});border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+          <span style="font-size:28px;">${config.icon}</span>
+        </div>
+        <h1 style="font-size:24px;color:#ffffff;margin-bottom:8px;">${params.title}</h1>
+        ${params.userName ? `<p style="color:#c9a84c;font-size:13px;margin-bottom:8px;">Bonjour ${params.userName},</p>` : ''}
+        <p style="color:#9bb2a8;font-size:14px;margin-bottom:24px;">${params.message}</p>
+        ${params.link ? `<a href="${params.link}" class="btn">Voir les détails →</a>` : ''}
+      </div>
+      <div class="info-note" style="margin-top:24px;">
+        📬 Vous recevez cet email car vous avez activé les notifications pour cette catégorie.<br>
+        Vous pouvez gérer vos préférences depuis votre espace ToolBox.
+      </div>
+    `;
+
+    const subject = `${config.icon} ${config.subjectPrefix} – ToolBox`;
+
+    await this.transporter.sendMail({
+      from: `"ToolBox" <${this.configService.get<string>('MAIL_FROM')}>`,
+      to: params.to,
+      subject,
       html: this.getBaseTemplate(content),
     });
   }

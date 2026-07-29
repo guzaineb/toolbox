@@ -1,11 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { LlmService } from './llm.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(private readonly llm: LlmService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly llm: LlmService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
 
   async generateSummary(
     projectId: string,
@@ -16,6 +26,27 @@ export class AiService {
 
     try {
       const response = await this.llm.generate(prompt, { temperature: 0.7, maxTokens: 1000 });
+
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { owner_id: true },
+      });
+
+      const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé IA' });
+      this.eventEmitter.emit(
+        NotificationEvent.AI_RESPONSE_READY,
+        {
+          event: NotificationEvent.AI_RESPONSE_READY,
+          recipients: [{ userId: project?.owner_id || '' }],
+          title,
+          message,
+          link: `/project-owner/projects/${projectId}/documents`,
+          senderId: project?.owner_id || '',
+          resourceType: 'PROJECT',
+          resourceId: projectId,
+        } as NotificationPayload,
+      );
+
       return response.content;
     } catch (error) {
       this.logger.error(`AI generation failed for step ${stepKey}: ${error.message}`);

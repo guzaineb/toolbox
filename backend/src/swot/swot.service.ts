@@ -3,6 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { LlmService } from '../ai/llm.service';
 import { StepStatus } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class SwotService {
@@ -12,6 +16,8 @@ export class SwotService {
     private readonly prisma: PrismaService,
     private readonly projects: ProjectsService,
     private readonly llm: LlmService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async getSwotAnalysis(projectId: string, userId: string) {
@@ -99,6 +105,21 @@ export class SwotService {
         model: response.model || 'llama-3.3-70b-versatile',
       },
     });
+
+    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Analyse SWOT' });
+    this.eventEmitter.emit(
+      NotificationEvent.AI_RESPONSE_READY,
+      {
+        event: NotificationEvent.AI_RESPONSE_READY,
+        recipients: [{ userId }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/swot`,
+        senderId: userId,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
 
     return saved;
   }

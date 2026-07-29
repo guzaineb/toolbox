@@ -3,6 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { LlmService } from '../ai/llm.service';
 import { DocumentPromptsService } from './document-prompts.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 export const DOCUMENT_DEFINITIONS = [
   { key: 'idea_sketch', title: "Fiche d'idée", icon: 'Lightbulb' },
@@ -37,6 +41,8 @@ export class DocumentsService {
     private readonly projects: ProjectsService,
     private readonly llm: LlmService,
     private readonly prompts: DocumentPromptsService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async getDocumentsList(projectId: string, userId: string) {
@@ -147,6 +153,26 @@ export class DocumentsService {
         model: response.model || 'llama-3.3-70b-versatile',
       },
     });
+
+    const isNew = !isUpdate;
+    const eventName = isNew ? NotificationEvent.DOCUMENT_GENERATED : NotificationEvent.DOCUMENT_UPDATED;
+    const { title, message } = isNew
+      ? this.messageBuilder.documentGenerated({ title: def.title })
+      : this.messageBuilder.documentUpdated({ title: def.title });
+
+    this.eventEmitter.emit(
+      eventName,
+      {
+        event: eventName,
+        recipients: [{ userId }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/documents`,
+        senderId: userId,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload,
+    );
 
     return {
       key: saved.document_key,

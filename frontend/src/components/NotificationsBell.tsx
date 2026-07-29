@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Bell, Check, CheckCheck } from 'lucide-react'
+import { Bell, CheckCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useNotifications } from '@/hooks/useNotifications'
-import { Notification, NOTIFICATION_TYPE_COLORS } from '@/types/notification'
+import { useNotificationsList, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications'
+import { NOTIFICATION_TYPE_COLORS } from '@/types/notification'
 
 function getRelativeTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -26,16 +26,15 @@ function NotificationItem({
   notification,
   onRead,
 }: {
-  notification: Notification
+  notification: { id: string; title: string; message: string; type: string; is_read: boolean; created_at: string }
   onRead: (id: string) => void
 }) {
-  const colorVariant = NOTIFICATION_TYPE_COLORS[notification.type] === 'green'
-    ? 'green'
-    : NOTIFICATION_TYPE_COLORS[notification.type] === 'red'
-      ? 'red'
-      : NOTIFICATION_TYPE_COLORS[notification.type] === 'amber'
-        ? 'amber'
-        : 'blue'
+  const color = NOTIFICATION_TYPE_COLORS[notification.type] ?? 'blue'
+  const dotColor =
+    color === 'green' ? 'bg-green-500' :
+    color === 'red' ? 'bg-red' :
+    color === 'amber' ? 'bg-amber' :
+    'bg-moss'
 
   return (
     <div
@@ -50,7 +49,7 @@ function NotificationItem({
       <div className="flex items-start gap-[10px]">
         <div className={cn(
           'mt-0.5 w-[6px] h-[6px] rounded-full flex-shrink-0',
-          notification.is_read ? 'bg-transparent' : 'bg-moss',
+          notification.is_read ? 'bg-transparent' : dotColor,
         )} />
         <div className="flex-1 min-w-0">
           <div className="text-[12px] font-semibold text-ink truncate">{notification.title}</div>
@@ -63,11 +62,15 @@ function NotificationItem({
 }
 
 export function NotificationsBell() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
+  const { data } = useNotificationsList({ limit: 8, archived: false })
+  const { data: unreadData } = useUnreadCount()
+  const markAsReadMut = useMarkAsRead()
+  const markAllAsReadMut = useMarkAllAsRead()
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const recentNotifications = notifications.slice(0, 8)
+  const notifications = data?.items ?? []
+  const unreadCount = unreadData?.count ?? 0
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -99,7 +102,7 @@ export function NotificationsBell() {
             <span className="font-syne text-[13px] font-bold text-ink">Notifications</span>
             {unreadCount > 0 && (
               <button
-                onClick={() => markAllAsRead()}
+                onClick={() => markAllAsReadMut.mutate()}
                 className="flex items-center gap-1 text-[11px] text-moss hover:text-moss-mid font-medium transition-colors"
               >
                 <CheckCheck size={13} />
@@ -109,16 +112,16 @@ export function NotificationsBell() {
           </div>
 
           <div className="max-h-[380px] overflow-y-auto">
-            {recentNotifications.length === 0 ? (
+            {notifications.length === 0 ? (
               <div className="px-[14px] py-8 text-center text-[12px] text-ink3">
                 Aucune notification
               </div>
             ) : (
-              recentNotifications.map((n) => (
+              notifications.map((n) => (
                 <NotificationItem
                   key={n.id}
                   notification={n}
-                  onRead={markAsRead}
+                  onRead={(id) => markAsReadMut.mutate(id)}
                 />
               ))
             )}

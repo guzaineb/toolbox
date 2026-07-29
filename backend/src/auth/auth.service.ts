@@ -1,11 +1,15 @@
 import { Injectable, BadRequestException, UnauthorizedException,} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +18,8 @@ export class AuthService {
     private mailService: MailService,
     private usersService: UsersService,
     private jwtService: JwtService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async register(registerDto: CreateUserDto) {
@@ -41,6 +47,20 @@ export class AuthService {
     } catch (error) {
       console.error('Erreur envoi email:', error);
     }
+
+    const { title, message } = this.messageBuilder.newUserRegistered({ email: user.email });
+    this.eventEmitter.emit(
+      NotificationEvent.NEW_USER_REGISTERED,
+      {
+        event: NotificationEvent.NEW_USER_REGISTERED,
+        recipients: [{ userId: user.id }],
+        title,
+        message,
+        senderId: user.id,
+        resourceType: 'USER',
+        resourceId: user.id,
+      } as NotificationPayload,
+    );
 
     return {
       message: 'Inscription réussie. Veuillez vérifier votre email avec le code reçu.',

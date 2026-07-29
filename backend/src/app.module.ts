@@ -10,7 +10,7 @@ import { ExpertModule } from './expert/expert.module';
 import { ProjectOwnerModule } from './project-owner/project-owner.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { ConfigModule } from '@nestjs/config';
-import { MailService } from './mail/mail.service';
+import { EventsModule } from './events/events.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -46,8 +46,9 @@ import { NotificationsModule } from './notifications/notifications.module';
     EvaluationsModule,
     CoachingsModule,
     NotificationsModule,
+    EventsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailService],
+  providers: [AppService],
 })
 export class AppModule { }

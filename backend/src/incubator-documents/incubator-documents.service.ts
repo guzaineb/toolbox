@@ -3,15 +3,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { VerifyDocumentDto } from './dto/verify-document.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class IncubatorDocumentsService {
   constructor(
     private prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) { }
 
   async create(incubatorId: string, fileUrl: string, userId: string, documentType: string) {
-    return this.prisma.incubatorDocument.create({
+    const doc = await this.prisma.incubatorDocument.create({
       data: {
         incubator_id: incubatorId,
         file_url: fileUrl,
@@ -20,6 +26,34 @@ export class IncubatorDocumentsService {
         verification_status: 'pending',
       },
     });
+
+    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
+    const members = await this.prisma.incubatorMember.findMany({
+      where: { incubator_id: incubatorId, status: 'active' },
+      select: { user_id: true },
+    });
+    const memberIds = members.map(m => m.user_id).filter(id => id !== userId);
+    if (memberIds.length > 0) {
+      const { title, message } = this.messageBuilder.documentPending({
+        documentType,
+        incubatorName: incubator?.name,
+      });
+      this.eventEmitter.emit(
+        NotificationEvent.DOCUMENT_PENDING,
+        {
+          event: NotificationEvent.DOCUMENT_PENDING,
+          recipients: memberIds.map(id => ({ userId: id })),
+          title,
+          message,
+          link: `/incubator/${incubatorId}/documents`,
+          senderId: userId,
+          resourceType: 'INCUBATOR',
+          resourceId: incubatorId,
+        } as NotificationPayload,
+      );
+    }
+
+    return doc;
   }
 
   async findByIncubator(incubatorId: string): Promise<any[]> {
@@ -80,13 +114,30 @@ export class IncubatorDocumentsService {
     await this.assertAdmin(incubatorId, userId);
     const doc = await this.findOne(id);
 
-    return this.prisma.incubatorDocument.update({
+    const result = await this.prisma.incubatorDocument.update({
       where: { id },
       data: {
         verification_status: dto.verification_status,
         rejection_reason: dto.verification_status === 'rejected' ? (dto.rejection_reason || null) : null,
       },
     });
+
+    const { title, message } = this.messageBuilder.documentVerified({ status: dto.verification_status as 'approved' | 'rejected' });
+    this.eventEmitter.emit(
+      NotificationEvent.DOCUMENT_VERIFIED,
+      {
+        event: NotificationEvent.DOCUMENT_VERIFIED,
+        recipients: [{ userId: doc.uploaded_by_user_id }],
+        title,
+        message,
+        link: `/incubator/${incubatorId}/documents`,
+        senderId: userId,
+        resourceType: 'INCUBATOR',
+        resourceId: incubatorId,
+      } as NotificationPayload,
+    );
+
+    return result;
   }
   private async assertMember(incubatorId: string, userId: string): Promise<void> {
     const member = await this.prisma.incubatorMember.findFirst({

@@ -1,5 +1,6 @@
 
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExpertiseArea } from '@prisma/client';
 import { ExpertScoringService } from './services/expert-scoring.service';
@@ -10,13 +11,18 @@ import { UpdateExpertDto } from './dto/update-expert.dto';
 import { AddExpertiseDto } from './dto/add-expertise.dto';
 import { plainToClass } from 'class-transformer';
 import { PublicExpertProfileDto } from './dto/public-expert-profile.dto';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class ExpertService {
   constructor(
     private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
     private scoringService: ExpertScoringService,
     private recommendationService: ExpertRecommendationService,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async create(userId: string, dto: CreateExpertDto) {
@@ -42,7 +48,23 @@ export class ExpertService {
       await this.addExpertiseBatch(userId, dto.expertiseAreaIds);
     }
 
-    return this.findById(savedExpert.id);
+    const expertProfile = await this.findById(savedExpert.id);
+
+    const { title, message } = this.messageBuilder.newExpertProfile();
+    this.eventEmitter.emit(
+      NotificationEvent.NEW_EXPERT,
+      {
+        event: NotificationEvent.NEW_EXPERT,
+        recipients: [{ userId }],
+        title,
+        message,
+        senderId: userId,
+        resourceType: 'EXPERT',
+        resourceId: expertProfile.id,
+      } as NotificationPayload,
+    );
+
+    return expertProfile;
   }
 
   async findByUser(userId: string) {

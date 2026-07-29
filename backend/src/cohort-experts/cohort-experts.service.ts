@@ -4,21 +4,30 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { CohortExpertRole, CohortExpertStatus } from '@prisma/client';
 import { CreateCohortExpertDto } from './dto/create-cohort-expert.dto';
 import { UpdateCohortExpertDto } from './dto/update-cohort-expert.dto';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class CohortExpertsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
 
   async assign(cohortId: string, dto: CreateCohortExpertDto, userId: string) {
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
+      include: { incubator: true },
     });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
-    if (!cohort.incubator_id) {
+    if (!cohort.incubator_id || !cohort.incubator) {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
@@ -61,7 +70,7 @@ export class CohortExpertsService {
       );
     }
 
-    return this.prisma.cohortExpert.create({
+    const assignment = await this.prisma.cohortExpert.create({
       data: {
         cohort_id: cohortId,
         expert_user_id: dto.expertUserId,
@@ -75,6 +84,29 @@ export class CohortExpertsService {
         },
       },
     });
+
+    const event = dto.role === 'COACH' ? NotificationEvent.ASSIGNED_AS_COACH : NotificationEvent.ASSIGNED_AS_JURY;
+    const { title, message } = this.messageBuilder.expertAssignment({
+      role: dto.role as 'JURY' | 'COACH',
+      cohortName: cohort.name,
+      incubatorName: cohort.incubator.name,
+    });
+
+    this.eventEmitter.emit(
+      event,
+      {
+        event,
+        recipients: [{ userId: dto.expertUserId }],
+        title,
+        message,
+        link: `/incubator/cohorts/${cohortId}`,
+        senderId: userId,
+        resourceType: 'COHORT',
+        resourceId: cohortId,
+      } as NotificationPayload,
+    );
+
+    return assignment;
   }
 
   async findByCohort(

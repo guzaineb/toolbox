@@ -3,11 +3,17 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateIncubatorDto } from './dto/create-incubator.dto';
 import { UpdateIncubatorDto } from './dto/update-incubator.dto';
 import { UpdateStatusDto, UpdateVerificationDto } from './dto/update-status.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class IncubatorsService {
   constructor(
     private prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async create(userId: string, dto: CreateIncubatorDto) {
@@ -33,6 +39,27 @@ export class IncubatorsService {
         status: 'active',
       },
     });
+
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'admin', is_active: true },
+      select: { id: true },
+    });
+    const adminIds = admins.map(a => a.id);
+    if (adminIds.length > 0) {
+      const { title, message } = this.messageBuilder.newIncubator({ name: saved.name });
+      this.eventEmitter.emit(
+        NotificationEvent.NEW_INCUBATOR,
+        {
+          event: NotificationEvent.NEW_INCUBATOR,
+          recipients: adminIds.map(id => ({ userId: id })),
+          title,
+          message,
+          senderId: userId,
+          resourceType: 'INCUBATOR',
+          resourceId: saved.id,
+        } as NotificationPayload,
+      );
+    }
 
     return saved;
   }
@@ -87,10 +114,38 @@ export class IncubatorsService {
 
   async updateStatus(id: string, dto: UpdateStatusDto, userId: string,) {
     await this.assertAdmin(id, userId);
-    return this.prisma.incubator.update({
+    const incubator = await this.prisma.incubator.findUnique({ where: { id }, select: { name: true } });
+    const updated = await this.prisma.incubator.update({
       where: { id },
       data: { status: dto.status },
     });
+
+    const members = await this.prisma.incubatorMember.findMany({
+      where: { incubator_id: id, status: 'active' },
+      select: { user_id: true },
+    });
+    const memberIds = members.map(m => m.user_id);
+    if (memberIds.length > 0) {
+      const { title, message } = this.messageBuilder.incubatorStatusChanged({
+        name: incubator?.name ?? 'Incubateur',
+        status: dto.status,
+      });
+      this.eventEmitter.emit(
+        NotificationEvent.INCUBATOR_STATUS_CHANGED,
+        {
+          event: NotificationEvent.INCUBATOR_STATUS_CHANGED,
+          recipients: memberIds.map(id => ({ userId: id })),
+          title,
+          message,
+          link: `/incubator/${id}`,
+          senderId: userId,
+          resourceType: 'INCUBATOR',
+          resourceId: id,
+        } as NotificationPayload,
+      );
+    }
+
+    return updated;
   }
 
   async updateVerification(id: string, dto: UpdateVerificationDto, userId: string,) {

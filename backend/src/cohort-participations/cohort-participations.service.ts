@@ -4,15 +4,19 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
-import { ParticipationStatus, ParticipationOrigin, CohortStatus, NotificationType } from '@prisma/client';
-import { NotificationsService } from '../notifications/notifications.service';
+import { ParticipationStatus, ParticipationOrigin, CohortStatus } from '@prisma/client';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class CohortParticipationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsService: NotificationsService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly notificationBuilder: NotificationMessageBuilder,
   ) {}
 
   // ==================== PORTUEUR — CANDIDATER ====================
@@ -28,6 +32,7 @@ export class CohortParticipationsService {
 
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
+      include: { incubator: { select: { name: true } } },
     });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
     if (cohort.status !== CohortStatus.OPEN) {
@@ -90,12 +95,24 @@ export class CohortParticipationsService {
 
       const memberIds = members.map((m) => m.user_id);
       if (memberIds.length > 0) {
-        await this.notificationsService.createMany(
-          memberIds,
-          NotificationType.APPLICATION_SUBMITTED,
-          'Nouvelle candidature',
-          `Le projet « ${project.name} » a soumis une candidature à la cohorte « ${cohort.name} ».`,
-          `/incubator/${cohort.incubator_id}/cohorts/${cohortId}`,
+        const { title, message } = this.notificationBuilder.applicationSubmitted({
+          projectName: project.name,
+          cohortName: cohort.name,
+          incubatorName: cohort.incubator!.name,
+        });
+
+        this.eventEmitter.emit(
+          NotificationEvent.APPLICATION_SUBMITTED,
+          {
+            event: NotificationEvent.APPLICATION_SUBMITTED,
+            recipients: memberIds.map((id) => ({ userId: id })),
+            title,
+            message,
+            link: `/incubator/${cohort.incubator_id}/cohorts/${cohortId}`,
+            senderId: userId,
+            resourceType: 'COHORT',
+            resourceId: cohortId,
+          } as NotificationPayload,
         );
       }
     }
@@ -108,6 +125,7 @@ export class CohortParticipationsService {
   async invite(cohortId: string, projectId: string, userId: string) {
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
+      include: { incubator: { select: { name: true } } },
     });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
     if (!cohort.incubator_id) {
@@ -149,12 +167,24 @@ export class CohortParticipationsService {
       },
     });
 
-    await this.notificationsService.create(
-      project.owner_id,
-      NotificationType.INVITATION_RECEIVED,
-      'Invitation à une cohorte',
-      `Vous avez été invité à rejoindre la cohorte « ${cohort.name} ».`,
-      `/project-owner/participations`,
+    const { title, message } = this.notificationBuilder.invitationSent({
+      projectName: project.name,
+      cohortName: cohort.name,
+      incubatorName: cohort.incubator!.name,
+    });
+
+    this.eventEmitter.emit(
+      NotificationEvent.INVITATION_SENT,
+      {
+        event: NotificationEvent.INVITATION_SENT,
+        recipients: [{ userId: project.owner_id }],
+        title,
+        message,
+        link: `/project-owner/participations`,
+        senderId: userId,
+        resourceType: 'COHORT',
+        resourceId: cohortId,
+      } as NotificationPayload,
     );
 
     return participation;
@@ -165,7 +195,7 @@ export class CohortParticipationsService {
   async accept(participationId: string, userId: string) {
     const participation = await this.prisma.cohortParticipation.findUnique({
       where: { id: participationId },
-      include: { cohort: true, project: true },
+      include: { cohort: { include: { incubator: { select: { name: true } } } }, project: true },
     });
     if (!participation) throw new NotFoundException('Candidature introuvable');
     if (!participation.cohort.incubator_id) {
@@ -206,24 +236,28 @@ export class CohortParticipationsService {
 
     const project = participation.project;
     if (project) {
-      const notificationType = participation.origin === ParticipationOrigin.INVITATION
-        ? NotificationType.INVITATION_ACCEPTED
-        : NotificationType.APPLICATION_ACCEPTED;
+      const eventType = participation.origin === ParticipationOrigin.INVITATION
+        ? NotificationEvent.INVITATION_ACCEPTED
+        : NotificationEvent.APPLICATION_ACCEPTED;
 
-      const title = participation.origin === ParticipationOrigin.INVITATION
-        ? 'Invitation acceptée'
-        : 'Candidature acceptée';
+      const { title, message } = this.notificationBuilder.participationAccepted({
+        origin: participation.origin === ParticipationOrigin.INVITATION ? 'invitation' : 'application',
+        cohortName: cohort.name,
+        incubatorName: participation.cohort.incubator!.name,
+      });
 
-      const message = participation.origin === ParticipationOrigin.INVITATION
-        ? `Votre invitation à la cohorte « ${cohort.name} » a été acceptée.`
-        : `Votre candidature à la cohorte « ${cohort.name} » a été acceptée.`;
-
-      await this.notificationsService.create(
-        project.owner_id,
-        notificationType,
-        title,
-        message,
-        `/project-owner/participations`,
+      this.eventEmitter.emit(
+        eventType,
+        {
+          event: eventType,
+          recipients: [{ userId: project.owner_id }],
+          title,
+          message,
+          link: `/project-owner/participations`,
+          senderId: userId,
+          resourceType: 'COHORT',
+          resourceId: participation.cohort_id,
+        } as NotificationPayload,
       );
     }
 
@@ -235,7 +269,7 @@ export class CohortParticipationsService {
   async reject(participationId: string, userId: string) {
     const participation = await this.prisma.cohortParticipation.findUnique({
       where: { id: participationId },
-      include: { cohort: true, project: true },
+      include: { cohort: { include: { incubator: { select: { name: true } } } }, project: true },
     });
     if (!participation) throw new NotFoundException('Candidature introuvable');
     if (!participation.cohort.incubator_id) {
@@ -262,24 +296,28 @@ export class CohortParticipationsService {
 
     const project = participation.project;
     if (project) {
-      const notificationType = participation.origin === ParticipationOrigin.INVITATION
-        ? NotificationType.INVITATION_REJECTED
-        : NotificationType.APPLICATION_REJECTED;
+      const eventType = participation.origin === ParticipationOrigin.INVITATION
+        ? NotificationEvent.INVITATION_REJECTED
+        : NotificationEvent.APPLICATION_REJECTED;
 
-      const title = participation.origin === ParticipationOrigin.INVITATION
-        ? 'Invitation refusée'
-        : 'Candidature refusée';
+      const { title, message } = this.notificationBuilder.participationRejected({
+        origin: participation.origin === ParticipationOrigin.INVITATION ? 'invitation' : 'application',
+        cohortName: participation.cohort.name,
+        incubatorName: participation.cohort.incubator!.name,
+      });
 
-      const message = participation.origin === ParticipationOrigin.INVITATION
-        ? `Votre invitation à la cohorte « ${participation.cohort.name} » a été refusée.`
-        : `Votre candidature à la cohorte « ${participation.cohort.name} » a été refusée.`;
-
-      await this.notificationsService.create(
-        project.owner_id,
-        notificationType,
-        title,
-        message,
-        `/project-owner/participations`,
+      this.eventEmitter.emit(
+        eventType,
+        {
+          event: eventType,
+          recipients: [{ userId: project.owner_id }],
+          title,
+          message,
+          link: `/project-owner/participations`,
+          senderId: userId,
+          resourceType: 'COHORT',
+          resourceId: participation.cohort_id,
+        } as NotificationPayload,
       );
     }
 
@@ -291,7 +329,7 @@ export class CohortParticipationsService {
   async withdraw(participationId: string, userId: string) {
     const participation = await this.prisma.cohortParticipation.findUnique({
       where: { id: participationId },
-      include: { project: true, cohort: true },
+      include: { project: true, cohort: { include: { incubator: { select: { name: true } } } } },
     });
     if (!participation) throw new NotFoundException('Candidature introuvable');
     if (participation.project.owner_id !== userId) {
@@ -341,12 +379,24 @@ export class CohortParticipationsService {
 
       const memberIds = members.map((m) => m.user_id);
       if (memberIds.length > 0) {
-        await this.notificationsService.createMany(
-          memberIds,
-          NotificationType.INVITATION_REJECTED,
-          'Invitation déclinée',
-          `Le projet « ${participation.project.name} » a décliné l'invitation à la cohorte « ${participation.cohort.name} ».`,
-          `/incubator/${participation.cohort.incubator_id}/cohorts/${participation.cohort_id}`,
+        const { title, message } = this.notificationBuilder.invitationDeclined({
+          projectName: participation.project.name,
+          cohortName: participation.cohort.name,
+          incubatorName: participation.cohort.incubator!.name,
+        });
+
+        this.eventEmitter.emit(
+          NotificationEvent.INVITATION_REJECTED,
+          {
+            event: NotificationEvent.INVITATION_REJECTED,
+            recipients: memberIds.map((id) => ({ userId: id })),
+            title,
+            message,
+            link: `/incubator/${participation.cohort.incubator_id}/cohorts/${participation.cohort_id}`,
+            senderId: userId,
+            resourceType: 'COHORT',
+            resourceId: participation.cohort_id,
+          } as NotificationPayload,
         );
       }
     }

@@ -3,13 +3,21 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { CohortExpertStatus, ParticipationStatus } from '@prisma/client';
 import { CreateCoachingDto, UpdateCoachingDto } from './dto/coaching.dto';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class CoachingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
 
   async create(projectId: string, dto: CreateCoachingDto, userId: string) {
     const project = await this.prisma.project.findUnique({
@@ -57,7 +65,7 @@ export class CoachingsService {
       );
     }
 
-    return this.prisma.coaching.create({
+    const coaching = await this.prisma.coaching.create({
       data: {
         project_id: projectId,
         coach_user_id: userId,
@@ -70,6 +78,25 @@ export class CoachingsService {
         },
       },
     });
+
+    if (project) {
+      const { title, message } = this.messageBuilder.coachingFeedback({ projectName: project.name });
+      this.eventEmitter.emit(
+        NotificationEvent.COACHING_FEEDBACK,
+        {
+          event: NotificationEvent.COACHING_FEEDBACK,
+          recipients: [{ userId: project.owner_id }],
+          title,
+          message,
+          link: `/project-owner/projects/${projectId}/coachings`,
+          senderId: userId,
+          resourceType: 'PROJECT',
+          resourceId: projectId,
+        } as NotificationPayload,
+      );
+    }
+
+    return coaching;
   }
 
   async update(id: string, dto: UpdateCoachingDto, userId: string) {

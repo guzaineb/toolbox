@@ -3,13 +3,21 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { CohortExpertStatus, ParticipationStatus } from '@prisma/client';
 import { CreateEvaluationDto, UpdateEvaluationDto } from './dto/evaluation.dto';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 @Injectable()
 export class EvaluationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
 
   async create(projectId: string, dto: CreateEvaluationDto, userId: string) {
     const project = await this.prisma.project.findUnique({
@@ -58,7 +66,7 @@ export class EvaluationsService {
       );
     }
 
-    return this.prisma.evaluation.create({
+    const evaluation = await this.prisma.evaluation.create({
       data: {
         project_id: projectId,
         jury_user_id: userId,
@@ -72,6 +80,25 @@ export class EvaluationsService {
         },
       },
     });
+
+    if (project) {
+      const { title, message } = this.messageBuilder.newEvaluation({ projectName: project.name });
+      this.eventEmitter.emit(
+        NotificationEvent.NEW_EVALUATION,
+        {
+          event: NotificationEvent.NEW_EVALUATION,
+          recipients: [{ userId: project.owner_id }],
+          title,
+          message,
+          link: `/project-owner/projects/${projectId}/evaluations`,
+          senderId: userId,
+          resourceType: 'PROJECT',
+          resourceId: projectId,
+        } as NotificationPayload,
+      );
+    }
+
+    return evaluation;
   }
 
   async update(id: string, dto: UpdateEvaluationDto, userId: string) {
