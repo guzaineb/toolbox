@@ -82,9 +82,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(isExpert ? [
       { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert' },
       { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert' },
-      { href: '/dashboard/expert/cohorts', label: 'cohots', icon: Users, section: 'expert' },
-      { href: '/dashboard/expert/evaluations', label: 'evatuation', icon: ClipboardCheck, section: 'expert' },
-      { href: '/dashboard/expert/coachings', label: 'coachings', icon: Presentation, section: 'expert' },
+      { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert' },
+      { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert' },
+      { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert' },
 
 
 

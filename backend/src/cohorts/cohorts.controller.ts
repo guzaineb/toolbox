@@ -40,6 +40,16 @@ export class CohortsController {
     return this.cohortsService.findOpenCohorts();
   }
 
+  @Get('cohorts/available')
+  findAvailableCohorts(@Req() req: { user: { id: string } }) {
+    return this.cohortsService.findAvailableCohorts(req.user.id);
+  }
+
+  @Get('cohorts/my')
+  findMyCohorts(@Req() req: { user: { id: string } }) {
+    return this.cohortsService.findMyCohorts(req.user.id);
+  }
+
   @Get('cohorts/:id')
   findOne(@Param('id') id: string) {
     return this.cohortsService.findOne(id);

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CohortStatus } from '@prisma/client';
+import { CohortStatus, CohortExpertStatus, ParticipationStatus } from '@prisma/client';
 import { CreateCohortDto } from './dto/create-cohort.dto';
 import { UpdateCohortDto } from './dto/update-cohort.dto';
 import { NotificationEvent } from '../events/notification-event.enum';
@@ -101,9 +101,136 @@ export class CohortsService {
       },
       include: {
         _count: { select: { participations: true } },
+        incubator: { select: { id: true, name: true } },
       },
       orderBy: { created_at: 'desc' },
     });
+  }
+
+  // ==================== COHORTES DISPONIBLES (pour un utilisateur connecté) ====================
+
+  async findAvailableCohorts(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const now = new Date();
+    const whereBase: any = {
+      status: CohortStatus.OPEN,
+      OR: [
+        { application_deadline: null },
+        { application_deadline: { gte: now } },
+      ],
+    };
+
+    if (user.role === 'expert') {
+      const myExpertIds = (
+        await this.prisma.cohortExpert.findMany({
+          where: {
+            expert_user_id: userId,
+            status: { in: [CohortExpertStatus.PENDING, CohortExpertStatus.ACTIVE] },
+          },
+          select: { cohort_id: true },
+        })
+      ).map((e) => e.cohort_id);
+
+      if (myExpertIds.length > 0) {
+        whereBase.NOT = { id: { in: myExpertIds } };
+      }
+    } else if (user.role === 'project_owner') {
+      const myProjects = await this.prisma.project.findMany({
+        where: { owner_id: userId },
+        select: { id: true },
+      });
+      const myProjectIds = myProjects.map((p) => p.id);
+
+      if (myProjectIds.length > 0) {
+        const myCohortIds = (
+          await this.prisma.cohortParticipation.findMany({
+            where: {
+              project_id: { in: myProjectIds },
+              status: { in: [ParticipationStatus.PENDING, ParticipationStatus.ACCEPTED] },
+            },
+            select: { cohort_id: true },
+          })
+        ).map((p) => p.cohort_id);
+
+        if (myCohortIds.length > 0) {
+          whereBase.NOT = { id: { in: myCohortIds } };
+        }
+      }
+    }
+
+    const cohorts = await this.prisma.cohort.findMany({
+      where: whereBase,
+      include: {
+        _count: { select: { participations: true } },
+        incubator: { select: { id: true, name: true } },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return cohorts.filter((c) => {
+      if (c.capacity && c.current_participants >= c.capacity) return false;
+      return true;
+    });
+  }
+
+  // ==================== MES COHORTES ====================
+
+  async findMyCohorts(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    if (user.role === 'expert') {
+      return this.prisma.cohortExpert.findMany({
+        where: { expert_user_id: userId },
+        include: {
+          cohort: {
+            include: {
+              incubator: { select: { id: true, name: true } },
+              _count: { select: { participations: true } },
+            },
+          },
+        },
+        orderBy: { assigned_at: 'desc' },
+      });
+    }
+
+    if (user.role === 'project_owner') {
+      const myProjects = await this.prisma.project.findMany({
+        where: { owner_id: userId },
+        select: { id: true, name: true, description: true, owner_id: true, created_at: true, updated_at: true },
+      });
+      const myProjectIds = myProjects.map((p) => p.id);
+
+      if (myProjectIds.length === 0) return [];
+
+      const participations = await this.prisma.cohortParticipation.findMany({
+        where: { project_id: { in: myProjectIds } },
+        include: {
+          cohort: {
+            include: {
+              incubator: { select: { id: true, name: true } },
+              _count: { select: { participations: true } },
+            },
+          },
+          project: {
+            select: { id: true, name: true, description: true, owner_id: true },
+          },
+        },
+        orderBy: { applied_at: 'desc' },
+      });
+
+      return participations;
+    }
+
+    return [];
   }
 
   async findOne(id: string) {

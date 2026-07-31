@@ -51,6 +51,16 @@ class CohortService {
     return response.data;
   }
 
+  async getAvailableCohorts(): Promise<Cohort[]> {
+    const response = await api.get('/cohorts/available');
+    return response.data;
+  }
+
+  async getMyCohorts(): Promise<CohortExpert[] | CohortParticipation[]> {
+    const response = await api.get('/cohorts/my');
+    return response.data;
+  }
+
   async getCohortById(id: string): Promise<Cohort> {
     const response = await api.get(`/cohorts/${id}`);
     return response.data;
@@ -176,6 +186,27 @@ class CohortService {
 
   async deactivateCohortExpert(id: string): Promise<CohortExpert> {
     const response = await api.delete(`/cohort-experts/${id}`);
+    return response.data;
+  }
+
+  // Expert invitations / applications
+  async inviteExpert(cohortId: string, dto: { expertUserId: string; role: string }): Promise<CohortExpert> {
+    const response = await api.post(`/cohorts/${cohortId}/experts/invite`, dto);
+    return response.data;
+  }
+
+  async applyAsExpert(cohortId: string, dto: { role: string }): Promise<CohortExpert> {
+    const response = await api.post(`/cohorts/${cohortId}/experts/apply`, dto);
+    return response.data;
+  }
+
+  async acceptExpertInvitation(id: string): Promise<CohortExpert> {
+    const response = await api.post(`/cohort-experts/${id}/accept-invitation`);
+    return response.data;
+  }
+
+  async rejectExpertInvitation(id: string): Promise<CohortExpert> {
+    const response = await api.post(`/cohort-experts/${id}/reject-invitation`);
     return response.data;
   }
 

@@ -190,7 +190,7 @@ export class CohortParticipationsService {
     return participation;
   }
 
-  // ==================== INCUBATEUR — ACCEPTER ====================
+  // ==================== ACCEPTER ====================
 
   async accept(participationId: string, userId: string) {
     const participation = await this.prisma.cohortParticipation.findUnique({
@@ -202,7 +202,13 @@ export class CohortParticipationsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(participation.cohort.incubator_id, userId);
+    if (participation.origin === ParticipationOrigin.INVITATION) {
+      if (participation.project.owner_id !== userId) {
+        throw new ForbiddenException("Seul le porteur de projet peut accepter l'invitation");
+      }
+    } else {
+      await this.assertCanManageCohorts(participation.cohort.incubator_id, userId);
+    }
 
     if (participation.status !== ParticipationStatus.PENDING) {
       throw new BadRequestException('Seules les candidatures en attente peuvent être acceptées');
@@ -264,7 +270,7 @@ export class CohortParticipationsService {
     return updated[0];
   }
 
-  // ==================== INCUBATEUR — REFUSER ====================
+  // ==================== REFUSER ====================
 
   async reject(participationId: string, userId: string) {
     const participation = await this.prisma.cohortParticipation.findUnique({
@@ -276,7 +282,13 @@ export class CohortParticipationsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(participation.cohort.incubator_id, userId);
+    if (participation.origin === ParticipationOrigin.INVITATION) {
+      if (participation.project.owner_id !== userId) {
+        throw new ForbiddenException("Seul le porteur de projet peut refuser l'invitation");
+      }
+    } else {
+      await this.assertCanManageCohorts(participation.cohort.incubator_id, userId);
+    }
 
     if (participation.status !== ParticipationStatus.PENDING) {
       throw new BadRequestException('Seules les candidatures en attente peuvent être refusées');

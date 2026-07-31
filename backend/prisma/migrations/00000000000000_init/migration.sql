@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('admin', 'expert', 'project_owner', 'incubator_membre');
 
 -- CreateEnum

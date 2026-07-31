@@ -90,6 +90,7 @@ enum CohortExpertRole {
 }
 
 enum CohortExpertStatus {
+  PENDING
   ACTIVE
   INACTIVE
 }
@@ -546,9 +547,11 @@ model CohortExpert {
   cohort_id       String
   expert_user_id  String
   role            CohortExpertRole
-  status          CohortExpertStatus @default(ACTIVE)
+  status          CohortExpertStatus @default(PENDING)
   assigned_by     String
   assigned_at     DateTime          @default(now())
+  invited_at      DateTime?
+  responded_at    DateTime?
 
   cohort      Cohort @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
   expertUser  User   @relation("ExpertUser", fields: [expert_user_id], references: [id])

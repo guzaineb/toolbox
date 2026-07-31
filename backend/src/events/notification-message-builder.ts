@@ -62,6 +62,96 @@ export class NotificationMessageBuilder {
     };
   }
 
+  // ==================== EXPERT INVITATION / APPLICATION ====================
+
+  expertInvitationSent(params: {
+    role: 'JURY' | 'COACH';
+    cohortName: string;
+    incubatorName: string;
+  }): { title: string; message: string } {
+    const roleLabel = params.role === 'JURY' ? 'Jury' : 'Coach';
+    return {
+      title: `Invitation comme ${roleLabel}`,
+      message: `Vous avez été invité à rejoindre la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} » en tant que ${roleLabel}.`,
+    };
+  }
+
+  expertApplicationSubmitted(params: {
+    role: 'JURY' | 'COACH';
+    cohortName: string;
+    incubatorName: string;
+  }): { title: string; message: string } {
+    const roleLabel = params.role === 'JURY' ? 'Jury' : 'Coach';
+    return {
+      title: `Candidature comme ${roleLabel}`,
+      message: `Un expert a déposé une candidature comme ${roleLabel} pour la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} ».`,
+    };
+  }
+
+  invitationAcceptedByRecipient(params: {
+    entityType: 'expert' | 'project';
+    projectName?: string;
+    role?: 'JURY' | 'COACH';
+    cohortName: string;
+    incubatorName: string;
+  }): { title: string; message: string } {
+    if (params.entityType === 'expert') {
+      const roleLabel = params.role === 'JURY' ? 'Jury' : 'Coach';
+      return {
+        title: 'Invitation acceptée',
+        message: `L'expert a accepté l'invitation comme ${roleLabel} pour la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} ».`,
+      };
+    }
+    return {
+      title: 'Invitation acceptée',
+      message: `Le projet « ${params.projectName} » a accepté l'invitation à rejoindre la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} ».`,
+    };
+  }
+
+  invitationRejectedByRecipient(params: {
+    entityType: 'expert' | 'project';
+    projectName?: string;
+    role?: 'JURY' | 'COACH';
+    cohortName: string;
+    incubatorName: string;
+  }): { title: string; message: string } {
+    if (params.entityType === 'expert') {
+      const roleLabel = params.role === 'JURY' ? 'Jury' : 'Coach';
+      return {
+        title: 'Invitation refusée',
+        message: `L'expert a refusé l'invitation comme ${roleLabel} pour la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} ».`,
+      };
+    }
+    return {
+      title: 'Invitation refusée',
+      message: `Le projet « ${params.projectName} » a refusé l'invitation à rejoindre la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} ».`,
+    };
+  }
+
+  expertApplicationAccepted(params: {
+    role: 'JURY' | 'COACH';
+    cohortName: string;
+    incubatorName: string;
+  }): { title: string; message: string } {
+    const roleLabel = params.role === 'JURY' ? 'Jury' : 'Coach';
+    return {
+      title: `Candidature acceptée`,
+      message: `Votre candidature comme ${roleLabel} pour la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} » a été acceptée.`,
+    };
+  }
+
+  expertApplicationRejected(params: {
+    role: 'JURY' | 'COACH';
+    cohortName: string;
+    incubatorName: string;
+  }): { title: string; message: string } {
+    const roleLabel = params.role === 'JURY' ? 'Jury' : 'Coach';
+    return {
+      title: `Candidature refusée`,
+      message: `Votre candidature comme ${roleLabel} pour la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} » a été refusée.`,
+    };
+  }
+
   // ==================== EXPERT ASSIGNMENT ====================
 
   expertAssignment(params: {

@@ -10,7 +10,7 @@ export type ParticipationOrigin = 'APPLICATION' | 'INVITATION';
 
 export type CohortExpertRole = 'JURY' | 'COACH';
 
-export type CohortExpertStatus = 'ACTIVE' | 'INACTIVE';
+export type CohortExpertStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE';
 
 /* =========================================================
    BASE ENTITIES
@@ -61,6 +61,8 @@ export interface CohortExpert {
   status: CohortExpertStatus;
   assigned_by: string;
   assigned_at: string;
+  invited_at?: string;
+  responded_at?: string;
 
   expertUser?: {
     id: string;
@@ -74,7 +76,12 @@ export interface CohortExpert {
       }>;
     };
   };
-  cohort?: { id: string; name: string };
+  cohort?: {
+    id: string;
+    name: string;
+    incubator?: { id: string; name: string };
+    _count?: { participations: number };
+  };
 }
 
 export interface Evaluation {
@@ -212,11 +219,13 @@ export const EXPERT_ROLE_COLORS: Record<CohortExpertRole, string> = {
 };
 
 export const EXPERT_STATUS_LABELS: Record<CohortExpertStatus, string> = {
+  PENDING: 'Invitation en attente',
   ACTIVE: 'Actif',
   INACTIVE: 'Inactif',
 };
 
 export const EXPERT_STATUS_COLORS: Record<CohortExpertStatus, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800',
   ACTIVE: 'bg-green-100 text-green-800',
   INACTIVE: 'bg-gray-100 text-gray-800',
 };
