@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateProfileDto } from '../profiles/dto/update-profile.dto';
+import { Language } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -37,7 +38,7 @@ export class UsersService {
             country: createUserDto.profile.country,
             city: createUserDto.profile.city,
             address: createUserDto.profile.address,
-            preferred_language: createUserDto.profile.preferredLanguage,
+            preferred_language: createUserDto.profile.preferredLanguage as Language,
             bio: createUserDto.profile.bio,
             linkedin: createUserDto.profile.linkedin,
           },

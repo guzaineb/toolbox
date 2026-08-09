@@ -5,7 +5,7 @@ import { RoleGuard } from '@/components/RoleGuard';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard allowedRoles={['admin']}>
+    <RoleGuard allowedRoles={['ADMIN']}>
       {children}
     </RoleGuard>
   );

@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class IdeaSketchDto {
@@ -49,7 +49,7 @@ export class MissionVisionDto {
 
 export class ContextSummaryDto {
   @IsOptional() @IsString() summary_text?: string;
-  @IsOptional() @IsString() generated_by_ai?: boolean;
+  @IsOptional() @IsBoolean() generated_by_ai?: boolean;
 }
 
 export class UpdateIdeaSketchDto extends PartialType(IdeaSketchDto) {}

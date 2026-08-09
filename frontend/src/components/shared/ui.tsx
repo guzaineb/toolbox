@@ -1,6 +1,27 @@
 import { cn } from '@/lib/utils'
 
 // ─────────────────────────────────────────────
+// LOADING STATES
+// ─────────────────────────────────────────────
+export function Spinner({ className }: { className?: string }) {
+  return (
+    <div
+      aria-label="Chargement"
+      className={cn('h-4 w-4 rounded-full border-2 border-moss/25 border-t-moss animate-spin', className)}
+    />
+  )
+}
+
+export function LoadingState({ label = 'Chargement…', className }: { label?: string; className?: string }) {
+  return (
+    <div className={cn('flex flex-col items-center justify-center gap-[10px] py-[48px] text-ink3', className)}>
+      <div className="h-[26px] w-[26px] rounded-full border-[3px] border-moss/20 border-t-moss animate-spin" />
+      <span className="text-[12px] font-semibold">{label}</span>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
 // BADGE
 // ─────────────────────────────────────────────
 type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary'

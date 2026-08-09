@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { MemberRole } from '@prisma/client';
 
 @Injectable()
 export class IncubatorMembersService {
@@ -26,12 +27,18 @@ export class IncubatorMembersService {
   ) {
     await this.assertCanManageMembers(incubatorId, currentUserId);
 
+    // Accepter les deux conventions : user_id (snake, API) ou userId (camel, rétro)
+    const targetUserId = dto.user_id ?? dto.userId;
+    if (!targetUserId) {
+      throw new BadRequestException('user_id est requis');
+    }
+
     const existing = await this.prisma.incubatorMember.findUnique({
-      where: { user_id_incubator_id: { user_id: dto.userId, incubator_id: incubatorId } },
+      where: { user_id_incubator_id: { user_id: targetUserId, incubator_id: incubatorId } },
     });
     if (existing) throw new BadRequestException('Cet utilisateur est déjà membre');
 
-    const user = await this.prisma.user.findUnique({ where: { id: dto.userId } });
+    const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
     const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId } });
@@ -39,12 +46,12 @@ export class IncubatorMembersService {
 
     const result = await this.prisma.incubatorMember.create({
       data: {
-        user_id: dto.userId,
+        user_id: targetUserId,
         incubator_id: incubatorId,
         role: dto.role as any,
         job_title: dto.job_title,
         can_manage_members: dto.can_manage_members || false,
-        status: 'active',
+        status: 'ACTIVE',
       },
     });
 
@@ -53,7 +60,7 @@ export class IncubatorMembersService {
       NotificationEvent.MEMBER_JOINED,
       {
         event: NotificationEvent.MEMBER_JOINED,
-        recipients: [{ userId: dto.userId }],
+        recipients: [{ userId: targetUserId }],
         title,
         message,
         link: `/incubator/${incubatorId}`,
@@ -98,9 +105,9 @@ export class IncubatorMembersService {
     });
     if (!member || member.incubator_id !== incubatorId) throw new NotFoundException('Membre introuvable');
 
-    if (dto.role && dto.role !== 'admin' && member.role === 'admin') {
+    if (dto.role && dto.role !== 'ADMIN' && member.role === 'ADMIN') {
       const adminCount = await this.prisma.incubatorMember.count({
-        where: { incubator_id: incubatorId, role: 'admin' },
+        where: { incubator_id: incubatorId, role: 'ADMIN' },
       });
       if (adminCount <= 1) {
         throw new BadRequestException("Il doit rester au moins un administrateur");
@@ -138,9 +145,9 @@ export class IncubatorMembersService {
     });
     if (!member || member.incubator_id !== incubatorId) throw new NotFoundException('Membre introuvable');
 
-    if (member.role === 'admin') {
+    if (member.role === 'ADMIN') {
       const adminCount = await this.prisma.incubatorMember.count({
-        where: { incubator_id: incubatorId, role: 'admin' },
+        where: { incubator_id: incubatorId, role: 'ADMIN' },
       });
       if (adminCount <= 1) {
         throw new BadRequestException("Impossible de supprimer le seul administrateur");
@@ -198,7 +205,7 @@ export class IncubatorMembersService {
         token,
         incubator_id: incubatorId,
         email: dto.email,
-        role: dto.role,
+        role: dto.role as MemberRole,
         job_title: dto.job_title,
         expires_at: expiresAt,
       },
@@ -242,7 +249,7 @@ export class IncubatorMembersService {
         incubator_id: invitation.incubator_id,
         role: invitation.role as any,
         job_title: invitation.job_title,
-        status: 'active',
+        status: 'ACTIVE',
       },
     });
 
@@ -259,7 +266,7 @@ export class IncubatorMembersService {
       where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
     });
     if (!member) throw new ForbiddenException('Vous n\'êtes pas membre de cet incubateur');
-    if (member.role !== 'admin' && !member.can_manage_members) {
+    if (member.role !== 'ADMIN' && !member.can_manage_members) {
       throw new ForbiddenException('Permissions insuffisantes pour gérer les membres');
     }
   }

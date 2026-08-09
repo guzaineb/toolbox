@@ -1,6 +1,3 @@
-import { IsUUID } from 'class-validator';
+import { ProjectIdParam } from '../../common/dto/project-id.param';
 
-export class ProjectIdParam {
-  @IsUUID()
-  projectId: string;
-}
+export { ProjectIdParam };

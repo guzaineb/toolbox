@@ -40,7 +40,7 @@ export class ExpertService {
         position: dto.position,
         years_of_experience: dto.years_of_experience,
         linkedin_url: dto.linkedin_url,
-        availability_status: 'available',
+        availability_status: 'AVAILABLE',
       },
     });
 
@@ -59,7 +59,7 @@ export class ExpertService {
         title,
         message,
         senderId: userId,
-        resourceType: 'EXPERT',
+        resourceType: 'USER',
         resourceId: expertProfile.id,
       } as NotificationPayload,
     );
@@ -416,7 +416,7 @@ async getPublicProfile(id: string) {
 
     return this.prisma.user.findMany({
       where: {
-        role: 'expert',
+        role: 'EXPERT',
         email: { contains: query.trim(), mode: 'insensitive' },
         expertProfile: { isNot: null },
       },

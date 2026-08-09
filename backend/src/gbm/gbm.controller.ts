@@ -50,6 +50,15 @@ export class GbmController {
     return this.gbmService.listStepItems(params.projectId, params.stepId, req.user.id);
   }
 
+  @Patch('step/:stepId/:itemId')
+  async updateStepItem(
+    @Req() req: { user: { id: string } },
+    @Param() params: GbmItemParams,
+    @Body() data: Record<string, any>,
+  ) {
+    return this.gbmService.updateStepItem(params.projectId, params.stepId, params.itemId, data, req.user.id);
+  }
+
   @Delete('step/:stepId/:itemId')
   async deleteStepItem(
     @Req() req: { user: { id: string } },

@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 export class ExpertFiltersDto {
   @IsOptional()
   @IsString()
-  @IsIn(['available', 'busy', 'unavailable'])
+  @IsIn(['AVAILABLE', 'BUSY', 'UNAVAILABLE'])
   availability?: string;
 
   @IsOptional()

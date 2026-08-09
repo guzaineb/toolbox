@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Check, Leaf } from 'lucide-react'
 import { ecoDesignService } from '@/services/eco-design.service'
-import { Button, Card, CardHeader, Badge, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
+import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
+import { DataProvenance } from '@/components/shared/DataProvenance'
+import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
+import type { ChecklistItem } from '@/types/project-context'
+import { projectContextService } from '@/services/project-context.service'
 
 const PHASES = [
   { id: 'preparer',    label: 'Préparer la valise', fields: ['equipe_eco','projet_eco','contexte_eco','vision_durable'] },
@@ -25,12 +30,24 @@ export default function EcoDesignPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [progress, setProgress] = useState<any>(null)
+  const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const data = await ecoDesignService.get(projectId)
-      setFormData(data || {})
+      try {
+        const prefill = await projectContextService.getPrefill(projectId, 'eco-design')
+        const merged = applyPrefill(data || {}, prefill)
+        setFormData(merged.data)
+        setProvenance(merged.provenance)
+        setChecklist(prefill.checklist || [])
+      } catch {
+        setFormData(data || {})
+        setProvenance({})
+        setChecklist([])
+      }
       const p = await ecoDesignService.getProgress(projectId)
       setProgress(p)
     } catch { setError('Erreur de chargement') }
@@ -92,6 +109,7 @@ export default function EcoDesignPage() {
         </CardHeader>
         <div className="p-5">
           {error && <ErrorAlert message={error} className="mb-4" />}
+          <MissingInfoCard checklist={checklist} />
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-moss" /></div>
           ) : (
@@ -105,6 +123,7 @@ export default function EcoDesignPage() {
                     onChange={e => setFormData((prev: any) => ({ ...prev, [f]: e.target.value }))}
                     rows={4}
                   />
+                  <DataProvenance provenance={provenance[f]} />
                 </div>
               ))}
             </div>

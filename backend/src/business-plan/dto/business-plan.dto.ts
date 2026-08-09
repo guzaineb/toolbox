@@ -1,10 +1,8 @@
-import { IsString, IsOptional, IsUUID, IsNumber, IsObject, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsObject, IsBoolean } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
+import { ProjectIdParam } from '../../common/dto/project-id.param';
 
-export class ProjectIdParam {
-  @IsUUID()
-  projectId: string;
-}
+export { ProjectIdParam };
 
 export class ManagementPlanDto {
   @IsOptional() @IsString() problemes_gestion?: string;

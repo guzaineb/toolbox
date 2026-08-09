@@ -32,20 +32,20 @@ interface Incubator {
   registration_number?: string
   tax_id?: string
   foundation_date?: string
-  verification_status: 'pending' | 'approved' | 'rejected'
-  status: 'active' | 'suspended'
+  verification_status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'ACTIVE' | 'SUSPENDED'
   members?: Member[]
   documents?: { id: string; verification_status: string }[]
 }
 
 const ROLE_LABEL: Record<string, string> = {
-  admin: 'Admin', program_manager: 'Program Mgr', cohort_manager: 'Cohort Mgr',
-  review_manager: 'Review Mgr', member: 'Membre', viewer: 'Viewer',
+  ADMIN: 'Admin', PROGRAM_MANAGER: 'Program Mgr', COHORT_MANAGER: 'Cohort Mgr',
+  REVIEW_MANAGER: 'Review Mgr', MEMBER: 'Membre', VIEWER: 'Viewer',
 }
 
 const ROLE_BADGE: Record<string, 'green' | 'blue' | 'amber' | 'gray'> = {
-  admin: 'green', program_manager: 'blue', cohort_manager: 'amber',
-  review_manager: 'blue', member: 'gray', viewer: 'gray',
+  ADMIN: 'green', PROGRAM_MANAGER: 'blue', COHORT_MANAGER: 'amber',
+  REVIEW_MANAGER: 'blue', MEMBER: 'gray', VIEWER: 'gray',
 }
 
 const AVATAR_COLORS = [
@@ -100,8 +100,8 @@ export default function IncubatorDetailPage() {
     )
   }
 
-  const activeMembers = incubator.members?.filter(m => m.status === 'active') ?? []
-  const approvedDocs = incubator.documents?.filter(d => d.verification_status === 'approved').length ?? 0
+  const activeMembers = incubator.members?.filter(m => m.status === 'ACTIVE') ?? []
+  const approvedDocs = incubator.documents?.filter(d => d.verification_status === 'APPROVED').length ?? 0
   const totalDocs = incubator.documents?.length ?? 0
   const docsProgress = totalDocs > 0 ? Math.round((approvedDocs / totalDocs) * 100) : 0
 
@@ -132,11 +132,11 @@ export default function IncubatorDetailPage() {
         <div className="flex-1 min-w-0">
           <h1 className="font-syne text-[22px] font-extrabold text-ink mb-1">{incubator.name}</h1>
           <div className="flex gap-[6px] mb-1.5 flex-wrap">
-            <Badge variant={incubator.verification_status === 'approved' ? 'green' : incubator.verification_status === 'rejected' ? 'red' : 'amber'}>
-              {incubator.verification_status === 'approved' ? 'Approuvé' : incubator.verification_status === 'rejected' ? 'Rejeté' : 'En attente'}
+            <Badge variant={incubator.verification_status === 'APPROVED' ? 'green' : incubator.verification_status === 'REJECTED' ? 'red' : 'amber'}>
+              {incubator.verification_status === 'APPROVED' ? 'Approuvé' : incubator.verification_status === 'REJECTED' ? 'Rejeté' : 'En attente'}
             </Badge>
-            <Badge variant={incubator.status === 'active' ? 'blue' : 'gray'}>
-              {incubator.status === 'active' ? 'Actif' : 'Suspendu'}
+            <Badge variant={incubator.status === 'ACTIVE' ? 'blue' : 'gray'}>
+              {incubator.status === 'ACTIVE' ? 'Actif' : 'Suspendu'}
             </Badge>
           </div>
           {incubator.description && (

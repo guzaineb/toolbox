@@ -1,14 +1,23 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('admin', 'expert', 'project_owner', 'incubator_membre');
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'EXPERT', 'PROJECT_OWNER', 'INCUBATOR_MEMBER');
 
 -- CreateEnum
-CREATE TYPE "MemberRole" AS ENUM ('admin', 'program_manager', 'cohort_manager', 'review_manager', 'member', 'viewer');
+CREATE TYPE "MemberRole" AS ENUM ('ADMIN', 'PROGRAM_MANAGER', 'COHORT_MANAGER', 'REVIEW_MANAGER', 'MEMBER', 'VIEWER');
 
 -- CreateEnum
-CREATE TYPE "VerificationStatus" AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE "AvailabilityStatus" AS ENUM ('AVAILABLE', 'BUSY', 'UNAVAILABLE');
 
 -- CreateEnum
-CREATE TYPE "IncubatorStatus" AS ENUM ('active', 'suspended');
+CREATE TYPE "IncubatorMemberStatus" AS ENUM ('ACTIVE', 'PENDING', 'SUSPENDED');
+
+-- CreateEnum
+CREATE TYPE "VerificationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "IncubatorStatus" AS ENUM ('ACTIVE', 'SUSPENDED');
+
+-- CreateEnum
+CREATE TYPE "Language" AS ENUM ('FR', 'EN', 'AR');
 
 -- CreateEnum
 CREATE TYPE "StepStatus" AS ENUM ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED');
@@ -23,10 +32,28 @@ CREATE TYPE "ParticipationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'W
 CREATE TYPE "FundingPhase" AS ENUM ('IDEATION', 'VALIDATION', 'EARLY_STAGE', 'GROWTH', 'SCALING');
 
 -- CreateEnum
-CREATE TYPE "ImpactPeriod" AS ENUM ('MENSUEL', 'TRIMESTRIEL', 'ANNUEL');
+CREATE TYPE "ImpactPeriod" AS ENUM ('MONTHLY', 'QUARTERLY', 'YEARLY');
 
 -- CreateEnum
 CREATE TYPE "DocumentStatus" AS ENUM ('NOT_GENERATED', 'GENERATED', 'UPDATED');
+
+-- CreateEnum
+CREATE TYPE "ParticipationOrigin" AS ENUM ('APPLICATION', 'INVITATION');
+
+-- CreateEnum
+CREATE TYPE "CohortExpertRole" AS ENUM ('JURY', 'COACH');
+
+-- CreateEnum
+CREATE TYPE "CohortExpertStatus" AS ENUM ('PENDING', 'ACTIVE', 'INACTIVE');
+
+-- CreateEnum
+CREATE TYPE "NotificationPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+
+-- CreateEnum
+CREATE TYPE "ResourceType" AS ENUM ('PROJECT', 'COHORT', 'INCUBATOR', 'EVALUATION', 'COACHING', 'DOCUMENT', 'USER', 'INCUBATOR_MEMBER');
+
+-- CreateEnum
+CREATE TYPE "NotificationType" AS ENUM ('APPLICATION_SUBMITTED', 'INVITATION_RECEIVED', 'APPLICATION_ACCEPTED', 'APPLICATION_REJECTED', 'INVITATION_ACCEPTED', 'INVITATION_REJECTED', 'MEMBER_JOINED', 'MEMBER_LEFT', 'COHORT_CREATED', 'COHORT_UPDATED', 'APPLICATION_OPEN', 'DOCUMENT_VERIFIED', 'NEW_EVALUATION', 'NEW_COACHING', 'COACHING_FEEDBACK', 'DOCUMENT_GENERATED', 'DOCUMENT_UPDATED', 'AI_RESPONSE_READY', 'STEP_COMPLETED', 'ASSIGNED_AS_COACH', 'ASSIGNED_AS_JURY', 'EVALUATION_REQUESTED', 'COACHING_SCHEDULED', 'PROJECT_MATCHED', 'PROJECT_UNMATCHED', 'NEW_USER_REGISTERED', 'NEW_INCUBATOR', 'NEW_EXPERT', 'USER_REPORTED', 'CRITICAL_ERROR', 'DOCUMENT_PENDING');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -39,8 +66,8 @@ CREATE TABLE "users" (
     "verification_code" TEXT,
     "verification_code_expires" TIMESTAMP(3),
     "last_login_at" TIMESTAMP(3),
-    "resetPasswordToken" TEXT,
-    "resetPasswordExpires" TIMESTAMP(3),
+    "reset_password_token" TEXT,
+    "reset_password_expires" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "role" "UserRole",
@@ -61,7 +88,7 @@ CREATE TABLE "user_profiles" (
     "city" TEXT,
     "address" TEXT,
     "bio" TEXT,
-    "preferred_language" TEXT NOT NULL DEFAULT 'fr',
+    "preferred_language" "Language" NOT NULL DEFAULT 'FR',
     "linkedin" TEXT,
 
     CONSTRAINT "user_profiles_pkey" PRIMARY KEY ("id")
@@ -85,7 +112,7 @@ CREATE TABLE "expert_profiles" (
     "position" TEXT,
     "years_of_experience" INTEGER,
     "linkedin_url" TEXT,
-    "availability_status" TEXT NOT NULL DEFAULT 'available',
+    "availability_status" "AvailabilityStatus" NOT NULL DEFAULT 'AVAILABLE',
     "user_id" TEXT NOT NULL,
 
     CONSTRAINT "expert_profiles_pkey" PRIMARY KEY ("id")
@@ -122,8 +149,8 @@ CREATE TABLE "incubators" (
     "country" TEXT,
     "city" TEXT,
     "logo_url" TEXT,
-    "verification_status" "VerificationStatus" NOT NULL DEFAULT 'pending',
-    "status" "IncubatorStatus" NOT NULL DEFAULT 'active',
+    "verification_status" "VerificationStatus" NOT NULL DEFAULT 'PENDING',
+    "status" "IncubatorStatus" NOT NULL DEFAULT 'ACTIVE',
     "created_by_user_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -136,11 +163,11 @@ CREATE TABLE "incubator_members" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "incubator_id" TEXT NOT NULL,
-    "role" "MemberRole" NOT NULL DEFAULT 'member',
+    "role" "MemberRole" NOT NULL DEFAULT 'MEMBER',
     "job_title" TEXT,
     "department" TEXT,
     "bio" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'active',
+    "status" "IncubatorMemberStatus" NOT NULL DEFAULT 'ACTIVE',
     "is_primary_contact" BOOLEAN NOT NULL DEFAULT false,
     "can_manage_programs" BOOLEAN NOT NULL DEFAULT false,
     "can_manage_cohorts" BOOLEAN NOT NULL DEFAULT false,
@@ -155,7 +182,7 @@ CREATE TABLE "incubator_invitations" (
     "token" TEXT NOT NULL,
     "incubator_id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
+    "role" "MemberRole" NOT NULL,
     "job_title" TEXT,
     "expires_at" TIMESTAMP(3) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -169,7 +196,7 @@ CREATE TABLE "incubator_documents" (
     "incubator_id" TEXT NOT NULL,
     "document_type" TEXT NOT NULL,
     "file_url" TEXT NOT NULL,
-    "verification_status" "VerificationStatus" NOT NULL DEFAULT 'pending',
+    "verification_status" "VerificationStatus" NOT NULL DEFAULT 'PENDING',
     "rejection_reason" TEXT,
     "uploaded_by_user_id" TEXT NOT NULL,
     "uploaded_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -211,8 +238,8 @@ CREATE TABLE "project_owner_experiences" (
     "title" TEXT NOT NULL,
     "organization" TEXT NOT NULL,
     "description" TEXT,
-    "start_date" TEXT,
-    "end_date" TEXT,
+    "start_date" TIMESTAMP(3),
+    "end_date" TIMESTAMP(3),
     "project_owner_profile_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -251,9 +278,12 @@ CREATE TABLE "cohorts" (
     "program" TEXT,
     "description" TEXT,
     "capacity" INTEGER,
+    "current_participants" INTEGER NOT NULL DEFAULT 0,
+    "application_deadline" TIMESTAMP(3),
     "start_date" TIMESTAMP(3),
     "end_date" TIMESTAMP(3),
     "status" "CohortStatus" NOT NULL DEFAULT 'DRAFT',
+    "incubator_id" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -266,6 +296,7 @@ CREATE TABLE "cohort_participations" (
     "cohort_id" TEXT NOT NULL,
     "project_id" TEXT NOT NULL,
     "status" "ParticipationStatus" NOT NULL DEFAULT 'PENDING',
+    "origin" "ParticipationOrigin" NOT NULL DEFAULT 'APPLICATION',
     "applied_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "invited_at" TIMESTAMP(3),
     "responded_at" TIMESTAMP(3),
@@ -273,6 +304,46 @@ CREATE TABLE "cohort_participations" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "cohort_participations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "cohort_experts" (
+    "id" TEXT NOT NULL,
+    "cohort_id" TEXT NOT NULL,
+    "expert_user_id" TEXT NOT NULL,
+    "role" "CohortExpertRole" NOT NULL,
+    "status" "CohortExpertStatus" NOT NULL DEFAULT 'PENDING',
+    "assigned_by" TEXT NOT NULL,
+    "assigned_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "invited_at" TIMESTAMP(3),
+    "responded_at" TIMESTAMP(3),
+
+    CONSTRAINT "cohort_experts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "evaluations" (
+    "id" TEXT NOT NULL,
+    "project_id" TEXT NOT NULL,
+    "jury_user_id" TEXT NOT NULL,
+    "score" DOUBLE PRECISION NOT NULL,
+    "comment" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "evaluations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "coachings" (
+    "id" TEXT NOT NULL,
+    "project_id" TEXT NOT NULL,
+    "coach_user_id" TEXT NOT NULL,
+    "feedback" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "coachings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -801,6 +872,47 @@ CREATE TABLE "generated_documents" (
     CONSTRAINT "generated_documents_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "notifications" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "sender_id" TEXT,
+    "title" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "type" "NotificationType" NOT NULL,
+    "priority" "NotificationPriority" NOT NULL DEFAULT 'MEDIUM',
+    "resource_type" "ResourceType",
+    "resource_id" TEXT,
+    "link" TEXT,
+    "is_read" BOOLEAN NOT NULL DEFAULT false,
+    "read_at" TIMESTAMP(3),
+    "is_archived" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "notification_preferences" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "in_app_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "email_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "realtime_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "coaching_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "evaluation_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "cohort_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "invitation_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "document_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "ai_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "admin_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "notification_preferences_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
@@ -823,7 +935,19 @@ CREATE UNIQUE INDEX "incubator_members_user_id_incubator_id_key" ON "incubator_m
 CREATE UNIQUE INDEX "incubator_invitations_token_key" ON "incubator_invitations"("token");
 
 -- CreateIndex
+CREATE INDEX "incubator_documents_incubator_id_idx" ON "incubator_documents"("incubator_id");
+
+-- CreateIndex
+CREATE INDEX "incubator_documents_uploaded_by_user_id_idx" ON "incubator_documents"("uploaded_by_user_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "project_owner_profiles_user_id_key" ON "project_owner_profiles"("user_id");
+
+-- CreateIndex
+CREATE INDEX "project_owner_skills_project_owner_profile_id_idx" ON "project_owner_skills"("project_owner_profile_id");
+
+-- CreateIndex
+CREATE INDEX "project_owner_experiences_project_owner_profile_id_idx" ON "project_owner_experiences"("project_owner_profile_id");
 
 -- CreateIndex
 CREATE INDEX "projects_name_idx" ON "projects"("name");
@@ -847,6 +971,9 @@ CREATE UNIQUE INDEX "step_progress_project_id_step_key_key" ON "step_progress"("
 CREATE INDEX "cohorts_status_idx" ON "cohorts"("status");
 
 -- CreateIndex
+CREATE INDEX "cohorts_incubator_id_idx" ON "cohorts"("incubator_id");
+
+-- CreateIndex
 CREATE INDEX "cohort_participations_cohort_id_idx" ON "cohort_participations"("cohort_id");
 
 -- CreateIndex
@@ -857,6 +984,33 @@ CREATE INDEX "cohort_participations_status_idx" ON "cohort_participations"("stat
 
 -- CreateIndex
 CREATE UNIQUE INDEX "cohort_participations_cohort_id_project_id_key" ON "cohort_participations"("cohort_id", "project_id");
+
+-- CreateIndex
+CREATE INDEX "cohort_experts_cohort_id_idx" ON "cohort_experts"("cohort_id");
+
+-- CreateIndex
+CREATE INDEX "cohort_experts_expert_user_id_idx" ON "cohort_experts"("expert_user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "cohort_experts_cohort_id_expert_user_id_role_key" ON "cohort_experts"("cohort_id", "expert_user_id", "role");
+
+-- CreateIndex
+CREATE INDEX "evaluations_project_id_idx" ON "evaluations"("project_id");
+
+-- CreateIndex
+CREATE INDEX "evaluations_jury_user_id_idx" ON "evaluations"("jury_user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "evaluations_project_id_jury_user_id_key" ON "evaluations"("project_id", "jury_user_id");
+
+-- CreateIndex
+CREATE INDEX "coachings_project_id_idx" ON "coachings"("project_id");
+
+-- CreateIndex
+CREATE INDEX "coachings_coach_user_id_idx" ON "coachings"("coach_user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "coachings_project_id_coach_user_id_key" ON "coachings"("project_id", "coach_user_id");
 
 -- CreateIndex
 CREATE INDEX "ai_interactions_project_id_idx" ON "ai_interactions"("project_id");
@@ -969,6 +1123,30 @@ CREATE INDEX "generated_documents_project_id_idx" ON "generated_documents"("proj
 -- CreateIndex
 CREATE UNIQUE INDEX "generated_documents_project_id_document_key_key" ON "generated_documents"("project_id", "document_key");
 
+-- CreateIndex
+CREATE INDEX "notifications_user_id_idx" ON "notifications"("user_id");
+
+-- CreateIndex
+CREATE INDEX "notifications_user_id_is_read_idx" ON "notifications"("user_id", "is_read");
+
+-- CreateIndex
+CREATE INDEX "notifications_user_id_is_archived_idx" ON "notifications"("user_id", "is_archived");
+
+-- CreateIndex
+CREATE INDEX "notifications_user_id_type_idx" ON "notifications"("user_id", "type");
+
+-- CreateIndex
+CREATE INDEX "notifications_sender_id_idx" ON "notifications"("sender_id");
+
+-- CreateIndex
+CREATE INDEX "notifications_created_at_idx" ON "notifications"("created_at");
+
+-- CreateIndex
+CREATE INDEX "notifications_resource_type_resource_id_idx" ON "notifications"("resource_type", "resource_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "notification_preferences_user_id_key" ON "notification_preferences"("user_id");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "user_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -1009,10 +1187,34 @@ ALTER TABLE "project_owner_experiences" ADD CONSTRAINT "project_owner_experience
 ALTER TABLE "step_progress" ADD CONSTRAINT "step_progress_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "cohorts" ADD CONSTRAINT "cohorts_incubator_id_fkey" FOREIGN KEY ("incubator_id") REFERENCES "incubators"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "cohort_participations" ADD CONSTRAINT "cohort_participations_cohort_id_fkey" FOREIGN KEY ("cohort_id") REFERENCES "cohorts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "cohort_participations" ADD CONSTRAINT "cohort_participations_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cohort_experts" ADD CONSTRAINT "cohort_experts_cohort_id_fkey" FOREIGN KEY ("cohort_id") REFERENCES "cohorts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cohort_experts" ADD CONSTRAINT "cohort_experts_expert_user_id_fkey" FOREIGN KEY ("expert_user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cohort_experts" ADD CONSTRAINT "cohort_experts_assigned_by_fkey" FOREIGN KEY ("assigned_by") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_jury_user_id_fkey" FOREIGN KEY ("jury_user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "coachings" ADD CONSTRAINT "coachings_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "coachings" ADD CONSTRAINT "coachings_coach_user_id_fkey" FOREIGN KEY ("coach_user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ai_interactions" ADD CONSTRAINT "ai_interactions_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1118,4 +1320,13 @@ ALTER TABLE "swot_analyses" ADD CONSTRAINT "swot_analyses_project_id_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "generated_documents" ADD CONSTRAINT "generated_documents_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "notification_preferences" ADD CONSTRAINT "notification_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

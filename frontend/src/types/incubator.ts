@@ -2,13 +2,13 @@ export interface IncubatorMember {
   id: string;
   user_id: string;
   incubator_id: string;
-  role: 'admin' | 'program_manager' | 'cohort_manager' | 'review_manager' | 'member' | 'viewer';
+  role: 'ADMIN' | 'PROGRAM_MANAGER' | 'COHORT_MANAGER' | 'REVIEW_MANAGER' | 'MEMBER' | 'VIEWER';
   job_title?: string;
   is_primary_contact: boolean;
   can_manage_members: boolean;
   can_manage_programs: boolean;
   can_manage_cohorts: boolean;
-  status: 'active' | 'inactive';
+  status: 'ACTIVE' | 'PENDING' | 'SUSPENDED';
   user?: {
     id: string;
     email: string;
@@ -23,7 +23,7 @@ export interface IncubatorMember {
 export interface IncubatorDocument {
   id: string;
   document_type: string;
-  verification_status: 'pending' | 'approved' | 'rejected';
+  verification_status: 'PENDING' | 'APPROVED' | 'REJECTED';
   file_url: string;
   uploaded_at: string;
 }
@@ -45,8 +45,8 @@ export interface Incubator {
   country?: string;
   city?: string;
   logo_url?: string;
-  verification_status: 'pending' | 'approved' | 'rejected';
-  status: 'active' | 'suspended';
+  verification_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'ACTIVE' | 'SUSPENDED';
   created_by_user_id: string;
   created_at: string;
   updated_at: string;
@@ -73,11 +73,11 @@ export interface CreateIncubatorDto {
 export type UpdateIncubatorDto = Partial<CreateIncubatorDto>;
 
 export interface UpdateStatusDto {
-  status: 'active' | 'suspended';
+  status: 'ACTIVE' | 'SUSPENDED';
 }
 
 export interface UpdateVerificationDto {
-  verification_status: 'approved' | 'rejected';
+  verification_status: 'APPROVED' | 'REJECTED';
 }
 
 export interface IncubatorDashboard {

@@ -1,8 +1,15 @@
 import { IsUUID, IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class AddMemberDto {
+  // Conformité API (snake_case) : utilisé par le frontend
+  @IsOptional()
   @IsUUID()
-  userId: string;
+  user_id?: string;
+
+  // Rétrocompatibilité : ancien contrat camelCase
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
 
   @IsString()
   role: string;

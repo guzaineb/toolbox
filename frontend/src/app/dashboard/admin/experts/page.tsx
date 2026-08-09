@@ -62,9 +62,9 @@ export default function AdminExpertsPage() {
           className="px-4 py-2 border border-gray-200 rounded-lg"
         >
           <option value="all">Tous les statuts</option>
-          <option value="available">Disponibles</option>
-          <option value="busy">Occupés</option>
-          <option value="unavailable">Indisponibles</option>
+          <option value="AVAILABLE">Disponibles</option>
+          <option value="BUSY">Occupés</option>
+          <option value="UNAVAILABLE">Indisponibles</option>
         </select>
       </div>
 

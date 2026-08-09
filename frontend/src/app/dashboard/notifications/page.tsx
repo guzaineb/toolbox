@@ -38,7 +38,7 @@ import {
   AlertOctagon,
   MoreHorizontal,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getRelativeTime } from '@/lib/utils'
 import {
   useNotificationsInfinite,
   useUnreadCount,
@@ -66,21 +66,6 @@ import {
 } from '@/types/notification'
 
 type FilterTab = 'all' | 'unread' | 'archived'
-
-function getRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  const diffH = Math.floor(diffMin / 60)
-  const diffD = Math.floor(diffH / 24)
-
-  if (diffMin < 1) return "à l'instant"
-  if (diffMin < 60) return `il y a ${diffMin}min`
-  if (diffH < 24) return `il y a ${diffH}h`
-  if (diffD < 7) return `il y a ${diffD}j`
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-}
 
 const iconMap: Record<string, React.ReactNode> = {
   FilePlus: <FilePlus size={16} />,

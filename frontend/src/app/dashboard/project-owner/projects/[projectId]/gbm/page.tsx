@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, FileDown } from 'lucide-react'
-import { GbmStepper } from '@/components/gbm/GbmStepper'
+import { GbmWizard } from '@/components/gbm/GbmWizard'
 import { Button } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
 
-export default function GbmPage() {
+function GbmPageContent() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.projectId as string
@@ -33,7 +33,7 @@ export default function GbmPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="max-w-7xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
         <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
@@ -46,7 +46,15 @@ export default function GbmPage() {
           <FileDown size={14} /> Télécharger BMC (PDF)
         </Button>
       </div>
-      <GbmStepper projectId={projectId} />
+      <GbmWizard projectId={projectId} />
     </div>
+  )
+}
+
+export default function GbmPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-sm text-ink3">Chargement du GBM…</div>}>
+      <GbmPageContent />
+    </Suspense>
   )
 }

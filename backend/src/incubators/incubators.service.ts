@@ -31,17 +31,17 @@ export class IncubatorsService {
       data: {
         user_id: userId,
         incubator_id: saved.id,
-        role: 'admin',
+        role: 'ADMIN',
         is_primary_contact: true,
         can_manage_members: true,
         can_manage_programs: true,
         can_manage_cohorts: true,
-        status: 'active',
+        status: 'ACTIVE',
       },
     });
 
     const admins = await this.prisma.user.findMany({
-      where: { role: 'admin', is_active: true },
+      where: { role: 'ADMIN', is_active: true },
       select: { id: true },
     });
     const adminIds = admins.map(a => a.id);
@@ -121,7 +121,7 @@ export class IncubatorsService {
     });
 
     const members = await this.prisma.incubatorMember.findMany({
-      where: { incubator_id: id, status: 'active' },
+      where: { incubator_id: id, status: 'ACTIVE' },
       select: { user_id: true },
     });
     const memberIds = members.map(m => m.user_id);
@@ -295,7 +295,7 @@ export class IncubatorsService {
 
   private async assertAdmin(incubatorId: string, userId: string): Promise<void> {
     const member = await this.prisma.incubatorMember.findFirst({
-      where: { incubator_id: incubatorId, user_id: userId, role: 'admin' },
+      where: { incubator_id: incubatorId, user_id: userId, role: 'ADMIN' },
     });
     if (!member) {
       throw new ForbiddenException("Vous n'êtes pas administrateur de cet incubateur");
@@ -314,7 +314,7 @@ export class IncubatorsService {
     if (!member) {
       throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     }
-    if (member.role !== 'admin' && !member.can_manage_cohorts) {
+    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
       throw new ForbiddenException(
         'Permissions insuffisantes pour accéder au dashboard',
       );

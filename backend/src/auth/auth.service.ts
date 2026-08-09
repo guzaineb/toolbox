@@ -130,6 +130,46 @@ export class AuthService {
     return { message: 'Email vérifié avec succès.' };
   }
 
+  async resendVerification(email: string): Promise<{ message: string }> {
+    if (!email) {
+      throw new BadRequestException('Email requis');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new BadRequestException('Aucun compte associé à cet email.');
+    }
+    if (user.is_verified) {
+      return { message: 'Cet email est déjà vérifié.' };
+    }
+
+    const verificationToken = uuidv4();
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeExpires = new Date();
+    codeExpires.setHours(codeExpires.getHours() + 1);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verification_token: verificationToken,
+        verification_code: verificationCode,
+        verification_code_expires: codeExpires,
+      },
+    });
+
+    try {
+      await this.mailService.sendVerificationEmail(
+        user.email,
+        verificationCode,
+        verificationToken,
+      );
+    } catch (error) {
+      console.error('Erreur envoi email:', error);
+    }
+
+    return { message: 'Un nouveau code de vérification a été envoyé.' };
+  }
+
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
 
@@ -194,8 +234,8 @@ async forgotPassword(email: string): Promise<{ message: string }> {
   await this.prisma.user.update({
     where: { id: user.id },
     data: {
-      resetPasswordToken: token,
-      resetPasswordExpires: expires,
+      reset_password_token: token,
+      reset_password_expires: expires,
     },
   });
 
@@ -206,13 +246,13 @@ async forgotPassword(email: string): Promise<{ message: string }> {
 
 async resetPassword(token: string, newPassword: string) {
   const user = await this.prisma.user.findFirst({
-    where: { resetPasswordToken: token },
+    where: { reset_password_token: token },
   });
   if (!user) {
     throw new BadRequestException('Token invalide ou expiré.');
   }
 
-  if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+  if (!user.reset_password_expires || user.reset_password_expires < new Date()) {
     throw new BadRequestException('Le token a expiré. Refaites une demande.');
   }
 
@@ -221,8 +261,8 @@ async resetPassword(token: string, newPassword: string) {
     where: { id: user.id },
     data: {
       password_hash: hashedPassword,
-      resetPasswordToken: null,
-      resetPasswordExpires: null,
+      reset_password_token: null,
+      reset_password_expires: null,
     },
   });
 

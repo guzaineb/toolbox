@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectOwnerDto } from './dto/create-project-owner.dto';
-import { CreateSkillDto } from './dto/ceate-skill.dto';
-import { CreateExperienceDto } from './dto/create.experience.dto';
+import { CreateSkillDto } from './dto/create-skill.dto';
+import { CreateExperienceDto } from './dto/create-experience.dto';
 
 @Injectable()
 export class ProjectOwnerService {

@@ -22,7 +22,7 @@ export function useMyIncubatorRole(incubatorId: string | undefined) {
       .finally(() => setLoading(false));
   }, [incubatorId]);
 
-  const isAdmin = myRole?.role === 'admin';
+  const isAdmin = myRole?.role === 'ADMIN';
   const canManageMembers = isAdmin || myRole?.can_manage_members;
 
   return { myRole, loading, isAdmin, canManageMembers };

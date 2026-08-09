@@ -8,6 +8,11 @@ import {
 } from 'lucide-react'
 import { Card, CardHeader, Badge, Progress, Button } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
+import { businessPlanService } from '@/services/business-plan.service'
+import { ecoDesignService } from '@/services/eco-design.service'
+import { marketService } from '@/services/market.service'
+import { impactService } from '@/services/impact.service'
+import { fundingService } from '@/services/funding.service'
 import api from '@/services/api'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +34,8 @@ const MODULES = [
   { key: 'documents',    label: 'Documents',                   icon: FileText,   color: 'text-teal-600',  bg: 'bg-teal-50' },
 ]
 
+const PROGRESS_MODULE_KEYS = ['gbm', 'business-plan', 'eco-design', 'funding', 'market', 'impact']
+
 export default function ProjectDashboardPage() {
   const params = useParams()
   const router = useRouter()
@@ -43,15 +50,36 @@ export default function ProjectDashboardPage() {
         const { data: p } = await api.get(`/projects/${projectId}`)
         if (p) setProject(p)
 
+        const [gbm, bp, eco, market, impact, funding] = await Promise.allSettled([
+          gbmService.getProgress(projectId),
+          businessPlanService.getProgress(projectId),
+          ecoDesignService.getProgress(projectId),
+          marketService.getProgress(projectId),
+          impactService.getProgress(projectId),
+          fundingService.getAssessment(projectId),
+        ])
+
         const prog: Record<string, number> = {}
-        const gbmProg = await gbmService.getProgress(projectId)
-        prog.gbm = gbmProg.percentage
+        if (gbm.status === 'fulfilled') prog.gbm = gbm.value.percentage ?? 0
+        if (bp.status === 'fulfilled') prog['business-plan'] = bp.value.percentage ?? 0
+        if (eco.status === 'fulfilled') prog['eco-design'] = eco.value.percentage ?? 0
+        if (market.status === 'fulfilled') prog.market = market.value.percentage ?? 0
+        if (impact.status === 'fulfilled') prog.impact = impact.value.percentage ?? 0
+        if (funding.status === 'fulfilled') {
+          const score = funding.value.score_maturite ?? 0
+          prog.funding = score > 0 ? Math.round((score / 12) * 100) : 0
+        }
         setProgress(prog)
       } catch { /* ignore */ }
       finally { setLoading(false) }
     }
     load()
   }, [projectId])
+
+  const overall = Math.round(
+    PROGRESS_MODULE_KEYS.reduce((sum, key) => sum + (progress[key] || 0), 0) /
+      PROGRESS_MODULE_KEYS.length,
+  )
 
   if (loading) {
     return (
@@ -92,10 +120,10 @@ export default function ProjectDashboardPage() {
       <Card className="p-4">
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <div className="text-xs font-semibold text-ink2 mb-2">Progression globale</div>
-            <Progress value={progress.gbm || 0} />
+            <div className="text-xs font-semibold text-ink2 mb-2">Progression globale (tous modules)</div>
+            <Progress value={overall} />
           </div>
-          <div className="text-lg font-extrabold text-moss">{progress.gbm || 0}%</div>
+          <div className="text-lg font-extrabold text-moss">{overall}%</div>
         </div>
       </Card>
 
@@ -124,10 +152,21 @@ export default function ProjectDashboardPage() {
                 <ChevronRight size={14} className="text-ink3" />
               </CardHeader>
               <div className="p-4 flex items-center gap-3">
-                <Progress value={mod.key === 'gbm' ? (progress.gbm || 0) : 0} />
-                <span className="text-xs font-bold text-moss flex-shrink-0">
-                  {mod.key === 'gbm' ? `${progress.gbm || 0}%` : '—'}
-                </span>
+                {mod.key === 'documents' ? (
+                  <span className="text-xs font-bold text-moss flex-shrink-0">—</span>
+                ) : (
+                  <>
+                    <Progress value={progress[mod.key] || 0} />
+                    <span className="text-xs font-bold text-moss flex-shrink-0">
+                      {progress[mod.key] || 0}%
+                    </span>
+                    {progress[mod.key] === 100 && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-moss/10 text-moss font-bold">
+                        Complet ✓
+                      </span>
+                    )}
+                  </>
+                )}
                 {isLocked && (
                   <span className="text-[10px] px-2 py-0.5 rounded bg-ink/10 text-ink3 font-semibold">
                     GBM requis

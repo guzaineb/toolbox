@@ -12,17 +12,17 @@ interface Incubator {
   slug: string
   city?: string
   country?: string
-  verification_status: 'pending' | 'approved' | 'rejected'
-  status: 'active' | 'suspended'
+  verification_status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'ACTIVE' | 'SUSPENDED'
   members?: { id: string }[]
   documents?: { id: string; verification_status: string }[]
 }
 
 const VERIFICATION_LABEL: Record<string, string> = {
-  pending: 'En attente', approved: 'Approuvé', rejected: 'Rejeté',
+  PENDING: 'En attente', APPROVED: 'Approuvé', REJECTED: 'Rejeté',
 }
 const VERIFICATION_VARIANT: Record<string, 'amber' | 'green' | 'red'> = {
-  pending: 'amber', approved: 'green', rejected: 'red',
+  PENDING: 'amber', APPROVED: 'green', REJECTED: 'red',
 }
 
 export default function IncubatorListPage() {
@@ -81,7 +81,7 @@ export default function IncubatorListPage() {
       ) : (
         <div className="space-y-[10px]">
           {incubators.map((inc) => {
-            const approvedDocs = inc.documents?.filter((d) => d.verification_status === 'approved').length ?? 0
+            const approvedDocs = inc.documents?.filter((d) => d.verification_status === 'APPROVED').length ?? 0
             const totalDocs = inc.documents?.length ?? 0
 
             return (
@@ -102,8 +102,8 @@ export default function IncubatorListPage() {
                       <Badge variant={VERIFICATION_VARIANT[inc.verification_status] ?? 'gray'}>
                         {VERIFICATION_LABEL[inc.verification_status] ?? inc.verification_status}
                       </Badge>
-                      <Badge variant={inc.status === 'active' ? 'blue' : 'gray'}>
-                        {inc.status === 'active' ? 'Actif' : 'Suspendu'}
+                      <Badge variant={inc.status === 'ACTIVE' ? 'blue' : 'gray'}>
+                        {inc.status === 'ACTIVE' ? 'Actif' : 'Suspendu'}
                       </Badge>
                     </div>
                   </div>

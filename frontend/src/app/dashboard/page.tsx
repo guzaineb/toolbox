@@ -21,16 +21,16 @@ export default function DashboardPage() {
       <p className="text-[13px] text-text-2 mb-7">Voici un aperçu de votre activité sur ToolBox</p>
 
       <div className="grid grid-cols-3 gap-2.5 mb-7">
-        {role === 'incubator_membre' && (
+        {role === 'INCUBATOR_MEMBER' && (
           <StatBox num={incubatorCount} label="Incubateur(s) rejoint(s)" />
         )}
-        {role === 'expert' && (
+        {role === 'EXPERT' && (
           <StatBox num={hasExpertProfile ? '1' : '0'} label="Profil expert" />
         )}
-        {role === 'project_owner' && (
+        {role === 'PROJECT_OWNER' && (
           <StatBox num={hasProjectOwnerProfile ? '1' : '0'} label="Profil porteur" />
         )}
-        {role === 'admin' && (
+        {role === 'ADMIN' && (
           <StatBox num="Admin" label="Rôle administrateur" />
         )}
         <StatBox num={user?.is_verified ? '✓' : '—'} label="Email vérifié" />
@@ -47,7 +47,7 @@ export default function DashboardPage() {
             <div className="text-[12px] text-text-2">Consultez et modifiez vos informations</div>
           </Card>
         </Link>
-        {role === 'project_owner' && (
+        {role === 'PROJECT_OWNER' && (
           <Link href="/dashboard/project-owner/projects">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <div className="text-[13px] font-semibold mb-1">Mes projets</div>
@@ -55,7 +55,7 @@ export default function DashboardPage() {
             </Card>
           </Link>
         )}
-        {role === 'expert' && (
+        {role === 'EXPERT' && (
           <Link href="/dashboard/expert">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <div className="text-[13px] font-semibold mb-1">Profil expert</div>
@@ -63,7 +63,7 @@ export default function DashboardPage() {
             </Card>
           </Link>
         )}
-        {role === 'incubator_membre' && (
+        {role === 'INCUBATOR_MEMBER' && (
           <Link href="/dashboard/incubator">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <div className="text-[13px] font-semibold mb-1">Mon incubateur</div>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
             </Card>
           </Link>
         )}
-        {role === 'admin' && (
+        {role === 'ADMIN' && (
           <Link href="/dashboard/admin/experts">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <div className="text-[13px] font-semibold mb-1">Administration</div>

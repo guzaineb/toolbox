@@ -138,7 +138,7 @@ export default function PublicExpertProfilePage() {
             <p className="text-sm text-gray-500">Années d'expérience</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 capitalize">{profile.availability_status === 'available' ? 'Disponible' : profile.availability_status === 'busy' ? 'Occupé' : 'Indisponible'}</p>
+            <p className="text-2xl font-bold text-gray-900 capitalize">{profile.availability_status === 'AVAILABLE' ? 'Disponible' : profile.availability_status === 'BUSY' ? 'Occupé' : 'Indisponible'}</p>
             <p className="text-sm text-gray-500">Statut</p>
           </div>
           <div className="text-center">

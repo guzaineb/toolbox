@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Check, LineChart, Sparkles } from 'lucide-react'
 import { impactService } from '@/services/impact.service'
-import { Button, Card, CardHeader, Badge, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
+import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
+import { DataProvenance } from '@/components/shared/DataProvenance'
+import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
+import type { ChecklistItem } from '@/types/project-context'
+import { projectContextService } from '@/services/project-context.service'
 
 const SECTIONS = [
   { id: 'env',        label: 'KPIs Environnementaux' },
@@ -28,12 +33,24 @@ export default function ImpactPage() {
   const [error, setError] = useState('')
   const [genLoading, setGenLoading] = useState(false)
   const [progress, setProgress] = useState<any>(null)
+  const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const data = await impactService.get(projectId)
-      setFormData(data || {})
+      try {
+        const prefill = await projectContextService.getPrefill(projectId, 'impact')
+        const merged = applyPrefill(data || {}, prefill)
+        setFormData(merged.data)
+        setProvenance(merged.provenance)
+        setChecklist(prefill.checklist || [])
+      } catch {
+        setFormData(data || {})
+        setProvenance({})
+        setChecklist([])
+      }
       const p = await impactService.getProgress(projectId)
       setProgress(p)
     } catch { setError('Erreur de chargement') }
@@ -70,7 +87,7 @@ export default function ImpactPage() {
     econ:      [{ key: 'kpis_economiques', label: 'KPIs Économiques (CA, marge, croissance)' }],
     method:    [
       { key: 'methode_mesure', label: 'Méthodologie (B Impact, GRI, SDGs...)' },
-      { key: 'periode_mesure', label: 'Période de mesure (MENSUEL/TRIMESTRIEL/ANNUEL)' },
+      { key: 'periode_mesure', label: 'Période de mesure (MONTHLY/QUARTERLY/YEARLY)' },
     ],
     objectifs: [
       { key: 'objectifs_impact', label: 'Objectifs chiffrés (JSON)' },
@@ -103,6 +120,8 @@ export default function ImpactPage() {
 
       {error && <ErrorAlert message={error} />}
       {saved && <SuccessAlert message="Sauvegardé ✓" />}
+
+      <MissingInfoCard checklist={checklist} />
 
       <Card className="p-0 overflow-hidden">
         <CardHeader icon={<LineChart size={13} />} title={SECTIONS.find(s => s.id === section)?.label || ''}>
@@ -138,6 +157,7 @@ export default function ImpactPage() {
                       rows={6}
                     />
                   )}
+                  <DataProvenance provenance={provenance[f.key]} />
                 </div>
               ))}
 

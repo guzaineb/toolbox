@@ -17,6 +17,7 @@ describe('CohortsService', () => {
     };
     incubatorMember: {
       findUnique: jest.Func;
+      findMany: jest.Func;
     };
   };
 
@@ -203,7 +204,7 @@ describe('CohortsService', () => {
       (prisma.incubatorMember.findUnique as jest.Mock).mockResolvedValue({
         user_id: 'user-1',
         incubator_id: 'inc-1',
-        role: 'admin',
+        role: 'ADMIN',
         can_manage_cohorts: true,
       });
     });

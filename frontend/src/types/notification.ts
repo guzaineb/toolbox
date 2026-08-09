@@ -12,6 +12,7 @@ export type NotificationType =
   | 'APPLICATION_OPEN'
   | 'DOCUMENT_VERIFIED'
   | 'NEW_EVALUATION'
+  | 'NEW_COACHING'
   | 'COACHING_FEEDBACK'
   | 'COACHING_SCHEDULED'
   | 'DOCUMENT_GENERATED'
@@ -90,6 +91,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   APPLICATION_OPEN: 'Candidatures ouvertes',
   DOCUMENT_VERIFIED: 'Document vérifié',
   NEW_EVALUATION: 'Nouvelle évaluation',
+  NEW_COACHING: 'Nouveau coaching',
   COACHING_FEEDBACK: 'Feedback coaching',
   COACHING_SCHEDULED: 'Coaching programmé',
   DOCUMENT_GENERATED: 'Document généré',
@@ -137,6 +139,7 @@ export const NOTIFICATION_TYPE_COLORS: Record<string, string> = {
   APPLICATION_OPEN: 'green',
   DOCUMENT_VERIFIED: 'green',
   NEW_EVALUATION: 'amber',
+  NEW_COACHING: 'green',
   COACHING_FEEDBACK: 'blue',
   COACHING_SCHEDULED: 'blue',
   DOCUMENT_GENERATED: 'green',
@@ -204,6 +207,7 @@ export const NOTIFICATION_TYPE_ICONS: Record<string, string> = {
   APPLICATION_OPEN: 'DoorOpen',
   DOCUMENT_VERIFIED: 'ShieldCheck',
   NEW_EVALUATION: 'Star',
+  NEW_COACHING: 'CalendarClock',
   COACHING_FEEDBACK: 'MessageSquare',
   COACHING_SCHEDULED: 'Calendar',
   DOCUMENT_GENERATED: 'FileText',

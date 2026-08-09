@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Check, Sparkles, FileText } from 'lucide-react'
 import { businessPlanService } from '@/services/business-plan.service'
-import { Button, Card, CardHeader, Badge, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
+import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
+import { DataProvenance } from '@/components/shared/DataProvenance'
+import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
+import type { ChecklistItem } from '@/types/project-context'
+import { projectContextService } from '@/services/project-context.service'
 
 const SECTIONS = [
   { id: 'management', label: '2.1 Gestion' },
@@ -15,6 +20,12 @@ const SECTIONS = [
   { id: 'kpis',       label: '2.5 KPIs' },
   { id: 'summary',    label: '2.6 Résumé' },
 ]
+
+const PREFILL_MODULES: Record<string, string> = {
+  management: 'management',
+  marketing: 'marketing',
+  financial: 'financial',
+}
 
 export default function BusinessPlanPage() {
   const params = useParams()
@@ -28,13 +39,32 @@ export default function BusinessPlanPage() {
   const [error, setError] = useState('')
   const [progress, setProgress] = useState<any>(null)
   const [genLoading, setGenLoading] = useState(false)
+  const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
 
   const loadData = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
       const data = await getSectionData(section)
-      setFormData(data || {})
+      const prefillModule = PREFILL_MODULES[section]
+      if (prefillModule) {
+        try {
+          const prefill = await projectContextService.getPrefill(projectId, prefillModule)
+          const merged = applyPrefill(data || {}, prefill)
+          setFormData(merged.data)
+          setProvenance(merged.provenance)
+          setChecklist(prefill.checklist || [])
+        } catch {
+          setFormData(data || {})
+          setProvenance({})
+          setChecklist([])
+        }
+      } else {
+        setFormData(data || {})
+        setProvenance({})
+        setChecklist([])
+      }
       const p = await businessPlanService.getProgress(projectId)
       setProgress(p)
     } catch {
@@ -67,7 +97,26 @@ export default function BusinessPlanPage() {
         case 'marketing':  await businessPlanService.updateMarketing(projectId, formData); break
         case 'financial':  await businessPlanService.updateFinancial(projectId, formData); break
         case 'legal':      await businessPlanService.updateLegal(projectId, formData); break
-        case 'kpis':       await businessPlanService.updateKpis(projectId, formData); break
+        case 'kpis': {
+          const payload: Record<string, unknown> = { ...formData }
+          const raw = payload.kpis
+          if (typeof raw === 'string') {
+            const trimmed = raw.trim()
+            if (trimmed) {
+              try {
+                payload.kpis = JSON.parse(trimmed)
+              } catch {
+                setError('Le champ KPIs doit contenir un objet JSON valide.')
+                setSaving(false)
+                return
+              }
+            } else {
+              delete payload.kpis
+            }
+          }
+          await businessPlanService.updateKpis(projectId, payload)
+          break
+        }
         case 'summary':    await businessPlanService.updateExecutiveSummary(projectId, formData); break
       }
       setSaved(true)
@@ -127,6 +176,8 @@ export default function BusinessPlanPage() {
           {error && <ErrorAlert message={error} className="mb-4" />}
           {saved && <SuccessAlert message="Sauvegardé ✓" className="mb-4" />}
 
+          <MissingInfoCard checklist={checklist} />
+
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-moss" /></div>
           ) : (
@@ -134,7 +185,15 @@ export default function BusinessPlanPage() {
               {fields.map(f => (
                 <div key={f.key}>
                   <label className="block text-xs font-semibold text-ink2 mb-1">{f.label}</label>
-                  {f.type === 'textarea' ? (
+                  {f.type === 'json' ? (
+                    <textarea
+                      className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y font-mono"
+                      value={jsonText(formData[f.key])}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
+                      rows={6}
+                      placeholder={f.placeholder}
+                    />
+                  ) : f.type === 'textarea' ? (
                     <textarea
                       className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y"
                       value={formData[f.key] || ''}
@@ -156,6 +215,7 @@ export default function BusinessPlanPage() {
                       onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
                     />
                   )}
+                  <DataProvenance provenance={provenance[f.key]} />
                 </div>
               ))}
             </div>
@@ -180,8 +240,17 @@ export default function BusinessPlanPage() {
   )
 }
 
+function jsonText(value: unknown): string {
+  if (value === undefined || value === null) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'object') {
+    try { return JSON.stringify(value, null, 2) } catch { return '' }
+  }
+  return String(value)
+}
+
 function getSectionFields(section: string) {
-  const map: Record<string, { key: string; label: string; type: string }[]> = {
+  const map: Record<string, { key: string; label: string; type: string; placeholder?: string }[]> = {
     management: [
       { key: 'problemes_gestion', label: 'Problèmes de gestion', type: 'textarea' },
       { key: 'ressources_humaines', label: 'Ressources humaines', type: 'textarea' },
@@ -212,7 +281,7 @@ function getSectionFields(section: string) {
       { key: 'assurances', label: 'Assurances', type: 'textarea' },
     ],
     kpis: [
-      { key: 'kpis', label: 'Indicateurs de performance (JSON)', type: 'textarea' },
+      { key: 'kpis', label: 'Indicateurs de performance (KPIs)', type: 'json', placeholder: '{\n  "KPI 1": "Valeur cible"\n}' },
       { key: 'objectifs_mesure', label: 'Objectifs de mesure', type: 'textarea' },
       { key: 'revues_performance', label: 'Revues de performance', type: 'textarea' },
     ],

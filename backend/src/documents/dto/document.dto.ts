@@ -1,9 +1,7 @@
 import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { ProjectIdParam } from '../../common/dto/project-id.param';
 
-export class ProjectIdParam {
-  @IsString()
-  projectId!: string;
-}
+export { ProjectIdParam };
 
 export class DocumentKeyParam {
   @IsString()

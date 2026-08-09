@@ -11,30 +11,48 @@ datasource db {
 // ENUMS
 // ===========================
 enum UserRole {
-  admin
-  expert
-  project_owner
-  incubator_membre
+  ADMIN
+  EXPERT
+  PROJECT_OWNER
+  INCUBATOR_MEMBER // anciennement `incubator_membre` (valeur historique, migrée)
 }
 
 enum MemberRole {
-  admin
-  program_manager
-  cohort_manager
-  review_manager
-  member
-  viewer
+  ADMIN
+  PROGRAM_MANAGER
+  COHORT_MANAGER
+  REVIEW_MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  UNAVAILABLE
+}
+
+enum IncubatorMemberStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
 }
 
 enum VerificationStatus {
-  pending
-  approved
-  rejected
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum IncubatorStatus {
-  active
-  suspended
+  ACTIVE
+  SUSPENDED
+}
+
+enum Language {
+  FR
+  EN
+  AR
 }
 
 enum StepStatus {
@@ -68,9 +86,9 @@ enum FundingPhase {
 }
 
 enum ImpactPeriod {
-  MENSUEL
-  TRIMESTRIEL
-  ANNUEL
+  MONTHLY
+  QUARTERLY
+  YEARLY
 }
 
 enum DocumentStatus {
@@ -132,7 +150,7 @@ enum NotificationType {
 
   // === PORTEUR DE PROJET ===
   NEW_EVALUATION
-  NEW_COACHING
+  NEW_COACHING // VALEUR ORPHELINE : référencée par les templates email backend, jamais créée en app
   COACHING_FEEDBACK
   DOCUMENT_GENERATED
   DOCUMENT_UPDATED
@@ -162,21 +180,21 @@ enum NotificationType {
 // IDENTITY — Users & Profiles
 // ===========================
 model User {
-  id                      String    @id @default(uuid())
-  email                   String    @unique
-  password_hash           String
-  is_active               Boolean   @default(true)
-  is_verified             Boolean   @default(false)
-  verification_token      String?
-  verification_code       String?
+  id                        String    @id @default(uuid())
+  email                     String    @unique
+  password_hash             String
+  is_active                 Boolean   @default(true)
+  is_verified               Boolean   @default(false)
+  verification_token        String?
+  verification_code         String?
   verification_code_expires DateTime?
-  last_login_at           DateTime?
-  resetPasswordToken      String?
-  resetPasswordExpires    DateTime?
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
-  role                    UserRole?
-  profile_id              String?   @unique
+  last_login_at             DateTime?
+  reset_password_token        String?
+  reset_password_expires      DateTime?
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @updatedAt
+  role                      UserRole?
+  profile_id                String?   @unique
 
   profile              UserProfile?             @relation(fields: [profile_id], references: [id])
   projectOwnerProfile  ProjectOwnerProfile?
@@ -205,7 +223,7 @@ model UserProfile {
   city               String?
   address            String?
   bio                String?
-  preferred_language String   @default("fr")
+  preferred_language Language  @default(FR)
   linkedin           String?
 
   user User?
@@ -227,28 +245,28 @@ model ExpertiseArea {
 }
 
 model ExpertProfile {
-  id                  String  @id @default(uuid())
+  id                  String             @id @default(uuid())
   headline            String
   bio                 String?
   organization        String?
   position            String?
   years_of_experience Int?
   linkedin_url        String?
-  availability_status String  @default("available")
-  user_id             String  @unique
+  availability_status AvailabilityStatus @default(AVAILABLE)
+  user_id             String             @unique
 
-  user                User                          @relation(fields: [user_id], references: [id])
+  user                 User                          @relation(fields: [user_id], references: [id])
   expertiseConnections ExpertProfileExpertiseArea[]
 
   @@map("expert_profiles")
 }
 
 model ExpertProfileExpertiseArea {
-  id                String   @id @default(uuid())
-  level             String?
-  years_of_experience Int?   @default(0)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  level               String?
+  years_of_experience Int?     @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   expert_profile_id String
   expertise_area_id String
@@ -280,8 +298,8 @@ model Incubator {
   country             String?
   city                String?
   logo_url            String?
-  verification_status VerificationStatus @default(pending)
-  status              IncubatorStatus    @default(active)
+  verification_status VerificationStatus @default(PENDING)
+  status              IncubatorStatus    @default(ACTIVE)
   created_by_user_id  String
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
@@ -295,18 +313,18 @@ model Incubator {
 }
 
 model IncubatorMember {
-  id                  String       @id @default(uuid())
+  id                  String               @id @default(uuid())
   user_id             String
   incubator_id        String
-  role                MemberRole   @default(member)
+  role                MemberRole           @default(MEMBER)
   job_title           String?
   department          String?
   bio                 String?
-  status              String       @default("active")
-  is_primary_contact  Boolean      @default(false)
-  can_manage_programs Boolean      @default(false)
-  can_manage_cohorts  Boolean      @default(false)
-  can_manage_members  Boolean      @default(false)
+  status              IncubatorMemberStatus @default(ACTIVE)
+  is_primary_contact  Boolean              @default(false)
+  can_manage_programs Boolean              @default(false)
+  can_manage_cohorts  Boolean              @default(false)
+  can_manage_members  Boolean              @default(false)
 
   user      User      @relation(fields: [user_id], references: [id])
   incubator Incubator @relation(fields: [incubator_id], references: [id])
@@ -316,14 +334,14 @@ model IncubatorMember {
 }
 
 model IncubatorInvitation {
-  id           String   @id @default(uuid())
-  token        String   @unique
+  id           String     @id @default(uuid())
+  token        String     @unique
   incubator_id String
   email        String
-  role         String
+  role         MemberRole
   job_title    String?
   expires_at   DateTime
-  created_at   DateTime @default(now())
+  created_at   DateTime   @default(now())
 
   incubator Incubator @relation(fields: [incubator_id], references: [id])
 
@@ -335,7 +353,7 @@ model IncubatorDocument {
   incubator_id        String
   document_type       String
   file_url            String
-  verification_status VerificationStatus @default(pending)
+  verification_status VerificationStatus @default(PENDING)
   rejection_reason    String?
   uploaded_by_user_id String
   uploaded_at         DateTime           @default(now())
@@ -343,6 +361,8 @@ model IncubatorDocument {
   incubator       Incubator @relation(fields: [incubator_id], references: [id])
   uploaded_by_user User     @relation(fields: [uploaded_by_user_id], references: [id])
 
+  @@index([incubator_id])
+  @@index([uploaded_by_user_id])
   @@map("incubator_documents")
 }
 
@@ -378,6 +398,7 @@ model ProjectOwnerSkill {
 
   profile ProjectOwnerProfile @relation(fields: [project_owner_profile_id], references: [id], onDelete: Cascade)
 
+  @@index([project_owner_profile_id])
   @@map("project_owner_skills")
 }
 
@@ -386,13 +407,14 @@ model ProjectOwnerExperience {
   title                    String
   organization             String
   description              String?
-  start_date               String?
-  end_date                 String?
+  start_date               DateTime?
+  end_date                 DateTime?
   project_owner_profile_id String
   created_at               DateTime @default(now())
 
   profile ProjectOwnerProfile @relation(fields: [project_owner_profile_id], references: [id], onDelete: Cascade)
 
+  @@index([project_owner_profile_id])
   @@map("project_owner_experiences")
 }
 

@@ -39,7 +39,7 @@ async updateProfile(@Req() req, @Body() dto: UpdateProfileDto) {
    * GET /users — Admin uniquement
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.admin)
+  @Roles(UserRole.ADMIN)
   @Get()
   async findAll(
     @Query('skip') skip = 0,

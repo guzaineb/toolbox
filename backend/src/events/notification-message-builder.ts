@@ -208,8 +208,8 @@ export class NotificationMessageBuilder {
     };
   }
 
-  documentVerified(params: { status: 'approved' | 'rejected' }): { title: string; message: string } {
-    const label = params.status === 'approved' ? 'approuvé' : 'rejeté';
+  documentVerified(params: { status: 'APPROVED' | 'REJECTED' }): { title: string; message: string } {
+    const label = params.status === 'APPROVED' ? 'approuvé' : 'rejeté';
     return {
       title: 'Document vérifié',
       message: `Votre document a été ${label}.`,

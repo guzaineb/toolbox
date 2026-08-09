@@ -64,10 +64,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (!user) return null;
 
   const userRole = user.role;
-  const isAdmin = userRole === 'admin';
-  const isExpert = userRole === 'expert';
-  const isProjectOwner = userRole === 'project_owner';
-  const isIncubatorMember = userRole === 'incubator_membre';
+  const isAdmin = userRole === 'ADMIN';
+  const isExpert = userRole === 'EXPERT';
+  const isProjectOwner = userRole === 'PROJECT_OWNER';
+  const isIncubatorMember = userRole === 'INCUBATOR_MEMBER';
 
   const NAV_ITEMS: { href: string; label: string; icon: any; section?: string }[] = [
     { href: '/dashboard/profile', label: 'Mon profil', icon: User, section: 'general' },
@@ -109,10 +109,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const initials = fullName ? `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() : '??';
 
   const roleLabels: Record<string, string> = {
-    admin: 'Administrateur',
-    expert: 'Expert',
-    project_owner: 'Porteur de projet',
-    incubator_membre: 'Membre incubateur',
+    ADMIN: 'Administrateur',
+    EXPERT: 'Expert',
+    PROJECT_OWNER: 'Porteur de projet',
+    INCUBATOR_MEMBER: 'Membre incubateur',
   };
   const currentRoleLabel = userRole ? roleLabels[userRole] : 'Membre';
 

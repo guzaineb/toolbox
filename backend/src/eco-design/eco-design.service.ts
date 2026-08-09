@@ -1,54 +1,39 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ProjectsService } from '../projects/projects.service';
+import { SectionStepService } from '../common/services/section-step.service';
+
+const ECO_DESIGN_ALLOWED_FIELDS = [
+  'equipe_eco', 'projet_eco', 'contexte_eco', 'vision_durable',
+  'cycle_de_vie', 'performance_eco', 'strategies_eco', 'plan_action_eco',
+];
 
 @Injectable()
 export class EcoDesignService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly projects: ProjectsService,
+    private readonly sections: SectionStepService,
   ) {}
 
-  private async ensureProjectOwnership(projectId: string, userId: string) {
-    return this.projects.findOwnedOrThrow(projectId, userId);
-  }
-
   async get(projectId: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
     const record = await this.prisma.ecoDesign.findUnique({ where: { project_id: projectId } });
     return record || {};
   }
 
   async update(projectId: string, data: any, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
-    const filteredData: any = {};
-    const allowedFields = [
-      'equipe_eco', 'projet_eco', 'contexte_eco', 'vision_durable',
-      'cycle_de_vie', 'performance_eco', 'strategies_eco', 'plan_action_eco',
-    ];
-    for (const key of Object.keys(data)) {
-      if (allowedFields.includes(key)) filteredData[key] = data[key];
-    }
-
-    const record = await this.prisma.ecoDesign.upsert({
-      where: { project_id: projectId },
-      create: { project_id: projectId, ...filteredData },
-      update: filteredData,
-    });
-
-    await this.prisma.stepProgress.upsert({
-      where: { project_id_step_key: { project_id: projectId, step_key: 'eco_design' } },
-      create: { project_id: projectId, step_key: 'eco_design', status: 'COMPLETED', completed_at: new Date() },
-      update: { status: 'COMPLETED', completed_at: new Date() },
-    });
-
-    return record;
+    return this.sections.saveSection(
+      this.prisma.ecoDesign,
+      projectId,
+      data,
+      { allowedFields: ECO_DESIGN_ALLOWED_FIELDS, stepKey: 'eco_design' },
+    );
   }
 
   async getProgress(projectId: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
-    const fields = ['equipe_eco', 'projet_eco', 'contexte_eco', 'vision_durable', 'cycle_de_vie', 'performance_eco', 'strategies_eco', 'plan_action_eco'];
+    await this.sections.ensureOwnership(projectId, userId);
+    const fields = ECO_DESIGN_ALLOWED_FIELDS;
     const record = await this.prisma.ecoDesign.findUnique({ where: { project_id: projectId } });
 
     if (!record) {

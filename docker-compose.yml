@@ -23,16 +23,26 @@ services:
         condition: service_healthy
     env_file:
       - ./backend/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DATABASE_USER:-postgres}
+      DB_PASSWORD: ${DATABASE_PASSWORD:-admin}
+      DB_NAME: ${DATABASE_NAME:-toolbox}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-admin}@db:5432/${DATABASE_NAME:-toolbox}?schema=public
     networks:
       - toolbox_net
     ports:
       - "3020:3000"
     restart: unless-stopped
     command: >
-      sh -c "node wait-for-db.js && npm run seed && npm run start:prod"
+      sh -c "node wait-for-db.js && npx prisma migrate deploy && npm run seed && npm run start:prod"
 
   web:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3020
     depends_on:
       - api
     networks:

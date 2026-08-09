@@ -87,7 +87,7 @@ export class CohortParticipationsService {
       const members = await this.prisma.incubatorMember.findMany({
         where: {
           incubator_id: cohort.incubator_id,
-          status: 'active',
+          status: 'ACTIVE',
           NOT: { user_id: userId },
         },
         select: { user_id: true },
@@ -383,7 +383,7 @@ export class CohortParticipationsService {
       const members = await this.prisma.incubatorMember.findMany({
         where: {
           incubator_id: participation.cohort.incubator_id,
-          status: 'active',
+          status: 'ACTIVE',
           NOT: { user_id: userId },
         },
         select: { user_id: true },
@@ -482,7 +482,7 @@ export class CohortParticipationsService {
     if (!member) {
       throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     }
-    if (member.role !== 'admin' && !member.can_manage_cohorts) {
+    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
       throw new ForbiddenException(
         'Permissions insuffisantes pour gérer les candidatures',
       );

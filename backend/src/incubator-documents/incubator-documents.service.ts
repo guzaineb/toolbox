@@ -23,13 +23,13 @@ export class IncubatorDocumentsService {
         file_url: fileUrl,
         uploaded_by_user_id: userId,
         document_type: documentType,
-        verification_status: 'pending',
+        verification_status: 'PENDING',
       },
     });
 
     const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
     const members = await this.prisma.incubatorMember.findMany({
-      where: { incubator_id: incubatorId, status: 'active' },
+      where: { incubator_id: incubatorId, status: 'ACTIVE' },
       select: { user_id: true },
     });
     const memberIds = members.map(m => m.user_id).filter(id => id !== userId);
@@ -118,11 +118,11 @@ export class IncubatorDocumentsService {
       where: { id },
       data: {
         verification_status: dto.verification_status,
-        rejection_reason: dto.verification_status === 'rejected' ? (dto.rejection_reason || null) : null,
+        rejection_reason: dto.verification_status === 'REJECTED' ? (dto.rejection_reason || null) : null,
       },
     });
 
-    const { title, message } = this.messageBuilder.documentVerified({ status: dto.verification_status as 'approved' | 'rejected' });
+    const { title, message } = this.messageBuilder.documentVerified({ status: dto.verification_status as 'APPROVED' | 'REJECTED' });
     this.eventEmitter.emit(
       NotificationEvent.DOCUMENT_VERIFIED,
       {
@@ -148,7 +148,7 @@ export class IncubatorDocumentsService {
 
   private async assertAdmin(incubatorId: string, userId: string): Promise<void> {
     const member = await this.prisma.incubatorMember.findFirst({
-      where: { incubator_id: incubatorId, user_id: userId, role: 'admin' },
+      where: { incubator_id: incubatorId, user_id: userId, role: 'ADMIN' },
     });
     if (!member) {
       throw new ForbiddenException("Seul un administrateur peut vérifier les documents");

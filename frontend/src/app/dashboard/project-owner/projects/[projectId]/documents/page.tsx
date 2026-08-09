@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import { Card, CardHeader, Button, Badge, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
 import { documentsService, type GeneratedDocument } from '@/services/documents.service'
-import { cn } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
+import { useAutoDismiss } from '@/hooks/use-auto-dismiss'
 
 const ICON_MAP: Record<string, any> = {
   Lightbulb: () => <span className="text-yellow-500">💡</span>,
@@ -49,6 +50,7 @@ export default function DocumentsPage() {
   const [generatingAll, setGeneratingAll] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const dismissSuccess = useAutoDismiss(() => setSuccess(''), 3000)
   const [previewDoc, setPreviewDoc] = useState<GeneratedDocument | null>(null)
 
   const loadDocuments = useCallback(async () => {
@@ -72,7 +74,7 @@ export default function DocumentsPage() {
       const doc = await documentsService.generateDocument(projectId, key)
       setDocuments(prev => prev.map(d => d.key === key ? { ...d, ...doc } : d))
       setSuccess(`Document "${doc.title}" généré avec succès`)
-      setTimeout(() => setSuccess(''), 3000)
+      dismissSuccess()
     } catch {
       setError('Erreur lors de la génération du document')
     } finally {
@@ -88,7 +90,7 @@ export default function DocumentsPage() {
       await documentsService.generateAllDocuments(projectId)
       await loadDocuments()
       setSuccess('Tous les documents ont été générés')
-      setTimeout(() => setSuccess(''), 3000)
+      dismissSuccess()
     } catch {
       setError('Erreur lors de la génération des documents')
     } finally {
@@ -121,12 +123,8 @@ export default function DocumentsPage() {
     }
   }
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '—'
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    })
-  }
+  const formatDateWithTime = (dateStr: string | null) =>
+    formatDate(dateStr, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   const generatedCount = documents.filter(d => d.status !== 'NOT_GENERATED').length
 
@@ -190,10 +188,10 @@ export default function DocumentsPage() {
                   </div>
                   <div className="flex items-center gap-4 mt-1 text-xs text-ink3">
                     {doc.generatedAt && (
-                      <span>Généré: {formatDate(doc.generatedAt)}</span>
+                      <span>Généré: {formatDateWithTime(doc.generatedAt)}</span>
                     )}
                     {doc.updatedAt && doc.status === 'UPDATED' && (
-                      <span>Modifié: {formatDate(doc.updatedAt)}</span>
+                      <span>Modifié: {formatDateWithTime(doc.updatedAt)}</span>
                     )}
                   </div>
                 </div>
@@ -245,7 +243,7 @@ export default function DocumentsPage() {
               <div>
                 <h2 className="font-syne text-lg font-bold text-ink">{previewDoc.title}</h2>
                 <p className="text-xs text-ink3 mt-1">
-                  Généré le {formatDate(previewDoc.generatedAt)}
+                  Généré le {formatDateWithTime(previewDoc.generatedAt)}
                 </p>
               </div>
               <div className="flex items-center gap-2">

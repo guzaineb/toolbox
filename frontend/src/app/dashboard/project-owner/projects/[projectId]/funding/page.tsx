@@ -6,6 +6,9 @@ import { ArrowLeft, Loader2, Check, DollarSign, Lightbulb } from 'lucide-react'
 import { fundingService } from '@/services/funding.service'
 import { Button, Card, CardHeader, Badge, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
 import { PHASE_LABELS } from '@/types/funding'
+import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
+import { projectContextService } from '@/services/project-context.service'
+import type { ChecklistItem, FundingSuggestion } from '@/types/project-context'
 
 const QUESTIONS = [
   { key: 'q1',  label: 'Problème marché clairement défini ?' },
@@ -33,6 +36,10 @@ export default function FundingPage() {
   const [error, setError] = useState('')
   const [showResults, setShowResults] = useState(false)
   const [opportunites, setOpportunites] = useState('')
+  const [suggestions, setSuggestions] = useState<Record<string, FundingSuggestion> | null>(null)
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true)
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [info, setInfo] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -48,7 +55,28 @@ export default function FundingPage() {
       finally { setLoading(false) }
     }
     load()
+    projectContextService
+      .getPrefill(projectId, 'funding')
+      .then(prefill => {
+        setSuggestions(prefill.suggestions || null)
+        setChecklist(prefill.checklist || [])
+      })
+      .catch(() => { /* ignore */ })
+      .finally(() => setSuggestionsLoading(false))
   }, [projectId])
+
+  const applySuggestions = () => {
+    if (!suggestions) return
+    const next = { ...answers }
+    let applied = 0
+    for (const [key, s] of Object.entries(suggestions)) {
+      if (s.reason.startsWith('À confirmer')) continue
+      next[key] = s.value
+      applied += 1
+    }
+    setAnswers(next)
+    setInfo(applied > 0 ? `${applied} réponses préremplies depuis vos données GBM — vérifiez avant de soumettre.` : '')
+  }
 
   const handleSubmit = async () => {
     const missing = QUESTIONS.filter(q => answers[q.key] === undefined)
@@ -84,6 +112,35 @@ export default function FundingPage() {
       </div>
 
       {error && <ErrorAlert message={error} />}
+      {info && <SuccessAlert message={info} className="mb-4" />}
+
+      <MissingInfoCard checklist={checklist} loading={suggestionsLoading} />
+
+      {/* Suggestions */}
+      {suggestions && Object.keys(suggestions).length > 0 && (
+        <Card className="p-0 overflow-hidden">
+          <CardHeader icon={<Lightbulb size={13} />} title="Suggestions automatiques (basées sur vos données GBM)">
+            <Button size="sm" variant="outline" onClick={applySuggestions}>
+              Appliquer les suggestions
+            </Button>
+          </CardHeader>
+          <div className="p-5 space-y-2">
+            {QUESTIONS.map((q) => {
+              const s = suggestions[q.key]
+              if (!s) return null
+              return (
+                <div key={q.key} className="flex items-center gap-3 text-sm">
+                  <Badge variant={s.value ? 'green' : 'amber'}>{s.value ? 'Oui' : 'Non'}</Badge>
+                  <div className="flex-1">
+                    <div className="text-ink font-semibold">{q.label}</div>
+                    <div className="text-xs text-ink3">{s.reason}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Results card */}
       {showResults && (

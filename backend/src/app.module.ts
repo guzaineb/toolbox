@@ -13,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EventsModule } from './events/events.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
 import { ProjectsModule } from './projects/projects.module';
 import { GbmModule } from './gbm/gbm.module';
 import { BusinessPlanModule } from './business-plan/business-plan.module';
@@ -33,6 +34,7 @@ import { NotificationsModule } from './notifications/notifications.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    CommonModule,
     IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule,
     AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule,
     ExpertModule, UploadsModule,

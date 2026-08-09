@@ -42,7 +42,7 @@ export class CohortExpertsService {
       include: { expertProfile: true },
     });
     if (!expertUser) throw new NotFoundException('Expert introuvable');
-    if (expertUser.role !== 'expert') {
+    if (expertUser.role !== 'EXPERT') {
       throw new BadRequestException("Cet utilisateur n'a pas le rôle expert");
     }
 
@@ -106,7 +106,7 @@ export class CohortExpertsService {
       include: { expertProfile: true },
     });
     if (!expertUser) throw new NotFoundException('Expert introuvable');
-    if (expertUser.role !== 'expert') {
+    if (expertUser.role !== 'EXPERT') {
       throw new BadRequestException("Cet utilisateur n'a pas le rôle expert");
     }
 
@@ -169,7 +169,7 @@ export class CohortExpertsService {
       include: { expertProfile: true },
     });
     if (!expertUser) throw new NotFoundException('Utilisateur introuvable');
-    if (expertUser.role !== 'expert') {
+    if (expertUser.role !== 'EXPERT') {
       throw new BadRequestException("Vous n'avez pas le rôle expert");
     }
 
@@ -194,7 +194,7 @@ export class CohortExpertsService {
     const members = await this.prisma.incubatorMember.findMany({
       where: {
         incubator_id: cohort.incubator_id,
-        status: 'active',
+        status: 'ACTIVE',
       },
       select: { user_id: true },
     });
@@ -567,7 +567,7 @@ export class CohortExpertsService {
     ).map((e) => e.expert_user_id);
 
     const where: any = {
-      role: 'expert',
+      role: 'EXPERT',
       expertProfile: {
         is: {},
       },
@@ -653,7 +653,7 @@ export class CohortExpertsService {
     if (!member) {
       throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     }
-    if (member.role !== 'admin' && !member.can_manage_cohorts) {
+    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
       throw new ForbiddenException(
         'Permissions insuffisantes pour gérer les experts de cohorte',
       );

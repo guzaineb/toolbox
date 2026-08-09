@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Check, Target } from 'lucide-react'
 import { marketService } from '@/services/market.service'
-import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { Button, Card, CardHeader, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
+import { DataProvenance } from '@/components/shared/DataProvenance'
+import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
+import type { ChecklistItem } from '@/types/project-context'
+import { projectContextService } from '@/services/project-context.service'
 
 const SECTIONS = [
   { id: 'essence',      label: 'Brand Essence' },
@@ -27,12 +32,24 @@ export default function MarketPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const data = await marketService.get(projectId)
-      setFormData(data || {})
+      try {
+        const prefill = await projectContextService.getPrefill(projectId, 'market')
+        const merged = applyPrefill(data || {}, prefill)
+        setFormData(merged.data)
+        setProvenance(merged.provenance)
+        setChecklist(prefill.checklist || [])
+      } catch {
+        setFormData(data || {})
+        setProvenance({})
+        setChecklist([])
+      }
     } catch { setError('Erreur de chargement') }
     finally { setLoading(false) }
   }, [projectId])
@@ -76,6 +93,8 @@ export default function MarketPage() {
       {error && <ErrorAlert message={error} />}
       {saved && <SuccessAlert message="Sauvegardé ✓" />}
 
+      <MissingInfoCard checklist={checklist} />
+
       <Card className="p-0 overflow-hidden">
         <CardHeader icon={<Target size={13} />} title={currentField?.label || ''} />
         <div className="p-5">
@@ -90,6 +109,7 @@ export default function MarketPage() {
                 rows={6}
                 placeholder={`Décrivez ${(currentField?.label || '').toLowerCase()}...`}
               />
+              {currentField && <DataProvenance provenance={provenance[currentField.key]} />}
             </div>
           )}
         </div>

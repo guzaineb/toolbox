@@ -1,6 +1,6 @@
 import { IsEmail, IsEnum, IsOptional, isString, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ProfileDto } from 'src/profiles/dto/create-profile';
+import { ProfileDto } from 'src/profiles/dto/create-profile.dto';
 import { UserRole } from '@prisma/client';
 
 export class CreateUserDto {

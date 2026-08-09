@@ -89,7 +89,7 @@ export class ExpertRecommendationService {
       score: (a, b) => b.score - a.score,
       experience: (a, b) => (b.years_of_experience || 0) - (a.years_of_experience || 0),
       availability: (a, b) => {
-        const order: any = { available: 3, busy: 2, unavailable: 1 };
+        const order: any = { AVAILABLE: 3, BUSY: 2, UNAVAILABLE: 1 };
         return order[b.availability_status] - order[a.availability_status];
       },
     };
@@ -98,7 +98,7 @@ export class ExpertRecommendationService {
   }
 
   private async getAvailableExperts(excludeIds?: string[]) {
-    const where: any = { availability_status: 'available' };
+    const where: any = { availability_status: 'AVAILABLE' };
     if (excludeIds?.length) {
       where.id = { notIn: excludeIds };
     }

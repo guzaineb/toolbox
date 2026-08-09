@@ -12,9 +12,9 @@ export class ExpertScoringService {
   };
 
   private readonly AVAILABILITY_SCORES: Record<string, number> = {
-    available: 20,
-    busy: 10,
-    unavailable: 0,
+    AVAILABLE: 20,
+    BUSY: 10,
+    UNAVAILABLE: 0,
   };
 
   private readonly WEIGHTS = {
@@ -74,7 +74,7 @@ export class ExpertScoringService {
       experienceMatch,
     };
 
-    if (profile.availability_status === 'available') {
+    if (profile.availability_status === 'AVAILABLE') {
       matchScore = Math.min(matchScore + this.WEIGHTS.AVAILABILITY_BONUS, 100);
       details.availabilityBonus = this.WEIGHTS.AVAILABILITY_BONUS;
     }

@@ -3,24 +3,9 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { Bell, CheckCheck } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getRelativeTime } from '@/lib/utils'
 import { useNotificationsList, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications'
 import { NOTIFICATION_TYPE_COLORS } from '@/types/notification'
-
-function getRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  const diffH = Math.floor(diffMin / 60)
-  const diffD = Math.floor(diffH / 24)
-
-  if (diffMin < 1) return "à l'instant"
-  if (diffMin < 60) return `il y a ${diffMin}min`
-  if (diffH < 24) return `il y a ${diffH}h`
-  if (diffD < 7) return `il y a ${diffD}j`
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-}
 
 function NotificationItem({
   notification,

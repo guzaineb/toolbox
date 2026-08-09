@@ -1,9 +1,8 @@
-import { IsUUID, IsString, IsOptional } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
+import { ProjectIdParam } from '../../common/dto/project-id.param';
+import { PaginationQuery } from '../../common/dto/pagination-query.dto';
 
-export class ProjectIdParam {
-  @IsUUID()
-  projectId: string;
-}
+export { ProjectIdParam, PaginationQuery };
 
 export class GbmStepParams extends ProjectIdParam {
   @IsString()
@@ -13,14 +12,4 @@ export class GbmStepParams extends ProjectIdParam {
 export class GbmItemParams extends GbmStepParams {
   @IsUUID()
   itemId: string;
-}
-
-export class PaginationQuery {
-  @IsOptional()
-  @IsString()
-  skip?: string;
-
-  @IsOptional()
-  @IsString()
-  take?: string;
 }

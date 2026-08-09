@@ -50,7 +50,7 @@ export class CohortsService {
 
     const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
     const members = await this.prisma.incubatorMember.findMany({
-      where: { incubator_id: incubatorId, status: 'active' },
+      where: { incubator_id: incubatorId, status: 'ACTIVE' },
       select: { user_id: true },
     });
     const memberIds = members.map(m => m.user_id);
@@ -125,7 +125,7 @@ export class CohortsService {
       ],
     };
 
-    if (user.role === 'expert') {
+    if (user.role === 'EXPERT') {
       const myExpertIds = (
         await this.prisma.cohortExpert.findMany({
           where: {
@@ -139,7 +139,7 @@ export class CohortsService {
       if (myExpertIds.length > 0) {
         whereBase.NOT = { id: { in: myExpertIds } };
       }
-    } else if (user.role === 'project_owner') {
+    } else if (user.role === 'PROJECT_OWNER') {
       const myProjects = await this.prisma.project.findMany({
         where: { owner_id: userId },
         select: { id: true },
@@ -187,7 +187,7 @@ export class CohortsService {
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
 
-    if (user.role === 'expert') {
+    if (user.role === 'EXPERT') {
       return this.prisma.cohortExpert.findMany({
         where: { expert_user_id: userId },
         include: {
@@ -202,7 +202,7 @@ export class CohortsService {
       });
     }
 
-    if (user.role === 'project_owner') {
+    if (user.role === 'PROJECT_OWNER') {
       const myProjects = await this.prisma.project.findMany({
         where: { owner_id: userId },
         select: { id: true, name: true, description: true, owner_id: true, created_at: true, updated_at: true },
@@ -324,7 +324,7 @@ export class CohortsService {
       : undefined;
 
     const members = cohort.incubator_id ? await this.prisma.incubatorMember.findMany({
-      where: { incubator_id: cohort.incubator_id, status: 'active' },
+      where: { incubator_id: cohort.incubator_id, status: 'ACTIVE' },
       select: { user_id: true },
     }) : [];
     const memberIds = members.map(m => m.user_id);
@@ -425,7 +425,7 @@ export class CohortsService {
     if (!member) {
       throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     }
-    if (member.role !== 'admin' && !member.can_manage_cohorts) {
+    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
       throw new ForbiddenException(
         'Permissions insuffisantes pour gérer les cohortes',
       );

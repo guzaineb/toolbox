@@ -19,14 +19,14 @@ async function main() {
         first_name: 'Admin',
         last_name: 'ToolBox',
         bio: 'Administrateur de la plateforme ToolBox',
-        preferred_language: 'fr',
+        preferred_language: 'FR',
       },
     });
     user = await prisma.user.create({
       data: {
         email: 'admin@toolbox.com',
         password_hash: passwordHash,
-        role: 'admin',
+        role: 'ADMIN',
         is_verified: true,
         is_active: true,
         profile_id: profile.id,
@@ -47,14 +47,14 @@ async function main() {
         first_name: 'Sophie',
         last_name: 'Martin',
         bio: "Experte en éco-conception et innovation durable avec 15 ans d'expérience.",
-        preferred_language: 'fr',
+        preferred_language: 'FR',
       },
     });
     user = await prisma.user.create({
       data: {
         email: 'expert@toolbox.com',
         password_hash: passwordHash,
-        role: 'expert',
+        role: 'EXPERT',
         is_verified: true,
         is_active: true,
         profile_id: profile.id,
@@ -68,7 +68,7 @@ async function main() {
         organization: 'Green Innovation Lab',
         position: 'Senior Advisor',
         years_of_experience: 15,
-        availability_status: 'available',
+        availability_status: 'AVAILABLE',
       },
     });
     console.log('  ✅ Expert: expert@toolbox.com');
@@ -134,7 +134,7 @@ async function main() {
         first_name: 'Thomas',
         last_name: 'Dubois',
         bio: "Entrepreneur vert spécialisé dans les solutions d'emballage compostable.",
-        preferred_language: 'fr',
+        preferred_language: 'FR',
         country: 'France',
         city: 'Lyon',
       },
@@ -143,7 +143,7 @@ async function main() {
       data: {
         email: 'porteur@toolbox.com',
         password_hash: passwordHash,
-        role: 'project_owner',
+        role: 'PROJECT_OWNER',
         is_verified: true,
         is_active: true,
         profile_id: profile.id,
@@ -177,7 +177,7 @@ async function main() {
         title: 'Fondateur',
         organization: 'Éco-Emballages Vert',
         description: 'Création startup emballages compostables',
-        start_date: '2023-01-01',
+        start_date: '2023-01-01T00:00:00.000Z',
         project_owner_profile_id: poProfile.id,
       },
     });
@@ -186,8 +186,8 @@ async function main() {
         title: 'Chef de projet R&D',
         organization: 'GreenPack Solutions',
         description: 'Développement matériaux biodégradables',
-        start_date: '2019-03-01',
-        end_date: '2022-12-31',
+        start_date: '2019-03-01T00:00:00.000Z',
+        end_date: '2022-12-31T00:00:00.000Z',
         project_owner_profile_id: poProfile.id,
       },
     });
@@ -206,7 +206,7 @@ async function main() {
         first_name: 'Claire',
         last_name: 'Moreau',
         bio: "Responsable de programme d'incubation pour startups vertes.",
-        preferred_language: 'fr',
+        preferred_language: 'FR',
         country: 'France',
         city: 'Paris',
       },
@@ -215,7 +215,7 @@ async function main() {
       data: {
         email: 'incubateur@toolbox.com',
         password_hash: passwordHash,
-        role: 'incubator_membre',
+        role: 'INCUBATOR_MEMBER',
         is_verified: true,
         is_active: true,
         profile_id: profile.id,
@@ -239,8 +239,8 @@ async function main() {
         email: 'contact@greenincubator.com',
         country: 'France',
         city: 'Paris',
-        verification_status: 'approved',
-        status: 'active',
+        verification_status: 'APPROVED',
+        status: 'ACTIVE',
         created_by_user_id: creatorId,
       },
     });
@@ -260,9 +260,9 @@ async function main() {
         data: {
           user_id: incUser.id,
           incubator_id: incubator.id,
-          role: 'admin',
+          role: 'ADMIN',
           job_title: 'Responsable de programme',
-          status: 'active',
+          status: 'ACTIVE',
           is_primary_contact: true,
         },
       });

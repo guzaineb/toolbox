@@ -3,12 +3,12 @@ import {
 } from '@nestjs/common';
 import { StepStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { ProjectsService } from '../projects/projects.service';
 import { AiService } from '../ai/ai.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { SectionStepService } from '../common/services/section-step.service';
 import { GBM_STEPS, getStepConfig, StepConfig } from './step-config';
 import { ALL_STEPS } from './step-registry';
 
@@ -16,15 +16,11 @@ import { ALL_STEPS } from './step-registry';
 export class GbmService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly projects: ProjectsService,
+    private readonly sections: SectionStepService,
     private readonly ai: AiService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
-
-  async ensureProjectOwnership(projectId: string, userId: string) {
-    return this.projects.findOwnedOrThrow(projectId, userId);
-  }
 
   private getModel(config: StepConfig) {
     const model = (this.prisma as any)[config.model];
@@ -33,7 +29,7 @@ export class GbmService {
   }
 
   async getStepData(projectId: string, stepKey: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
 
@@ -58,7 +54,7 @@ export class GbmService {
   }
 
   async updateStep(projectId: string, stepKey: string, data: any, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
     if (config.relation !== 'one-to-one') {
@@ -74,7 +70,12 @@ export class GbmService {
       update: filteredData,
     });
 
-    await this.updateStepProgress(projectId, stepKey, 'COMPLETED');
+    const hasContent = Object.values(filteredData).some(
+      (value) => value !== undefined && value !== null && value !== '',
+    );
+    if (hasContent) {
+      await this.sections.markStepComplete(projectId, stepKey);
+    }
 
     if (config.aiGenerated) {
       await this.generateAiSummary(projectId, stepKey, record);
@@ -84,7 +85,7 @@ export class GbmService {
   }
 
   async addStepItem(projectId: string, stepKey: string, data: any, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
     if (config.relation !== 'one-to-many') {
@@ -92,25 +93,51 @@ export class GbmService {
     }
 
     const model = this.getModel(config);
+    const filteredData = this.filterStepFields(config, data);
     const item = await model.create({
-      data: { project_id: projectId, ...data },
+      data: { project_id: projectId, ...filteredData },
     });
 
-    await this.updateStepProgress(projectId, stepKey, 'IN_PROGRESS');
+    await this.sections.markStepComplete(projectId, stepKey);
 
     return item;
   }
 
   async listStepItems(projectId: string, stepKey: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
 
     return this.getMany(projectId, config);
   }
 
+  async updateStepItem(projectId: string, stepKey: string, itemId: string, data: any, userId: string) {
+    await this.sections.ensureOwnership(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+    if (config.relation !== 'one-to-many') {
+      throw new BadRequestException(`Step ${stepKey} is one-to-one. Use PATCH to update.`);
+    }
+
+    const model = this.getModel(config);
+    const item = await model.findFirst({
+      where: { id: itemId, project_id: projectId },
+    });
+    if (!item) throw new NotFoundException('Item not found');
+
+    const filteredData = this.filterStepFields(config, data);
+    const updated = await model.update({
+      where: { id: itemId },
+      data: filteredData,
+    });
+
+    await this.syncStepStatus(projectId, stepKey);
+
+    return updated;
+  }
+
   async deleteStepItem(projectId: string, stepKey: string, itemId: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
     if (config.relation !== 'one-to-many') {
@@ -125,16 +152,27 @@ export class GbmService {
 
     await model.delete({ where: { id: itemId } });
 
-    const remaining = await model.count({ where: { project_id: projectId } });
-    if (remaining === 0) {
-      await this.updateStepProgress(projectId, stepKey, 'NOT_STARTED');
-    }
+    await this.syncStepStatus(projectId, stepKey);
 
     return { deleted: true };
   }
 
+  private async syncStepStatus(projectId: string, stepKey: string) {
+    const config = getStepConfig(stepKey);
+    if (!config) return;
+
+    const model = this.getModel(config);
+    const count = await model.count({ where: { project_id: projectId } });
+
+    if (count === 0) {
+      await this.sections.markStepProgress(projectId, stepKey, 'NOT_STARTED');
+    } else {
+      await this.sections.markStepComplete(projectId, stepKey);
+    }
+  }
+
   async reviewGbm(projectId: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const missingSteps: string[] = [];
     const oneToOneModels = GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated);
@@ -154,10 +192,11 @@ export class GbmService {
       });
     }
 
+    const reviewedAt = new Date();
     await this.prisma.project.update({
       where: { id: projectId },
       data: {
-        gbm_reviewed_at: new Date(),
+        gbm_reviewed_at: reviewedAt,
         is_gbm_reviewed: true,
       },
     });
@@ -177,11 +216,11 @@ export class GbmService {
       } as NotificationPayload,
     );
 
-    return { message: 'GBM review completed', gbm_reviewed_at: new Date() };
+    return { message: 'GBM review completed', gbm_reviewed_at: reviewedAt };
   }
 
   async getProgress(projectId: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const steps = await this.prisma.stepProgress.findMany({
       where: { project_id: projectId },
@@ -223,7 +262,7 @@ export class GbmService {
   }
 
   async initializeProjectSteps(projectId: string, userId: string) {
-    await this.ensureProjectOwnership(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const operations = ALL_STEPS.map(step =>
       this.prisma.stepProgress.upsert({
@@ -243,23 +282,6 @@ export class GbmService {
     return { initialized: true, count: ALL_STEPS.length };
   }
 
-  private async updateStepProgress(projectId: string, stepKey: string, status: string) {
-    await this.prisma.stepProgress.upsert({
-      where: {
-        project_id_step_key: { project_id: projectId, step_key: stepKey },
-      },
-      create: {
-        project_id: projectId,
-        step_key: stepKey,
-        status: status as any,
-        completed_at: status === 'COMPLETED' ? new Date() : null,
-      },
-      update: {
-        status: status as any,
-        completed_at: status === 'COMPLETED' ? new Date() : undefined,
-      },
-    });
-  }
 
   private filterStepFields(config: StepConfig, data: any): any {
     const allowedFields = this.getAllowedFields(config.model);
@@ -322,7 +344,7 @@ export class GbmService {
       const model = this.getModel(config);
       await model.update({
         where: { id: record.id },
-        data: this.getSummaryField(stepKey, summary),
+        data: this.buildSummaryData(stepKey, summary),
       });
 
       await this.prisma.aiInteraction.create({
@@ -444,13 +466,48 @@ export class GbmService {
     }
   }
 
-  private getSummaryField(stepKey: string, summary: string): any {
+  private tryParseJson(text: string): Record<string, any> | null {
+    if (!text) return null;
+    const trimmed = text.trim();
+    const match = trimmed.match(/\{[\s\S]*\}/);
+    const candidate = match ? match[0] : trimmed;
+    try {
+      const parsed = JSON.parse(candidate);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private buildSummaryData(stepKey: string, summary: string): any {
+    const base = { generated_by_ai: true };
     switch (stepKey) {
-      case 'gbm_6':  return { summary_text: summary, generated_by_ai: true };
-      case 'gbm_15': return { activities_summary: summary, generated_by_ai: true };
-      case 'gbm_18': return { cost_summary: summary, generated_by_ai: true };
-      case 'gbm_21': return { strengths: summary, generated_by_ai: true };
-      default: return {};
+      case 'gbm_6':
+        return { ...base, summary_text: summary };
+      case 'gbm_15':
+      case 'gbm_18': {
+        const allowed =
+          stepKey === 'gbm_15'
+            ? ['activities_summary', 'key_achievements', 'next_steps']
+            : ['cost_summary', 'revenue_summary', 'financial_health'];
+        const parsed = this.tryParseJson(summary);
+        if (parsed) {
+          const data: Record<string, any> = { ...base };
+          for (const key of allowed) {
+            if (parsed[key] !== undefined) data[key] = String(parsed[key]);
+          }
+          if (Object.keys(data).length > 1) return data;
+        }
+        return stepKey === 'gbm_15'
+          ? { ...base, activities_summary: summary }
+          : { ...base, cost_summary: summary };
+      }
+      case 'gbm_21':
+        return { strengths: summary };
+      default:
+        return {};
     }
   }
 }

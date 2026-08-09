@@ -276,7 +276,7 @@ export class MailService {
   }
 
   async sendDocumentVerification(email: string, documentType: string, status: string): Promise<void> {
-    const isApproved = status === 'approved';
+    const isApproved = status === 'APPROVED';
     const statusColor = isApproved ? '#2d7a52' : '#c2410c';
     const icon = isApproved ? '✅' : '❌';
     const title = isApproved ? 'Document approuvé' : 'Document rejeté';

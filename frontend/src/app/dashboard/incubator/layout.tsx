@@ -5,7 +5,7 @@ import { RoleGuard } from '@/components/RoleGuard';
 
 export default function IncubatorLayout({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard allowedRoles={['incubator_membre']}>
+    <RoleGuard allowedRoles={['INCUBATOR_MEMBER']}>
       {children}
     </RoleGuard>
   );

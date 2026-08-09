@@ -1,19 +1,20 @@
 import VerifyEmailClient from './VerifyEmailClient';
 
-export default function VerifyEmailPage({
+export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     token?: string;
     email?: string;
     code?: string;
-  };
+  }>;
 }) {
+  const { token = '', email = '', code = '' } = await searchParams;
   return (
     <VerifyEmailClient
-      token={searchParams.token || ''}
-      email={searchParams.email || ''}
-      code={searchParams.code || ''}
+      token={token}
+      email={email}
+      code={code}
     />
   );
 }

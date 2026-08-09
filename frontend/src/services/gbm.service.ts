@@ -9,13 +9,18 @@ export const gbmService = {
     return data
   },
 
-  async updateStep(projectId: string, stepId: string, body: Record<string, any>) {
+  async updateStep(projectId: string, stepId: string, body: Record<string, unknown>) {
     const { data } = await api.patch(`${base(projectId)}/step/${stepId}`, body)
     return data
   },
 
-  async addStepItem(projectId: string, stepId: string, body: Record<string, any>) {
+  async addStepItem(projectId: string, stepId: string, body: Record<string, unknown>) {
     const { data } = await api.post(`${base(projectId)}/step/${stepId}/add`, body)
+    return data
+  },
+
+  async updateStepItem(projectId: string, stepId: string, itemId: string, body: Record<string, unknown>) {
+    const { data } = await api.patch(`${base(projectId)}/step/${stepId}/${itemId}`, body)
     return data
   },
 

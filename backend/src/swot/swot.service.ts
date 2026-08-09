@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ProjectsService } from '../projects/projects.service';
 import { LlmService } from '../ai/llm.service';
 import { StepStatus } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { SectionStepService } from '../common/services/section-step.service';
 
 @Injectable()
 export class SwotService {
@@ -14,14 +14,14 @@ export class SwotService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly projects: ProjectsService,
+    private readonly sections: SectionStepService,
     private readonly llm: LlmService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
   async getSwotAnalysis(projectId: string, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const swot = await (this.prisma as any).swotAnalysis.findUnique({
       where: { project_id: projectId },
@@ -31,7 +31,7 @@ export class SwotService {
   }
 
   async generateSwotAnalysis(projectId: string, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -94,7 +94,7 @@ export class SwotService {
       },
     });
 
-    await this.updateStepProgress(projectId, 'gbm_21', 'COMPLETED');
+    await this.sections.markStepProgress(projectId, 'gbm_21', 'COMPLETED');
 
     await this.prisma.aiInteraction.create({
       data: {
@@ -125,7 +125,7 @@ export class SwotService {
   }
 
   async updateSwotAnalysis(projectId: string, data: any, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const saved = await (this.prisma as any).swotAnalysis.upsert({
       where: { project_id: projectId },
@@ -137,24 +137,6 @@ export class SwotService {
     });
 
     return saved;
-  }
-
-  private async updateStepProgress(projectId: string, stepKey: string, status: string) {
-    await this.prisma.stepProgress.upsert({
-      where: {
-        project_id_step_key: { project_id: projectId, step_key: stepKey },
-      },
-      create: {
-        project_id: projectId,
-        step_key: stepKey,
-        status: status as any,
-        completed_at: status === 'COMPLETED' ? new Date() : null,
-      },
-      update: {
-        status: status as any,
-        completed_at: status === 'COMPLETED' ? new Date() : undefined,
-      },
-    });
   }
 
   private buildSwotPrompt(project: any): string {

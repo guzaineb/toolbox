@@ -1,12 +1,12 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ProjectsService } from '../projects/projects.service';
 import { LlmService } from '../ai/llm.service';
 import { DocumentPromptsService } from './document-prompts.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { SectionStepService } from '../common/services/section-step.service';
 
 export const DOCUMENT_DEFINITIONS = [
   { key: 'idea_sketch', title: "Fiche d'idée", icon: 'Lightbulb' },
@@ -38,7 +38,7 @@ export class DocumentsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly projects: ProjectsService,
+    private readonly sections: SectionStepService,
     private readonly llm: LlmService,
     private readonly prompts: DocumentPromptsService,
     private readonly eventEmitter: EventEmitter2,
@@ -46,7 +46,7 @@ export class DocumentsService {
   ) {}
 
   async getDocumentsList(projectId: string, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const docs = await (this.prisma as any).generatedDocument.findMany({
       where: { project_id: projectId },
@@ -70,7 +70,7 @@ export class DocumentsService {
   }
 
   async getDocument(projectId: string, documentKey: string, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);
@@ -93,7 +93,7 @@ export class DocumentsService {
   }
 
   async generateDocument(projectId: string, documentKey: string, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);
@@ -184,7 +184,7 @@ export class DocumentsService {
   }
 
   async generateAllDocuments(projectId: string, userId: string) {
-    await this.projects.findOwnedOrThrow(projectId, userId);
+    await this.sections.ensureOwnership(projectId, userId);
 
     const results: any[] = [];
     for (const def of DOCUMENT_DEFINITIONS) {
