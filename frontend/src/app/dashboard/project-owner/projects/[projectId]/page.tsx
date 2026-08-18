@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, TreePine, BarChart3, Leaf, DollarSign,
   Target, LineChart, Loader2, ChevronRight, Check, FileText,
+  HeartHandshake, ClipboardCheck,
 } from 'lucide-react'
 import { Card, CardHeader, Badge, Progress, Button } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
@@ -24,7 +25,16 @@ interface Project {
   gbm_reviewed_at?: string
 }
 
-const MODULES = [
+interface ModuleDef {
+  key: string
+  label: string
+  icon: any
+  color: string
+  bg: string
+  followUp?: boolean
+}
+
+const MODULES: ModuleDef[] = [
   { key: 'gbm',          label: 'Modèle d\'Affaires Vert',   icon: TreePine,   color: 'text-moss',      bg: 'bg-moss-light' },
   { key: 'business-plan',label: 'Plan d\'Affaires Vert',      icon: BarChart3,  color: 'text-amber',     bg: 'bg-amber-light' },
   { key: 'eco-design',   label: 'Éco-conception',             icon: Leaf,       color: 'text-green-600', bg: 'bg-green-50' },
@@ -32,6 +42,8 @@ const MODULES = [
   { key: 'market',       label: 'Accès au Marché',            icon: Target,     color: 'text-purple-600',bg: 'bg-purple-50' },
   { key: 'impact',       label: 'Mesure de l\'Impact',        icon: LineChart,  color: 'text-orange-600',bg: 'bg-orange-50' },
   { key: 'documents',    label: 'Documents',                   icon: FileText,   color: 'text-teal-600',  bg: 'bg-teal-50' },
+  { key: 'coachings',    label: 'Suivi coaching',              icon: HeartHandshake, color: 'text-moss', bg: 'bg-moss-light', followUp: true },
+  { key: 'evaluations',  label: 'Évaluation & décision',       icon: ClipboardCheck, color: 'text-blue-600', bg: 'bg-blue-50', followUp: true },
 ]
 
 const PROGRESS_MODULE_KEYS = ['gbm', 'business-plan', 'eco-design', 'funding', 'market', 'impact']
@@ -131,7 +143,7 @@ export default function ProjectDashboardPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         {MODULES.map(mod => {
           const Icon = mod.icon
-          const isLocked = !['gbm', 'documents'].includes(mod.key) && !project.is_gbm_reviewed
+          const isLocked = !['gbm', 'documents'].includes(mod.key) && !mod.followUp && !project.is_gbm_reviewed
           return (
             <Card
               key={mod.key}
@@ -152,7 +164,9 @@ export default function ProjectDashboardPage() {
                 <ChevronRight size={14} className="text-ink3" />
               </CardHeader>
               <div className="p-4 flex items-center gap-3">
-                {mod.key === 'documents' ? (
+                {mod.followUp ? (
+                  <span className="text-xs text-ink3">Suivi par l'incubateur et les experts</span>
+                ) : mod.key === 'documents' ? (
                   <span className="text-xs font-bold text-moss flex-shrink-0">—</span>
                 ) : (
                   <>

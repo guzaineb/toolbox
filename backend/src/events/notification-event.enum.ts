@@ -49,4 +49,30 @@ export enum NotificationEvent {
 
   // === DOCUMENTS ===
   DOCUMENT_PENDING = 'notification.document.pending',
+
+  // === COACHING & ÉVALUATION (module) ===
+  COACHING_SESSION_SCHEDULED = 'notification.coaching.session.scheduled',
+  COACHING_SESSION_UPDATED = 'notification.coaching.session.updated',
+  COACHING_SESSION_CANCELLED = 'notification.coaching.session.cancelled',
+  COACHING_SESSION_COMPLETED = 'notification.coaching.session.completed',
+  COACHING_REPORT_SUBMITTED = 'notification.coaching.report.submitted',
+  COACHING_ACTION_ASSIGNED = 'notification.coaching.action.assigned',
+  COACHING_ACTION_UPDATED = 'notification.coaching.action.updated',
+  COACHING_ACTION_COMPLETED = 'notification.coaching.action.completed',
+  COACHING_ACTION_DEADLINE_SOON = 'notification.coaching.action.deadline_soon',
+  COACHING_ACTION_OVERDUE = 'notification.coaching.action.overdue',
+  COACHING_RECOMMENDATION_ADDED = 'notification.coaching.recommendation.added',
+  COACHING_COMMENT_ADDED = 'notification.coaching.comment.added',
+  COACH_ASSIGNED = 'notification.coach.assigned',
+  COACH_REMOVED = 'notification.coach.removed',
+  EVALUATION_AVAILABLE = 'notification.evaluation.available',
+  EVALUATION_SUBMITTED = 'notification.evaluation.submitted',
+  EVALUATION_ALL_COMPLETED = 'notification.evaluation.all_completed',
+  EVALUATION_DEADLINE_SOON = 'notification.evaluation.deadline_soon',
+  EVALUATION_TEMPLATE_CREATED = 'notification.evaluation.template.created',
+  FINAL_DECISION_MADE = 'notification.final_decision.made',
+  FINAL_DECISION_UPDATED = 'notification.final_decision.updated',
+  FINAL_DECISION_CONDITIONS_ADDED = 'notification.final_decision.conditions.added',
+  CONDITION_VALIDATED = 'notification.condition.validated',
+  REEVALUATION_REQUESTED = 'notification.reevaluation.requested',
 }

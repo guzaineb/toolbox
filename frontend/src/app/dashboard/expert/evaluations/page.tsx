@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ClipboardCheck, Star, Edit3 } from 'lucide-react'
+import Link from 'next/link'
+import { ClipboardCheck, Star, Edit3, ClipboardList } from 'lucide-react'
 import { cohortService } from '@/services/cohort.service'
 import { Badge, Button, Card, Field, Input, Textarea, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
 import { Evaluation } from '@/types/cohort'
@@ -62,7 +63,14 @@ export default function ExpertEvaluationsPage() {
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <h1 className="font-syne text-[22px] font-extrabold text-ink mb-[2px]">Mes évaluations</h1>
-      <p className="text-[12px] text-ink3 mb-6">Projets que vous avez évalués en tant que jury</p>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <p className="text-[12px] text-ink3">Projets que vous avez évalués en tant que jury</p>
+        <Link href="/dashboard/expert/evaluations-todo">
+          <Button size="sm" variant="outline">
+            <ClipboardList size={13} /> À évaluer
+          </Button>
+        </Link>
+      </div>
 
       {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
       {success && <div className="mb-5"><SuccessAlert message={success} /></div>}

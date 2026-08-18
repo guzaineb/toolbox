@@ -168,6 +168,152 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, Notification
     subjectPrefix: 'Projet désassocié',
   },
 
+  // ─── COACHING & ÉVALUATION (module) ───────────────────
+  [NotificationType.COACHING_SESSION_SCHEDULED]: {
+    icon: '📅',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Session de coaching planifiée',
+  },
+  [NotificationType.COACHING_SESSION_UPDATED]: {
+    icon: '🔄',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Session de coaching modifiée',
+  },
+  [NotificationType.COACHING_SESSION_CANCELLED]: {
+    icon: '🚫',
+    gradientFrom: '#6b7280',
+    gradientTo: '#4b5563',
+    subjectPrefix: 'Session de coaching annulée',
+  },
+  [NotificationType.COACHING_SESSION_COMPLETED]: {
+    icon: '✅',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Session de coaching terminée',
+  },
+  [NotificationType.COACHING_REPORT_SUBMITTED]: {
+    icon: '📋',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Compte-rendu de coaching',
+  },
+  [NotificationType.COACHING_ACTION_ASSIGNED]: {
+    icon: '📝',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Action de coaching',
+  },
+  [NotificationType.COACHING_ACTION_UPDATED]: {
+    icon: '🔄',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Action de coaching mise à jour',
+  },
+  [NotificationType.COACHING_ACTION_COMPLETED]: {
+    icon: '🎯',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Action de coaching terminée',
+  },
+  [NotificationType.COACHING_ACTION_DEADLINE_SOON]: {
+    icon: '⏰',
+    gradientFrom: '#c2410c',
+    gradientTo: '#9a3412',
+    subjectPrefix: 'Échéance proche',
+  },
+  [NotificationType.COACHING_ACTION_OVERDUE]: {
+    icon: '🚨',
+    gradientFrom: '#dc2626',
+    gradientTo: '#991b1b',
+    subjectPrefix: 'Action en retard',
+  },
+  [NotificationType.COACHING_RECOMMENDATION_ADDED]: {
+    icon: '💡',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Recommandation de coaching',
+  },
+  [NotificationType.COACHING_COMMENT_ADDED]: {
+    icon: '💬',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Commentaire de coaching',
+  },
+  [NotificationType.COACH_ASSIGNED]: {
+    icon: '🏅',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Coach affecté',
+  },
+  [NotificationType.COACH_REMOVED]: {
+    icon: '⚙️',
+    gradientFrom: '#6b7280',
+    gradientTo: '#4b5563',
+    subjectPrefix: 'Coach retiré',
+  },
+  [NotificationType.EVALUATION_AVAILABLE]: {
+    icon: '📊',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Évaluation disponible',
+  },
+  [NotificationType.EVALUATION_SUBMITTED]: {
+    icon: '📤',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Évaluation soumise',
+  },
+  [NotificationType.EVALUATION_ALL_COMPLETED]: {
+    icon: '🏁',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Toutes les évaluations reçues',
+  },
+  [NotificationType.EVALUATION_DEADLINE_SOON]: {
+    icon: '⏰',
+    gradientFrom: '#c2410c',
+    gradientTo: '#9a3412',
+    subjectPrefix: 'Échéance d\'évaluation',
+  },
+  [NotificationType.EVALUATION_TEMPLATE_CREATED]: {
+    icon: '📋',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Grille d\'évaluation créée',
+  },
+  [NotificationType.FINAL_DECISION_MADE]: {
+    icon: '⚖️',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Décision finale',
+  },
+  [NotificationType.FINAL_DECISION_UPDATED]: {
+    icon: '🔄',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Décision finale mise à jour',
+  },
+  [NotificationType.FINAL_DECISION_CONDITIONS_ADDED]: {
+    icon: '📌',
+    gradientFrom: '#c2410c',
+    gradientTo: '#9a3412',
+    subjectPrefix: 'Conditions de la décision',
+  },
+  [NotificationType.CONDITION_VALIDATED]: {
+    icon: '✅',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Condition validée',
+  },
+  [NotificationType.REEVALUATION_REQUESTED]: {
+    icon: '🔁',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Réévaluation demandée',
+  },
+
   // ─── IA ───────────────────────────────────────────────
   [NotificationType.AI_RESPONSE_READY]: {
     icon: '🤖',

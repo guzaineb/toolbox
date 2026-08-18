@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Settings, Plus, X, TrendingUp, Users, Award,
-  Calendar, Briefcase, Target, Clock, Star, Edit3, CheckCircle, AlertCircle
+  Calendar, Briefcase, Target, Clock, Star, Edit3, CheckCircle, AlertCircle,
+  ClipboardCheck, HeartHandshake
 } from 'lucide-react';
 import { Button, Card } from '@/components/shared/ui';
 import { AvailabilityBadge } from '@/components/expert/AvailabilityBadge';
@@ -159,7 +160,19 @@ export default function ExpertDashboardPage() {
           <h1 className="font-syne text-2xl font-extrabold text-ink">Tableau de bord expert</h1>
           <p className="text-ink3 mt-1">Gérez votre profil et suivez votre impact</p>
         </div>
-        <div className="flex gap-3 mt-4 sm:mt-0">
+        <div className="flex gap-3 mt-4 sm:mt-0 flex-wrap">
+          <Link href="/dashboard/expert/evaluations-todo">
+            <Button variant="secondary" size="sm">
+              <ClipboardCheck className="w-4 h-4 mr-2" />
+              À évaluer
+            </Button>
+          </Link>
+          <Link href="/dashboard/expert/coachings">
+            <Button variant="secondary" size="sm">
+              <HeartHandshake className="w-4 h-4 mr-2" />
+              Suivi coaching
+            </Button>
+          </Link>
           <Link href="/dashboard/expert/matching">
             <Button variant="secondary" size="sm">
               <Target className="w-4 h-4 mr-2" />

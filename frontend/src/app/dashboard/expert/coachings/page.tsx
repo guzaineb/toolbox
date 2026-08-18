@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { HeartHandshake, Edit3 } from 'lucide-react'
+import Link from 'next/link'
+import { HeartHandshake, Edit3, ArrowUpRight } from 'lucide-react'
 import { cohortService } from '@/services/cohort.service'
 import { Badge, Button, Card, Field, Textarea, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
 import { Coaching } from '@/types/cohort'
@@ -103,9 +104,16 @@ export default function ExpertCoachingsPage() {
                       </div>
                     )}
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => startEdit(c)}>
-                    <Edit3 size={13} />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Link href={`/dashboard/expert/coaching/${c.project?.id}`}>
+                      <Button size="sm" variant="outline">
+                        <ArrowUpRight size={13} /> Suivi
+                      </Button>
+                    </Link>
+                    <Button size="sm" variant="ghost" onClick={() => startEdit(c)}>
+                      <Edit3 size={13} />
+                    </Button>
+                  </div>
                 </div>
               )}
             </Card>

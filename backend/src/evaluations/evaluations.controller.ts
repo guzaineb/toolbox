@@ -13,6 +13,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EvaluationsService } from './evaluations.service';
 import { CreateEvaluationDto, UpdateEvaluationDto } from './dto/evaluation.dto';
+import { SaveScoresDto } from './dto/save-scores.dto';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -56,5 +57,36 @@ export class EvaluationsController {
   @Get('experts/me/evaluations')
   findMyEvaluations(@Req() req: { user: { id: string } }) {
     return this.evaluationsService.findMyEvaluations(req.user.id);
+  }
+
+  // ==================== MODULE ÉVALUATION ====================
+
+  @Post('evaluation-assignments/:id/draft')
+  @HttpCode(HttpStatus.CREATED)
+  createDraft(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+    return this.evaluationsService.createDraft(id, req.user.id);
+  }
+
+  @Patch('evaluations/:id/scores')
+  saveScores(
+    @Param('id') id: string,
+    @Body() dto: SaveScoresDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.evaluationsService.saveScores(id, dto, req.user.id);
+  }
+
+  @Post('evaluations/:id/submit')
+  @HttpCode(HttpStatus.OK)
+  submit(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+    return this.evaluationsService.submit(id, req.user.id);
+  }
+
+  @Get('projects/:projectId/evaluations/summary')
+  getProjectSummary(
+    @Param('projectId') projectId: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.evaluationsService.getProjectSummary(projectId, req.user.id);
   }
 }

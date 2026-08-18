@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {
   ChevronRight, Users, UserCheck, FileText, Play, Pause,
   Archive, Trash2, Plus, X, Check, Send,
+  HeartHandshake, ClipboardCheck, Gavel,
 } from 'lucide-react'
 import { cohortService } from '@/services/cohort.service'
 import {
@@ -22,8 +23,11 @@ import {
   EXPERT_STATUS_LABELS, EXPERT_STATUS_COLORS,
   CohortStatus,
 } from '@/types/cohort'
+import { CoachingTab } from '@/components/cohort/CoachingTab'
+import { EvaluationTab } from '@/components/cohort/EvaluationTab'
+import { JuryTab } from '@/components/cohort/JuryTab'
 
-type Tab = 'info' | 'participations' | 'experts'
+type Tab = 'info' | 'participations' | 'experts' | 'coaching' | 'evaluation' | 'jury'
 
 interface ProjectSearchResult {
   id: string
@@ -455,7 +459,14 @@ export default function CohortDetailPage() {
     { key: 'info', label: 'Informations', icon: <FileText size={13} /> },
     { key: 'participations', label: `Candidatures (${cohort.participations?.length ?? 0})`, icon: <Users size={13} /> },
     { key: 'experts', label: `Experts (${cohort.experts?.filter((e) => e.status === 'ACTIVE').length ?? 0})`, icon: <UserCheck size={13} /> },
+    { key: 'coaching', label: 'Coaching', icon: <HeartHandshake size={13} /> },
+    { key: 'evaluation', label: 'Évaluation', icon: <ClipboardCheck size={13} /> },
+    { key: 'jury', label: 'Jury & Décisions', icon: <Gavel size={13} /> },
   ]
+
+  const acceptedProjects = (cohort.participations ?? [])
+    .filter((p) => p.status === 'ACCEPTED' && p.project)
+    .map((p) => ({ id: p.project!.id, name: p.project!.name }))
 
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-5">
@@ -508,6 +519,15 @@ export default function CohortDetailPage() {
       )}
       {activeTab === 'experts' && (
         <ExpertsTab cohortId={cohortId} experts={cohort.experts ?? []} onRefresh={fetchCohort} />
+      )}
+      {activeTab === 'coaching' && (
+        <CoachingTab projects={acceptedProjects} />
+      )}
+      {activeTab === 'evaluation' && (
+        <EvaluationTab cohortId={cohortId} projects={acceptedProjects} experts={cohort.experts ?? []} />
+      )}
+      {activeTab === 'jury' && (
+        <JuryTab projects={acceptedProjects} experts={cohort.experts ?? []} />
       )}
     </div>
   )

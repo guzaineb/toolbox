@@ -105,12 +105,76 @@ enum ParticipationOrigin {
 enum CohortExpertRole {
   JURY
   COACH
+  EVALUATOR
 }
 
 enum CohortExpertStatus {
   PENDING
   ACTIVE
   INACTIVE
+}
+
+enum CoachingSessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  MISSED
+}
+
+enum CoachingActionStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  REJECTED
+  OVERDUE
+  CANCELLED
+}
+
+enum CoachingActionPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum CoachingRecommendationStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  ARCHIVED
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum EvaluationStage {
+  INTERMEDIATE
+  FINAL
+}
+
+enum FinalDecisionType {
+  ACCEPTED
+  REJECTED
+  CONDITIONAL
+  EXTENDED
+  REEVALUATION_REQUIRED
+}
+
+enum ConditionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+enum JurySessionStatus {
+  DRAFT
+  OPEN
+  DELIBERATION
+  CLOSED
 }
 
 enum NotificationPriority {
@@ -165,6 +229,32 @@ enum NotificationType {
   PROJECT_MATCHED
   PROJECT_UNMATCHED
 
+  // === COACHING & ÉVALUATION (module) ===
+  COACHING_SESSION_SCHEDULED
+  COACHING_SESSION_UPDATED
+  COACHING_SESSION_CANCELLED
+  COACHING_SESSION_COMPLETED
+  COACHING_REPORT_SUBMITTED
+  COACHING_ACTION_ASSIGNED
+  COACHING_ACTION_UPDATED
+  COACHING_ACTION_COMPLETED
+  COACHING_ACTION_DEADLINE_SOON
+  COACHING_ACTION_OVERDUE
+  COACHING_RECOMMENDATION_ADDED
+  COACHING_COMMENT_ADDED
+  COACH_ASSIGNED
+  COACH_REMOVED
+  EVALUATION_AVAILABLE
+  EVALUATION_SUBMITTED
+  EVALUATION_ALL_COMPLETED
+  EVALUATION_DEADLINE_SOON
+  EVALUATION_TEMPLATE_CREATED
+  FINAL_DECISION_MADE
+  FINAL_DECISION_UPDATED
+  FINAL_DECISION_CONDITIONS_ADDED
+  CONDITION_VALIDATED
+  REEVALUATION_REQUESTED
+
   // === ADMIN ===
   NEW_USER_REGISTERED
   NEW_INCUBATOR
@@ -208,6 +298,22 @@ model User {
   notifications        Notification[]        @relation("NotificationRecipient")
   sentNotifications    Notification[]        @relation("NotificationSender")
   notificationPreference NotificationPreference?
+
+  // Coaching & Évaluation
+  projectExpertAssignments        ProjectExpertAssignment[]  @relation("AssignmentExpert")
+  assignedProjectExpertAssignments ProjectExpertAssignment[] @relation("AssignmentAssignedBy")
+  coachingSessionsCreated         CoachingSession[]          @relation("SessionCreatedBy")
+  coachingActionsCreated          CoachingAction[]           @relation("ActionCreatedBy")
+  coachingRecommendations         CoachingRecommendation[]   @relation("RecommendationAuthor")
+  coachingComments                CoachingComment[]          @relation("CommentAuthor")
+  evaluationTemplatesCreated      EvaluationTemplate[]       @relation("TemplateCreatedBy")
+  evaluationAssignmentsJury       EvaluationAssignment[]     @relation("EvaluationJury")
+  evaluationAssignmentsCreated    EvaluationAssignment[]     @relation("EvaluationAssignedBy")
+  finalDecisionsDecided           FinalDecision[]            @relation("DecisionDecidedBy")
+  conditionValidated              FinalDecisionCondition[]   @relation("ConditionValidatedBy")
+  jurySessionsCreated             JurySession[]              @relation("JuryCreatedBy")
+  jurySessionMemberships          JurySessionMember[]        @relation("JuryMemberUser")
+  auditLogs                       AuditLog[]                 @relation("AuditActor")
 
   @@map("users")
 }
@@ -488,6 +594,14 @@ model Project {
   evaluations            Evaluation[]
   coachings              Coaching[]
 
+  // Coaching & Évaluation
+  projectExpertAssignments ProjectExpertAssignment[]
+  coachingActions          CoachingAction[]
+  coachingRecommendations  CoachingRecommendation[]
+  evaluationAssignments    EvaluationAssignment[]
+  finalDecisions           FinalDecision[]
+  jurySessions             JurySession[]
+
   @@index([name])
   @@index([owner_id])
   @@map("projects")
@@ -533,6 +647,12 @@ model Cohort {
   incubator      Incubator?          @relation(fields: [incubator_id], references: [id])
   participations CohortParticipation[]
   experts        CohortExpert[]
+
+  // Coaching & Évaluation
+  evaluationAssignments EvaluationAssignment[]
+  evaluationTemplates   EvaluationTemplate[]
+  finalDecisions        FinalDecision[]
+  jurySessions          JurySession[]
 
   @@index([status])
   @@index([incubator_id])
@@ -589,20 +709,28 @@ model CohortExpert {
 // CORE — Evaluations (Jury)
 // ===========================
 model Evaluation {
-  id            String   @id @default(uuid())
+  id            String          @id @default(uuid())
   project_id    String
   jury_user_id  String
-  score         Float
+  score         Float?
   comment       String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  recommendation String?
+  status        EvaluationStatus @default(DRAFT)
+  submitted_at  DateTime?
+  template_id   String?
+  version       Int             @default(1)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
 
-  project   Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  juryUser  User    @relation(fields: [jury_user_id], references: [id])
+  project   Project             @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  juryUser  User                @relation(fields: [jury_user_id], references: [id])
+  template  EvaluationTemplate? @relation(fields: [template_id], references: [id])
+  scores    EvaluationScore[]
 
-  @@unique([project_id, jury_user_id])
+  @@unique([project_id, jury_user_id, template_id, version])
   @@index([project_id])
   @@index([jury_user_id])
+  @@index([status])
   @@map("evaluations")
 }
 
@@ -624,6 +752,324 @@ model Coaching {
   @@index([project_id])
   @@index([coach_user_id])
   @@map("coachings")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Affectations par projet
+// ===========================
+model ProjectExpertAssignment {
+  id           String            @id @default(uuid())
+  project_id   String
+  expert_user_id String
+  role         CohortExpertRole  @default(COACH)
+  status       CohortExpertStatus @default(ACTIVE)
+  assigned_by  String
+  assigned_at  DateTime          @default(now())
+  removed_at   DateTime?
+
+  project     Project            @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  expertUser  User               @relation("AssignmentExpert", fields: [expert_user_id], references: [id])
+  assignedBy  User               @relation("AssignmentAssignedBy", fields: [assigned_by], references: [id])
+  sessions    CoachingSession[]
+  actions     CoachingAction[]
+
+  @@unique([project_id, expert_user_id, role])
+  @@index([project_id])
+  @@index([expert_user_id])
+  @@index([status])
+  @@map("project_expert_assignments")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Sessions
+// ===========================
+model CoachingSession {
+  id               String                @id @default(uuid())
+  assignment_id    String
+  title            String?
+  scheduled_at     DateTime
+  duration_minutes Int?
+  status           CoachingSessionStatus @default(SCHEDULED)
+  report           String?
+  created_by       String
+  created_at       DateTime              @default(now())
+  updated_at       DateTime              @updatedAt
+  completed_at     DateTime?
+
+  assignment ProjectExpertAssignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
+  createdBy  User                    @relation("SessionCreatedBy", fields: [created_by], references: [id])
+  actions    CoachingAction[]
+  comments   CoachingComment[]
+  recommendations CoachingRecommendation[]
+
+  @@index([assignment_id])
+  @@index([status])
+  @@map("coaching_sessions")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Recommandations
+// ===========================
+model CoachingRecommendation {
+  id          String                      @id @default(uuid())
+  session_id  String?
+  project_id  String?
+  author_id   String
+  title       String?
+  content     String
+  priority    CoachingActionPriority      @default(MEDIUM)
+  status      CoachingRecommendationStatus @default(OPEN)
+  created_at  DateTime                    @default(now())
+  updated_at  DateTime                    @updatedAt
+
+  session CoachingSession? @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  project Project?         @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  author  User             @relation("RecommendationAuthor", fields: [author_id], references: [id])
+  actions CoachingAction[]
+
+  @@index([session_id])
+  @@index([project_id])
+  @@map("coaching_recommendations")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Actions
+// ===========================
+model CoachingAction {
+  id                  String                @id @default(uuid())
+  project_id          String
+  session_id          String?
+  assignment_id       String?
+  recommendation_id   String?
+  title               String
+  description         String?
+  status              CoachingActionStatus  @default(PENDING)
+  priority            CoachingActionPriority @default(MEDIUM)
+  deadline            DateTime?
+  completed_at        DateTime?
+  created_by          String
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
+  deadline_reminded_at DateTime?
+  overdue_reminded_at  DateTime?
+
+  project       Project                @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  session       CoachingSession?       @relation(fields: [session_id], references: [id])
+  assignment    ProjectExpertAssignment? @relation(fields: [assignment_id], references: [id])
+  recommendation CoachingRecommendation? @relation(fields: [recommendation_id], references: [id])
+  createdBy     User                   @relation("ActionCreatedBy", fields: [created_by], references: [id])
+  comments      CoachingComment[]
+
+  @@index([project_id])
+  @@index([session_id])
+  @@index([assignment_id])
+  @@index([status])
+  @@index([deadline])
+  @@map("coaching_actions")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Commentaires
+// ===========================
+model CoachingComment {
+  id            String        @id @default(uuid())
+  action_id     String?
+  session_id    String?
+  author_id     String
+  content       String
+  resource_type ResourceType?
+  resource_id   String?
+  created_at    DateTime      @default(now())
+
+  action  CoachingAction?  @relation(fields: [action_id], references: [id], onDelete: Cascade)
+  session CoachingSession? @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  author  User             @relation("CommentAuthor", fields: [author_id], references: [id])
+
+  @@index([action_id])
+  @@index([session_id])
+  @@index([resource_type, resource_id])
+  @@map("coaching_comments")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Grilles d'évaluation
+// ===========================
+model EvaluationTemplate {
+  id          String          @id @default(uuid())
+  cohort_id   String
+  name        String
+  description String?
+  stage       EvaluationStage @default(FINAL)
+  published   Boolean         @default(false)
+  locked_at   DateTime?
+  created_by  String
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
+
+  cohort     Cohort             @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  createdBy  User               @relation("TemplateCreatedBy", fields: [created_by], references: [id])
+  criteria   EvaluationCriterion[]
+  evaluations Evaluation[]
+
+  @@index([cohort_id])
+  @@map("evaluation_templates")
+}
+
+model EvaluationCriterion {
+  id          String  @id @default(uuid())
+  template_id String
+  name        String
+  description String?
+  weight      Float   @default(1)
+  max_score   Int     @default(5)
+  sort_order  Int     @default(0)
+
+  template EvaluationTemplate @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  scores   EvaluationScore[]
+
+  @@index([template_id])
+  @@map("evaluation_criteria")
+}
+
+model EvaluationScore {
+  id           String  @id @default(uuid())
+  evaluation_id String
+  criterion_id String
+  score        Int
+  comment      String?
+
+  evaluation Evaluation        @relation(fields: [evaluation_id], references: [id], onDelete: Cascade)
+  criterion  EvaluationCriterion @relation(fields: [criterion_id], references: [id], onDelete: Cascade)
+
+  @@unique([evaluation_id, criterion_id])
+  @@index([evaluation_id])
+  @@map("evaluation_scores")
+}
+
+model EvaluationAssignment {
+  id               String    @id @default(uuid())
+  cohort_id        String
+  project_id       String
+  jury_user_id     String
+  assigned_by      String
+  created_at       DateTime  @default(now())
+  deadline         DateTime?
+  deadline_reminded_at DateTime?
+
+  cohort     Cohort @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  project    Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  juryUser   User   @relation("EvaluationJury", fields: [jury_user_id], references: [id])
+  assignedBy User   @relation("EvaluationAssignedBy", fields: [assigned_by], references: [id])
+
+  @@unique([cohort_id, project_id, jury_user_id])
+  @@index([cohort_id])
+  @@index([project_id])
+  @@index([jury_user_id])
+  @@index([deadline])
+  @@map("evaluation_assignments")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Décision finale & Conditions
+// ===========================
+model FinalDecision {
+  id          String           @id @default(uuid())
+  project_id  String
+  cohort_id   String
+  decision    FinalDecisionType
+  final_score Float?
+  justification String?
+  new_end_date DateTime?
+  decided_by  String
+  decided_at  DateTime         @default(now())
+  created_at  DateTime         @default(now())
+
+  project Project               @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  cohort  Cohort                @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  decidedBy User                @relation("DecisionDecidedBy", fields: [decided_by], references: [id])
+  conditions FinalDecisionCondition[]
+
+  @@index([project_id])
+  @@index([cohort_id])
+  @@map("final_decisions")
+}
+
+model FinalDecisionCondition {
+  id           String         @id @default(uuid())
+  decision_id  String
+  description  String
+  deadline     DateTime?
+  status       ConditionStatus @default(PENDING)
+  validated_by String?
+  validated_at DateTime?
+  created_at   DateTime       @default(now())
+
+  decision    FinalDecision @relation(fields: [decision_id], references: [id], onDelete: Cascade)
+  validatedBy User?         @relation("ConditionValidatedBy", fields: [validated_by], references: [id])
+
+  @@index([decision_id])
+  @@map("final_decision_conditions")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Jury / Délibération
+// ===========================
+model JurySession {
+  id                    String          @id @default(uuid())
+  project_id            String
+  cohort_id             String
+  title                 String?
+  status                JurySessionStatus @default(DRAFT)
+  observations          String?
+  reevaluation_requested Boolean        @default(false)
+  created_by            String
+  created_at            DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
+  closed_at             DateTime?
+
+  project   Project           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  cohort    Cohort            @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  createdBy User              @relation("JuryCreatedBy", fields: [created_by], references: [id])
+  members   JurySessionMember[]
+
+  @@index([project_id])
+  @@index([cohort_id])
+  @@index([status])
+  @@map("jury_sessions")
+}
+
+model JurySessionMember {
+  id              String @id @default(uuid())
+  jury_session_id String
+  member_user_id  String
+  created_at      DateTime @default(now())
+
+  jurySession JurySession @relation(fields: [jury_session_id], references: [id], onDelete: Cascade)
+  member      User        @relation("JuryMemberUser", fields: [member_user_id], references: [id])
+
+  @@unique([jury_session_id, member_user_id])
+  @@index([member_user_id])
+  @@map("jury_session_members")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Audit log
+// ===========================
+model AuditLog {
+  id          String   @id @default(uuid())
+  actor_id    String
+  action      String
+  entity_type String
+  entity_id   String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  actor User @relation("AuditActor", fields: [actor_id], references: [id])
+
+  @@index([entity_type, entity_id])
+  @@index([actor_id])
+  @@index([created_at])
+  @@map("audit_logs")
 }
 
 // ===========================
