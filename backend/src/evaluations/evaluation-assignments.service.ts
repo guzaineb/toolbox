@@ -36,7 +36,7 @@ export class EvaluationAssignmentsService {
     }
     if (template && !template.published) {
       throw new BadRequestException(
-        'La grille doit être publiée avant d’affecter des évaluateurs',
+        "La grille doit être publiée avant d'affecter des membres du jury",
       );
     }
 
@@ -255,3 +255,4 @@ export class EvaluationAssignmentsService {
       .sort((a, b) => Number(a.todo) - Number(b.todo));
   }
 }
+

@@ -107,14 +107,14 @@ export default function ProjectEvaluationsPage() {
 
           {summary && summary.byEvaluator.length > 0 && (
             <div className="mt-4">
-              <div className="text-[11px] font-bold text-ink3 uppercase tracking-[0.1em] mb-2">Par évaluateur</div>
+              <div className="text-[11px] font-bold text-ink3 uppercase tracking-[0.1em] mb-2">Par membre du jury</div>
               <div className="space-y-[6px]">
                 {summary.byEvaluator.map((e, i) => (
                   <div key={i} className="flex items-center gap-3 text-[12px]">
                     <span className="flex-1 text-ink2">
-                      {e.evaluator.profile
-                        ? `${e.evaluator.profile.first_name} ${e.evaluator.profile.last_name}`
-                        : e.evaluator.email}
+                      {e.juryMember.profile
+                        ? `${e.juryMember.profile.first_name} ${e.juryMember.profile.last_name}`
+                        : e.juryMember.email}
                     </span>
                     <span className="font-bold text-ink">{e.total20}/20</span>
                   </div>

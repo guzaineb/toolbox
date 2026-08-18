@@ -12,7 +12,7 @@ export class CreateAssignmentDto {
   expertUserId: string;
 
   @IsEnum(CohortExpertRole, {
-    message: 'Rôle invalide (COACH, EVALUATOR ou JURY)',
+    message: 'Rôle invalide (COACH ou JURY)',
   })
   role: CohortExpertRole;
 

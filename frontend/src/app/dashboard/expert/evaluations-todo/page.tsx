@@ -36,7 +36,7 @@ export default function ExpertEvaluationsTodoPage() {
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <h1 className="font-syne text-[22px] font-extrabold text-ink mb-[2px]">Évaluations à faire</h1>
-      <p className="text-[12px] text-ink3 mb-6">Projets qui vous ont été affectés en tant qu'évaluateur</p>
+      <p className="text-[12px] text-ink3 mb-6">Projets qui vous ont été affectés en tant que membre du jury</p>
 
       {assignments.length === 0 ? (
         <Card className="text-center py-14">

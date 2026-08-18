@@ -140,7 +140,7 @@ function CreateTemplateModal({
 }
 
 /* ═════════════════════════════════════
-   MODALE : AFFECTER DES ÉVALUATEURS
+   MODALE : AFFECTER DES MEMBRES DU JURY
 ═════════════════════════════════════ */
 function AssignEvaluatorsModal({
   cohortId, projects, juryExperts, templates, onClose, onSuccess,
@@ -171,7 +171,7 @@ function AssignEvaluatorsModal({
       .filter((p) => (selections[p.id] ?? []).length > 0)
       .map((p) => ({ projectId: p.id, juryUserIds: selections[p.id] }))
     if (assignments.length === 0) {
-      setError('Sélectionnez au moins un évaluateur pour un projet')
+      setError('Sélectionnez au moins un membre du jury pour un projet')
       return
     }
     setError(null)
@@ -194,7 +194,7 @@ function AssignEvaluatorsModal({
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6 z-50 overflow-y-auto" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <Card className="w-full max-w-[640px] p-0 overflow-hidden shadow-lg my-8">
-        <CardHeader icon={<ClipboardCheck size={15} />} title="Affecter des évaluateurs">
+        <CardHeader icon={<ClipboardCheck size={15} />} title="Affecter des membres du jury">
           <Button size="sm" variant="ghost" onClick={onClose}><X size={16} /></Button>
         </CardHeader>
         <div className="p-6">
@@ -213,7 +213,7 @@ function AssignEvaluatorsModal({
             </Field>
           </div>
 
-          <div className="text-[11px] font-bold text-ink3 uppercase tracking-[0.1em] mb-2">Évaluateurs disponibles</div>
+          <div className="text-[11px] font-bold text-ink3 uppercase tracking-[0.1em] mb-2">Membres du jury disponibles</div>
           {juryExperts.length === 0 && (
             <p className="text-[12px] text-ink3 mb-3">Aucun expert Jury actif dans la cohorte. Affectez d'abord des experts au rôle Jury.</p>
           )}
@@ -400,14 +400,14 @@ export function EvaluationTab({
 
       {/* Affectations */}
       <Card className="overflow-hidden">
-        <CardHeader icon={<ClipboardCheck size={13} />} title="Affectations d'évaluateurs">
+        <CardHeader icon={<ClipboardCheck size={13} />} title="Affectations d'évaluation">
           <Button size="sm" variant="primary" onClick={() => setShowAssign(true)}>
             <Plus size={12} /> Affecter
           </Button>
         </CardHeader>
         <div className="p-[18px]">
           {assignments.length === 0 ? (
-            <p className="text-[12px] text-ink3">Aucune affectation d'évaluateur pour le moment.</p>
+            <p className="text-[12px] text-ink3">Aucune affectation d'évaluation pour le moment.</p>
           ) : (
             <div className="space-y-[6px]">
               {assignments.map((a) => {

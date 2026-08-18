@@ -15,7 +15,7 @@ export class AssignmentItemDto {
   projectId: string;
 
   @IsArray()
-  @ArrayNotEmpty({ message: 'Au moins un évaluateur requis' })
+  @ArrayNotEmpty({ message: 'Au moins un membre du jury requis' })
   @IsString({ each: true })
   juryUserIds: string[];
 }

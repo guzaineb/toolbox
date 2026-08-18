@@ -2,7 +2,7 @@
    ENUMS — Module Coaching & Évaluation
 ========================================================= */
 
-export type AssignmentRole = 'COACH' | 'JURY' | 'EVALUATOR'
+export type AssignmentRole = 'COACH' | 'JURY'
 
 export type CoachingSessionStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'MISSED'
 export type CoachingActionStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'COMPLETED' | 'REJECTED' | 'OVERDUE' | 'CANCELLED'
@@ -196,7 +196,7 @@ export interface EvaluationSummary {
   min20: number | null
   max20: number | null
   byEvaluator: Array<{
-    evaluator: { id: string; email: string; profile?: { first_name: string; last_name: string } }
+    juryMember: { id: string; email: string; profile?: { first_name: string; last_name: string } }
     total: number
     total20: number
     submitted_at?: string
@@ -355,7 +355,6 @@ export interface MakeDecisionDto {
 export const ASSIGNMENT_ROLE_LABELS: Record<AssignmentRole, string> = {
   COACH: 'Coach',
   JURY: 'Jury',
-  EVALUATOR: 'Évaluateur',
 }
 
 export const COACHING_SESSION_STATUS_LABELS: Record<CoachingSessionStatus, string> = {

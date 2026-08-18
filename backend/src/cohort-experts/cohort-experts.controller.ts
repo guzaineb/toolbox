@@ -102,27 +102,32 @@ export class CohortExpertsController {
   @Get('cohorts/:cohortId/experts')
   findByCohort(
     @Param('cohortId') cohortId: string,
+    @Req() req: { user: { id: string } },
     @Query('role') role?: CohortExpertRole,
     @Query('status') status?: CohortExpertStatus,
   ) {
-    return this.cohortExpertsService.findByCohort(cohortId, { role, status });
+    return this.cohortExpertsService.findByCohort(cohortId, { role, status }, req.user.id);
   }
 
   @Get('cohorts/:cohortId/experts/available')
   findAvailable(
     @Param('cohortId') cohortId: string,
+    @Req() req: { user: { id: string } },
     @Query('expertiseAreaId') expertiseAreaId?: string,
     @Query('availability') availability?: string,
   ) {
     return this.cohortExpertsService.findAvailable(cohortId, {
       expertiseAreaId,
       availability,
-    });
+    }, req.user.id);
   }
 
   @Get('cohort-experts/:id')
-  findOne(@Param('id') id: string) {
-    return this.cohortExpertsService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.cohortExpertsService.findOne(id, req.user.id);
   }
 
   @Patch('cohort-experts/:id')

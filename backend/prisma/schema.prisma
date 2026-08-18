@@ -105,7 +105,6 @@ enum ParticipationOrigin {
 enum CohortExpertRole {
   JURY
   COACH
-  EVALUATOR
 }
 
 enum CohortExpertStatus {

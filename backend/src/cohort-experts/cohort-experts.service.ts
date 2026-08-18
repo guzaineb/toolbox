@@ -447,7 +447,16 @@ export class CohortExpertsService {
   async findByCohort(
     cohortId: string,
     filters?: { role?: CohortExpertRole; status?: CohortExpertStatus },
+    userId?: string,
   ) {
+    if (userId) {
+      const access = await this.hasCohortReadAccess(cohortId, userId);
+      if (!access) {
+        throw new ForbiddenException(
+          "Vous n'avez pas accÃ¨s aux experts de cette cohorte",
+        );
+      }
+    }
     const where: any = { cohort_id: cohortId };
     if (filters?.role) where.role = filters.role;
     if (filters?.status) where.status = filters.status;
@@ -463,7 +472,7 @@ export class CohortExpertsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const assignment = await this.prisma.cohortExpert.findUnique({
       where: { id },
       include: {
@@ -474,6 +483,27 @@ export class CohortExpertsService {
       },
     });
     if (!assignment) throw new NotFoundException('Affectation introuvable');
+
+    if (userId) {
+      const isExpert = assignment.expert_user_id === userId;
+      const isIncubatorMember = assignment.cohort.incubator_id
+        ? !!(await this.prisma.incubatorMember.findUnique({
+            where: {
+              user_id_incubator_id: {
+                user_id: userId,
+                incubator_id: assignment.cohort.incubator_id,
+              },
+            },
+            select: { id: true },
+          }))
+        : false;
+      if (!isExpert && !isIncubatorMember) {
+        throw new ForbiddenException(
+          "Vous n'avez pas accÃ¨s Ã  cette affectation",
+        );
+      }
+    }
+
     return assignment;
   }
 
@@ -550,11 +580,29 @@ export class CohortExpertsService {
   async findAvailable(
     cohortId: string,
     filters?: { expertiseAreaId?: string; availability?: string },
+    userId?: string,
   ) {
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
     });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
+
+    if (userId && cohort.incubator_id) {
+      const member = await this.prisma.incubatorMember.findUnique({
+        where: {
+          user_id_incubator_id: {
+            user_id: userId,
+            incubator_id: cohort.incubator_id,
+          },
+        },
+        select: { id: true },
+      });
+      if (!member) {
+        throw new ForbiddenException(
+          "Vous n'avez pas accÃ¨s aux experts disponibles de cette cohorte",
+        );
+      }
+    }
 
     const assignedExpertIds = (
       await this.prisma.cohortExpert.findMany({
@@ -658,5 +706,33 @@ export class CohortExpertsService {
         'Permissions insuffisantes pour gérer les experts de cohorte',
       );
     }
+  }
+
+  private async hasCohortReadAccess(
+    cohortId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const isExpert = !!(await this.prisma.cohortExpert.findFirst({
+      where: { cohort_id: cohortId, expert_user_id: userId },
+      select: { id: true },
+    }));
+    if (isExpert) return true;
+
+    const cohort = await this.prisma.cohort.findUnique({
+      where: { id: cohortId },
+      select: { incubator_id: true },
+    });
+    if (!cohort?.incubator_id) return false;
+
+    const member = await this.prisma.incubatorMember.findUnique({
+      where: {
+        user_id_incubator_id: {
+          user_id: userId,
+          incubator_id: cohort.incubator_id,
+        },
+      },
+      select: { id: true },
+    });
+    return !!member;
   }
 }

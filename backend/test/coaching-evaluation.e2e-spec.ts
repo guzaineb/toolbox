@@ -27,7 +27,7 @@ import { FinalDecisionsService } from '../src/final-decisions/final-decisions.se
  *
  * Parcourt l'ensemble du flux métier contre une vraie base PostgreSQL :
  * affectation COACH → session de coaching → clôture → grille d'évaluation →
- * publication → affectation évaluateur → notation → soumission → synthèse →
+ * publication → affectation jury → notation → soumission → synthèse →
  * session de jury → décision finale conditionnelle → validation de condition.
  * Les contrôles d'accès (RBAC), les notifications et l'audit sont réels.
  */
@@ -50,7 +50,6 @@ describe('Coaching & Évaluation (e2e)', () => {
     cohortId: '',
     projectId: '',
     coachUserId: '',
-    evaluatorUserId: '',
     juryUserId: '',
     ownerUserId: '',
     adminUserId: '',
@@ -123,13 +122,11 @@ describe('Coaching & Évaluation (e2e)', () => {
 
     const admin = await makeUser(`admin-${stamp}@e2e.test`, UserRole.ADMIN, 'Admin', 'Test');
     const coach = await makeUser(`coach-${stamp}@e2e.test`, UserRole.EXPERT, 'Coach', 'Test');
-    const evaluator = await makeUser(`evaluator-${stamp}@e2e.test`, UserRole.EXPERT, 'Evalu', 'Test');
     const jury = await makeUser(`jury-${stamp}@e2e.test`, UserRole.EXPERT, 'Jur', 'Y');
     const owner = await makeUser(`owner-${stamp}@e2e.test`, UserRole.PROJECT_OWNER, 'Owner', 'Test');
 
     ids.adminUserId = admin.id;
     ids.coachUserId = coach.id;
-    ids.evaluatorUserId = evaluator.id;
     ids.juryUserId = jury.id;
     ids.ownerUserId = owner.id;
 
@@ -177,7 +174,6 @@ describe('Coaching & Évaluation (e2e)', () => {
 
     for (const { role, userId } of [
       { role: CohortExpertRole.COACH, userId: coach.id },
-      { role: CohortExpertRole.EVALUATOR, userId: evaluator.id },
       { role: CohortExpertRole.JURY, userId: jury.id },
     ]) {
       const ce = await prisma.cohortExpert.create({
@@ -299,14 +295,14 @@ describe('Coaching & Évaluation (e2e)', () => {
     expect(published.locked_at).toBeInstanceOf(Date);
   });
 
-  it('4. affecte un évaluateur et soumet une évaluation notée (score pondéré)', async () => {
+  it('4. affecte un membre du jury et soumet une évaluation notée (score pondéré)', async () => {
     emitter.on('notification.evaluation.submitted', capture('EVALUATION_SUBMITTED'));
 
     const result = await evaluationAssignmentsService.assign(
       ids.cohortId,
       {
         templateId: ids.templateId,
-        assignments: [{ projectId: ids.projectId, juryUserIds: [ids.evaluatorUserId] }],
+        assignments: [{ projectId: ids.projectId, juryUserIds: [ids.juryUserId] }],
       },
       ids.adminUserId,
     );
@@ -314,7 +310,7 @@ describe('Coaching & Évaluation (e2e)', () => {
     expect(result.assignments).toHaveLength(1);
     ids.evalAssignmentId = result.assignments[0].id;
 
-    const draft = await evaluationsService.createDraft(ids.evalAssignmentId, ids.evaluatorUserId);
+    const draft = await evaluationsService.createDraft(ids.evalAssignmentId, ids.juryUserId);
     ids.evaluationId = draft.id;
     expect(draft.status).toBe('DRAFT');
 
@@ -327,11 +323,11 @@ describe('Coaching & Évaluation (e2e)', () => {
           { criterionId: criteria[1].id, score: 8 },
         ],
       },
-      ids.evaluatorUserId,
+      ids.juryUserId,
     );
     expect(saved.scores).toHaveLength(2);
 
-    const submitted = await evaluationsService.submit(draft.id, ids.evaluatorUserId);
+    const submitted = await evaluationsService.submit(draft.id, ids.juryUserId);
     expect(submitted.status).toBe('SUBMITTED');
     expect(submitted.total).toBe(92); // 100% × 60 + 80% × 40
     expect(submitted.total20).toBe(18.4);
@@ -345,7 +341,7 @@ describe('Coaching & Évaluation (e2e)', () => {
     expect(summary.average20).toBe(18.4);
     expect(summary.min20).toBe(18.4);
     expect(summary.max20).toBe(18.4);
-    expect(summary.byEvaluator[0].evaluator.id).toBe(ids.evaluatorUserId);
+    expect(summary.byEvaluator[0].juryMember.id).toBe(ids.juryUserId);
     expect(summary.byCriterion).toHaveLength(2);
   });
 

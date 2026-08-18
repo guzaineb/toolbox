@@ -113,12 +113,36 @@ export class EvaluationTemplatesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const template = await this.prisma.evaluationTemplate.findUnique({
       where: { id },
       include: { criteria: { orderBy: { sort_order: 'asc' } } },
     });
     if (!template) throw new NotFoundException('Grille introuvable');
+
+    if (userId) {
+      if (template.published) return template;
+      const cohort = await this.prisma.cohort.findUnique({
+        where: { id: template.cohort_id },
+        select: { incubator_id: true },
+      });
+      if (cohort?.incubator_id) {
+        const member = await this.prisma.incubatorMember.findUnique({
+          where: {
+            user_id_incubator_id: {
+              user_id: userId,
+              incubator_id: cohort.incubator_id,
+            },
+          },
+          select: { id: true },
+        });
+        if (member) return template;
+      }
+      throw new ForbiddenException(
+        "Vous n'avez pas accès à cette grille d'évaluation",
+      );
+    }
+
     return template;
   }
 

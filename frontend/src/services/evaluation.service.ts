@@ -42,7 +42,7 @@ class EvaluationService {
     return data
   }
 
-  // ==================== AFFECTATIONS ÉVALUATEURS ====================
+  // ==================== AFFECTATIONS JURY ====================
 
   async assignEvaluators(cohortId: string, dto: AssignEvaluatorsDto): Promise<{ created: number; assignments: EvaluationAssignment[] }> {
     const { data } = await api.post(`/cohorts/${cohortId}/evaluations/assign`, dto)

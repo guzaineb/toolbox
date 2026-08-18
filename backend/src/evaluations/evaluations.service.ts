@@ -133,6 +133,11 @@ export class EvaluationsService {
         "Vous ne pouvez modifier que vos propres Ã©valuations",
       );
     }
+    if (evaluation.status === EvaluationStatus.SUBMITTED) {
+      throw new BadRequestException(
+        'Une Ã©valuation soumise ne peut plus Ãªtre modifiÃ©e',
+      );
+    }
 
     const cohortId = evaluation.project.cohort_participations[0]?.cohort_id;
     if (!cohortId) {
@@ -170,7 +175,8 @@ export class EvaluationsService {
     });
   }
 
-  async findByProject(projectId: string) {
+  async findByProject(projectId: string, userId: string) {
+    await this.assertCanViewEvaluations(projectId, userId);
     return this.prisma.evaluation.findMany({
       where: { project_id: projectId },
       include: {
@@ -182,7 +188,8 @@ export class EvaluationsService {
     });
   }
 
-  async findByCohort(cohortId: string) {
+  async findByCohort(cohortId: string, userId: string) {
+    await this.assertCanViewCohortEvaluations(cohortId, userId);
     const participations = await this.prisma.cohortParticipation.findMany({
       where: {
         cohort_id: cohortId,
@@ -216,18 +223,54 @@ export class EvaluationsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const evaluation = await this.prisma.evaluation.findUnique({
       where: { id },
       include: {
-        project: { select: { id: true, name: true, description: true } },
+        project: {
+          select: { id: true, name: true, description: true, owner_id: true },
+        },
         juryUser: {
           select: { id: true, email: true, profile: true },
         },
       },
     });
     if (!evaluation) throw new NotFoundException('Ã‰valuation introuvable');
+
+    if (userId) {
+      const isOwner = evaluation.project.owner_id === userId;
+      const isJury = evaluation.jury_user_id === userId;
+      const isCohortMember =
+        (await this.access.getAcceptedCohortForProject(evaluation.project.id)) &&
+        (await this.access.canEvaluateProject(evaluation.project.id, userId));
+      const isIncubatorMember = await this.isIncubatorMember(
+        evaluation.project.id,
+        userId,
+      );
+      if (!isOwner && !isJury && !isCohortMember && !isIncubatorMember) {
+        throw new ForbiddenException('AccÃ¨s refusÃ© Ã  cette Ã©valuation');
+      }
+    }
+
     return evaluation;
+  }
+
+  private async isIncubatorMember(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    if (!participation?.cohort.incubator_id) return false;
+    const member = await this.prisma.incubatorMember.findUnique({
+      where: {
+        user_id_incubator_id: {
+          user_id: userId,
+          incubator_id: participation.cohort.incubator_id,
+        },
+      },
+      select: { id: true },
+    });
+    return !!member;
   }
 
   // ==================== MODULE Ã‰VALUATION (grilles / scores) ====================
@@ -325,10 +368,19 @@ export class EvaluationsService {
     }
 
     const validCriterionIds = new Set(evaluation.template?.criteria.map((c) => c.id) ?? []);
+    const criteriaMap = new Map(
+      (evaluation.template?.criteria ?? []).map((c) => [c.id, c]),
+    );
     for (const item of dto.scores) {
       if (!validCriterionIds.has(item.criterionId)) {
         throw new BadRequestException(
           `Le critÃ¨re Â« ${item.criterionId} Â» n'appartient pas Ã  la grille de cette Ã©valuation`,
+        );
+      }
+      const criterion = criteriaMap.get(item.criterionId)!;
+      if (item.score < 0 || item.score > criterion.max_score) {
+        throw new BadRequestException(
+          `Le score ${item.score} est hors limites (0-${criterion.max_score}) pour le critÃ¨re Â« ${criterion.name} Â»`,
         );
       }
     }
@@ -500,6 +552,55 @@ export class EvaluationsService {
     return members.map((m) => m.user_id);
   }
 
+  private async assertCanViewEvaluations(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { owner_id: true },
+    });
+    if (!project) throw new NotFoundException('Projet introuvable');
+    if (project.owner_id === userId) return;
+    if (await this.access.canEvaluateProject(projectId, userId)) return;
+    if (await this.isIncubatorMember(projectId, userId)) return;
+    throw new ForbiddenException(
+      "Vous n'avez pas accÃ¨s aux Ã©valuations de ce projet",
+    );
+  }
+
+  private async assertCanViewCohortEvaluations(
+    cohortId: string,
+    userId: string,
+  ): Promise<void> {
+    const isCohortMember = await this.isCohortMember(cohortId, userId);
+    if (isCohortMember) return;
+    throw new ForbiddenException(
+      "Vous n'avez pas accÃ¨s aux Ã©valuations de cette cohorte",
+    );
+  }
+
+  private async isCohortMember(
+    cohortId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const cohort = await this.prisma.cohort.findUnique({
+      where: { id: cohortId },
+      select: { incubator_id: true },
+    });
+    if (!cohort?.incubator_id) return false;
+    const member = await this.prisma.incubatorMember.findUnique({
+      where: {
+        user_id_incubator_id: {
+          user_id: userId,
+          incubator_id: cohort.incubator_id,
+        },
+      },
+      select: { id: true },
+    });
+    return !!member;
+  }
+
   async getProjectSummary(projectId: string, userId: string) {
     await this.access.assertProjectExists(projectId);
     const canView =
@@ -577,7 +678,7 @@ export class EvaluationsService {
       min20: Math.min(...totals.map((t) => t.total20)),
       max20: Math.max(...totals.map((t) => t.total20)),
       byEvaluator: totals.map((t) => ({
-        evaluator: t.evaluation.juryUser,
+        juryMember: t.evaluation.juryUser,
         total: t.total,
         total20: t.total20,
         submitted_at: t.evaluation.submitted_at,

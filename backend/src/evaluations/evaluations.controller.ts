@@ -40,18 +40,27 @@ export class EvaluationsController {
   }
 
   @Get('evaluations/:id')
-  findOne(@Param('id') id: string) {
-    return this.evaluationsService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.evaluationsService.findOne(id, req.user.id);
   }
 
   @Get('projects/:projectId/evaluations')
-  findByProject(@Param('projectId') projectId: string) {
-    return this.evaluationsService.findByProject(projectId);
+  findByProject(
+    @Param('projectId') projectId: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.evaluationsService.findByProject(projectId, req.user.id);
   }
 
   @Get('cohorts/:cohortId/evaluations')
-  findByCohort(@Param('cohortId') cohortId: string) {
-    return this.evaluationsService.findByCohort(cohortId);
+  findByCohort(
+    @Param('cohortId') cohortId: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.evaluationsService.findByCohort(cohortId, req.user.id);
   }
 
   @Get('experts/me/evaluations')

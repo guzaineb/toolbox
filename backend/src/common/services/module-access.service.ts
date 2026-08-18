@@ -148,32 +148,23 @@ export class ModuleAccessService {
     const ok = await this.hasActiveAssignment(projectId, userId, role);
     if (!ok) {
       throw new ForbiddenException(
-        `Vous n'êtes pas ${role === CohortExpertRole.COACH ? 'le coach' : role === CohortExpertRole.EVALUATOR ? 'évaluateur' : 'membre du jury'} affecté à ce projet`,
+        `Vous n'êtes pas ${role === CohortExpertRole.COACH ? 'le coach' : 'membre du jury'} affecté à ce projet`,
       );
     }
   }
 
-  // Accès évaluateur : affectation EVALUATOR active, OU membre du jury (CohortExpert JURY) de la cohorte du projet,
+  // Accès évaluation : membre du jury (CohortExpert JURY) de la cohorte du projet,
   // OU affecté via EvaluationAssignment.
   async canEvaluateProject(projectId: string, userId: string): Promise<boolean> {
     const participation = await this.getAcceptedCohortForProject(projectId);
     if (!participation) return false;
 
-    const [byAssignment, byCohortExpert, byEvaluationAssignment] = await Promise.all([
-      this.prisma.projectExpertAssignment.findFirst({
-        where: {
-          project_id: projectId,
-          expert_user_id: userId,
-          role: CohortExpertRole.EVALUATOR,
-          status: CohortExpertStatus.ACTIVE,
-        },
-        select: { id: true },
-      }),
+    const [byCohortExpert, byEvaluationAssignment] = await Promise.all([
       this.prisma.cohortExpert.findFirst({
         where: {
           cohort_id: participation.cohort_id,
           expert_user_id: userId,
-          role: { in: [CohortExpertRole.EVALUATOR, CohortExpertRole.JURY] },
+          role: CohortExpertRole.JURY,
           status: CohortExpertStatus.ACTIVE,
         },
         select: { id: true },
@@ -187,14 +178,14 @@ export class ModuleAccessService {
       }),
     ]);
 
-    return !!(byAssignment || byCohortExpert || byEvaluationAssignment);
+    return !!(byCohortExpert || byEvaluationAssignment);
   }
 
   async assertCanEvaluateProject(projectId: string, userId: string): Promise<void> {
     const ok = await this.canEvaluateProject(projectId, userId);
     if (!ok) {
       throw new ForbiddenException(
-        "Vous n'êtes pas évaluateur affecté à ce projet",
+        "Vous n'êtes pas membre du jury affecté à ce projet",
       );
     }
   }

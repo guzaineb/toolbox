@@ -4,7 +4,7 @@ import { CohortExpertRole, CohortExpertStatus } from '@prisma/client';
 export class UpdateAssignmentDto {
   @IsOptional()
   @IsEnum(CohortExpertRole, {
-    message: 'Rôle invalide (COACH, EVALUATOR ou JURY)',
+    message: 'Rôle invalide (COACH ou JURY)',
   })
   role?: CohortExpertRole;
 
