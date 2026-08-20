@@ -79,6 +79,13 @@ export interface CohortExpert {
   cohort?: {
     id: string;
     name: string;
+    description?: string;
+    status: CohortStatus;
+    capacity?: number;
+    current_participants: number;
+    application_deadline?: string;
+    start_date?: string;
+    end_date?: string;
     incubator?: { id: string; name: string };
     _count?: { participations: number };
   };
@@ -95,22 +102,6 @@ export interface Evaluation {
 
   project?: { id: string; name: string; description?: string };
   juryUser?: {
-    id: string;
-    email: string;
-    profile?: { first_name: string; last_name: string };
-  };
-}
-
-export interface Coaching {
-  id: string;
-  project_id: string;
-  coach_user_id: string;
-  feedback?: string;
-  created_at: string;
-  updated_at: string;
-
-  project?: { id: string; name: string; description?: string };
-  coachUser?: {
     id: string;
     email: string;
     profile?: { first_name: string; last_name: string };
@@ -159,14 +150,6 @@ export interface CreateEvaluationDto {
 export interface UpdateEvaluationDto {
   score?: number;
   comment?: string;
-}
-
-export interface CreateCoachingDto {
-  feedback?: string;
-}
-
-export interface UpdateCoachingDto {
-  feedback?: string;
 }
 
 /* =========================================================

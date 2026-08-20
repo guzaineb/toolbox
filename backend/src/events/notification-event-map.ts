@@ -124,12 +124,6 @@ export const NOTIFICATION_EVENT_MAP: Record<
     category: 'coaching',
     requiresEmail: false,
   },
-  [NotificationEvent.COACHING_FEEDBACK]: {
-    type: NotificationType.COACHING_FEEDBACK,
-    priority: NotificationPriority.MEDIUM,
-    category: 'coaching',
-    requiresEmail: false,
-  },
   [NotificationEvent.DOCUMENT_GENERATED]: {
     type: NotificationType.DOCUMENT_GENERATED,
     priority: NotificationPriority.LOW,

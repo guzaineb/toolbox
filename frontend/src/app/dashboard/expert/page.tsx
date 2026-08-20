@@ -161,7 +161,7 @@ export default function ExpertDashboardPage() {
           <p className="text-ink3 mt-1">Gérez votre profil et suivez votre impact</p>
         </div>
         <div className="flex gap-3 mt-4 sm:mt-0 flex-wrap">
-          <Link href="/dashboard/expert/evaluations-todo">
+          <Link href="/dashboard/expert/evaluations">
             <Button variant="secondary" size="sm">
               <ClipboardCheck className="w-4 h-4 mr-2" />
               À évaluer

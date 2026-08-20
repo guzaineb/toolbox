@@ -27,7 +27,6 @@ import { CohortsModule } from './cohorts/cohorts.module';
 import { CohortParticipationsModule } from './cohort-participations/cohort-participations.module';
 import { CohortExpertsModule } from './cohort-experts/cohort-experts.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
-import { CoachingsModule } from './coachings/coachings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuditModule } from './audit/audit.module';
 import { AssignmentsModule } from './assignments/assignments.module';
@@ -51,7 +50,6 @@ import { JuriesModule } from './juries/juries.module';
     CohortParticipationsModule,
     CohortExpertsModule,
     EvaluationsModule,
-    CoachingsModule,
     NotificationsModule,
     EventsModule,
     AuditModule,

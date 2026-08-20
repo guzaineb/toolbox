@@ -38,6 +38,7 @@ export interface ProjectAssignment {
     profile?: { first_name: string; last_name: string }
   }
   project?: { id: string; name: string; description?: string; owner_id: string }
+  cohort?: { id: string; name: string; incubator?: { id: string; name: string } } | null
 }
 
 export interface CoachingSession {

@@ -217,4 +217,46 @@ export class ModuleAccessService {
       } as NotificationPayload,
     );
   }
+
+  // ==================== MEMBRES INCUBATEUR ====================
+
+  async isIncubatorMember(
+    userId: string,
+    incubatorId: string,
+  ): Promise<{ role: string; can_manage_cohorts: boolean } | null> {
+    const member = await this.prisma.incubatorMember.findUnique({
+      where: {
+        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+      },
+      select: { role: true, can_manage_cohorts: true },
+    });
+    return member ?? null;
+  }
+
+  async assertCanManageCohorts(
+    userId: string,
+    incubatorId: string,
+  ): Promise<void> {
+    const member = await this.isIncubatorMember(userId, incubatorId);
+    if (!member) {
+      throw new ForbiddenException(
+        "Vous n'êtes pas membre de cet incubateur",
+      );
+    }
+    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
+      throw new ForbiddenException('Permissions insuffisantes');
+    }
+  }
+
+  async assertIncubatorAdmin(
+    userId: string,
+    incubatorId: string,
+  ): Promise<void> {
+    const member = await this.isIncubatorMember(userId, incubatorId);
+    if (!member || member.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        "Seul un administrateur peut effectuer cette action",
+      );
+    }
+  }
 }

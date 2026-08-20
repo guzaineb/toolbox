@@ -7,6 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { ModuleAccessService } from '../common/services/module-access.service';
 
 @Injectable()
 export class IncubatorDocumentsService {
@@ -14,6 +15,7 @@ export class IncubatorDocumentsService {
     private prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
+    private readonly access: ModuleAccessService,
   ) { }
 
   async create(incubatorId: string, fileUrl: string, userId: string, documentType: string) {
@@ -96,7 +98,8 @@ export class IncubatorDocumentsService {
   }
 
   async remove(id: string, incubatorId: string, userId: string,): Promise<{ message: string }> {
-    await this.assertMember(incubatorId, userId);
+    const member = await this.access.isIncubatorMember(userId, incubatorId);
+    if (!member) throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     const doc = await this.findOne(id);
 
     if (doc.file_url) {
@@ -111,7 +114,7 @@ export class IncubatorDocumentsService {
   }
 
   async verify(id: string, incubatorId: string, dto: VerifyDocumentDto, userId: string) {
-    await this.assertAdmin(incubatorId, userId);
+    await this.access.assertIncubatorAdmin(userId, incubatorId);
     const doc = await this.findOne(id);
 
     const result = await this.prisma.incubatorDocument.update({
@@ -138,20 +141,5 @@ export class IncubatorDocumentsService {
     );
 
     return result;
-  }
-  private async assertMember(incubatorId: string, userId: string): Promise<void> {
-    const member = await this.prisma.incubatorMember.findFirst({
-      where: { incubator_id: incubatorId, user_id: userId },
-    });
-    if (!member) throw new ForbiddenException('Accès refusé');
-  }
-
-  private async assertAdmin(incubatorId: string, userId: string): Promise<void> {
-    const member = await this.prisma.incubatorMember.findFirst({
-      where: { incubator_id: incubatorId, user_id: userId, role: 'ADMIN' },
-    });
-    if (!member) {
-      throw new ForbiddenException("Seul un administrateur peut vérifier les documents");
-    }
   }
 }

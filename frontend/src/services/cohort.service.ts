@@ -4,15 +4,12 @@ import {
   CohortParticipation,
   CohortExpert,
   Evaluation,
-  Coaching,
   CreateCohortDto,
   UpdateCohortDto,
   CreateCohortExpertDto,
   UpdateCohortExpertDto,
   CreateEvaluationDto,
   UpdateEvaluationDto,
-  CreateCoachingDto,
-  UpdateCoachingDto,
 } from '@/types/cohort';
 
 class CohortService {
@@ -103,6 +100,23 @@ class CohortService {
 
   async getCohortProgress(id: string) {
     const response = await api.get(`/cohorts/${id}/progress`);
+    return response.data;
+  }
+
+  async getCoachingProjects(cohortId: string): Promise<Array<{
+    project: { id: string; name: string; description?: string; owner_id: string };
+    assignment: { id: string; role: string; status: string } | null;
+    cohort_participation: { status: string; applied_at: string };
+    stats: {
+      sessions_count: number;
+      last_session_at: string | null;
+      next_session_at: string | null;
+      recommendations_count: number;
+      actions_pending: number;
+      actions_total: number;
+    };
+  }>> {
+    const response = await api.get(`/cohorts/${cohortId}/coaching-projects`);
     return response.data;
   }
 
@@ -239,38 +253,6 @@ class CohortService {
 
   async getMyEvaluations(): Promise<Evaluation[]> {
     const response = await api.get('/experts/me/evaluations');
-    return response.data;
-  }
-
-  // ==================== COACHINGS ====================
-
-  async createCoaching(projectId: string, dto: CreateCoachingDto): Promise<Coaching> {
-    const response = await api.post(`/projects/${projectId}/coachings`, dto);
-    return response.data;
-  }
-
-  async updateCoaching(id: string, dto: UpdateCoachingDto): Promise<Coaching> {
-    const response = await api.patch(`/coachings/${id}`, dto);
-    return response.data;
-  }
-
-  async getCoachingById(id: string): Promise<Coaching> {
-    const response = await api.get(`/coachings/${id}`);
-    return response.data;
-  }
-
-  async getProjectCoachings(projectId: string): Promise<Coaching[]> {
-    const response = await api.get(`/projects/${projectId}/coachings`);
-    return response.data;
-  }
-
-  async getCohortCoachings(cohortId: string): Promise<Coaching[]> {
-    const response = await api.get(`/cohorts/${cohortId}/coachings`);
-    return response.data;
-  }
-
-  async getMyCoachings(): Promise<Coaching[]> {
-    const response = await api.get('/experts/me/coachings');
     return response.data;
   }
 }

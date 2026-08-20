@@ -111,23 +111,11 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, Notification
     gradientTo: '#1d5a3a',
     subjectPrefix: 'Nouvelle évaluation',
   },
-  [NotificationType.NEW_COACHING]: {
-    icon: '🎯',
-    gradientFrom: '#2d7a52',
-    gradientTo: '#1d5a3a',
-    subjectPrefix: 'Nouveau coaching',
-  },
   [NotificationType.COACHING_SCHEDULED]: {
     icon: '📅',
     gradientFrom: '#2d7a52',
     gradientTo: '#1d5a3a',
     subjectPrefix: 'Coaching planifié',
-  },
-  [NotificationType.COACHING_FEEDBACK]: {
-    icon: '💬',
-    gradientFrom: '#c9a84c',
-    gradientTo: '#b88a2a',
-    subjectPrefix: 'Feedback coaching',
   },
   [NotificationType.EVALUATION_REQUESTED]: {
     icon: '📋',

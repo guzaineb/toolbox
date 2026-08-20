@@ -1,124 +1,120 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { ClipboardCheck, Star, Edit3, ClipboardList } from 'lucide-react'
-import { cohortService } from '@/services/cohort.service'
-import { Badge, Button, Card, Field, Input, Textarea, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
-import { Evaluation } from '@/types/cohort'
+import { useRouter } from 'next/navigation'
+import { ClipboardCheck, ChevronRight, Calendar, Clock } from 'lucide-react'
+import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
+import { evaluationService } from '@/services/evaluation.service'
+import { EvaluationAssignment } from '@/types/coaching'
 
 export default function ExpertEvaluationsPage() {
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([])
+  const router = useRouter()
+  const [assignments, setAssignments] = useState<EvaluationAssignment[]>([])
   const [loading, setLoading] = useState(true)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editScore, setEditScore] = useState('')
-  const [editComment, setEditComment] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
   const fetchEvaluations = () => {
     setLoading(true)
-    cohortService
-      .getMyEvaluations()
-      .then(setEvaluations)
+    setError(null)
+    evaluationService
+      .getMyTodo()
+      .then(setAssignments)
+      .catch(() => setError('Impossible de charger vos évaluations.'))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchEvaluations() }, [])
-
-  const startEdit = (ev: Evaluation) => {
-    setEditingId(ev.id)
-    setEditScore(String(ev.score))
-    setEditComment(ev.comment || '')
-  }
-
-  const handleUpdate = async () => {
-    if (!editingId) return
-    setError(null)
-    try {
-      await cohortService.updateEvaluation(editingId, {
-        score: parseFloat(editScore),
-        comment: editComment || undefined,
-      })
-      setSuccess('Évaluation mise à jour')
-      setEditingId(null)
-      fetchEvaluations()
-      setTimeout(() => setSuccess(null), 3000)
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Erreur lors de la mise à jour')
-    }
-  }
 
   if (loading) {
     return (
       <div className="p-8 max-w-6xl mx-auto">
         <div className="animate-pulse space-y-4">
           <div className="h-7 w-64 bg-border rounded-lg" />
-          {[1, 2].map((i) => <div key={i} className="h-20 bg-border rounded-[14px]" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-border rounded-[14px]" />)}
         </div>
       </div>
     )
   }
 
+  const pendingCount = assignments.filter((a) => !a.evaluation_status || a.evaluation_status === null).length
+  const draftCount = assignments.filter((a) => a.evaluation_status === 'DRAFT').length
+  const submittedCount = assignments.filter((a) => a.evaluation_status === 'SUBMITTED').length
+
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <h1 className="font-syne text-[22px] font-extrabold text-ink mb-[2px]">Mes évaluations</h1>
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-        <p className="text-[12px] text-ink3">Projets que vous avez évalués en tant que jury</p>
-        <Link href="/dashboard/expert/evaluations-todo">
-          <Button size="sm" variant="outline">
-            <ClipboardList size={13} /> À évaluer
-          </Button>
-        </Link>
-      </div>
+      <p className="text-[12px] text-ink3 mb-6">
+        Les projets que vous devez évaluer en tant que membre du jury.
+      </p>
 
       {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
-      {success && <div className="mb-5"><SuccessAlert message={success} /></div>}
 
-      {evaluations.length === 0 ? (
+      {assignments.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <Card className="p-4 text-center">
+            <div className="font-syne text-[20px] font-extrabold text-ink leading-none">{pendingCount}</div>
+            <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">À commencer</div>
+          </Card>
+          <Card className="p-4 text-center">
+            <div className="font-syne text-[20px] font-extrabold text-amber leading-none">{draftCount}</div>
+            <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Brouillons</div>
+          </Card>
+          <Card className="p-4 text-center">
+            <div className="font-syne text-[20px] font-extrabold text-moss leading-none">{submittedCount}</div>
+            <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Soumises</div>
+          </Card>
+        </div>
+      )}
+
+      {assignments.length === 0 ? (
         <Card className="text-center py-14">
           <div className="w-14 h-14 rounded-full bg-moss-light text-moss flex items-center justify-center mx-auto mb-4">
             <ClipboardCheck size={24} />
           </div>
           <p className="text-[15px] font-semibold text-ink mb-1">Aucune évaluation</p>
-          <p className="text-[12px] text-ink3">Vous n'avez pas encore évalué de projets.</p>
+          <p className="text-[12px] text-ink3">Vous n&apos;avez aucune évaluation à réaliser actuellement.</p>
         </Card>
       ) : (
         <div className="space-y-[10px]">
-          {evaluations.map((ev) => (
-            <Card key={ev.id} className="p-[16px_18px]">
-              {editingId === ev.id ? (
-                <div className="space-y-3">
-                  <div className="text-[13px] font-medium text-ink">{ev.project?.name}</div>
-                  <Field label="Note (sur 20)">
-                    <Input type="number" min={0} max={20} step={0.5} value={editScore} onChange={(e) => setEditScore(e.target.value)} />
-                  </Field>
-                  <Field label="Commentaire">
-                    <Textarea value={editComment} onChange={(e) => setEditComment(e.target.value)} rows={3} />
-                  </Field>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => setEditingId(null)}>Annuler</Button>
-                    <Button size="sm" variant="primary" onClick={handleUpdate}>Enregistrer</Button>
+          {assignments.map((a) => (
+            <Card
+              key={a.id}
+              className="p-[16px_18px] cursor-pointer hover:shadow-md transition-shadow group"
+              onClick={() => router.push(`/dashboard/expert/evaluations-todo/${a.id}`)}
+            >
+              <div className="flex items-start gap-[14px]">
+                <div className="w-[42px] h-[42px] rounded-[10px] bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
+                  <ClipboardCheck size={18} className="text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13px] font-semibold text-ink group-hover:text-purple-600 transition-colors truncate">
+                      {a.project?.name || 'Projet inconnu'}
+                    </span>
+                    <Badge variant="secondary">Jury</Badge>
+                    <Badge variant={
+                      a.evaluation_status === 'SUBMITTED' ? 'green' :
+                      a.evaluation_status === 'DRAFT' ? 'amber' : 'gray'
+                    }>
+                      {a.evaluation_status === 'SUBMITTED' ? 'Soumise' :
+                       a.evaluation_status === 'DRAFT' ? 'Brouillon en cours' : 'À commencer'}
+                    </Badge>
+                  </div>
+                  <div className="text-[11px] text-ink3 mt-0.5">
+                    {a.cohort?.name && <span>{a.cohort.name}</span>}
+                    {a.deadline && (
+                      <span className="flex items-center gap-1 mt-0.5">
+                        <Calendar size={10} />
+                        Échéance : {new Date(a.deadline).toLocaleDateString('fr-FR')}
+                        {new Date(a.deadline) < new Date() && a.evaluation_status !== 'SUBMITTED' && (
+                          <Badge variant="red" className="ml-1">En retard</Badge>
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center gap-[14px]">
-                  <div className="w-[40px] h-[40px] rounded-[10px] bg-moss-light border border-border flex items-center justify-center flex-shrink-0">
-                    <Star size={18} className="text-moss" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium text-ink truncate">{ev.project?.name || 'Projet inconnu'}</div>
-                    <div className="text-[11px] text-ink3">
-                      {new Date(ev.created_at).toLocaleDateString('fr-FR')}
-                      {ev.comment && ` · ${ev.comment.substring(0, 60)}${ev.comment.length > 60 ? '...' : ''}`}
-                    </div>
-                  </div>
-                  <div className="font-syne text-[18px] font-extrabold text-moss">{ev.score}/20</div>
-                  <Button size="sm" variant="ghost" onClick={() => startEdit(ev)}>
-                    <Edit3 size={13} />
-                  </Button>
-                </div>
-              )}
+                <ChevronRight size={14} className="text-ink3 group-hover:text-purple-600 transition-colors mt-2 flex-shrink-0" />
+              </div>
             </Card>
           ))}
         </div>

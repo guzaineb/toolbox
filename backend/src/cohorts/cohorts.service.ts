@@ -12,6 +12,7 @@ import { UpdateCohortDto } from './dto/update-cohort.dto';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { ModuleAccessService } from '../common/services/module-access.service';
 
 const ALLOWED_TRANSITIONS: Record<string, CohortStatus[]> = {
   DRAFT: [CohortStatus.OPEN, CohortStatus.ARCHIVED],
@@ -27,10 +28,11 @@ export class CohortsService {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
+    private readonly access: ModuleAccessService,
   ) {}
 
   async create(incubatorId: string, dto: CreateCohortDto, userId: string) {
-    await this.assertCanManageCohorts(incubatorId, userId);
+    await this.access.assertCanManageCohorts(userId, incubatorId);
 
     const cohort = await this.prisma.cohort.create({
       data: {
@@ -263,7 +265,7 @@ export class CohortsService {
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
     if (!cohort.incubator_id) throw new BadRequestException('Cohorte sans incubateur');
 
-    await this.assertCanManageCohorts(cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
     if (
       dto.capacity !== undefined &&
@@ -295,7 +297,7 @@ export class CohortsService {
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
     if (!cohort.incubator_id) throw new BadRequestException('Cohorte sans incubateur');
 
-    await this.assertCanManageCohorts(cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
     const allowed = ALLOWED_TRANSITIONS[cohort.status] || [];
     if (!allowed.includes(targetStatus)) {
@@ -394,6 +396,142 @@ export class CohortsService {
     return idsToClose;
   }
 
+  // ==================== PROJETS DE COACHING D'UNE COHORTE POUR UN EXPERT ====================
+
+  async findCoachingProjects(cohortId: string, userId: string) {
+    const cohort = await this.prisma.cohort.findUnique({
+      where: { id: cohortId },
+      select: { id: true, name: true, incubator_id: true },
+    });
+    if (!cohort) throw new NotFoundException('Cohorte introuvable');
+
+    const isCoach = await this.prisma.cohortExpert.findFirst({
+      where: {
+        cohort_id: cohortId,
+        expert_user_id: userId,
+        role: 'COACH',
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
+    if (!isCoach) {
+      throw new ForbiddenException(
+        "Vous n'êtes pas coach actif dans cette cohorte",
+      );
+    }
+
+    const participations = await this.prisma.cohortParticipation.findMany({
+      where: {
+        cohort_id: cohortId,
+        status: ParticipationStatus.ACCEPTED,
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            owner_id: true,
+          },
+        },
+      },
+      orderBy: { applied_at: 'desc' },
+    });
+
+    const projectIds = participations.map((p) => p.project_id);
+
+    const assignments = await this.prisma.projectExpertAssignment.findMany({
+      where: {
+        project_id: { in: projectIds },
+        expert_user_id: userId,
+      },
+      include: {
+        project: { select: { id: true } },
+      },
+    });
+
+    const assignmentsByProject = new Map(
+      assignments.map((a) => [a.project_id, a]),
+    );
+
+    const sessionsByProject = new Map<string, number>();
+    const recommendationsByProject = new Map<string, number>();
+    const actionsByProject = new Map<string, { pending: number; total: number }>();
+    let allSessions: Array<{ assignment: { project_id: string } | null; status: string; scheduled_at: Date }> = [];
+
+    if (projectIds.length > 0) {
+      const [sessions, recommendations, actions] = await Promise.all([
+        this.prisma.coachingSession.findMany({
+          where: { assignment: { project_id: { in: projectIds }, expert_user_id: userId } },
+          select: { assignment: { select: { project_id: true } }, status: true, scheduled_at: true },
+          orderBy: { scheduled_at: 'desc' },
+        }),
+        this.prisma.coachingRecommendation.findMany({
+          where: { project_id: { in: projectIds }, author_id: userId },
+          select: { project_id: true },
+        }),
+        this.prisma.coachingAction.findMany({
+          where: { project_id: { in: projectIds } },
+          select: { project_id: true, status: true },
+        }),
+      ]);
+
+      allSessions = sessions;
+
+      for (const s of sessions) {
+        const pid = s.assignment?.project_id;
+        if (pid) sessionsByProject.set(pid, (sessionsByProject.get(pid) || 0) + 1);
+      }
+      for (const r of recommendations) {
+        if (r.project_id) {
+          recommendationsByProject.set(r.project_id, (recommendationsByProject.get(r.project_id) || 0) + 1);
+        }
+      }
+      for (const a of actions) {
+        const current = actionsByProject.get(a.project_id) || { pending: 0, total: 0 };
+        current.total++;
+        if (['PENDING', 'IN_PROGRESS', 'SUBMITTED'].includes(a.status)) current.pending++;
+        actionsByProject.set(a.project_id, current);
+      }
+    }
+
+    return participations.map((p) => {
+      const assignment = assignmentsByProject.get(p.project_id);
+      const lastSession = allSessions.find(
+        (s) => s.assignment?.project_id === p.project_id && s.status === 'COMPLETED',
+      );
+
+      let nextSession: { scheduled_at: Date } | null = null;
+      const now = new Date();
+      for (const s of allSessions) {
+        if (
+          s.assignment?.project_id === p.project_id &&
+          s.status === 'SCHEDULED' &&
+          new Date(s.scheduled_at) > now
+        ) {
+          nextSession = { scheduled_at: s.scheduled_at };
+          break;
+        }
+      }
+
+      return {
+        project: p.project,
+        assignment: assignment
+          ? { id: assignment.id, role: assignment.role, status: assignment.status }
+          : null,
+        cohort_participation: { status: p.status, applied_at: p.applied_at },
+        stats: {
+          sessions_count: sessionsByProject.get(p.project_id) || 0,
+          last_session_at: lastSession?.scheduled_at ?? null,
+          next_session_at: nextSession?.scheduled_at ?? null,
+          recommendations_count: recommendationsByProject.get(p.project_id) || 0,
+          actions_pending: actionsByProject.get(p.project_id)?.pending || 0,
+          actions_total: actionsByProject.get(p.project_id)?.total || 0,
+        },
+      };
+    });
+  }
+
   async getProgress(id: string) {
     const cohort = await this.prisma.cohort.findUnique({
       where: { id },
@@ -413,22 +551,4 @@ export class CohortsService {
     };
   }
 
-  private async assertCanManageCohorts(
-    incubatorId: string,
-    userId: string,
-  ): Promise<void> {
-    const member = await this.prisma.incubatorMember.findUnique({
-      where: {
-        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
-      },
-    });
-    if (!member) {
-      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
-    }
-    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
-      throw new ForbiddenException(
-        'Permissions insuffisantes pour gérer les cohortes',
-      );
-    }
-  }
 }

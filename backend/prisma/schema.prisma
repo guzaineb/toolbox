@@ -213,8 +213,6 @@ enum NotificationType {
 
   // === PORTEUR DE PROJET ===
   NEW_EVALUATION
-  NEW_COACHING // VALEUR ORPHELINE : référencée par les templates email backend, jamais créée en app
-  COACHING_FEEDBACK
   DOCUMENT_GENERATED
   DOCUMENT_UPDATED
   AI_RESPONSE_READY
@@ -293,7 +291,6 @@ model User {
   cohortExperts        CohortExpert[]           @relation("ExpertUser")
   assignedCohorts      CohortExpert[]           @relation("AssignedBy")
   evaluations          Evaluation[]
-  coachings            Coaching[]
   notifications        Notification[]        @relation("NotificationRecipient")
   sentNotifications    Notification[]        @relation("NotificationSender")
   notificationPreference NotificationPreference?
@@ -591,7 +588,6 @@ model Project {
   ai_interactions        AiInteraction[]
   cohort_participations  CohortParticipation[]
   evaluations            Evaluation[]
-  coachings              Coaching[]
 
   // Coaching & Évaluation
   projectExpertAssignments ProjectExpertAssignment[]
@@ -731,26 +727,6 @@ model Evaluation {
   @@index([jury_user_id])
   @@index([status])
   @@map("evaluations")
-}
-
-// ===========================
-// CORE — Coachings
-// ===========================
-model Coaching {
-  id            String   @id @default(uuid())
-  project_id    String
-  coach_user_id String
-  feedback      String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  project    Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  coachUser  User    @relation(fields: [coach_user_id], references: [id])
-
-  @@unique([project_id, coach_user_id])
-  @@index([project_id])
-  @@index([coach_user_id])
-  @@map("coachings")
 }
 
 // ===========================

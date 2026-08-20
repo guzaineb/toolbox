@@ -22,7 +22,6 @@ export enum NotificationEvent {
   PROJECT_CREATED = 'notification.project.created',
   NEW_EVALUATION = 'notification.evaluation.new',
   COACHING_SCHEDULED = 'notification.coaching.scheduled',
-  COACHING_FEEDBACK = 'notification.coaching.feedback',
   DOCUMENT_GENERATED = 'notification.document.generated',
   DOCUMENT_UPDATED = 'notification.document.updated',
   DOCUMENT_VERIFIED = 'notification.document.verified',

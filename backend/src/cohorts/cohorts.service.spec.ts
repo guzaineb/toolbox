@@ -4,6 +4,8 @@ import { CohortsService } from './cohorts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CohortStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ModuleAccessService } from '../common/services/module-access.service';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 describe('CohortsService', () => {
   let service: CohortsService;
@@ -23,6 +25,9 @@ describe('CohortsService', () => {
 
   beforeEach(async () => {
     const eventEmitter = { emit: jest.fn() };
+    const mockAccess = {
+      assertCanManageCohorts: jest.fn(),
+    };
 
     prisma = {
       cohort: {
@@ -43,6 +48,8 @@ describe('CohortsService', () => {
         CohortsService,
         { provide: PrismaService, useValue: prisma },
         { provide: EventEmitter2, useValue: eventEmitter },
+        { provide: NotificationMessageBuilder, useValue: { build: jest.fn() } },
+        { provide: ModuleAccessService, useValue: mockAccess },
       ],
     }).compile();
 

@@ -771,8 +771,40 @@ export class CoachingService {
   }
 
   private async assertCanManageProjectCohort(projectId: string, userId: string) {
-    const cohortId = await this.access.assertProjectAcceptedInCohort(projectId);
-    await this.access.assertCanManageCohort(cohortId, userId);
+    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    if (!participation) {
+      throw new BadRequestException(
+        "Ce projet n'est pas accepté dans une cohorte",
+      );
+    }
+
+    const cohortId = participation.cohort_id;
+    const incubatorId = participation.cohort.incubator_id;
+
+    if (incubatorId) {
+      const member = await this.prisma.incubatorMember.findUnique({
+        where: {
+          user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+        },
+        select: { id: true },
+      });
+      if (member) return;
+    }
+
+    const cohortCoach = await this.prisma.cohortExpert.findFirst({
+      where: {
+        cohort_id: cohortId,
+        expert_user_id: userId,
+        role: CohortExpertRole.COACH,
+        status: CohortExpertStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+    if (cohortCoach) return;
+
+    throw new ForbiddenException(
+      "Vous n'êtes pas autorisé à gérer le coaching de ce projet",
+    );
   }
 
   private async assertIsSessionCoachOrManager(
@@ -782,10 +814,10 @@ export class CoachingService {
     const assignment = await this.prisma.projectExpertAssignment.findUnique({
       where: { id: session.assignment_id },
     });
-    if (assignment && assignment.expert_user_id === userId) return;
     if (!assignment) {
       throw new NotFoundException('Affectation du coaching introuvable');
     }
+    if (assignment.expert_user_id === userId) return;
     await this.assertCanManageProjectCohort(assignment.project_id, userId);
   }
 }

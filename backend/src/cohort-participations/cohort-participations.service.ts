@@ -10,6 +10,7 @@ import { ParticipationStatus, ParticipationOrigin, CohortStatus } from '@prisma/
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { ModuleAccessService } from '../common/services/module-access.service';
 
 @Injectable()
 export class CohortParticipationsService {
@@ -17,6 +18,7 @@ export class CohortParticipationsService {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly notificationBuilder: NotificationMessageBuilder,
+    private readonly access: ModuleAccessService,
   ) {}
 
   // ==================== PORTUEUR — CANDIDATER ====================
@@ -132,7 +134,7 @@ export class CohortParticipationsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -207,7 +209,7 @@ export class CohortParticipationsService {
         throw new ForbiddenException("Seul le porteur de projet peut accepter l'invitation");
       }
     } else {
-      await this.assertCanManageCohorts(participation.cohort.incubator_id, userId);
+      await this.access.assertCanManageCohorts(userId, participation.cohort.incubator_id);
     }
 
     if (participation.status !== ParticipationStatus.PENDING) {
@@ -287,7 +289,7 @@ export class CohortParticipationsService {
         throw new ForbiddenException("Seul le porteur de projet peut refuser l'invitation");
       }
     } else {
-      await this.assertCanManageCohorts(participation.cohort.incubator_id, userId);
+      await this.access.assertCanManageCohorts(userId, participation.cohort.incubator_id);
     }
 
     if (participation.status !== ParticipationStatus.PENDING) {
@@ -553,24 +555,4 @@ export class CohortParticipationsService {
     );
   }
 
-  // ==================== VÉRIFICATIONS ====================
-
-  private async assertCanManageCohorts(
-    incubatorId: string,
-    userId: string,
-  ): Promise<void> {
-    const member = await this.prisma.incubatorMember.findUnique({
-      where: {
-        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
-      },
-    });
-    if (!member) {
-      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
-    }
-    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
-      throw new ForbiddenException(
-        'Permissions insuffisantes pour gérer les candidatures',
-      );
-    }
-  }
 }

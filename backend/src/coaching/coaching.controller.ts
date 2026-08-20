@@ -167,14 +167,6 @@ export class CoachingController {
 
   // ==================== TABLEAU DE BORD ====================
 
-  @Get('projects/:projectId/coaching/overview')
-  getOverview(
-    @Param('projectId') projectId: string,
-    @Req() req: { user: { id: string } },
-  ) {
-    return this.coachingService.getOverview(projectId, req.user.id);
-  }
-
   @Get('projects/:projectId/coaching')
   getCoachingDashboard(
     @Param('projectId') projectId: string,

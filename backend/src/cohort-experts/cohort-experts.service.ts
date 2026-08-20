@@ -14,6 +14,7 @@ import { UpdateCohortExpertDto } from './dto/update-cohort-expert.dto';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { ModuleAccessService } from '../common/services/module-access.service';
 
 @Injectable()
 export class CohortExpertsService {
@@ -21,6 +22,7 @@ export class CohortExpertsService {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
+    private readonly access: ModuleAccessService,
   ) {}
 
   // ==================== ASSIGNEMENT DIRECT (existant) ====================
@@ -35,7 +37,7 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
     const expertUser = await this.prisma.user.findUnique({
       where: { id: dto.expertUserId },
@@ -99,7 +101,7 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
     const expertUser = await this.prisma.user.findUnique({
       where: { id: dto.expertUserId },
@@ -345,7 +347,7 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(assignment.cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
 
     if (assignment.status !== CohortExpertStatus.PENDING) {
       throw new BadRequestException("Seules les candidatures en attente peuvent être acceptées");
@@ -404,7 +406,7 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(assignment.cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
 
     if (assignment.status !== CohortExpertStatus.PENDING) {
       throw new BadRequestException("Seules les candidatures en attente peuvent être refusées");
@@ -521,7 +523,7 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(assignment.cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
 
     if (dto.role && dto.role !== assignment.role) {
       const duplicate = await this.prisma.cohortExpert.findUnique({
@@ -564,7 +566,7 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.assertCanManageCohorts(assignment.cohort.incubator_id, userId);
+    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
 
     return this.prisma.cohortExpert.update({
       where: { id },
@@ -685,25 +687,6 @@ export class CohortExpertsService {
     if (existingOtherRole && existingOtherRole.role !== role) {
       throw new BadRequestException(
         'Cet expert est déjà actif dans cette cohorte avec un autre rôle',
-      );
-    }
-  }
-
-  private async assertCanManageCohorts(
-    incubatorId: string,
-    userId: string,
-  ): Promise<void> {
-    const member = await this.prisma.incubatorMember.findUnique({
-      where: {
-        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
-      },
-    });
-    if (!member) {
-      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
-    }
-    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
-      throw new ForbiddenException(
-        'Permissions insuffisantes pour gérer les experts de cohorte',
       );
     }
   }

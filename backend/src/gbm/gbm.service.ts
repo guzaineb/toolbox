@@ -504,8 +504,18 @@ export class GbmService {
           ? { ...base, activities_summary: summary }
           : { ...base, cost_summary: summary };
       }
-      case 'gbm_21':
+      case 'gbm_21': {
+        const allowed = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+        const parsed = this.tryParseJson(summary);
+        if (parsed) {
+          const data: Record<string, any> = {};
+          for (const key of allowed) {
+            if (parsed[key] !== undefined) data[key] = String(parsed[key]);
+          }
+          if (Object.keys(data).length > 0) return data;
+        }
         return { strengths: summary };
+      }
       default:
         return {};
     }

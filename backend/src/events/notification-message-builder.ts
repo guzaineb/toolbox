@@ -263,13 +263,6 @@ export class NotificationMessageBuilder {
     };
   }
 
-  coachingFeedback(params: { projectName: string }): { title: string; message: string } {
-    return {
-      title: 'Nouveau feedback de coaching',
-      message: `Vous avez reçu un nouveau feedback de coaching pour le projet « ${params.projectName} ».`,
-    };
-  }
-
   // ==================== PROJECT ====================
 
   projectCreated(params: { projectName: string }): { title: string; message: string } {

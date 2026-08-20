@@ -272,7 +272,7 @@ export class AssignmentsService {
   }
 
   async findMyAssignments(userId: string) {
-    return this.prisma.projectExpertAssignment.findMany({
+    const assignments = await this.prisma.projectExpertAssignment.findMany({
       where: { expert_user_id: userId },
       include: {
         project: {
@@ -285,6 +285,35 @@ export class AssignmentsService {
         },
       },
       orderBy: { assigned_at: 'desc' },
+    });
+
+    const projectIds = assignments.map((a) => a.project_id);
+    const participations = await this.prisma.cohortParticipation.findMany({
+      where: {
+        project_id: { in: projectIds },
+        status: ParticipationStatus.ACCEPTED,
+      },
+      include: {
+        cohort: {
+          select: {
+            id: true,
+            name: true,
+            incubator: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    const participationByProject = new Map(
+      participations.map((p) => [p.project_id, p]),
+    );
+
+    return assignments.map((a) => {
+      const participation = participationByProject.get(a.project_id);
+      return {
+        ...a,
+        cohort: participation?.cohort ?? null,
+      };
     });
   }
 
