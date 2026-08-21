@@ -4,7 +4,7 @@
 
 export type AssignmentRole = 'COACH' | 'JURY'
 
-export type CoachingSessionStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'MISSED'
+export type CoachingSessionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'MISSED'
 export type CoachingActionStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'COMPLETED' | 'REJECTED' | 'OVERDUE' | 'CANCELLED'
 export type CoachingActionPriority = 'LOW' | 'MEDIUM' | 'HIGH'
 export type CoachingRecommendationStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED'
@@ -45,10 +45,18 @@ export interface CoachingSession {
   id: string
   assignment_id: string
   title?: string
+  objective?: string
+  session_type?: string
   scheduled_at: string
   duration_minutes?: number
   status: CoachingSessionStatus
+  agenda?: string
+  notes?: string
+  decisions?: string
   report?: string
+  summary?: string
+  next_objectives?: string
+  started_at?: string
   completed_at?: string
   created_at: string
   updated_at: string
@@ -76,6 +84,7 @@ export interface CoachingAction {
   updated_at: string
   project?: { id: string; name: string }
   assignment?: { id: string; expert_user_id: string }
+  session?: { id: string; title?: string; scheduled_at: string }
 }
 
 export interface CoachingRecommendation {
@@ -86,11 +95,36 @@ export interface CoachingRecommendation {
   content: string
   priority: CoachingActionPriority
   status: CoachingRecommendationStatus
+  source?: 'COACH' | 'AI'
+  ai_analysis_id?: string
   author_id: string
   created_at: string
   updated_at: string
   author?: { id: string; email: string; profile?: { first_name: string; last_name: string } }
   actions?: Array<{ id: string; title: string; status: CoachingActionStatus }>
+}
+
+/* =========================================================
+   PREUVES D'ACTION (proof of work)
+========================================================= */
+
+export type EvidenceType = 'LINK' | 'TEXT' | 'DOCUMENT' | 'RESULT'
+export type EvidenceReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface ActionEvidence {
+  id: string
+  action_id: string
+  type: EvidenceType
+  title?: string
+  content?: string
+  url?: string
+  review_status: EvidenceReviewStatus
+  coach_comment?: string
+  reviewed_by?: string
+  reviewed_at?: string
+  submitted_by: string
+  created_at: string
+  updated_at: string
 }
 
 export interface CoachingComment {
@@ -278,9 +312,29 @@ export interface CreateAssignmentDto {
 
 export interface CreateSessionDto {
   title?: string
+  sessionType?: string
+  objective?: string
+  agenda?: string
   scheduledAt: string
   durationMinutes?: number
   report?: string
+}
+
+/** Mise à jour partielle d'une session (côté backend : UpdateSessionDto). */
+export interface UpdateSessionDto {
+  title?: string
+  scheduledAt?: string
+  durationMinutes?: number
+  sessionType?: string
+  objective?: string
+  agenda?: string
+  status?: CoachingSessionStatus
+  notes?: string
+  decisions?: string
+  report?: string
+  /** Résumé de session (proposition IA validée/éditée par le coach). */
+  summary?: string
+  nextObjectives?: string
 }
 
 export interface CreateActionDto {
@@ -360,6 +414,7 @@ export const ASSIGNMENT_ROLE_LABELS: Record<AssignmentRole, string> = {
 
 export const COACHING_SESSION_STATUS_LABELS: Record<CoachingSessionStatus, string> = {
   SCHEDULED: 'Planifiée',
+  IN_PROGRESS: 'En cours',
   COMPLETED: 'Terminée',
   CANCELLED: 'Annulée',
   RESCHEDULED: 'Reprogrammée',
@@ -368,6 +423,7 @@ export const COACHING_SESSION_STATUS_LABELS: Record<CoachingSessionStatus, strin
 
 export const COACHING_SESSION_STATUS_COLORS: Record<CoachingSessionStatus, BadgeVariantKey> = {
   SCHEDULED: 'blue',
+  IN_PROGRESS: 'amber',
   COMPLETED: 'green',
   CANCELLED: 'gray',
   RESCHEDULED: 'amber',
@@ -465,6 +521,25 @@ export const CONDITION_STATUS_COLORS: Record<ConditionStatus, BadgeVariantKey> =
   IN_PROGRESS: 'blue',
   COMPLETED: 'green',
   EXPIRED: 'red',
+}
+
+export const EVIDENCE_TYPE_LABELS: Record<EvidenceType, string> = {
+  LINK: 'Lien',
+  TEXT: 'Texte',
+  DOCUMENT: 'Document',
+  RESULT: 'Résultat',
+}
+
+export const EVIDENCE_REVIEW_LABELS: Record<EvidenceReviewStatus, string> = {
+  PENDING: 'En attente',
+  APPROVED: 'Validée',
+  REJECTED: 'Refusée',
+}
+
+export const EVIDENCE_REVIEW_COLORS: Record<EvidenceReviewStatus, BadgeVariantKey> = {
+  PENDING: 'amber',
+  APPROVED: 'green',
+  REJECTED: 'red',
 }
 
 type BadgeVariantKey = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary'

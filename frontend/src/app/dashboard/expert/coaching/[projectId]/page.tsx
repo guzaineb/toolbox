@@ -5,20 +5,27 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, HeartHandshake, CalendarClock, ListTodo, Lightbulb,
-  BarChart3, CheckCircle2, Clock,
+  BarChart3, CheckCircle2, BrainCircuit, ClipboardList, TrendingUp,
 } from 'lucide-react'
 import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
 import { coachingService } from '@/services/coaching.service'
 import { SessionsPanel, ActionsPanel, RecommendationsPanel } from '@/components/coaching/CoachingPanels'
+import { MaturityCard } from '@/components/coaching/MaturityCard'
+import { AiAnalysisPanel } from '@/components/coaching/AiAnalysisPanel'
+import { ImprovementPlanPanel } from '@/components/coaching/ImprovementPlanPanel'
+import { ProgressPanel } from '@/components/coaching/ProgressPanel'
 import { CoachingOverview } from '@/types/coaching'
 
-type Tab = 'overview' | 'sessions' | 'actions' | 'recommendations'
+type Tab = 'overview' | 'ai' | 'plan' | 'sessions' | 'actions' | 'recommendations' | 'progress'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 size={13} /> },
+  { id: 'ai', label: 'Analyse IA', icon: <BrainCircuit size={13} /> },
+  { id: 'plan', label: "Plan d'amélioration", icon: <ClipboardList size={13} /> },
   { id: 'sessions', label: 'Sessions', icon: <CalendarClock size={13} /> },
   { id: 'actions', label: 'Actions', icon: <ListTodo size={13} /> },
   { id: 'recommendations', label: 'Recommandations', icon: <Lightbulb size={13} /> },
+  { id: 'progress', label: 'Progression', icon: <TrendingUp size={13} /> },
 ]
 
 export default function ExpertCoachingProjectPage() {
@@ -170,14 +177,23 @@ export default function ExpertCoachingProjectPage() {
 
           {tab === 'overview' && (
             <div className="space-y-4">
-              <Card className="overflow-hidden">
-                <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
-                  Sessions de coaching
-                </div>
-                <div className="p-[18px]">
-                  <SessionsPanel projectId={projectId} sessions={overview.sessions.slice(0, 5)} canManage onRefresh={fetchOverview} />
-                </div>
-              </Card>
+              <div className="grid lg:grid-cols-[1fr_1.4fr] gap-4 items-start">
+                <MaturityCard projectId={projectId} />
+                <Card className="overflow-hidden">
+                  <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
+                    Prochaines sessions
+                  </div>
+                  <div className="p-[18px]">
+                    <SessionsPanel
+                      projectId={projectId}
+                      sessions={overview.sessions.filter((s) => s.status !== 'COMPLETED').slice(0, 3)}
+                      canManage
+                      onRefresh={fetchOverview}
+                      sessionHref={(id) => `/dashboard/expert/coaching/${projectId}/sessions/${id}`}
+                    />
+                  </div>
+                </Card>
+              </div>
               <Card className="overflow-hidden">
                 <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
                   Actions récentes
@@ -197,13 +213,27 @@ export default function ExpertCoachingProjectPage() {
             </div>
           )}
 
+          {tab === 'ai' && (
+            <AiAnalysisPanel projectId={projectId} onRecommendationCreated={fetchOverview} />
+          )}
+
+          {tab === 'plan' && (
+            <ImprovementPlanPanel projectId={projectId} canManage />
+          )}
+
           {tab === 'sessions' && (
             <Card className="overflow-hidden">
               <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
                 Sessions de coaching
               </div>
               <div className="p-[18px]">
-                <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage onRefresh={fetchOverview} />
+                <SessionsPanel
+                  projectId={projectId}
+                  sessions={overview.sessions}
+                  canManage
+                  onRefresh={fetchOverview}
+                  sessionHref={(id) => `/dashboard/expert/coaching/${projectId}/sessions/${id}`}
+                />
               </div>
             </Card>
           )}
@@ -228,6 +258,13 @@ export default function ExpertCoachingProjectPage() {
                 <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage onRefresh={fetchOverview} />
               </div>
             </Card>
+          )}
+
+          {tab === 'progress' && (
+            <div className="space-y-4">
+              <ProgressPanel projectId={projectId} />
+              <ImprovementPlanPanel projectId={projectId} canManage />
+            </div>
           )}
         </>
       )}

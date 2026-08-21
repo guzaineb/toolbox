@@ -74,4 +74,10 @@ export enum NotificationEvent {
   FINAL_DECISION_CONDITIONS_ADDED = 'notification.final_decision.conditions.added',
   CONDITION_VALIDATED = 'notification.condition.validated',
   REEVALUATION_REQUESTED = 'notification.reevaluation.requested',
+
+  // === COACHING & ÉVALUATION — IA (nouveau) ===
+  AI_ANALYSIS_READY = 'notification.ai.analysis.ready',
+  COACHING_ACTION_SUBMITTED = 'notification.coaching.action.submitted',
+  COACHING_EVIDENCE_REVIEWED = 'notification.coaching.evidence.reviewed',
+  RE_EVALUATION_AVAILABLE = 'notification.reevaluation.available',
 }

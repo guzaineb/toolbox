@@ -2,10 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, HeartHandshake } from 'lucide-react'
+import { ArrowLeft, HeartHandshake, Bot, Target, CalendarClock } from 'lucide-react'
 import { Card } from '@/components/shared/ui'
 import { coachingService } from '@/services/coaching.service'
 import { SessionsPanel, ActionsPanel, RecommendationsPanel } from '@/components/coaching/CoachingPanels'
+import { MaturityCard } from '@/components/coaching/MaturityCard'
+import { ImprovementPlanPanel } from '@/components/coaching/ImprovementPlanPanel'
+import { GbmChatbot } from '@/components/gbm/GbmChatbot'
 import { CoachingOverview, ASSIGNMENT_ROLE_LABELS } from '@/types/coaching'
 
 export default function ProjectCoachingPage() {
@@ -67,49 +70,76 @@ export default function ProjectCoachingPage() {
 
       {overview && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="p-4">
-              <div className="font-syne text-[24px] font-extrabold text-ink leading-none">{overview.counts.sessions}</div>
-              <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Sessions</div>
-            </Card>
-            <Card className="p-4">
-              <div className="font-syne text-[24px] font-extrabold text-moss leading-none">{overview.counts.actions_pending}</div>
-              <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Actions en cours</div>
-            </Card>
-            <Card className="p-4">
-              <div className="font-syne text-[24px] font-extrabold text-amber leading-none">{overview.counts.actions_completed}</div>
-              <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Actions terminées</div>
-            </Card>
-            <Card className="p-4">
-              <div className="font-syne text-[24px] font-extrabold text-blue leading-none">{overview.counts.recommendations}</div>
-              <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Recommandations</div>
-            </Card>
+          <div className="grid lg:grid-cols-[1fr_1.4fr] gap-4 items-start">
+            <MaturityCard projectId={projectId} />
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Card className="p-4">
+                  <div className="font-syne text-[24px] font-extrabold text-moss leading-none">{overview.counts.actions_completed}</div>
+                  <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Actions terminées</div>
+                </Card>
+                <Card className="p-4">
+                  <div className="font-syne text-[24px] font-extrabold text-amber leading-none">{overview.counts.actions_pending}</div>
+                  <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold mt-1">Actions en cours</div>
+                </Card>
+              </div>
+              {overview.sessions.filter((s) => s.status !== 'COMPLETED').slice(0, 1).map((s) => (
+                <Card key={s.id} className="p-4 flex items-center gap-3">
+                  <CalendarClock size={16} className="text-moss shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-ink3 uppercase tracking-[0.06em] font-semibold">Prochaine session</div>
+                    <div className="text-[13px] text-ink font-medium truncate">
+                      {new Date(s.scheduled_at).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}
+                      {s.title ? ` — ${s.title}` : ''}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
+
+          <Card className="overflow-hidden">
+            <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink flex items-center gap-2">
+              <Bot size={14} className="text-moss" /> AI Coach — posez vos questions sur votre suivi
+            </div>
+            <div className="p-[18px]">
+              <GbmChatbot projectId={projectId} />
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink flex items-center gap-2">
+              <Target size={14} className="text-moss" /> Plan d'amélioration & objectifs
+            </div>
+            <div className="p-[18px]">
+              <ImprovementPlanPanel projectId={projectId} canManage={false} />
+            </div>
+          </Card>
 
           <Card className="overflow-hidden">
             <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
               Sessions de coaching
             </div>
             <div className="p-[18px]">
-              <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage onRefresh={fetchOverview} />
+              <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage={false} onRefresh={fetchOverview} />
             </div>
           </Card>
 
           <Card className="overflow-hidden">
             <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
-              Actions
+              Mes actions — soumettez vos preuves de réalisation
             </div>
             <div className="p-[18px]">
-              <ActionsPanel projectId={projectId} actions={overview.actions} canManage onRefresh={fetchOverview} />
+              <ActionsPanel projectId={projectId} actions={overview.actions} canManage={false} isOwner onRefresh={fetchOverview} />
             </div>
           </Card>
 
           <Card className="overflow-hidden">
             <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink">
-              Recommandations
+              Recommandations du coach
             </div>
             <div className="p-[18px]">
-              <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage onRefresh={fetchOverview} />
+              <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage={false} onRefresh={fetchOverview} />
             </div>
           </Card>
         </>

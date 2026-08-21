@@ -424,6 +424,36 @@ export class NotificationMessageBuilder {
     };
   }
 
+  coachingActionSubmitted(params: { projectName: string; actionTitle: string }): { title: string; message: string } {
+    return {
+      title: 'Preuve d’action soumise',
+      message: `Le porteur a soumis une preuve pour l'action « ${params.actionTitle} » du projet « ${params.projectName} ». Votre validation est attendue.`,
+    };
+  }
+
+  coachingEvidenceReviewed(params: { projectName: string; actionTitle: string; approved: boolean }): { title: string; message: string } {
+    return {
+      title: params.approved ? 'Preuve validée' : 'Preuve à compléter',
+      message: params.approved
+        ? `Votre preuve pour l'action « ${params.actionTitle} » (projet « ${params.projectName} ») a été validée par le coach.`
+        : `La preuve soumise pour l'action « ${params.actionTitle} » (projet « ${params.projectName} ») n'a pas été retenue. Consultez le commentaire du coach.`,
+    };
+  }
+
+  aiAnalysisReady(params: { projectName: string; analysisType?: string }): { title: string; message: string } {
+    return {
+      title: 'Analyse IA disponible',
+      message: `Une nouvelle analyse IA est disponible pour le projet « ${params.projectName} »${params.analysisType ? ` (${params.analysisType})` : ''}.`,
+    };
+  }
+
+  reEvaluationAvailable(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Ré-évaluation disponible',
+      message: `Une grille de ré-évaluation est prête pour le projet « ${params.projectName} ». Vous pouvez renseigner la nouvelle évaluation.`,
+    };
+  }
+
   coachAssigned(params: { projectName: string }): { title: string; message: string } {
     return {
       title: 'Coach affecté',

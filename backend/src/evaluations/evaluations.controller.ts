@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EvaluationsService } from './evaluations.service';
 import { CreateEvaluationDto, UpdateEvaluationDto } from './dto/evaluation.dto';
 import { SaveScoresDto } from './dto/save-scores.dto';
+import { RequestReevaluationDto } from './dto/request-reevaluation.dto';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -97,5 +98,17 @@ export class EvaluationsController {
     @Req() req: { user: { id: string } },
   ) {
     return this.evaluationsService.getProjectSummary(projectId, req.user.id);
+  }
+
+  // ==================== RÉ-ÉVALUATION ====================
+
+  @Post('projects/:projectId/evaluations/reevaluation')
+  @HttpCode(HttpStatus.OK)
+  requestReevaluation(
+    @Param('projectId') projectId: string,
+    @Body() dto: RequestReevaluationDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.evaluationsService.requestReevaluation(projectId, dto, req.user.id);
   }
 }

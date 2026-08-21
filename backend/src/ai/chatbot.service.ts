@@ -4,6 +4,7 @@ import { LlmService } from './llm.service';
 import { ChromaService } from './chroma.service';
 import { EmbeddingsService } from './embeddings.service';
 import { RagDocument } from './interfaces/ai.types';
+import { ProjectContextBuilderService } from './analysis/project-context.service';
 
 @Injectable()
 export class ChatbotService {
@@ -14,6 +15,7 @@ export class ChatbotService {
     private readonly llm: LlmService,
     private readonly chroma: ChromaService,
     private readonly embeddings: EmbeddingsService,
+    private readonly contextBuilder: ProjectContextBuilderService,
   ) {}
 
   async ask(
@@ -21,7 +23,7 @@ export class ChatbotService {
     question: string,
     conversationHistory?: { role: 'user' | 'assistant'; content: string }[],
   ): Promise<{ answer: string; sources: RagDocument[]; contextUsed: boolean }> {
-    const [queryEmbedding, project] = await Promise.all([
+    const [queryEmbedding, project, coachingContext] = await Promise.all([
       this.embeddings.generate([question]).then(e => e[0]).catch(() => null),
       this.prisma.project.findUnique({
         where: { id: projectId },
@@ -34,6 +36,8 @@ export class ChatbotService {
           value_proposition: true,
         },
       }),
+      // Contexte coaching & évaluation (sessions, actions, évaluations, plan d'amélioration)
+      this.contextBuilder.build(projectId).catch(() => null),
     ]);
 
     let ragResults: { documents: RagDocument[]; distances: number[] } = { documents: [], distances: [] };
@@ -70,6 +74,11 @@ export class ChatbotService {
       if (project.mission_vision?.mission) {
         contextParts.push(`\n--- MISSION ---\n${project.mission_vision.mission}`);
       }
+    }
+
+    // Contexte coaching & évaluation : évaluations jury, recommandations, actions, sessions
+    if (coachingContext?.contextText) {
+      contextParts.push(`\n--- COACHING & ÉVALUATIONS ---\n${coachingContext.contextText}`);
     }
 
     const hasContext = contextParts.length > 0;

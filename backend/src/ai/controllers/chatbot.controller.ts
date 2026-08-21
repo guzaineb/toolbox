@@ -1,8 +1,10 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ChatbotService } from '../chatbot.service';
 import { ChatbotAskDto, ChatbotIndexDto } from '../dto/chatbot.dto';
 
 @Controller('ai/chatbot')
+@UseGuards(JwtAuthGuard)
 export class ChatbotController {
   constructor(private readonly chatbot: ChatbotService) {}
 

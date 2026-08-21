@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { AcceptInviteDto, InviteMemberDto } from './dto/invite-member.dto';
 import * as crypto from 'crypto';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
@@ -27,7 +27,7 @@ export class IncubatorMembersService {
   ) {
     await this.assertCanManageMembers(incubatorId, currentUserId);
 
-    // Accepter les deux conventions : user_id (snake, API) ou userId (camel, rétro)
+    // Accepter les deux conventions : user_id (snake, API) ou userId (camel, rÃ©tro)
     const targetUserId = dto.user_id ?? dto.userId;
     if (!targetUserId) {
       throw new BadRequestException('user_id est requis');
@@ -36,7 +36,7 @@ export class IncubatorMembersService {
     const existing = await this.prisma.incubatorMember.findUnique({
       where: { user_id_incubator_id: { user_id: targetUserId, incubator_id: incubatorId } },
     });
-    if (existing) throw new BadRequestException('Cet utilisateur est déjà membre');
+    if (existing) throw new BadRequestException('Cet utilisateur est dÃ©jÃ  membre');
 
     const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
@@ -88,7 +88,7 @@ export class IncubatorMembersService {
       where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
       include: { user: { include: { profile: true } }, incubator: true },
     });
-    if (!member) throw new NotFoundException('Vous n\'êtes pas membre de cet incubateur');
+    if (!member) throw new NotFoundException('Vous n\'Ãªtes pas membre de cet incubateur');
     return member;
   }
 
@@ -155,7 +155,7 @@ export class IncubatorMembersService {
     }
 
     if (member.user_id === currentUserId) {
-      throw new BadRequestException("Vous ne pouvez pas vous retirer vous-même");
+      throw new BadRequestException("Vous ne pouvez pas vous retirer vous-mÃªme");
     }
 
     const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
@@ -176,7 +176,7 @@ export class IncubatorMembersService {
       } as NotificationPayload,
     );
 
-    return { message: 'Membre supprimé' };
+    return { message: 'Membre supprimÃ©' };
   }
 
   async inviteMember(
@@ -194,7 +194,7 @@ export class IncubatorMembersService {
       const existing = await this.prisma.incubatorMember.findUnique({
         where: { user_id_incubator_id: { user_id: user.id, incubator_id: incubatorId } },
       });
-      if (existing) throw new BadRequestException('Cet utilisateur est déjà membre');
+      if (existing) throw new BadRequestException('Cet utilisateur est dÃ©jÃ  membre');
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -214,7 +214,7 @@ export class IncubatorMembersService {
     await this.emailService.sendInvitation(dto.email, incubator.name, token, incubatorId);
 
     return {
-      message: `Invitation envoyée à ${dto.email}`,
+      message: `Invitation envoyÃ©e Ã  ${dto.email}`,
       token: process.env.NODE_ENV === 'development' ? token : undefined,
     };
   }
@@ -228,20 +228,20 @@ export class IncubatorMembersService {
     if (!invitation) throw new BadRequestException('Token invalide');
     if (invitation.expires_at < new Date()) {
       await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
-      throw new BadRequestException("L'invitation a expiré");
+      throw new BadRequestException("L'invitation a expirÃ©");
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     
     if (user.email !== invitation.email) {
-      throw new ForbiddenException("Cette invitation ne vous est pas destinée");
+      throw new ForbiddenException("Cette invitation ne vous est pas destinÃ©e");
     }
 
     const existing = await this.prisma.incubatorMember.findUnique({
       where: { user_id_incubator_id: { user_id: userId, incubator_id: invitation.incubator_id } },
     });
-    if (existing) throw new BadRequestException('Vous êtes déjà membre de cet incubateur');
+    if (existing) throw new BadRequestException('Vous Ãªtes dÃ©jÃ  membre de cet incubateur');
 
     const saved = await this.prisma.incubatorMember.create({
       data: {
@@ -265,9 +265,9 @@ export class IncubatorMembersService {
     const member = await this.prisma.incubatorMember.findUnique({
       where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
     });
-    if (!member) throw new ForbiddenException('Vous n\'êtes pas membre de cet incubateur');
+    if (!member) throw new ForbiddenException('Vous n\'Ãªtes pas membre de cet incubateur');
     if (member.role !== 'ADMIN' && !member.can_manage_members) {
-      throw new ForbiddenException('Permissions insuffisantes pour gérer les membres');
+      throw new ForbiddenException('Permissions insuffisantes pour gÃ©rer les membres');
     }
   }
   async declineInvitation(token: string, userId: string): Promise<{ message: string }> {
@@ -278,15 +278,15 @@ export class IncubatorMembersService {
   if (!invitation) throw new BadRequestException('Token invalide');
   if (invitation.expires_at < new Date()) {
     await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
-    throw new BadRequestException('Invitation déjà expirée');
+    throw new BadRequestException('Invitation dÃ©jÃ  expirÃ©e');
   }
 
   const user = await this.prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new NotFoundException('Utilisateur introuvable');
   if (user.email !== invitation.email) {
-    throw new ForbiddenException('Cette invitation ne vous est pas destinée');
+    throw new ForbiddenException('Cette invitation ne vous est pas destinÃ©e');
   }
   await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
-  return { message: 'Invitation refusée avec succès' };
+  return { message: 'Invitation refusÃ©e avec succÃ¨s' };
 }
 }

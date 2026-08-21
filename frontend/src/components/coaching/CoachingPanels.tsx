@@ -1,13 +1,15 @@
 ﻿'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   CalendarClock, CheckCircle2, MessageSquare, Plus, X, Lightbulb, ListTodo,
+  ExternalLink, Paperclip,
 } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ErrorAlert, Field, Input, Select, Textarea } from '@/components/shared/ui'
 import { coachingService } from '@/services/coaching.service'
 import {
-  CoachingSession, CoachingAction, CoachingRecommendation,
+  CoachingSession, CoachingAction, CoachingRecommendation, ActionEvidence,
   COACHING_SESSION_STATUS_LABELS, COACHING_SESSION_STATUS_COLORS,
   ACTION_STATUS_LABELS, ACTION_STATUS_COLORS,
   PRIORITY_LABELS, RECOMMENDATION_STATUS_LABELS,
@@ -270,9 +272,11 @@ export function AddRecommendationModal({
    PANNEAU : SESSIONS
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export function SessionsPanel({
-  projectId, sessions, canManage, onRefresh,
+  projectId, sessions, canManage, onRefresh, sessionHref,
 }: {
   projectId: string; sessions: CoachingSession[]; canManage: boolean; onRefresh: () => void
+  /** Si fourni, chaque session devient ouvrable dans son workspace (ex. coach). */
+  sessionHref?: (sessionId: string) => string
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [completing, setCompleting] = useState<CoachingSession | null>(null)
@@ -353,6 +357,13 @@ export function SessionsPanel({
                   <CheckCircle2 size={13} /> Terminer
                 </Button>
               )}
+              {sessionHref && (
+                <Link href={sessionHref(s.id)}>
+                  <Button size="sm" variant="outline">
+                    <ExternalLink size={12} /> Ouvrir
+                  </Button>
+                </Link>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-2">
               <button
@@ -394,9 +405,11 @@ export function SessionsPanel({
    PANNEAU : ACTIONS
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export function ActionsPanel({
-  projectId, actions, canManage, onRefresh,
+  projectId, actions, canManage, onRefresh, isOwner,
 }: {
   projectId: string; actions: CoachingAction[]; canManage: boolean; onRefresh: () => void
+  /** Porteur du projet : peut suivre ses actions et soumettre des preuves. */
+  isOwner?: boolean
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [updating, setUpdating] = useState(false)
@@ -436,36 +449,197 @@ export function ActionsPanel({
         </Card>
       ) : (
         actions.map((a) => (
-          <Card key={a.id} className="p-[14px_16px]">
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[13px] font-semibold text-ink">{a.title}</span>
-                  <Badge variant={PRIORITY_COLOR(a.priority)}>{PRIORITY_LABELS[a.priority]}</Badge>
-                  <Badge variant={ACTION_STATUS_COLORS[a.status]}>{ACTION_STATUS_LABELS[a.status]}</Badge>
-                </div>
-                <div className="text-[11px] text-ink3 mt-1">
-                  Ã‰chÃ©ance : {formatDate(a.deadline)}
-                </div>
-                {a.description && (
-                  <div className="text-[12px] text-ink2 mt-1">{a.description}</div>
-                )}
-              </div>
-              <Select
-                className="w-[150px] !py-[6px] !text-[11px]"
-                value={a.status}
-                disabled={updating || !canManage}
-                onChange={(e) => updateStatus(a.id, e.target.value)}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{ACTION_STATUS_LABELS[s]}</option>
-                ))}
-              </Select>
-            </div>
-          </Card>
+          <OwnerActionRow
+            key={a.id}
+            action={a}
+            canManage={canManage}
+            isOwner={!!isOwner}
+            updating={updating}
+            onStatusChange={(status) => updateStatus(a.id, status)}
+            onChanged={onRefresh}
+            onError={setError}
+          />
         ))
       )}
     </div>
+  )
+}
+
+/**
+ * Ligne d'action unifiée : le coach gère le statut complet, le porteur peut
+ * passer l'action en cours / soumise et joindre des preuves (proof of work)
+ * que le coach valide ou rejette ensuite.
+ */
+function OwnerActionRow({
+  action, canManage, isOwner, updating, onStatusChange, onChanged, onError,
+}: {
+  action: CoachingAction
+  canManage: boolean
+  isOwner: boolean
+  updating: boolean
+  onStatusChange: (status: string) => void
+  onChanged: () => void
+  onError: (message: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [evidences, setEvidences] = useState<ActionEvidence[] | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [type, setType] = useState<'LINK' | 'TEXT' | 'DOCUMENT' | 'RESULT'>('LINK')
+  const [evTitle, setEvTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [url, setUrl] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  // Le porteur ne peut que démarrer ou soumettre ; la validation finale reste au coach.
+  const OWNER_STATUSES: CoachingActionStatus[] = ['PENDING', 'IN_PROGRESS', 'SUBMITTED']
+  const evidenceAllowed = action.status !== 'COMPLETED' && action.status !== 'CANCELLED'
+
+  const loadEvidences = async () => {
+    try {
+      const list = await coachingService.getEvidences(action.id)
+      setEvidences(list)
+    } catch {
+      setEvidences([])
+    }
+  }
+
+  const toggle = async () => {
+    const next = !open
+    setOpen(next)
+    if (next && evidences === null) await loadEvidences()
+  }
+
+  const submitEvidence = async () => {
+    onError(null)
+    setSubmitting(true)
+    try {
+      await coachingService.addEvidence(action.id, {
+        type,
+        title: evTitle || undefined,
+        content: content || undefined,
+        url: url || undefined,
+      })
+      setEvTitle(''); setContent(''); setUrl(''); setShowForm(false)
+      await loadEvidences()
+      onChanged()
+    } catch (err) {
+      onError(apiError(err, "La soumission de la preuve a échoué"))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card className="p-[14px_16px]">
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[13px] font-semibold text-ink">{action.title}</span>
+            <Badge variant={PRIORITY_COLOR(action.priority)}>{PRIORITY_LABELS[action.priority]}</Badge>
+            <Badge variant={ACTION_STATUS_COLORS[action.status]}>{ACTION_STATUS_LABELS[action.status]}</Badge>
+          </div>
+          <div className="text-[11px] text-ink3 mt-1">
+            Ã‰chÃ©ance : {formatDate(action.deadline)}
+          </div>
+          {action.description && (
+            <div className="text-[12px] text-ink2 mt-1">{action.description}</div>
+          )}
+        </div>
+        {canManage ? (
+          <Select
+            className="w-[150px] !py-[6px] !text-[11px]"
+            value={action.status}
+            disabled={updating}
+            onChange={(e) => onStatusChange(e.target.value)}
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{ACTION_STATUS_LABELS[s]}</option>
+            ))}
+          </Select>
+        ) : isOwner && OWNER_STATUSES.includes(action.status) ? (
+          <Select
+            className="w-[150px] !py-[6px] !text-[11px]"
+            value={action.status}
+            disabled={updating}
+            onChange={(e) => onStatusChange(e.target.value)}
+          >
+            {OWNER_STATUSES.map((s) => (
+              <option key={s} value={s}>{ACTION_STATUS_LABELS[s]}</option>
+            ))}
+          </Select>
+        ) : null}
+      </div>
+      {(isOwner || canManage) && (
+        <>
+          <button onClick={toggle} className="mt-2 flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors cursor-pointer">
+            <Paperclip size={11} /> Preuves ({evidences?.length ?? 'â€¦'})
+          </button>
+          {open && (
+            <div className="mt-2 border-t border-border pt-2 space-y-2">
+              {isOwner && evidenceAllowed && (
+                showForm ? (
+                  <div className="border border-border rounded-[10px] p-3 space-y-2 bg-surface-2/50">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="Type de preuve">
+                        <Select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+                          <option value="LINK">Lien</option>
+                          <option value="TEXT">Texte</option>
+                          <option value="DOCUMENT">Document</option>
+                          <option value="RESULT">RÃ©sultat</option>
+                        </Select>
+                      </Field>
+                      <Field label="Titre">
+                        <Input value={evTitle} onChange={(e) => setEvTitle(e.target.value)} placeholder="Ex. RÃ©sultats d'enquÃªte" />
+                      </Field>
+                    </div>
+                    {type === 'LINK' ? (
+                      <Field label="URL" required>
+                        <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://â€¦" />
+                      </Field>
+                    ) : (
+                      <Field label="Contenu" required>
+                        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} />
+                      </Field>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
+                      <Button size="sm" variant="primary" loading={submitting} onClick={submitEvidence}>
+                        Soumettre au coach
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
+                    <Plus size={11} /> Soumettre une preuve
+                  </Button>
+                )
+              )}
+              {(evidences ?? []).map((ev) => (
+                <div key={ev.id} className="bg-surface border border-border rounded-lg p-2.5 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="gray">{ev.type}</Badge>
+                    {ev.title && <span className="text-[11px] font-semibold text-ink">{ev.title}</span>}
+                    <Badge variant={ev.review_status === 'APPROVED' ? 'green' : ev.review_status === 'REJECTED' ? 'red' : 'amber'}>
+                      {ev.review_status === 'APPROVED' ? 'ValidÃ©e par le coach' : ev.review_status === 'REJECTED' ? 'Ã€ corriger' : 'En attente de revue'}
+                    </Badge>
+                  </div>
+                  {ev.url && (
+                    <a href={ev.url} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 underline break-all">
+                      {ev.url}
+                    </a>
+                  )}
+                  {ev.content && <p className="text-[11px] text-ink2 whitespace-pre-wrap">{ev.content}</p>}
+                  {ev.coach_comment && <p className="text-[11px] text-ink3 italic">{ev.coach_comment}</p>}
+                </div>
+              ))}
+              {evidences !== null && evidences.length === 0 && (
+                <p className="text-[11px] text-ink3">Aucune preuve pour le moment.</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </Card>
   )
 }
 

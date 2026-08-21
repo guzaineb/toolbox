@@ -33,6 +33,7 @@ import { AssignmentsModule } from './assignments/assignments.module';
 import { CoachingModule } from './coaching/coaching.module';
 import { FinalDecisionsModule } from './final-decisions/final-decisions.module';
 import { JuriesModule } from './juries/juries.module';
+import { MaturityModule } from './maturity/maturity.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { JuriesModule } from './juries/juries.module';
     CoachingModule,
     FinalDecisionsModule,
     JuriesModule,
+    MaturityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

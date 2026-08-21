@@ -8,10 +8,13 @@ import {
   ProjectAssignment,
   CreateAssignmentDto,
   CreateSessionDto,
+  UpdateSessionDto,
   CreateActionDto,
   CreateRecommendationDto,
   CreateCommentDto,
+  ActionEvidence,
 } from '@/types/coaching'
+import { CoachingBriefPayload, SessionSummaryPayload } from '@/types/ai-analysis'
 
 class CoachingService {
   private static instance: CoachingService
@@ -59,6 +62,11 @@ class CoachingService {
 
   // ==================== SESSIONS ====================
 
+  async getSession(id: string): Promise<CoachingSession> {
+    const { data } = await api.get(`/coaching/sessions/${id}`)
+    return data
+  }
+
   async getProjectSessions(projectId: string): Promise<CoachingSession[]> {
     const { data } = await api.get(`/projects/${projectId}/coaching/sessions`)
     return data
@@ -69,13 +77,30 @@ class CoachingService {
     return data
   }
 
-  async updateSession(id: string, dto: Partial<CreateSessionDto> & { status?: string }): Promise<CoachingSession> {
+  async updateSession(id: string, dto: UpdateSessionDto): Promise<CoachingSession> {
     const { data } = await api.patch(`/coaching/sessions/${id}`, dto)
     return data
   }
 
   async completeSession(id: string, report?: string): Promise<CoachingSession> {
     const { data } = await api.post(`/coaching/sessions/${id}/complete`, { report })
+    return data
+  }
+
+  async startSession(id: string): Promise<CoachingSession> {
+    const { data } = await api.post(`/coaching/sessions/${id}/start`)
+    return data
+  }
+
+  // ==================== IA DE SESSION (proposition → validation coach) ====================
+
+  async aiSessionBrief(id: string): Promise<{ success: boolean; data: CoachingBriefPayload | null }> {
+    const { data } = await api.post(`/coaching/sessions/${id}/ai-brief`)
+    return data
+  }
+
+  async aiSessionSummary(id: string): Promise<{ success: boolean; data: SessionSummaryPayload | null }> {
+    const { data } = await api.post(`/coaching/sessions/${id}/ai-summary`)
     return data
   }
 
@@ -93,6 +118,29 @@ class CoachingService {
 
   async updateAction(id: string, dto: { title?: string; description?: string; status?: string; priority?: string; deadline?: string }): Promise<CoachingAction> {
     const { data } = await api.patch(`/coaching/actions/${id}`, dto)
+    return data
+  }
+
+  // ==================== PREUVES D'ACTION ====================
+
+  async addEvidence(actionId: string, dto: { type: string; title?: string; content?: string; url?: string }): Promise<ActionEvidence> {
+    const { data } = await api.post(`/coaching/actions/${actionId}/evidences`, dto)
+    return data
+  }
+
+  async getEvidences(actionId: string): Promise<ActionEvidence[]> {
+    const { data } = await api.get(`/coaching/actions/${actionId}/evidences`)
+    return data
+  }
+
+  async reviewEvidence(evidenceId: string, dto: { status: 'APPROVED' | 'REJECTED'; comment?: string }): Promise<ActionEvidence> {
+    const { data } = await api.patch(`/coaching/evidences/${evidenceId}/review`, dto)
+    return data
+  }
+
+  /** Valide une suggestion IA en recommandation officielle (source = AI). */
+  async createRecommendationFromAi(projectId: string, dto: { title: string; content: string; priority?: string; sessionId?: string; aiAnalysisId: string }): Promise<CoachingRecommendation> {
+    const { data } = await api.post(`/projects/${projectId}/coaching/recommendations/from-ai`, dto)
     return data
   }
 

@@ -300,6 +300,30 @@ export const NOTIFICATION_EVENT_MAP: Record<
     category: 'coaching',
     requiresEmail: false,
   },
+  [NotificationEvent.AI_ANALYSIS_READY]: {
+    type: NotificationType.AI_ANALYSIS_READY,
+    priority: NotificationPriority.MEDIUM,
+    category: 'coaching',
+    requiresEmail: false,
+  },
+  [NotificationEvent.COACHING_ACTION_SUBMITTED]: {
+    type: NotificationType.COACHING_ACTION_SUBMITTED,
+    priority: NotificationPriority.MEDIUM,
+    category: 'coaching',
+    requiresEmail: false,
+  },
+  [NotificationEvent.COACHING_EVIDENCE_REVIEWED]: {
+    type: NotificationType.COACHING_EVIDENCE_REVIEWED,
+    priority: NotificationPriority.MEDIUM,
+    category: 'coaching',
+    requiresEmail: false,
+  },
+  [NotificationEvent.RE_EVALUATION_AVAILABLE]: {
+    type: NotificationType.RE_EVALUATION_AVAILABLE,
+    priority: NotificationPriority.HIGH,
+    category: 'evaluation',
+    requiresEmail: true,
+  },
   [NotificationEvent.COACH_ASSIGNED]: {
     type: NotificationType.COACH_ASSIGNED,
     priority: NotificationPriority.HIGH,

@@ -97,6 +97,11 @@ export interface Evaluation {
   jury_user_id: string;
   score: number;
   comment?: string;
+  /** Statut renvoyé par le backend (DRAFT | SUBMITTED) — absent sur les anciennes réponses. */
+  status?: 'DRAFT' | 'SUBMITTED';
+  submitted_at?: string | null;
+  template_id?: string | null;
+  version?: number;
   created_at: string;
   updated_at: string;
 

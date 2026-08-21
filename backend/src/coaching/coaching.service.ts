@@ -11,6 +11,7 @@ import {
   CoachingSessionStatus,
   CohortExpertRole,
   CohortExpertStatus,
+  EvidenceReviewStatus,
   ParticipationStatus,
   ResourceType,
 } from '@prisma/client';
@@ -26,6 +27,8 @@ import { UpdateRecommendationDto } from './dto/update-recommendation.dto';
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateEvidenceDto, ReviewEvidenceDto } from './dto/evidence.dto';
+import { CreateAiRecommendationDto } from './dto/create-ai-recommendation.dto';
 
 @Injectable()
 export class CoachingService {
@@ -61,9 +64,11 @@ export class CoachingService {
       data: {
         assignment_id: assignment.id,
         title: dto.title,
+        session_type: dto.sessionType,
+        objective: dto.objective,
+        agenda: dto.agenda,
         scheduled_at: new Date(dto.scheduledAt),
         duration_minutes: dto.durationMinutes,
-        report: dto.report,
         created_by: userId,
         status: CoachingSessionStatus.SCHEDULED,
       },
@@ -157,9 +162,16 @@ export class CoachingService {
       where: { id },
       data: {
         title: dto.title,
+        session_type: dto.sessionType,
+        objective: dto.objective,
+        agenda: dto.agenda,
+        notes: dto.notes,
+        decisions: dto.decisions,
         scheduled_at: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         duration_minutes: dto.durationMinutes,
         report: dto.report,
+        summary: dto.summary,
+        next_objectives: dto.nextObjectives,
         status,
         completed_at:
           status === CoachingSessionStatus.COMPLETED ? new Date() : session.completed_at,
@@ -263,6 +275,38 @@ export class CoachingService {
     });
 
     return completed;
+  }
+
+  /**
+   * Démarrage d'une session planifiée : SCHEDULED → IN_PROGRESS (coach uniquement).
+   */
+  async startSession(id: string, userId: string) {
+    const session = await this.prisma.coachingSession.findUnique({
+      where: { id },
+      include: { assignment: { include: { project: { select: { id: true, name: true } } } } },
+    });
+    if (!session) throw new NotFoundException('Session introuvable');
+
+    const assignment = await this.prisma.projectExpertAssignment.findUnique({
+      where: { id: session.assignment_id },
+    });
+    if (!assignment || assignment.expert_user_id !== userId || assignment.status !== CohortExpertStatus.ACTIVE) {
+      throw new ForbiddenException('Seul le coach de la session peut la démarrer');
+    }
+    if (session.status !== CoachingSessionStatus.SCHEDULED && session.status !== CoachingSessionStatus.RESCHEDULED) {
+      throw new BadRequestException(
+        'Seule une session planifiée peut être démarrée',
+      );
+    }
+
+    return this.prisma.coachingSession.update({
+      where: { id },
+      data: {
+        status: CoachingSessionStatus.IN_PROGRESS,
+        started_at: new Date(),
+      },
+      include: { assignment: { include: { project: { select: { id: true, name: true } } } } },
+    });
   }
 
   // ==================== RECOMMANDATIONS ====================
@@ -518,6 +562,181 @@ export class CoachingService {
     }
 
     return updated;
+  }
+
+  // ==================== PREUVES D'ACTION ====================
+
+  /**
+   * Le porteur soumet une preuve de réalisation pour son action.
+   * L'action passe en SUBMITTED tant que le coach n'a pas validé.
+   */
+  async addEvidence(actionId: string, dto: CreateEvidenceDto, userId: string) {
+    const action = await this.prisma.coachingAction.findUnique({
+      where: { id: actionId },
+      include: { project: { select: { id: true, name: true, owner_id: true } } },
+    });
+    if (!action) throw new NotFoundException('Action introuvable');
+    if (action.project.owner_id !== userId) {
+      throw new ForbiddenException(
+        'Seul le porteur du projet peut soumettre une preuve',
+      );
+    }
+    if (([CoachingActionStatus.CANCELLED, CoachingActionStatus.COMPLETED] as CoachingActionStatus[]).includes(action.status)) {
+      throw new BadRequestException(
+        'Impossible d’ajouter une preuve sur une action terminée ou annulée',
+      );
+    }
+
+    const evidence = await this.prisma.actionEvidence.create({
+      data: {
+        action_id: actionId,
+        type: dto.type,
+        title: dto.title,
+        content: dto.content,
+        url: dto.url,
+        submitted_by: userId,
+      },
+    });
+
+    await this.prisma.coachingAction.update({
+      where: { id: actionId },
+      data: { status: CoachingActionStatus.SUBMITTED },
+    });
+
+    // Notification au coach affecté
+    const assignment = action.assignment_id
+      ? await this.prisma.projectExpertAssignment.findUnique({
+          where: { id: action.assignment_id },
+          select: { expert_user_id: true },
+        })
+      : null;
+    const coachFallback = await this.prisma.projectExpertAssignment.findFirst({
+      where: { project_id: action.project_id, role: CohortExpertRole.COACH, status: CohortExpertStatus.ACTIVE },
+      select: { expert_user_id: true },
+    });
+    const recipient = assignment?.expert_user_id ?? coachFallback?.expert_user_id;
+    if (recipient) {
+      const { title, message } = this.messageBuilder.coachingActionSubmitted({
+        projectName: action.project.name,
+        actionTitle: action.title,
+      });
+      this.access.notify({
+        event: NotificationEvent.COACHING_ACTION_SUBMITTED,
+        recipients: [{ userId: recipient }],
+        title,
+        message,
+        link: `/dashboard/expert/coaching/${action.project_id}/coaching`,
+        senderId: userId,
+        resourceType: ResourceType.COACHING,
+        resourceId: action.project_id,
+      });
+    }
+
+    return evidence;
+  }
+
+  async findEvidences(actionId: string, userId: string) {
+    const action = await this.prisma.coachingAction.findUnique({
+      where: { id: actionId },
+      select: { project_id: true },
+    });
+    if (!action) throw new NotFoundException('Action introuvable');
+    await this.assertCanViewCoaching(action.project_id, userId);
+
+    return this.prisma.actionEvidence.findMany({
+      where: { action_id: actionId },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  /**
+   * Le coach valide ou rejette une preuve (human-in-the-loop).
+   */
+  async reviewEvidence(evidenceId: string, dto: ReviewEvidenceDto, userId: string) {
+    const evidence = await this.prisma.actionEvidence.findUnique({
+      where: { id: evidenceId },
+      include: { action: { include: { project: { select: { id: true, name: true, owner_id: true } } } } },
+    });
+    if (!evidence) throw new NotFoundException('Preuve introuvable');
+
+    await this.assertCanCoachOrManage(evidence.action.project_id, userId);
+
+    const reviewed = await this.prisma.actionEvidence.update({
+      where: { id: evidenceId },
+      data: {
+        review_status: dto.status,
+        coach_comment: dto.comment,
+        reviewed_by: userId,
+        reviewed_at: new Date(),
+      },
+    });
+
+    if (dto.status === EvidenceReviewStatus.REJECTED) {
+      // La preuve est refusée : l'action repasse à IN_PROGRESS pour que le porteur complète
+      await this.prisma.coachingAction.update({
+        where: { id: evidence.action_id },
+        data: { status: CoachingActionStatus.IN_PROGRESS },
+      });
+    }
+
+    const { title, message } = this.messageBuilder.coachingEvidenceReviewed({
+      projectName: evidence.action.project.name,
+      actionTitle: evidence.action.title,
+      approved: dto.status === EvidenceReviewStatus.APPROVED,
+    });
+    this.access.notify({
+      event: NotificationEvent.COACHING_EVIDENCE_REVIEWED,
+      recipients: [{ userId: evidence.submitted_by }],
+      title,
+      message,
+      link: `/project-owner/projects/${evidence.action.project_id}/coaching`,
+      senderId: userId,
+      resourceType: ResourceType.COACHING,
+      resourceId: evidence.action.project_id,
+    });
+
+    return reviewed;
+  }
+
+  /**
+   * Le coach transforme une suggestion IA en recommandation officielle.
+   */
+  async createAiRecommendation(projectId: string, dto: CreateAiRecommendationDto, userId: string) {
+    await this.access.assertProjectExists(projectId);
+    await this.assertCanCoachOrManage(projectId, userId);
+
+    const analysis = await this.prisma.aiAnalysis.findUnique({
+      where: { id: dto.aiAnalysisId },
+      select: { id: true, project_id: true, type: true },
+    });
+    if (!analysis || analysis.project_id !== projectId) {
+      throw new BadRequestException("L'analyse IA indiquée ne concerne pas ce projet");
+    }
+
+    const recommendation = await this.prisma.coachingRecommendation.create({
+      data: {
+        project_id: projectId,
+        session_id: dto.sessionId ?? null,
+        author_id: userId,
+        title: dto.title,
+        content: dto.content,
+        priority: dto.priority ?? CoachingActionPriority.MEDIUM,
+        status: CoachingRecommendationStatus.OPEN,
+        source: 'AI',
+        ai_analysis_id: analysis.id,
+      },
+      include: { project: { select: { id: true, name: true, owner_id: true } } },
+    });
+
+    await this.audit.log({
+      actorId: userId,
+      action: 'COACHING_RECOMMENDATION_CREATE_FROM_AI',
+      entityType: 'CoachingRecommendation',
+      entityId: recommendation.id,
+      metadata: { project_id: projectId, ai_analysis_id: analysis.id },
+    });
+
+    return recommendation;
   }
 
   // ==================== COMMENTAIRES ====================

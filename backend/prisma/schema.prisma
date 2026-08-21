@@ -115,6 +115,7 @@ enum CohortExpertStatus {
 
 enum CoachingSessionStatus {
   SCHEDULED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
   RESCHEDULED
@@ -142,6 +143,51 @@ enum CoachingRecommendationStatus {
   IN_PROGRESS
   DONE
   ARCHIVED
+}
+
+// ===========================
+// COACHING & ÉVALUATION — IA (analyse, plan, preuves)
+// ===========================
+enum AiAnalysisType {
+  EVALUATION_ANALYSIS
+  JURY_ASSISTANT
+  RISK_ANALYSIS
+  PROGRESS_ANALYSIS
+  SESSION_BRIEF
+  SESSION_SUMMARY
+}
+
+enum AiAnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ImprovementPlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ImprovementObjectiveStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EvidenceType {
+  LINK
+  TEXT
+  DOCUMENT
+  RESULT
+}
+
+enum EvidenceReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum EvaluationStatus {
@@ -251,6 +297,10 @@ enum NotificationType {
   FINAL_DECISION_CONDITIONS_ADDED
   CONDITION_VALIDATED
   REEVALUATION_REQUESTED
+  AI_ANALYSIS_READY
+  COACHING_ACTION_SUBMITTED
+  COACHING_EVIDENCE_REVIEWED
+  RE_EVALUATION_AVAILABLE
 
   // === ADMIN ===
   NEW_USER_REGISTERED
@@ -309,6 +359,7 @@ model User {
   conditionValidated              FinalDecisionCondition[]   @relation("ConditionValidatedBy")
   jurySessionsCreated             JurySession[]              @relation("JuryCreatedBy")
   jurySessionMemberships          JurySessionMember[]        @relation("JuryMemberUser")
+  improvementPlansCreated         ImprovementPlan[]          @relation("PlanCreatedBy")
   auditLogs                       AuditLog[]                 @relation("AuditActor")
 
   @@map("users")
@@ -596,10 +647,125 @@ model Project {
   evaluationAssignments    EvaluationAssignment[]
   finalDecisions           FinalDecision[]
   jurySessions             JurySession[]
+  aiAnalyses               AiAnalysis[]
+  improvementPlans         ImprovementPlan[]
 
   @@index([name])
   @@index([owner_id])
   @@map("projects")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Analyses IA persistées
+// ===========================
+model AiAnalysis {
+  id            String          @id @default(uuid())
+  project_id    String
+  type          AiAnalysisType
+  status        AiAnalysisStatus @default(PENDING)
+  evaluation_id String?
+  session_id    String?
+  from_evaluation_id String?
+  to_evaluation_id   String?
+  payload       Json?
+  error         String?
+  model         String?
+  prompt_tokens Int?
+  completion_tokens Int?
+  total_tokens  Int?
+  duration_ms   Int?
+  created_by    String?
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  evaluation Evaluation? @relation("AnalysisEvaluation", fields: [evaluation_id], references: [id], onDelete: SetNull)
+  recommendations CoachingRecommendation[]
+  improvementPlans ImprovementPlan[]
+
+  @@index([project_id])
+  @@index([type])
+  @@index([status])
+  @@index([evaluation_id])
+  @@map("ai_analyses")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Plan d'amélioration
+// ===========================
+model ImprovementPlan {
+  id            String               @id @default(uuid())
+  project_id    String
+  evaluation_id String?
+  ai_analysis_id String?
+  title         String?
+  description   String?
+  status        ImprovementPlanStatus @default(DRAFT)
+  target_areas  Json?
+  progress      Int                  @default(0)
+  deadline      DateTime?
+  validated_by  String?
+  validated_at  DateTime?
+  created_by    String
+  created_at    DateTime             @default(now())
+  updated_at    DateTime             @updatedAt
+
+  project    Project                @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  evaluation Evaluation?            @relation(fields: [evaluation_id], references: [id], onDelete: SetNull)
+  aiAnalysis AiAnalysis?            @relation(fields: [ai_analysis_id], references: [id])
+  objectives ImprovementObjective[]
+  createdBy  User                   @relation("PlanCreatedBy", fields: [created_by], references: [id])
+
+  @@index([project_id])
+  @@index([status])
+  @@index([evaluation_id])
+  @@map("improvement_plans")
+}
+
+model ImprovementObjective {
+  id              String                    @id @default(uuid())
+  plan_id         String
+  title           String
+  description     String?
+  priority        CoachingActionPriority    @default(MEDIUM)
+  current_score   Float?
+  target_score    Float?
+  progress        Int                       @default(0)
+  status          ImprovementObjectiveStatus @default(PENDING)
+  deadline        DateTime?
+  created_at      DateTime                  @default(now())
+  updated_at      DateTime                  @updatedAt
+
+  plan ImprovementPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+
+  @@index([plan_id])
+  @@index([status])
+  @@map("improvement_objectives")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Preuves d'action (proof of work)
+// ===========================
+model ActionEvidence {
+  id          String               @id @default(uuid())
+  action_id   String
+  type        EvidenceType
+  title       String?
+  content     String?
+  url         String?
+  review_status EvidenceReviewStatus @default(PENDING)
+  coach_comment String?
+  reviewed_by String?
+  reviewed_at DateTime?
+  submitted_by String
+  created_at  DateTime             @default(now())
+  updated_at  DateTime             @updatedAt
+
+  action CoachingAction @relation(fields: [action_id], references: [id], onDelete: Cascade)
+
+  @@index([action_id])
+  @@index([review_status])
+  @@map("action_evidences")
 }
 
 // ===========================
@@ -721,6 +887,8 @@ model Evaluation {
   juryUser  User                @relation(fields: [jury_user_id], references: [id])
   template  EvaluationTemplate? @relation(fields: [template_id], references: [id])
   scores    EvaluationScore[]
+  aiAnalyses        AiAnalysis[]       @relation("AnalysisEvaluation")
+  improvementPlans  ImprovementPlan[]
 
   @@unique([project_id, jury_user_id, template_id, version])
   @@index([project_id])
@@ -762,14 +930,22 @@ model CoachingSession {
   id               String                @id @default(uuid())
   assignment_id    String
   title            String?
+  objective        String?
+  session_type     String?
   scheduled_at     DateTime
   duration_minutes Int?
   status           CoachingSessionStatus @default(SCHEDULED)
+  agenda           String?
+  notes            String?
+  decisions        String?
   report           String?
+  summary          String?
+  next_objectives  String?
   created_by       String
-  created_at       DateTime              @default(now())
-  updated_at       DateTime              @updatedAt
-  completed_at     DateTime?
+   created_at       DateTime              @default(now())
+   updated_at       DateTime              @updatedAt
+   started_at       DateTime?
+   completed_at     DateTime?
 
   assignment ProjectExpertAssignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
   createdBy  User                    @relation("SessionCreatedBy", fields: [created_by], references: [id])
@@ -794,6 +970,8 @@ model CoachingRecommendation {
   content     String
   priority    CoachingActionPriority      @default(MEDIUM)
   status      CoachingRecommendationStatus @default(OPEN)
+  source      String                      @default("COACH") // COACH | AI (suggestion IA validée/modifiée par le coach)
+  ai_analysis_id String?
   created_at  DateTime                    @default(now())
   updated_at  DateTime                    @updatedAt
 
@@ -801,9 +979,11 @@ model CoachingRecommendation {
   project Project?         @relation(fields: [project_id], references: [id], onDelete: Cascade)
   author  User             @relation("RecommendationAuthor", fields: [author_id], references: [id])
   actions CoachingAction[]
+  aiAnalysis AiAnalysis?   @relation(fields: [ai_analysis_id], references: [id])
 
   @@index([session_id])
   @@index([project_id])
+  @@index([source])
   @@map("coaching_recommendations")
 }
 
@@ -834,6 +1014,7 @@ model CoachingAction {
   recommendation CoachingRecommendation? @relation(fields: [recommendation_id], references: [id])
   createdBy     User                   @relation("ActionCreatedBy", fields: [created_by], references: [id])
   comments      CoachingComment[]
+  evidences     ActionEvidence[]
 
   @@index([project_id])
   @@index([session_id])

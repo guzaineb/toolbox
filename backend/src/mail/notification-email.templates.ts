@@ -301,6 +301,12 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, Notification
     gradientTo: '#b88a2a',
     subjectPrefix: 'Réévaluation demandée',
   },
+  [NotificationType.RE_EVALUATION_AVAILABLE]: {
+    icon: '🔁',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Nouvelle ré-évaluation disponible',
+  },
 
   // ─── IA ───────────────────────────────────────────────
   [NotificationType.AI_RESPONSE_READY]: {
@@ -308,6 +314,24 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, Notification
     gradientFrom: '#2d7a52',
     gradientTo: '#1d5a3a',
     subjectPrefix: 'Réponse IA prête',
+  },
+  [NotificationType.AI_ANALYSIS_READY]: {
+    icon: '🧠',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Analyse IA disponible',
+  },
+  [NotificationType.COACHING_ACTION_SUBMITTED]: {
+    icon: '📎',
+    gradientFrom: '#c9a84c',
+    gradientTo: '#b88a2a',
+    subjectPrefix: 'Preuve d\'action soumise',
+  },
+  [NotificationType.COACHING_EVIDENCE_REVIEWED]: {
+    icon: '✅',
+    gradientFrom: '#2d7a52',
+    gradientTo: '#1d5a3a',
+    subjectPrefix: 'Preuve d\'action examinée',
   },
 
   // ─── ADMIN ────────────────────────────────────────────

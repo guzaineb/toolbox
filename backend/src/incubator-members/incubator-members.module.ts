@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { IncubatorMembersService } from './incubator-members.service';
 import { IncubatorMembersController } from './incubator-members.controller';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   controllers: [IncubatorMembersController],

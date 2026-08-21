@@ -140,6 +140,54 @@ export class ModuleAccessService {
     return !!assignment;
   }
 
+  /**
+   * Accès en lecture au projet : porteur, coach/jury affecté, ou membre de l'incubateur de la cohorte.
+   */
+  async assertCanAccessProject(projectId: string, userId: string): Promise<void> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, owner_id: true },
+    });
+    if (!project) throw new NotFoundException('Projet introuvable');
+    if (project.owner_id === userId) return;
+
+    const [assigned, participation] = await Promise.all([
+      this.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH),
+      this.getAcceptedCohortForProject(projectId),
+    ]);
+    if (assigned) return;
+    if ((await this.canEvaluateProject(projectId, userId)) || (await this.hasActiveAssignment(projectId, userId, CohortExpertRole.JURY))) {
+      return;
+    }
+
+    if (participation?.cohort.incubator_id) {
+      const member = await this.isIncubatorMember(userId, participation.cohort.incubator_id);
+      if (member) return;
+    }
+
+    throw new ForbiddenException("Accès refusé à ce projet");
+  }
+
+  /**
+   * Gestion du coaching / plan d'amélioration : coach affecté au projet
+   * ou gestionnaire de l'incubateur de la cohorte.
+   */
+  async assertCanManageProjectCoaching(projectId: string, userId: string): Promise<void> {
+    if (await this.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH)) return;
+
+    const participation = await this.getAcceptedCohortForProject(projectId);
+    if (!participation) {
+      throw new BadRequestException("Ce projet n'est pas accepté dans une cohorte");
+    }
+    if (participation.cohort.incubator_id) {
+      await this.assertCanManageIncubator(participation.cohort.incubator_id, userId);
+      return;
+    }
+    throw new ForbiddenException(
+      "Vous n'êtes pas autorisé à gérer le coaching de ce projet",
+    );
+  }
+
   async assertActiveAssignment(
     projectId: string,
     userId: string,

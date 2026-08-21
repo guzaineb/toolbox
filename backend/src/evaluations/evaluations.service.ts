@@ -14,6 +14,7 @@ import {
 } from '@prisma/client';
 import { CreateEvaluationDto, UpdateEvaluationDto } from './dto/evaluation.dto';
 import { SaveScoresDto } from './dto/save-scores.dto';
+import { RequestReevaluationDto } from './dto/request-reevaluation.dto';
 import { ModuleAccessService } from '../common/services/module-access.service';
 import { AuditService } from '../audit/audit.service';
 import { computeWeightedScore } from './score.util';
@@ -711,5 +712,105 @@ export class EvaluationsService {
     }
 
     return false;
+  }
+
+  // ==================== RÉ-ÉVALUATION (boucle d'amélioration) ====================
+
+  /**
+   * Demande de ré-évaluation après exécution du plan d'amélioration :
+   * crée un brouillon version+1 pour chaque jury affecté et le notifie.
+   * Les scores restent exclusivement saisies par les jurys humains.
+   */
+  async requestReevaluation(
+    projectId: string,
+    dto: RequestReevaluationDto,
+    userId: string,
+  ) {
+    await this.access.assertProjectExists(projectId);
+    await this.access.assertCanManageProjectCoaching(projectId, userId);
+
+    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    if (!participation) {
+      throw new BadRequestException("Ce projet n'est pas accepté dans une cohorte");
+    }
+
+    const template = await this.prisma.evaluationTemplate.findFirst({
+      where: { cohort_id: participation.cohort_id, published: true },
+      orderBy: { created_at: 'desc' },
+    });
+    if (!template) {
+      throw new BadRequestException('Aucune grille publiée pour cette cohorte');
+    }
+
+    const assignments = await this.prisma.evaluationAssignment.findMany({
+      where: {
+        project_id: projectId,
+        ...(dto.juryUserIds && dto.juryUserIds.length > 0
+          ? { jury_user_id: { in: dto.juryUserIds } }
+          : {}),
+      },
+    });
+    if (assignments.length === 0) {
+      throw new BadRequestException('Aucun jury affecté à ce projet');
+    }
+
+    const created: Array<{ evaluationId: string; juryUserId: string; version: number }> = [];
+    for (const assignment of assignments) {
+      const latest = await this.prisma.evaluation.findFirst({
+        where: {
+          project_id: projectId,
+          jury_user_id: assignment.jury_user_id,
+          template_id: template.id,
+        },
+        orderBy: { version: 'desc' },
+      });
+
+      // Un brouillon existe déjà pour ce jury : pas de doublon
+      if (latest && latest.status === EvaluationStatus.DRAFT) continue;
+
+      const evaluation = await this.prisma.evaluation.create({
+        data: {
+          project_id: projectId,
+          jury_user_id: assignment.jury_user_id,
+          template_id: template.id,
+          status: EvaluationStatus.DRAFT,
+          version: (latest?.version ?? 0) + 1,
+        },
+        select: { id: true, jury_user_id: true, version: true },
+      });
+      created.push({
+        evaluationId: evaluation.id,
+        juryUserId: evaluation.jury_user_id,
+        version: evaluation.version,
+      });
+
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { name: true },
+      });
+      const { title, message } = this.messageBuilder.reEvaluationAvailable({
+        projectName: project?.name ?? 'Projet',
+      });
+      this.access.notify({
+        event: NotificationEvent.RE_EVALUATION_AVAILABLE,
+        recipients: [{ userId: assignment.jury_user_id }],
+        title,
+        message,
+        link: `/dashboard/jury/evaluations`,
+        senderId: userId,
+        resourceType: ResourceType.EVALUATION,
+        resourceId: projectId,
+      });
+    }
+
+    await this.audit.log({
+      actorId: userId,
+      action: 'EVALUATION_REEVALUATION_REQUEST',
+      entityType: 'Evaluation',
+      entityId: projectId,
+      metadata: { created_count: created.length },
+    });
+
+    return { requested: created.length, evaluations: created };
   }
 }
