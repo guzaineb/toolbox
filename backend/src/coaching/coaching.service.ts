@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import {
   CoachingActionPriority,
   CoachingActionStatus,
@@ -16,6 +17,7 @@ import {
   ResourceType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { ModuleAccessService } from '../common/services/module-access.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
@@ -29,6 +31,51 @@ import { UpdateActionDto } from './dto/update-action.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateEvidenceDto, ReviewEvidenceDto } from './dto/evidence.dto';
 import { CreateAiRecommendationDto } from './dto/create-ai-recommendation.dto';
+import { SessionBlockerDto } from './dto/update-session.dto';
+
+/** Blocage identifié par le coach, persisté en Json sur la session. */
+interface SessionBlocker {
+  id: string;
+  title: string;
+  detail?: string;
+  resolved: boolean;
+  resolvedAt?: string;
+}
+
+type IncomingBlocker = SessionBlockerDto & { id?: unknown; resolvedAt?: unknown };
+
+const MAX_BLOCKERS = 30;
+
+/**
+ * Normalise la liste de blocages envoyée par le coach : identifiant stable
+ * par item (pour le suivi session N → N+1), bornes de taille, champs nettoyés.
+ */
+function normalizeBlockers(input: SessionBlockerDto[] | undefined): SessionBlocker[] {
+  if (!Array.isArray(input)) return [];
+  return (input as IncomingBlocker[])
+    .slice(0, MAX_BLOCKERS)
+    .map((b) => {
+      const title = typeof b?.title === 'string' ? b.title.trim().slice(0, 300) : '';
+      const detail =
+        typeof b?.detail === 'string' && b.detail.trim() ? b.detail.trim().slice(0, 2000) : undefined;
+      const resolved = b?.resolved === true;
+      const resolvedAt =
+        typeof b?.resolvedAt === 'string'
+          ? b.resolvedAt
+          : resolved
+            ? new Date().toISOString()
+            : undefined;
+      const blocker: SessionBlocker = {
+        id: typeof b?.id === 'string' && b.id ? b.id : randomUUID(),
+        title,
+        resolved,
+        ...(resolvedAt ? { resolvedAt } : {}),
+        ...(detail ? { detail } : {}),
+      };
+      return blocker;
+    })
+    .filter((b) => b.title.length > 0);
+}
 
 @Injectable()
 export class CoachingService {
@@ -45,20 +92,7 @@ export class CoachingService {
     await this.access.assertProjectExists(projectId);
     await this.assertCanCoachOrManage(projectId, userId);
 
-    const assignment = await this.prisma.projectExpertAssignment.findFirst({
-      where: {
-        project_id: projectId,
-        expert_user_id: userId,
-        role: CohortExpertRole.COACH,
-        status: CohortExpertStatus.ACTIVE,
-      },
-      select: { id: true },
-    });
-    if (!assignment) {
-      throw new ForbiddenException(
-        "Vous devez être le coach affecté pour créer une session",
-      );
-    }
+    const assignment = await this.resolveCoachAssignment(projectId, userId);
 
     const session = await this.prisma.coachingSession.create({
       data: {
@@ -133,7 +167,12 @@ export class CoachingService {
             expertUser: { select: { id: true, email: true, profile: true } },
           },
         },
-        actions: true,
+        actions: {
+          include: {
+            assignment: { select: { id: true, expert_user_id: true, expertUser: { select: { id: true, email: true, profile: true } } } },
+            responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+          },
+        },
         recommendations: true,
         comments: { include: { author: { select: { id: true, email: true, profile: true } } }, orderBy: { created_at: 'asc' } },
       },
@@ -152,6 +191,29 @@ export class CoachingService {
 
     await this.assertIsSessionCoachOrManager(session, userId);
 
+    // Une session close (terminée / annulée / manquée) fait partie de
+    // l'historique : seuls les champs de compte-rendu restent modifiables.
+    const TERMINAL_SESSION_STATUSES: CoachingSessionStatus[] = [
+      CoachingSessionStatus.COMPLETED,
+      CoachingSessionStatus.CANCELLED,
+      CoachingSessionStatus.MISSED,
+    ];
+    if (TERMINAL_SESSION_STATUSES.includes(session.status)) {
+      const touchesLockedFields =
+        dto.title !== undefined ||
+        dto.scheduledAt !== undefined ||
+        dto.durationMinutes !== undefined ||
+        dto.sessionType !== undefined ||
+        dto.objective !== undefined ||
+        dto.agenda !== undefined ||
+        (dto.status !== undefined && dto.status !== session.status);
+      if (touchesLockedFields) {
+        throw new BadRequestException(
+          'Cette session est clôturée : seuls les champs de compte-rendu (notes, décisions, rapport, résumé, prochaines étapes) peuvent être mis à jour',
+        );
+      }
+    }
+
     let status = session.status;
     if (dto.status) status = dto.status;
     if (!dto.status && dto.scheduledAt && new Date(dto.scheduledAt).getTime() !== session.scheduled_at.getTime()) {
@@ -166,12 +228,20 @@ export class CoachingService {
         objective: dto.objective,
         agenda: dto.agenda,
         notes: dto.notes,
+        findings: dto.findings,
+        topics_discussed: dto.topicsDiscussed,
+        blockers:
+          dto.blockers !== undefined
+            ? (normalizeBlockers(dto.blockers) as unknown as Prisma.InputJsonValue[])
+            : undefined,
         decisions: dto.decisions,
         scheduled_at: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         duration_minutes: dto.durationMinutes,
         report: dto.report,
         summary: dto.summary,
         next_objectives: dto.nextObjectives,
+        objective_result: dto.objectiveResult,
+        objective_result_reason: dto.objectiveResultReason,
         status,
         completed_at:
           status === CoachingSessionStatus.COMPLETED ? new Date() : session.completed_at,
@@ -184,7 +254,7 @@ export class CoachingService {
       action: 'COACHING_SESSION_UPDATE',
       entityType: 'CoachingSession',
       entityId: id,
-      metadata: { ...dto },
+      metadata: { ...dto, blockers: dto.blockers ? normalizeBlockers(dto.blockers) : undefined } as unknown as Prisma.InputJsonValue,
     });
 
     const project = updated.assignment.project;
@@ -425,12 +495,26 @@ export class CoachingService {
       }
     }
 
+    let responsibleUserId: string | undefined;
+    if (dto.responsibleUserId) {
+      const responsible = await this.prisma.user.findUnique({
+        where: { id: dto.responsibleUserId },
+        select: { id: true },
+      });
+      if (!responsible) {
+        throw new BadRequestException("L'utilisateur responsable indiqué est introuvable");
+      }
+      responsibleUserId = responsible.id;
+    }
+
     const action = await this.prisma.coachingAction.create({
       data: {
         project_id: projectId,
         session_id: dto.sessionId ?? null,
         assignment_id: dto.assignmentId ?? null,
         recommendation_id: dto.recommendationId ?? null,
+        responsible_user_id: responsibleUserId ?? null,
+        related_document_key: dto.relatedDocumentKey ?? null,
         title: dto.title,
         description: dto.description,
         priority: dto.priority ?? CoachingActionPriority.MEDIUM,
@@ -438,7 +522,10 @@ export class CoachingService {
         deadline: dto.deadline ? new Date(dto.deadline) : undefined,
         created_by: userId,
       },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+        responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+      },
     });
 
     await this.audit.log({
@@ -485,6 +572,7 @@ export class CoachingService {
         session: { select: { id: true, title: true, scheduled_at: true } },
         assignment: { include: { expertUser: { select: { id: true, email: true, profile: true } } } },
         recommendation: { select: { id: true, title: true } },
+        responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
         createdBy: { select: { id: true, email: true } },
       },
       orderBy: { created_at: 'desc' },
@@ -500,9 +588,51 @@ export class CoachingService {
 
     await this.assertCanCoachOwnerOrManage(action.project_id, userId);
 
+    let responsibleUserId: string | null | undefined;
+    if (dto.responsibleUserId !== undefined && dto.responsibleUserId !== action.responsible_user_id) {
+      if (dto.responsibleUserId === null || dto.responsibleUserId === '') {
+        responsibleUserId = null;
+      } else {
+        const responsible = await this.prisma.user.findUnique({
+          where: { id: dto.responsibleUserId },
+          select: { id: true },
+        });
+        if (!responsible) {
+          throw new BadRequestException("L'utilisateur responsable indiqué est introuvable");
+        }
+        responsibleUserId = responsible.id;
+      }
+    }
+
+    // Un porteur qui n'est ni coach ni gestionnaire ne peut que démarrer ou
+    // soumettre son travail : la validation finale reste au coach/gestionnaire (F2).
+    if (action.project.owner_id === userId) {
+      const managesCoaching =
+        (await this.access.hasActiveAssignment(action.project_id, userId, CohortExpertRole.COACH)) ||
+        (await this.isCohortManagerOfProject(action.project_id, userId));
+      if (!managesCoaching) {
+        const ownerAllowed: CoachingActionStatus[] = [
+          CoachingActionStatus.PENDING,
+          CoachingActionStatus.IN_PROGRESS,
+          CoachingActionStatus.SUBMITTED,
+        ];
+        const touchesFields =
+          dto.title !== undefined ||
+          dto.description !== undefined ||
+          dto.priority !== undefined ||
+          dto.deadline !== undefined ||
+          dto.relatedDocumentKey !== undefined ||
+          dto.responsibleUserId !== undefined;
+        if (touchesFields || (dto.status !== undefined && !ownerAllowed.includes(dto.status))) {
+          throw new ForbiddenException(
+            'Seul le coach peut modifier ou valider une action ; le porteur peut uniquement démarrer ou soumettre.',
+          );
+        }
+      }
+    }
+
     const now = new Date();
-    const status =
-      dto.status === CoachingActionStatus.COMPLETED ? CoachingActionStatus.COMPLETED : dto.status;
+    const status = dto.status;
 
     const updated = await this.prisma.coachingAction.update({
       where: { id },
@@ -512,6 +642,13 @@ export class CoachingService {
         priority: dto.priority,
         status,
         deadline: dto.deadline ? new Date(dto.deadline) : undefined,
+        related_document_key:
+          dto.relatedDocumentKey !== undefined
+            ? dto.relatedDocumentKey === ''
+              ? null
+              : dto.relatedDocumentKey
+            : undefined,
+        ...(responsibleUserId !== undefined ? { responsible_user_id: responsibleUserId } : {}),
         completed_at:
           status === CoachingActionStatus.COMPLETED
             ? now
@@ -519,7 +656,10 @@ export class CoachingService {
               ? null
               : action.completed_at,
       },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+        responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+      },
     });
 
     await this.audit.log({
@@ -894,14 +1034,59 @@ export class CoachingService {
       this.prisma.coachingSession.findMany({
         where: { assignment: { project_id: projectId } },
         orderBy: { scheduled_at: 'desc' },
+        include: {
+          assignment: {
+            select: {
+              id: true,
+              role: true,
+              status: true,
+              expert_user_id: true,
+              expertUser: {
+                select: {
+                  id: true,
+                  email: true,
+                  profile: { select: { first_name: true, last_name: true } },
+                },
+              },
+            },
+          },
+          actions: { select: { id: true, title: true, status: true } },
+          recommendations: { select: { id: true, title: true, content: true } },
+        },
       }),
       this.prisma.coachingAction.findMany({
         where: { project_id: projectId },
         orderBy: { created_at: 'desc' },
+        include: {
+          session: { select: { id: true, title: true, scheduled_at: true } },
+          assignment: {
+            select: {
+              id: true,
+              expert_user_id: true,
+              expertUser: {
+                select: {
+                  id: true,
+                  profile: { select: { first_name: true, last_name: true } },
+                },
+              },
+            },
+          },
+          responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+        },
       }),
       this.prisma.coachingRecommendation.findMany({
         where: { project_id: projectId },
         orderBy: { created_at: 'desc' },
+        include: {
+          author: {
+            select: {
+              id: true,
+              email: true,
+              profile: { select: { first_name: true, last_name: true } },
+            },
+          },
+          actions: { select: { id: true, title: true, status: true } },
+        },
       }),
       this.prisma.projectExpertAssignment.findMany({
         where: { project_id: projectId },
@@ -939,6 +1124,46 @@ export class CoachingService {
 
   // ==================== ACCÈS ====================
 
+  /**
+   * Résout l'affectation COACH active de l'utilisateur sur le projet.
+   * Un coach actif au niveau cohorte (CohortExpert) est automatiquement
+   * projeté au niveau projet : la cohorte est sa périmètre d'action, il
+   * accompagne les projets acceptés dans celle-ci (scénarios 2/3/7).
+   */
+  private async resolveCoachAssignment(
+    projectId: string,
+    userId: string,
+  ): Promise<{ id: string }> {
+    const existing = await this.prisma.projectExpertAssignment.findFirst({
+      where: {
+        project_id: projectId,
+        expert_user_id: userId,
+        role: CohortExpertRole.COACH,
+        status: CohortExpertStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+    if (existing) return existing;
+
+    const isCohortCoach = await this.access.isCohortCoachOfProject(projectId, userId);
+    if (!isCohortCoach) {
+      throw new ForbiddenException(
+        "Vous devez être le coach affecté pour créer une session",
+      );
+    }
+
+    return this.prisma.projectExpertAssignment.create({
+      data: {
+        project_id: projectId,
+        expert_user_id: userId,
+        role: CohortExpertRole.COACH,
+        status: CohortExpertStatus.ACTIVE,
+        assigned_by: userId,
+      },
+      select: { id: true },
+    });
+  }
+
   private async assertCanCoachOrManage(projectId: string, userId: string) {
     const isCoach = await this.access.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH);
     if (isCoach) return;
@@ -964,8 +1189,8 @@ export class CoachingService {
     const isCoach = await this.access.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH);
     if (isCoach) return;
 
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
-    if (participation) {
+    const participations = await this.access.getAcceptedCohortsForProject(projectId);
+    for (const participation of participations) {
       const incubatorId = participation.cohort.incubator_id;
       if (incubatorId) {
         const member = await this.prisma.incubatorMember.findUnique({
@@ -974,19 +1199,30 @@ export class CoachingService {
         });
         if (member) return;
       }
-      const cohortCoach = await this.prisma.cohortExpert.findFirst({
-        where: {
-          cohort_id: participation.cohort_id,
-          expert_user_id: userId,
-          role: CohortExpertRole.COACH,
-          status: CohortExpertStatus.ACTIVE,
-        },
-        select: { id: true },
-      });
-      if (cohortCoach) return;
     }
 
+    // Coach actif sur au moins une cohorte acceptée du projet
+    if (await this.access.isCohortCoachOfProject(projectId, userId)) return;
+
     throw new ForbiddenException('Accès refusé au coaching de ce projet');
+  }
+
+  /** Gestionnaire de coaching au niveau cohorte : gestionnaire d'incubateur ou coach de cohorte actif. */
+  private async isCohortManagerOfProject(projectId: string, userId: string): Promise<boolean> {
+    const participations = await this.access.getAcceptedCohortsForProject(projectId);
+    if (participations.length === 0) return false;
+
+    for (const participation of participations) {
+      const incubatorId = participation.cohort.incubator_id;
+      if (!incubatorId) continue;
+      const member = await this.prisma.incubatorMember.findUnique({
+        where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
+        select: { role: true, can_manage_cohorts: true },
+      });
+      if (member && (member.role === 'ADMIN' || member.can_manage_cohorts)) return true;
+    }
+
+    return this.access.isCohortCoachOfProject(projectId, userId);
   }
 
   private async assertCanManageProjectCohort(projectId: string, userId: string) {
@@ -997,33 +1233,11 @@ export class CoachingService {
       );
     }
 
-    const cohortId = participation.cohort_id;
-    const incubatorId = participation.cohort.incubator_id;
-
-    if (incubatorId) {
-      const member = await this.prisma.incubatorMember.findUnique({
-        where: {
-          user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
-        },
-        select: { id: true },
-      });
-      if (member) return;
+    if (!(await this.isCohortManagerOfProject(projectId, userId))) {
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à gérer le coaching de ce projet",
+      );
     }
-
-    const cohortCoach = await this.prisma.cohortExpert.findFirst({
-      where: {
-        cohort_id: cohortId,
-        expert_user_id: userId,
-        role: CohortExpertRole.COACH,
-        status: CohortExpertStatus.ACTIVE,
-      },
-      select: { id: true },
-    });
-    if (cohortCoach) return;
-
-    throw new ForbiddenException(
-      "Vous n'êtes pas autorisé à gérer le coaching de ce projet",
-    );
   }
 
   private async assertIsSessionCoachOrManager(

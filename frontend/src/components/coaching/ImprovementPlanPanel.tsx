@@ -103,7 +103,7 @@ export function ImprovementPlanPanel({ projectId, canManage }: Props) {
 
         {!loading && plans.length === 0 && (
           <p className="text-[12px] text-ink3">
-            Aucun plan d'amélioration. Générez-en un depuis la dernière évaluation soumise : l'IA
+            Aucun plan d&apos;amélioration. Générez-en un depuis la dernière évaluation soumise : l&apos;IA
             propose objectifs et priorités, puis le coach valide le plan avant activation.
           </p>
         )}

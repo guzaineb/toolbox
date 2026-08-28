@@ -1,25 +1,29 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, HeartHandshake, CalendarClock, ListTodo, Lightbulb,
   BarChart3, CheckCircle2, BrainCircuit, ClipboardList, TrendingUp,
+  FolderCheck,
 } from 'lucide-react'
 import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
 import { coachingService } from '@/services/coaching.service'
+import { getErrorMessage } from '@/lib/utils'
 import { SessionsPanel, ActionsPanel, RecommendationsPanel } from '@/components/coaching/CoachingPanels'
 import { MaturityCard } from '@/components/coaching/MaturityCard'
 import { AiAnalysisPanel } from '@/components/coaching/AiAnalysisPanel'
 import { ImprovementPlanPanel } from '@/components/coaching/ImprovementPlanPanel'
 import { ProgressPanel } from '@/components/coaching/ProgressPanel'
+import { DeliverablesPanel } from '@/components/coaching/DeliverablesPanel'
 import { CoachingOverview } from '@/types/coaching'
 
-type Tab = 'overview' | 'ai' | 'plan' | 'sessions' | 'actions' | 'recommendations' | 'progress'
+type Tab = 'overview' | 'deliverables' | 'ai' | 'plan' | 'sessions' | 'actions' | 'recommendations' | 'progress'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 size={13} /> },
+  { id: 'deliverables', label: 'Livrables', icon: <FolderCheck size={13} /> },
   { id: 'ai', label: 'Analyse IA', icon: <BrainCircuit size={13} /> },
   { id: 'plan', label: "Plan d'amélioration", icon: <ClipboardList size={13} /> },
   { id: 'sessions', label: 'Sessions', icon: <CalendarClock size={13} /> },
@@ -28,7 +32,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'progress', label: 'Progression', icon: <TrendingUp size={13} /> },
 ]
 
-export default function ExpertCoachingProjectPage() {
+function ExpertCoachingProjectContent() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -40,17 +44,20 @@ export default function ExpertCoachingProjectPage() {
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('overview')
 
-  const fetchOverview = useCallback(() => {
+  const fetchOverview = useCallback(async () => {
     if (!projectId) return
-    setLoading(true)
-    coachingService
-      .getProjectCoachingOverview(projectId)
-      .then(setOverview)
-      .catch((err: any) => setError(err?.response?.data?.message ?? 'Erreur de chargement'))
-      .finally(() => setLoading(false))
+    try {
+      const data = await coachingService.getProjectCoachingOverview(projectId)
+      setOverview(data)
+      setError(null)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
-  useEffect(() => { fetchOverview() }, [fetchOverview])
+  useEffect(() => { void fetchOverview() }, [fetchOverview])
 
   if (loading) {
     return (
@@ -213,6 +220,10 @@ export default function ExpertCoachingProjectPage() {
             </div>
           )}
 
+          {tab === 'deliverables' && (
+            <DeliverablesPanel projectId={projectId} />
+          )}
+
           {tab === 'ai' && (
             <AiAnalysisPanel projectId={projectId} onRecommendationCreated={fetchOverview} />
           )}
@@ -269,5 +280,13 @@ export default function ExpertCoachingProjectPage() {
         </>
       )}
     </div>
+  )
+}
+
+export default function ExpertCoachingProjectPage() {
+  return (
+    <Suspense fallback={<div className="p-8 max-w-6xl mx-auto text-[12px] text-ink3">Chargement du coaching…</div>}>
+      <ExpertCoachingProjectContent />
+    </Suspense>
   )
 }

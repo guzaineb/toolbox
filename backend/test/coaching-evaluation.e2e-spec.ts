@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CohortExpertRole,
@@ -21,6 +22,13 @@ import { EvaluationAssignmentsService } from '../src/evaluations/evaluation-assi
 import { EvaluationsService } from '../src/evaluations/evaluations.service';
 import { JuriesService } from '../src/juries/juries.service';
 import { FinalDecisionsService } from '../src/final-decisions/final-decisions.service';
+import { ProjectsService } from '../src/projects/projects.service';
+import { SectionStepService } from '../src/common/services/section-step.service';
+import { DocumentsService } from '../src/documents/documents.service';
+import { DocumentPromptsService } from '../src/documents/document-prompts.service';
+import { LlmService } from '../src/ai/llm.service';
+import { AiService } from '../src/ai/ai.service';
+import { GbmService } from '../src/gbm/gbm.service';
 
 /**
  * Scénario E2E du module Coaching & Évaluation.
@@ -41,6 +49,8 @@ describe('Coaching & Évaluation (e2e)', () => {
   let evaluationsService: EvaluationsService;
   let juriesService: JuriesService;
   let finalDecisionsService: FinalDecisionsService;
+  let documentsService: DocumentsService;
+  let gbmService: GbmService;
 
   const ids = {
     users: [] as string[],
@@ -53,6 +63,7 @@ describe('Coaching & Évaluation (e2e)', () => {
     juryUserId: '',
     ownerUserId: '',
     adminUserId: '',
+    strangerUserId: '',
     assignmentId: '',
     sessionId: '',
     templateId: '',
@@ -61,6 +72,9 @@ describe('Coaching & Évaluation (e2e)', () => {
     jurySessionId: '',
     decisionId: '',
     conditionId: '',
+    actionId: '',
+    workflowSessionId: '',
+    responsibleActionId: '',
     cohortExpertIds: [] as string[],
   };
 
@@ -95,6 +109,7 @@ describe('Coaching & Évaluation (e2e)', () => {
       providers: [
         PrismaService,
         { provide: EventEmitter2, useValue: new EventEmitter2() },
+        { provide: LlmService, useValue: { generate: jest.fn().mockResolvedValue({ content: 'ok', model: 'stub' }) } },
         ModuleAccessService,
         AuditService,
         NotificationMessageBuilder,
@@ -105,6 +120,12 @@ describe('Coaching & Évaluation (e2e)', () => {
         EvaluationsService,
         JuriesService,
         FinalDecisionsService,
+        ProjectsService,
+        SectionStepService,
+        DocumentPromptsService,
+        DocumentsService,
+        AiService,
+        GbmService,
       ],
     }).compile();
 
@@ -117,6 +138,8 @@ describe('Coaching & Évaluation (e2e)', () => {
     evaluationsService = moduleFixture.get<EvaluationsService>(EvaluationsService);
     juriesService = moduleFixture.get<JuriesService>(JuriesService);
     finalDecisionsService = moduleFixture.get<FinalDecisionsService>(FinalDecisionsService);
+    documentsService = moduleFixture.get<DocumentsService>(DocumentsService);
+    gbmService = moduleFixture.get<GbmService>(GbmService);
 
     await prisma.onModuleInit();
 
@@ -124,11 +147,13 @@ describe('Coaching & Évaluation (e2e)', () => {
     const coach = await makeUser(`coach-${stamp}@e2e.test`, UserRole.EXPERT, 'Coach', 'Test');
     const jury = await makeUser(`jury-${stamp}@e2e.test`, UserRole.EXPERT, 'Jur', 'Y');
     const owner = await makeUser(`owner-${stamp}@e2e.test`, UserRole.PROJECT_OWNER, 'Owner', 'Test');
+    const stranger = await makeUser(`stranger-${stamp}@e2e.test`, UserRole.EXPERT, 'Stranger', 'Test');
 
     ids.adminUserId = admin.id;
     ids.coachUserId = coach.id;
     ids.juryUserId = jury.id;
     ids.ownerUserId = owner.id;
+    ids.strangerUserId = stranger.id;
 
     const incubator = await prisma.incubator.create({
       data: {
@@ -152,7 +177,7 @@ describe('Coaching & Évaluation (e2e)', () => {
     const cohort = await prisma.cohort.create({
       data: {
         name: `Cohorte E2E ${stamp}`,
-        status: CohortStatus.ACTIVE,
+        status: CohortStatus.IN_PROGRESS,
         incubator_id: incubator.id,
       },
     });
@@ -202,6 +227,15 @@ describe('Coaching & Évaluation (e2e)', () => {
       }
       if (ids.sessionId) {
         await prisma.coachingSession.deleteMany({ where: { id: ids.sessionId } });
+      }
+      if (ids.workflowSessionId) {
+        await prisma.coachingSession.deleteMany({ where: { id: ids.workflowSessionId } });
+      }
+      if (ids.actionId) {
+        await prisma.coachingAction.deleteMany({ where: { id: ids.actionId } });
+      }
+      if (ids.responsibleActionId) {
+        await prisma.coachingAction.deleteMany({ where: { id: ids.responsibleActionId } });
       }
       if (ids.assignmentId) {
         await prisma.projectExpertAssignment.deleteMany({ where: { id: ids.assignmentId } });
@@ -314,7 +348,7 @@ describe('Coaching & Évaluation (e2e)', () => {
     ids.evaluationId = draft.id;
     expect(draft.status).toBe('DRAFT');
 
-    const criteria = draft.template.criteria;
+    const criteria = draft.template!.criteria;
     const saved = await evaluationsService.saveScores(
       draft.id,
       {
@@ -387,5 +421,233 @@ describe('Coaching & Évaluation (e2e)', () => {
     expect(validated.validated_by).toBe(ids.adminUserId);
     expect(validated.validated_at).toBeInstanceOf(Date);
     expect(emittedEvents.some((e) => e.event === 'CONDITION_VALIDATED')).toBe(true);
+  });
+
+  // ==================== LIVRABLES & RBAC (corrections F1/F2) ====================
+
+  it('8. le coach consulte les livrables et la progression GBM du projet', async () => {
+    const docs = await documentsService.getDocumentsList(ids.projectId, ids.coachUserId);
+    expect(docs.length).toBeGreaterThan(0);
+    expect(docs[0]).toMatchObject({ key: expect.any(String), status: 'NOT_GENERATED' });
+
+    const progress = await gbmService.getProgress(ids.projectId, ids.coachUserId);
+    expect(typeof progress.percentage).toBe('number');
+    expect(progress.phases).toHaveLength(5);
+
+    const stepData = await gbmService.getStepData(ids.projectId, 'gbm_1', ids.coachUserId);
+    expect(stepData).toBeDefined();
+  });
+
+  it('9. le jury consulte aussi les livrables', async () => {
+    const docs = await documentsService.getDocumentsList(ids.projectId, ids.juryUserId);
+    expect(docs.length).toBeGreaterThan(0);
+  });
+
+  it('10. un expert non affecté est refusé sur les livrables', async () => {
+    await expect(
+      documentsService.getDocumentsList(ids.projectId, ids.strangerUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      gbmService.getProgress(ids.projectId, ids.strangerUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('11. la génération de livrables reste réservée au porteur', async () => {
+    await expect(
+      documentsService.generateDocument(ids.projectId, 'idea_sketch', ids.coachUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      gbmService.updateStep(ids.projectId, 'gbm_1', { idea_initial: 'x' }, ids.coachUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('12. le porteur ne peut pas auto-valider ses actions (F2)', async () => {
+    const action = await coachingService.createAction(
+      ids.projectId,
+      { title: 'Préparer 10 interviews clients', priority: 'HIGH' },
+      ids.coachUserId,
+    );
+    ids.actionId = action.id;
+
+    await expect(
+      coachingService.updateAction(action.id, { status: 'COMPLETED' }, ids.ownerUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    const submitted = await coachingService.updateAction(
+      action.id,
+      { status: 'SUBMITTED' },
+      ids.ownerUserId,
+    );
+    expect(submitted.status).toBe('SUBMITTED');
+
+    const completed = await coachingService.updateAction(
+      action.id,
+      { status: 'COMPLETED' },
+      ids.coachUserId,
+    );
+    expect(completed.status).toBe('COMPLETED');
+  });
+
+  it('13. une session clôturée ne peut plus être replanifiée (historique verrouillé)', async () => {
+    // La session de l'étape 2 est COMPLETED : les champs de planification sont gelés,
+    // seuls les champs de compte-rendu restent modifiables.
+    await expect(
+      coachingService.updateSession(
+        ids.sessionId,
+        { scheduledAt: new Date(Date.now() + 86400000).toISOString() },
+        ids.coachUserId,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    const report = await coachingService.updateSession(
+      ids.sessionId,
+      { report: 'Compte-rendu complété après coup.' },
+      ids.coachUserId,
+    );
+    expect(report.status).toBe('COMPLETED');
+    expect(report.report).toContain('après coup');
+  });
+
+  it('14. un autre jury ne peut pas ouvrir laffectation dun jury (403)', async () => {
+    await expect(
+      evaluationAssignmentsService.findOne(ids.evalAssignmentId, ids.strangerUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    await expect(
+      evaluationAssignmentsService.findOne(ids.evalAssignmentId, ids.ownerUserId),
+    ).resolves.toMatchObject({ id: ids.evalAssignmentId });
+
+    const own = await evaluationAssignmentsService.findOne(
+      ids.evalAssignmentId,
+      ids.juryUserId,
+    );
+    expect(own.jury_user_id).toBe(ids.juryUserId);
+    expect(own.evaluations.length).toBeGreaterThan(0);
+  });
+
+  // ==================== WORKFLOW DE SESSION COMPLET ====================
+
+  it('15. déroule une session complète (constats, blocages, résultat d’objectif)', async () => {
+    const session = await coachingService.createSession(
+      ids.projectId,
+      {
+        title: 'Validation du BMC',
+        objective: 'Valider le Business Model',
+        scheduledAt: new Date().toISOString(),
+        durationMinutes: 90,
+      },
+      ids.coachUserId,
+    );
+    ids.workflowSessionId = session.id;
+    expect(session.status).toBe('SCHEDULED');
+
+    const started = await coachingService.startSession(session.id, ids.coachUserId);
+    expect(started.status).toBe('IN_PROGRESS');
+    expect(started.started_at).toBeInstanceOf(Date);
+
+    // Déroulement : notes ≠ constats, points abordés, blocages
+    const updated = await coachingService.updateSession(
+      session.id,
+      {
+        notes: 'Le porteur souhaite vendre principalement via Instagram.',
+        findings: 'Le canal de distribution n’est pas encore validé par des données terrain.',
+        topicsDiscussed: 'Segmentation client\nProposition de valeur\nCanaux de distribution',
+        blockers: [
+          { title: 'Manque de données marché', detail: 'Aucune étude concurrentielle' },
+          { title: 'Modèle financier incomplet', resolved: true },
+        ],
+      },
+      ids.coachUserId,
+    );
+    expect(updated.findings).toContain('canal de distribution');
+    expect(updated.topics_discussed).toContain('Segmentation client');
+    const blockers = updated.blockers as Array<Record<string, unknown>>;
+    expect(blockers).toHaveLength(2);
+    expect(blockers[0]).toMatchObject({ title: 'Manque de données marché', resolved: false });
+    expect(blockers[0].id).toEqual(expect.any(String));
+    expect(blockers[1].resolved).toBe(true);
+    expect(blockers[1].resolvedAt).toEqual(expect.any(String));
+
+    // Décisions + résultat de l'objectif, puis clôture
+    const completed = await coachingService.updateSession(
+      session.id,
+      {
+        decisions: 'Le porteur réalisera 10 interviews avant la prochaine session.',
+        objectiveResult: 'PARTIALLY_ACHIEVED',
+        objectiveResultReason: 'Le modèle financier nécessite encore des données sur les coûts variables.',
+        status: 'COMPLETED',
+      },
+      ids.coachUserId,
+    );
+    expect(completed.status).toBe('COMPLETED');
+    expect(completed.objective_result).toBe('PARTIALLY_ACHIEVED');
+    expect(completed.objective_result_reason).toContain('coûts variables');
+
+    // Persistance après rechargement
+    const reloaded = await coachingService.findSessionById(session.id, ids.coachUserId);
+    expect(reloaded.notes).toContain('Instagram');
+    expect((reloaded.blockers as unknown[])).toHaveLength(2);
+    expect(reloaded.objective_result).toBe('PARTIALLY_ACHIEVED');
+  });
+
+  it('16. une action peut désigner un responsable et un livrable concerné', async () => {
+    emitter.on('notification.coaching.action.assigned', capture('COACHING_ACTION_ASSIGNED'));
+
+    const action = await coachingService.createAction(
+      ids.projectId,
+      {
+        title: 'Réaliser 10 interviews clients',
+        priority: 'HIGH',
+        deadline: new Date(Date.now() + 6 * 86400000).toISOString(),
+        sessionId: ids.workflowSessionId,
+        responsibleUserId: ids.ownerUserId,
+        relatedDocumentKey: 'value_proposition',
+      },
+      ids.coachUserId,
+    );
+    ids.responsibleActionId = action.id;
+
+    expect(action.responsible_user_id).toBe(ids.ownerUserId);
+    expect(action.related_document_key).toBe('value_proposition');
+    expect(action.responsibleUser?.id).toBe(ids.ownerUserId);
+    expect(emittedEvents.some((e) => e.event === 'COACHING_ACTION_ASSIGNED')).toBe(true);
+
+    // Le porteur ne peut pas redéfinir le responsable ou le livrable (F2)
+    await expect(
+      coachingService.updateAction(action.id, { responsibleUserId: ids.juryUserId }, ids.ownerUserId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    // Le coach met à jour le statut et peut retirer le livrable
+    const updated = await coachingService.updateAction(
+      action.id,
+      { status: 'IN_PROGRESS', relatedDocumentKey: null },
+      ids.coachUserId,
+    );
+    expect(updated.status).toBe('IN_PROGRESS');
+    expect(updated.related_document_key).toBeNull();
+  });
+
+  it('17. sur une session clôturée, le compte-rendu étendu reste modifiable', async () => {
+    // Planification gelée…
+    await expect(
+      coachingService.updateSession(
+        ids.workflowSessionId,
+        { objective: 'Nouvel objectif' },
+        ids.coachUserId,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    // …mais compte-rendu (constats, blocages, résultat) toujours éditable
+    const updated = await coachingService.updateSession(
+      ids.workflowSessionId,
+      {
+        findings: 'Constat consolidé après la séance.',
+        blockers: [{ title: 'Manque de données marché', detail: 'Aucune étude', resolved: true }],
+      },
+      ids.coachUserId,
+    );
+    expect(updated.findings).toContain('consolidé');
+    expect((updated.blockers as Array<{ resolved: boolean }>)[0].resolved).toBe(true);
+    expect(updated.objective_result).toBe('PARTIALLY_ACHIEVED');
   });
 });

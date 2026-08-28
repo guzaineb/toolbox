@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
 } from 'class-validator';
 import { CoachingActionPriority } from '@prisma/client';
 
@@ -37,4 +38,15 @@ export class CreateActionDto {
   @IsOptional()
   @IsString()
   assignmentId?: string;
+
+  /** Responsable de l'action : porteur, coach ou tout utilisateur autorisé. */
+  @IsOptional()
+  @IsString()
+  responsibleUserId?: string;
+
+  /** Livrable concerné (clé des DOCUMENT_DEFINITIONS). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  relatedDocumentKey?: string;
 }

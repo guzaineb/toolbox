@@ -5,6 +5,7 @@ import { LlmService } from '../llm.service';
 import { ProjectContextBuilderService } from './project-context.service';
 import { asString, asStringArray, parseWithRetry } from './ai-json.util';
 import { AiAnalysisType } from '@prisma/client';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 
 export interface CoachingBriefPayload {
   objective: string;
@@ -30,6 +31,7 @@ export class CoachingAiService {
     private readonly prisma: PrismaService,
     private readonly llm: LlmService,
     private readonly contextBuilder: ProjectContextBuilderService,
+    private readonly access: ModuleAccessService,
   ) {}
 
   // ==================== BRIEF AVANT SESSION ====================
@@ -40,6 +42,12 @@ export class CoachingAiService {
       include: { assignment: { select: { project_id: true } } },
     });
     if (!session) return null;
+
+    // Seul le coach (ou le gestionnaire) prépare le brief de sa session
+    await this.access.assertCanManageProjectCoaching(
+      session.assignment.project_id,
+      userId,
+    );
 
     const analysis = await this.prisma.aiAnalysis.create({
       data: {
@@ -102,7 +110,7 @@ Contraintes : 2 à 5 éléments par liste ; appuie-toi uniquement sur les donné
 
   // ==================== RÉSUMÉ DE FIN DE SESSION ====================
 
-  async summarizeSession(sessionId: string): Promise<SessionSummaryPayload | null> {
+  async summarizeSession(sessionId: string, userId: string): Promise<SessionSummaryPayload | null> {
     const session = await this.prisma.coachingSession.findUnique({
       where: { id: sessionId },
       include: {
@@ -112,6 +120,12 @@ Contraintes : 2 à 5 éléments par liste ; appuie-toi uniquement sur les donné
       },
     });
     if (!session) return null;
+
+    // Seul le coach (ou le gestionnaire) demande le résumé de sa session
+    await this.access.assertCanManageProjectCoaching(
+      session.assignment.project_id,
+      userId,
+    );
 
     const context = await this.contextBuilder.build(session.assignment.project_id);
 

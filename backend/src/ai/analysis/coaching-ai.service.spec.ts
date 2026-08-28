@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
 import { CoachingAiService } from './coaching-ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LlmService } from '../llm.service';
 import { ProjectContextBuilderService } from './project-context.service';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 
 const VALID_BRIEF = {
   objective: 'Cadrer la stratégie de prix avant le lancement.',
@@ -32,6 +34,7 @@ describe('CoachingAiService', () => {
   };
   const llmMock = { chat: jest.fn() };
   const contextMock = { build: jest.fn() };
+  const accessMock = { assertCanManageProjectCoaching: jest.fn().mockResolvedValue(undefined) };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -41,6 +44,7 @@ describe('CoachingAiService', () => {
         { provide: PrismaService, useValue: prismaMock },
         { provide: LlmService, useValue: llmMock },
         { provide: ProjectContextBuilderService, useValue: contextMock },
+        { provide: ModuleAccessService, useValue: accessMock },
       ],
     }).compile();
     service = module.get<CoachingAiService>(CoachingAiService);
@@ -113,12 +117,25 @@ describe('CoachingAiService', () => {
 
       await expect(service.generateBrief('s3', 'u1')).rejects.toThrow('db down');
     });
+
+    it('should refuse the brief when the caller cannot manage project coaching', async () => {
+      accessMock.assertCanManageProjectCoaching.mockRejectedValueOnce(
+        new ForbiddenException('interdit'),
+      );
+      prismaMock.coachingSession.findUnique.mockResolvedValue({
+        id: 's6',
+        assignment: { project_id: 'p1' },
+      });
+
+      await expect(service.generateBrief('s6', 'u2')).rejects.toBeInstanceOf(ForbiddenException);
+      expect(llmMock.chat).not.toHaveBeenCalled();
+    });
   });
 
   describe('summarizeSession', () => {
     it('should return null when the session does not exist', async () => {
       prismaMock.coachingSession.findUnique.mockResolvedValue(null);
-      await expect(service.summarizeSession('s404')).resolves.toBeNull();
+      await expect(service.summarizeSession('s404', 'u1')).resolves.toBeNull();
     });
 
     it('should summarize a completed session from notes, recommendations and actions', async () => {
@@ -134,7 +151,7 @@ describe('CoachingAiService', () => {
       });
       llmMock.chat.mockResolvedValue({ content: JSON.stringify(VALID_SUMMARY) });
 
-      const summary = await service.summarizeSession('s4');
+      const summary = await service.summarizeSession('s4', 'u1');
 
       expect(summary).not.toBeNull();
       expect(summary!.summary).toContain('Session productive');
@@ -158,7 +175,7 @@ describe('CoachingAiService', () => {
       });
       llmMock.chat.mockResolvedValue({ content: 'toujours pas de json' });
 
-      await expect(service.summarizeSession('s5')).resolves.toBeNull();
+      await expect(service.summarizeSession('s5', 'u1')).resolves.toBeNull();
       expect(prismaMock.aiAnalysis.create).not.toHaveBeenCalled();
     });
   });

@@ -131,7 +131,8 @@ export class AiAnalysisController {
       orderBy: { created_at: 'desc' },
       take: 30,
     });
-    return { data: analyses };
+    // Tableau brut : convention de l'API (le service frontend attend un Array).
+    return analyses;
   }
 
   @Get('analyses/:id')
@@ -143,6 +144,6 @@ export class AiAnalysisController {
     await this.access.assertCanAccessProject(projectId, req.user.id);
     const analysis = await this.prisma.aiAnalysis.findUnique({ where: { id } });
     if (!analysis || analysis.project_id !== projectId) throw new NotFoundException();
-    return { data: analysis };
+    return analysis;
   }
 }

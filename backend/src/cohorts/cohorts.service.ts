@@ -13,6 +13,7 @@ import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
 import { ModuleAccessService } from '../common/services/module-access.service';
+import { GBM_STEPS } from '../gbm/step-config';
 
 const ALLOWED_TRANSITIONS: Record<string, CohortStatus[]> = {
   DRAFT: [CohortStatus.OPEN, CohortStatus.ARCHIVED],
@@ -457,10 +458,13 @@ export class CohortsService {
     const sessionsByProject = new Map<string, number>();
     const recommendationsByProject = new Map<string, number>();
     const actionsByProject = new Map<string, { pending: number; total: number }>();
+    const progressionByProject = new Map<string, number>();
+    const documentsByProject = new Map<string, number>();
     let allSessions: Array<{ assignment: { project_id: string } | null; status: string; scheduled_at: Date }> = [];
 
     if (projectIds.length > 0) {
-      const [sessions, recommendations, actions] = await Promise.all([
+      const gbmStepKeys = new Set(GBM_STEPS.map((s) => s.stepKey));
+      const [sessions, recommendations, actions, stepProgress, documents] = await Promise.all([
         this.prisma.coachingSession.findMany({
           where: { assignment: { project_id: { in: projectIds }, expert_user_id: userId } },
           select: { assignment: { select: { project_id: true } }, status: true, scheduled_at: true },
@@ -473,6 +477,14 @@ export class CohortsService {
         this.prisma.coachingAction.findMany({
           where: { project_id: { in: projectIds } },
           select: { project_id: true, status: true },
+        }),
+        this.prisma.stepProgress.findMany({
+          where: { project_id: { in: projectIds } },
+          select: { project_id: true, step_key: true, status: true },
+        }),
+        this.prisma.generatedDocument.findMany({
+          where: { project_id: { in: projectIds }, status: { not: 'NOT_GENERATED' } },
+          select: { project_id: true },
         }),
       ]);
 
@@ -492,6 +504,25 @@ export class CohortsService {
         current.total++;
         if (['PENDING', 'IN_PROGRESS', 'SUBMITTED'].includes(a.status)) current.pending++;
         actionsByProject.set(a.project_id, current);
+      }
+
+      const completedByProject = new Map<string, number>();
+      for (const sp of stepProgress) {
+        if (!gbmStepKeys.has(sp.step_key)) continue;
+        if (sp.status === 'COMPLETED') {
+          completedByProject.set(sp.project_id, (completedByProject.get(sp.project_id) || 0) + 1);
+        }
+      }
+      const gbmTotal = GBM_STEPS.length || 1;
+      for (const pid of projectIds) {
+        progressionByProject.set(
+          pid,
+          Math.round(((completedByProject.get(pid) || 0) / gbmTotal) * 100),
+        );
+      }
+
+      for (const d of documents) {
+        documentsByProject.set(d.project_id, (documentsByProject.get(d.project_id) || 0) + 1);
       }
     }
 
@@ -527,6 +558,8 @@ export class CohortsService {
           recommendations_count: recommendationsByProject.get(p.project_id) || 0,
           actions_pending: actionsByProject.get(p.project_id)?.pending || 0,
           actions_total: actionsByProject.get(p.project_id)?.total || 0,
+          gbm_progression: progressionByProject.get(p.project_id) ?? 0,
+          documents_generated: documentsByProject.get(p.project_id) || 0,
         },
       };
     });

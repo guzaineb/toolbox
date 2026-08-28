@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ModuleAccessService } from '../common/services/module-access.service';
 import PDFDocument from 'pdfkit';
 import { DOCUMENT_DEFINITIONS } from './documents.service';
 
@@ -7,12 +8,16 @@ import { DOCUMENT_DEFINITIONS } from './documents.service';
 export class DocumentPdfService {
   private readonly logger = new Logger(DocumentPdfService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: ModuleAccessService,
+  ) {}
 
   async generate(projectId: string, documentKey: string, userId: string): Promise<Buffer> {
+    await this.access.assertCanAccessProject(projectId, userId);
+
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Projet introuvable');
-    if (project.owner_id !== userId) throw new ForbiddenException('Accès refusé');
 
     const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);

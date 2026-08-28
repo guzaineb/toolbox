@@ -455,7 +455,7 @@ export class CohortExpertsService {
       const access = await this.hasCohortReadAccess(cohortId, userId);
       if (!access) {
         throw new ForbiddenException(
-          "Vous n'avez pas accÃ¨s aux experts de cette cohorte",
+          "Vous n'avez pas accès aux experts de cette cohorte",
         );
       }
     }
@@ -501,7 +501,7 @@ export class CohortExpertsService {
         : false;
       if (!isExpert && !isIncubatorMember) {
         throw new ForbiddenException(
-          "Vous n'avez pas accÃ¨s Ã  cette affectation",
+          "Vous n'avez pas accès à cette affectation",
         );
       }
     }
@@ -601,7 +601,7 @@ export class CohortExpertsService {
       });
       if (!member) {
         throw new ForbiddenException(
-          "Vous n'avez pas accÃ¨s aux experts disponibles de cette cohorte",
+          "Vous n'avez pas accès aux experts disponibles de cette cohorte",
         );
       }
     }

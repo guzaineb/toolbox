@@ -22,24 +22,27 @@ export default function ExpertCoachingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchCoachings = () => {
-    setLoading(true)
-    setError(null)
-    cohortService
-      .getMyCohorts()
-      .then((data) => {
-        const all = data as CohortExpert[]
-        setCohorts(
-          all.filter(
-            (c) => c.role === 'COACH' && c.status === 'ACTIVE',
-          ),
-        )
-      })
-      .catch(() => setError('Impossible de charger vos cohortes de coaching.'))
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => { fetchCoachings() }, [])
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const data = await cohortService.getMyCohorts()
+        if (!cancelled) {
+          setCohorts(
+            (data as CohortExpert[]).filter(
+              (c) => c.role === 'COACH' && c.status === 'ACTIVE',
+            ),
+          )
+        }
+      } catch {
+        if (!cancelled) setError('Impossible de charger vos cohortes de coaching.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [])
 
   if (loading) {
     return (

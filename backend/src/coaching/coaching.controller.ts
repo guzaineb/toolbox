@@ -94,8 +94,8 @@ export class CoachingController {
   /** Résumé proposé par l'IA en fin de session ; le coach l'applique ensuite via PATCH s'il le valide. */
   @Post('coaching/sessions/:id/ai-summary')
   @HttpCode(HttpStatus.OK)
-  async aiSessionSummary(@Param('id') id: string) {
-    const payload = await this.coachingAi.summarizeSession(id);
+  async aiSessionSummary(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+    const payload = await this.coachingAi.summarizeSession(id, req.user.id);
     return { success: !!payload, data: payload };
   }
 

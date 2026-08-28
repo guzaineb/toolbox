@@ -38,22 +38,23 @@ export class EvaluationsService {
     });
     if (!project) throw new NotFoundException('Projet introuvable');
 
-    const participation = await this.prisma.cohortParticipation.findFirst({
+    const participations = await this.prisma.cohortParticipation.findMany({
       where: {
         project_id: projectId,
         status: ParticipationStatus.ACCEPTED,
       },
-      include: { cohort: true },
+      select: { cohort_id: true },
     });
-    if (!participation) {
+    if (participations.length === 0) {
       throw new BadRequestException(
-        "Ce projet n'est pas acceptÃ© dans une cohorte",
+        "Ce projet n'est pas accepté dans une cohorte",
       );
     }
 
+    // Le jury peut être actif sur l'une des cohortes acceptées du projet
     const assignment = await this.prisma.cohortExpert.findFirst({
       where: {
-        cohort_id: participation.cohort_id,
+        cohort_id: { in: participations.map((p) => p.cohort_id) },
         expert_user_id: userId,
         role: 'JURY',
         status: CohortExpertStatus.ACTIVE,
@@ -61,7 +62,7 @@ export class EvaluationsService {
     });
     if (!assignment) {
       throw new BadRequestException(
-        "Vous n'Ãªtes pas jury affectÃ© Ã  la cohorte de ce projet",
+        "Vous n'êtes pas jury affecté à la cohorte de ce projet",
       );
     }
 
@@ -70,10 +71,11 @@ export class EvaluationsService {
         project_id: projectId,
         jury_user_id: userId,
       },
+      orderBy: { version: 'desc' },
     });
     if (existing) {
       throw new BadRequestException(
-        'Vous avez dÃ©jÃ  Ã©valuÃ© ce projet. Utilisez la modification.',
+        'Vous avez déjà évalué ce projet. Utilisez la modification.',
       );
     }
 
@@ -128,28 +130,29 @@ export class EvaluationsService {
         },
       },
     });
-    if (!evaluation) throw new NotFoundException('Ã‰valuation introuvable');
+    if (!evaluation) throw new NotFoundException('Évaluation introuvable');
     if (evaluation.jury_user_id !== userId) {
-      throw new BadRequestException(
-        "Vous ne pouvez modifier que vos propres Ã©valuations",
+      // 403 : l'évaluation existe mais n'appartient pas à cet utilisateur
+      throw new ForbiddenException(
+        'Vous ne pouvez modifier que vos propres évaluations',
       );
     }
     if (evaluation.status === EvaluationStatus.SUBMITTED) {
       throw new BadRequestException(
-        'Une Ã©valuation soumise ne peut plus Ãªtre modifiÃ©e',
+        'Une évaluation soumise ne peut plus être modifiée',
       );
     }
 
-    const cohortId = evaluation.project.cohort_participations[0]?.cohort_id;
-    if (!cohortId) {
+    const cohortIds = evaluation.project.cohort_participations.map((p) => p.cohort_id);
+    if (cohortIds.length === 0) {
       throw new BadRequestException(
-        "Ce projet n'est associÃ© Ã  aucune cohorte",
+        "Ce projet n'est associé à aucune cohorte",
       );
     }
 
     const assignment = await this.prisma.cohortExpert.findFirst({
       where: {
-        cohort_id: cohortId,
+        cohort_id: { in: cohortIds },
         expert_user_id: userId,
         role: 'JURY',
         status: CohortExpertStatus.ACTIVE,
@@ -157,7 +160,7 @@ export class EvaluationsService {
     });
     if (!assignment) {
       throw new BadRequestException(
-        "Vous n'Ãªtes plus jury actif dans la cohorte de ce projet",
+        "Vous n'êtes plus jury actif dans la cohorte de ce projet",
       );
     }
 
@@ -178,8 +181,16 @@ export class EvaluationsService {
 
   async findByProject(projectId: string, userId: string) {
     await this.assertCanViewEvaluations(projectId, userId);
+    // Les brouillons restent privés : seul leur auteur (le jury) les voit.
+    // Le porteur et l'incubateur ne consultent que les évaluations soumises.
     return this.prisma.evaluation.findMany({
-      where: { project_id: projectId },
+      where: {
+        project_id: projectId,
+        OR: [
+          { status: EvaluationStatus.SUBMITTED },
+          { jury_user_id: userId },
+        ],
+      },
       include: {
         juryUser: {
           select: { id: true, email: true, profile: true },
@@ -236,7 +247,7 @@ export class EvaluationsService {
         },
       },
     });
-    if (!evaluation) throw new NotFoundException('Ã‰valuation introuvable');
+    if (!evaluation) throw new NotFoundException('Évaluation introuvable');
 
     if (userId) {
       const isOwner = evaluation.project.owner_id === userId;
@@ -249,7 +260,7 @@ export class EvaluationsService {
         userId,
       );
       if (!isOwner && !isJury && !isCohortMember && !isIncubatorMember) {
-        throw new ForbiddenException('AccÃ¨s refusÃ© Ã  cette Ã©valuation');
+        throw new ForbiddenException('Accès refusé à cette évaluation');
       }
     }
 
@@ -274,7 +285,28 @@ export class EvaluationsService {
     return !!member;
   }
 
-  // ==================== MODULE Ã‰VALUATION (grilles / scores) ====================
+  // ==================== MODULE ÉVALUATION (grilles / scores) ====================
+
+  /** L'expert doit être jury ACTIF sur la cohorte (rôle défini par cohorte). */
+  private async assertJuryActiveOnCohort(
+    cohortId: string,
+    userId: string,
+  ): Promise<void> {
+    const juryLink = await this.prisma.cohortExpert.findFirst({
+      where: {
+        cohort_id: cohortId,
+        expert_user_id: userId,
+        role: 'JURY',
+        status: CohortExpertStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+    if (!juryLink) {
+      throw new ForbiddenException(
+        "Vous n'êtes pas jury actif dans la cohorte de ce projet",
+      );
+    }
+  }
 
   async createDraft(assignmentId: string, userId: string) {
     const assignment = await this.prisma.evaluationAssignment.findUnique({
@@ -283,19 +315,22 @@ export class EvaluationsService {
     if (!assignment) throw new NotFoundException('Affectation introuvable');
     if (assignment.jury_user_id !== userId) {
       throw new ForbiddenException(
-        'Vous ne pouvez Ã©valuer que les projets qui vous sont affectÃ©s',
+        'Vous ne pouvez évaluer que les projets qui vous sont affectés',
       );
     }
+    // L'expert doit toujours être jury actif dans la cohorte de l'affectation.
+    await this.assertJuryActiveOnCohort(assignment.cohort_id, userId);
 
     const existing = await this.prisma.evaluation.findFirst({
       where: {
         project_id: assignment.project_id,
         jury_user_id: userId,
       },
+      orderBy: { version: 'desc' },
     });
     if (existing && existing.status === EvaluationStatus.SUBMITTED) {
       throw new BadRequestException(
-        'Vous avez dÃ©jÃ  soumis une Ã©valuation pour ce projet',
+        'Vous avez déjà soumis une évaluation pour ce projet',
       );
     }
 
@@ -309,7 +344,7 @@ export class EvaluationsService {
     });
     if (!template) {
       throw new BadRequestException(
-        'Aucune grille publiÃ©e disponible pour cette cohorte',
+        'Aucune grille publiée disponible pour cette cohorte',
       );
     }
 
@@ -356,15 +391,15 @@ export class EvaluationsService {
       where: { id },
       include: { template: { include: { criteria: true } } },
     });
-    if (!evaluation) throw new NotFoundException('Ã‰valuation introuvable');
+    if (!evaluation) throw new NotFoundException('Évaluation introuvable');
     if (evaluation.jury_user_id !== userId) {
       throw new ForbiddenException(
-        'Vous ne pouvez modifier que vos propres Ã©valuations',
+        'Vous ne pouvez modifier que vos propres évaluations',
       );
     }
     if (evaluation.status === EvaluationStatus.SUBMITTED) {
       throw new BadRequestException(
-        'Une Ã©valuation soumise ne peut plus Ãªtre modifiÃ©e',
+        'Une évaluation soumise ne peut plus être modifiée',
       );
     }
 
@@ -375,13 +410,13 @@ export class EvaluationsService {
     for (const item of dto.scores) {
       if (!validCriterionIds.has(item.criterionId)) {
         throw new BadRequestException(
-          `Le critÃ¨re Â« ${item.criterionId} Â» n'appartient pas Ã  la grille de cette Ã©valuation`,
+          `Le critère « ${item.criterionId} » n'appartient pas à la grille de cette évaluation`,
         );
       }
       const criterion = criteriaMap.get(item.criterionId)!;
       if (item.score < 0 || item.score > criterion.max_score) {
         throw new BadRequestException(
-          `Le score ${item.score} est hors limites (0-${criterion.max_score}) pour le critÃ¨re Â« ${criterion.name} Â»`,
+          `Le score ${item.score} est hors limites (0-${criterion.max_score}) pour le critère « ${criterion.name} »`,
         );
       }
     }
@@ -431,19 +466,19 @@ export class EvaluationsService {
         project: { select: { id: true, name: true, owner_id: true } },
       },
     });
-    if (!evaluation) throw new NotFoundException('Ã‰valuation introuvable');
+    if (!evaluation) throw new NotFoundException('Évaluation introuvable');
     if (evaluation.jury_user_id !== userId) {
       throw new ForbiddenException(
-        'Vous ne pouvez soumettre que vos propres Ã©valuations',
+        'Vous ne pouvez soumettre que vos propres évaluations',
       );
     }
     if (evaluation.status === EvaluationStatus.SUBMITTED) {
-      throw new BadRequestException('Ã‰valuation dÃ©jÃ  soumise');
+      throw new BadRequestException('Évaluation déjà soumise');
     }
 
     if (!evaluation.template) {
       throw new BadRequestException(
-        'Aucune grille associÃ©e Ã  cette Ã©valuation',
+        'Aucune grille associée à cette évaluation',
       );
     }
 
@@ -456,7 +491,7 @@ export class EvaluationsService {
     );
     if (!allScored) {
       throw new BadRequestException(
-        'Tous les critÃ¨res doivent Ãªtre notÃ©s avant la soumission',
+        'Tous les critères doivent être notés avant la soumission',
       );
     }
 
@@ -566,7 +601,7 @@ export class EvaluationsService {
     if (await this.access.canEvaluateProject(projectId, userId)) return;
     if (await this.isIncubatorMember(projectId, userId)) return;
     throw new ForbiddenException(
-      "Vous n'avez pas accÃ¨s aux Ã©valuations de ce projet",
+      "Vous n'avez pas accès aux évaluations de ce projet",
     );
   }
 
@@ -577,7 +612,7 @@ export class EvaluationsService {
     const isCohortMember = await this.isCohortMember(cohortId, userId);
     if (isCohortMember) return;
     throw new ForbiddenException(
-      "Vous n'avez pas accÃ¨s aux Ã©valuations de cette cohorte",
+      "Vous n'avez pas accès aux évaluations de cette cohorte",
     );
   }
 
@@ -608,7 +643,7 @@ export class EvaluationsService {
       (await this.access.getAcceptedCohortForProject(projectId)) &&
       (await this.canViewSummary(projectId, userId));
     if (!canView) {
-      throw new ForbiddenException('AccÃ¨s refusÃ© au rÃ©sumÃ© des Ã©valuations');
+      throw new ForbiddenException('Accès refusé au résumé des évaluations');
     }
 
     const evaluations = await this.prisma.evaluation.findMany({

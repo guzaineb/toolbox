@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ClipboardCheck, ChevronRight, Calendar, Clock } from 'lucide-react'
-import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
+import { ClipboardCheck, ChevronRight, Calendar } from 'lucide-react'
+import { Badge, Card, ErrorAlert } from '@/components/shared/ui'
 import { evaluationService } from '@/services/evaluation.service'
 import { EvaluationAssignment } from '@/types/coaching'
 
@@ -13,17 +13,21 @@ export default function ExpertEvaluationsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchEvaluations = () => {
-    setLoading(true)
-    setError(null)
-    evaluationService
-      .getMyTodo()
-      .then(setAssignments)
-      .catch(() => setError('Impossible de charger vos évaluations.'))
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => { fetchEvaluations() }, [])
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const data = await evaluationService.getMyTodo()
+        if (!cancelled) setAssignments(data)
+      } catch {
+        if (!cancelled) setError('Impossible de charger vos évaluations.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [])
 
   if (loading) {
     return (

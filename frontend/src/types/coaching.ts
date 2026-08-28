@@ -9,6 +9,18 @@ export type CoachingActionStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'CO
 export type CoachingActionPriority = 'LOW' | 'MEDIUM' | 'HIGH'
 export type CoachingRecommendationStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED'
 
+/** Résultat de l'objectif de session, constaté par le coach à la clôture. */
+export type SessionObjectiveResult = 'ACHIEVED' | 'PARTIALLY_ACHIEVED' | 'NOT_ACHIEVED'
+
+/** Blocage identifié par le coach (persisté en Json sur la session). */
+export interface SessionBlocker {
+  id: string
+  title: string
+  detail?: string
+  resolved: boolean
+  resolvedAt?: string
+}
+
 export type EvaluationStatus = 'DRAFT' | 'SUBMITTED'
 export type EvaluationStage = 'INTERMEDIATE' | 'FINAL'
 
@@ -52,10 +64,19 @@ export interface CoachingSession {
   status: CoachingSessionStatus
   agenda?: string
   notes?: string
+  /** Constats du coach — distincts des notes : ce que le coach observe. */
+  findings?: string
+  /** Points réellement abordés (un par ligne). */
+  topics_discussed?: string
+  /** Blocages identifiés, suivis de session en session. */
+  blockers?: SessionBlocker[] | null
   decisions?: string
   report?: string
   summary?: string
   next_objectives?: string
+  /** Résultat de l'objectif fixé, constaté à la clôture. */
+  objective_result?: SessionObjectiveResult | null
+  objective_result_reason?: string | null
   started_at?: string
   completed_at?: string
   created_at: string
@@ -66,12 +87,23 @@ export interface CoachingSession {
     project?: { id: string; name: string; owner_id: string }
     expertUser?: { id: string; email: string; profile?: { first_name: string; last_name: string } }
   }
+  actions?: CoachingAction[]
+}
+
+export interface CoachingActionResponsible {
+  id: string
+  email: string
+  profile?: { first_name: string; last_name: string }
 }
 
 export interface CoachingAction {
   id: string
   project_id: string
   assignment_id?: string
+  /** Responsable métier : porteur, coach ou expert (User). */
+  responsible_user_id?: string | null
+  /** Livrable concerné (clé des DOCUMENT_DEFINITIONS). */
+  related_document_key?: string | null
   title: string
   description?: string
   status: CoachingActionStatus
@@ -83,7 +115,12 @@ export interface CoachingAction {
   created_at: string
   updated_at: string
   project?: { id: string; name: string }
-  assignment?: { id: string; expert_user_id: string }
+  assignment?: {
+    id: string
+    expert_user_id: string
+    expertUser?: CoachingActionResponsible
+  }
+  responsibleUser?: CoachingActionResponsible
   session?: { id: string; title?: string; scheduled_at: string }
 }
 
@@ -330,11 +367,16 @@ export interface UpdateSessionDto {
   agenda?: string
   status?: CoachingSessionStatus
   notes?: string
+  findings?: string
+  topicsDiscussed?: string
+  blockers?: Array<{ id?: string; title: string; detail?: string; resolved: boolean }>
   decisions?: string
   report?: string
   /** Résumé de session (proposition IA validée/éditée par le coach). */
   summary?: string
   nextObjectives?: string
+  objectiveResult?: SessionObjectiveResult
+  objectiveResultReason?: string
 }
 
 export interface CreateActionDto {
@@ -345,6 +387,8 @@ export interface CreateActionDto {
   sessionId?: string
   recommendationId?: string
   assignmentId?: string
+  responsibleUserId?: string
+  relatedDocumentKey?: string
 }
 
 export interface CreateRecommendationDto {
@@ -460,6 +504,18 @@ export const PRIORITY_COLORS: Record<CoachingActionPriority, BadgeVariantKey> = 
   LOW: 'gray',
   MEDIUM: 'blue',
   HIGH: 'red',
+}
+
+export const OBJECTIVE_RESULT_LABELS: Record<SessionObjectiveResult, string> = {
+  ACHIEVED: 'Atteint',
+  PARTIALLY_ACHIEVED: 'Partiellement atteint',
+  NOT_ACHIEVED: 'Non atteint',
+}
+
+export const OBJECTIVE_RESULT_COLORS: Record<SessionObjectiveResult, BadgeVariantKey> = {
+  ACHIEVED: 'green',
+  PARTIALLY_ACHIEVED: 'amber',
+  NOT_ACHIEVED: 'red',
 }
 
 export const RECOMMENDATION_STATUS_LABELS: Record<CoachingRecommendationStatus, string> = {

@@ -122,6 +122,13 @@ enum CoachingSessionStatus {
   MISSED
 }
 
+// Résultat de l'objectif de session, constaté par le coach à la clôture.
+enum SessionObjectiveResult {
+  ACHIEVED
+  PARTIALLY_ACHIEVED
+  NOT_ACHIEVED
+}
+
 enum CoachingActionStatus {
   PENDING
   IN_PROGRESS
@@ -350,6 +357,7 @@ model User {
   assignedProjectExpertAssignments ProjectExpertAssignment[] @relation("AssignmentAssignedBy")
   coachingSessionsCreated         CoachingSession[]          @relation("SessionCreatedBy")
   coachingActionsCreated          CoachingAction[]           @relation("ActionCreatedBy")
+  coachingActionsResponsible      CoachingAction[]           @relation("ActionResponsible")
   coachingRecommendations         CoachingRecommendation[]   @relation("RecommendationAuthor")
   coachingComments                CoachingComment[]          @relation("CommentAuthor")
   evaluationTemplatesCreated      EvaluationTemplate[]       @relation("TemplateCreatedBy")
@@ -937,10 +945,15 @@ model CoachingSession {
   status           CoachingSessionStatus @default(SCHEDULED)
   agenda           String?
   notes            String?
+  findings         String?
+  topics_discussed String?
+  blockers         Json?
   decisions        String?
   report           String?
   summary          String?
   next_objectives  String?
+  objective_result         SessionObjectiveResult?
+  objective_result_reason  String?
   created_by       String
    created_at       DateTime              @default(now())
    updated_at       DateTime              @updatedAt
@@ -996,6 +1009,8 @@ model CoachingAction {
   session_id          String?
   assignment_id       String?
   recommendation_id   String?
+  responsible_user_id String?
+  related_document_key String?
   title               String
   description         String?
   status              CoachingActionStatus  @default(PENDING)
@@ -1012,6 +1027,7 @@ model CoachingAction {
   session       CoachingSession?       @relation(fields: [session_id], references: [id])
   assignment    ProjectExpertAssignment? @relation(fields: [assignment_id], references: [id])
   recommendation CoachingRecommendation? @relation(fields: [recommendation_id], references: [id])
+  responsibleUser User?                 @relation("ActionResponsible", fields: [responsible_user_id], references: [id])
   createdBy     User                   @relation("ActionCreatedBy", fields: [created_by], references: [id])
   comments      CoachingComment[]
   evidences     ActionEvidence[]

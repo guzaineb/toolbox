@@ -36,7 +36,7 @@ export class AuthService {
     );
 
     if (!user) {
-      throw new BadRequestException("Erreur lors de la crÃ©ation de l'utilisateur");
+      throw new BadRequestException("Erreur lors de la création de l'utilisateur");
     }
     try {
       await this.mailService.sendVerificationEmail(
@@ -63,7 +63,7 @@ export class AuthService {
     );
 
     return {
-      message: 'Inscription rÃ©ussie. Veuillez vÃ©rifier votre email avec le code reÃ§u.',
+      message: 'Inscription réussie. Veuillez vérifier votre email avec le code reçu.',
     };
   }
 
@@ -79,7 +79,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Token de vÃ©rification invalide ou dÃ©jÃ  utilisÃ©.');
+      throw new BadRequestException('Token de vérification invalide ou déjà utilisé.');
     }
 
     await this.prisma.user.update({
@@ -92,7 +92,7 @@ export class AuthService {
       },
     });
 
-    return { message: 'Email vÃ©rifiÃ© avec succÃ¨s.' };
+    return { message: 'Email vérifié avec succès.' };
   }
 
   async verifyCode(email: string, code: string): Promise<{ message: string }> {
@@ -103,7 +103,7 @@ export class AuthService {
     }
 
     if (user.is_verified) {
-      return { message: 'Email dÃ©jÃ  vÃ©rifiÃ©.' };
+      return { message: 'Email déjà vérifié.' };
     }
 
     if (user.verification_code !== code) {
@@ -114,7 +114,7 @@ export class AuthService {
       !user.verification_code_expires ||
       new Date() > user.verification_code_expires
     ) {
-      throw new BadRequestException('Code expirÃ©. Demandez un nouveau lien.');
+      throw new BadRequestException('Code expiré. Demandez un nouveau lien.');
     }
 
     await this.prisma.user.update({
@@ -127,7 +127,7 @@ export class AuthService {
       },
     });
 
-    return { message: 'Email vÃ©rifiÃ© avec succÃ¨s.' };
+    return { message: 'Email vérifié avec succès.' };
   }
 
   async resendVerification(email: string): Promise<{ message: string }> {
@@ -137,10 +137,10 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new BadRequestException('Aucun compte associÃ© Ã  cet email.');
+      throw new BadRequestException('Aucun compte associé à cet email.');
     }
     if (user.is_verified) {
-      return { message: 'Cet email est dÃ©jÃ  vÃ©rifiÃ©.' };
+      return { message: 'Cet email est déjà vérifié.' };
     }
 
     const verificationToken = uuidv4();
@@ -167,7 +167,7 @@ export class AuthService {
       console.error('Erreur envoi email:', error);
     }
 
-    return { message: 'Un nouveau code de vÃ©rification a Ã©tÃ© envoyÃ©.' };
+    return { message: 'Un nouveau code de vérification a été envoyé.' };
   }
 
   async validateUser(email: string, password: string) {
@@ -183,12 +183,12 @@ export class AuthService {
 
     if (!freshUser || !freshUser.is_verified) {
       throw new UnauthorizedException(
-        'Veuillez vÃ©rifier votre adresse email avant de vous connecter.',
+        'Veuillez vérifier votre adresse email avant de vous connecter.',
       );
     }
 
     if (!freshUser.is_active) {
-      throw new UnauthorizedException('Ce compte a Ã©tÃ© dÃ©sactivÃ©.');
+      throw new UnauthorizedException('Ce compte a été désactivé.');
     }
 
     const isMatch = await bcrypt.compare(password, freshUser.password_hash);
@@ -224,7 +224,7 @@ export class AuthService {
 async forgotPassword(email: string): Promise<{ message: string }> {
   const user = await this.prisma.user.findUnique({ where: { email } });
   if (!user) {
-    return { message: 'Si un compte existe, un email de rÃ©initialisation a Ã©tÃ© envoyÃ©.' };
+    return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
   }
 
   const token = uuidv4();
@@ -241,7 +241,7 @@ async forgotPassword(email: string): Promise<{ message: string }> {
 
   await this.mailService.sendResetPasswordEmail(user.email, token);
 
-  return { message: 'Si un compte existe, un email de rÃ©initialisation a Ã©tÃ© envoyÃ©.' };
+  return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
 }
 
 async resetPassword(token: string, newPassword: string) {
@@ -249,11 +249,11 @@ async resetPassword(token: string, newPassword: string) {
     where: { reset_password_token: token },
   });
   if (!user) {
-    throw new BadRequestException('Token invalide ou expirÃ©.');
+    throw new BadRequestException('Token invalide ou expiré.');
   }
 
   if (!user.reset_password_expires || user.reset_password_expires < new Date()) {
-    throw new BadRequestException('Le token a expirÃ©. Refaites une demande.');
+    throw new BadRequestException('Le token a expiré. Refaites une demande.');
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -266,6 +266,6 @@ async resetPassword(token: string, newPassword: string) {
     },
   });
 
-  return { message: 'Mot de passe mis Ã  jour avec succÃ¨s.' };
+  return { message: 'Mot de passe mis à jour avec succès.' };
 }
 }

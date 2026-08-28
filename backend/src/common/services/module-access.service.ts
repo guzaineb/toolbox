@@ -95,6 +95,53 @@ export class ModuleAccessService {
     });
   }
 
+  /**
+   * Toutes les cohortes acceptées d'un projet. Un projet peut appartenir à
+   * plusieurs cohortes : les contrôles d'accès doivent toutes les considérer,
+   * sinon un expert peut être refusé alors qu'il est coach/jury sur l'une
+   * d'entre elles (la participation « trouvée en premier » n'est pas stable).
+   */
+  async getAcceptedCohortsForProject(projectId: string) {
+    return this.prisma.cohortParticipation.findMany({
+      where: {
+        project_id: projectId,
+        status: ParticipationStatus.ACCEPTED,
+      },
+      include: { cohort: true },
+      orderBy: { updated_at: 'desc' },
+    });
+  }
+
+  /** Coach actif (CohortExpert) sur l'une des cohortes indiquées. */
+  private async isCohortCoachOnCohorts(
+    cohortIds: string[],
+    userId: string,
+  ): Promise<boolean> {
+    if (cohortIds.length === 0) return false;
+    const coach = await this.prisma.cohortExpert.findFirst({
+      where: {
+        cohort_id: { in: cohortIds },
+        expert_user_id: userId,
+        role: CohortExpertRole.COACH,
+        status: CohortExpertStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+    return !!coach;
+  }
+
+  /**
+   * Coach de cohorte actif pour ce projet : expert marqué COACH (ACTIVE) sur
+   * au moins une cohorte dans laquelle le projet est accepté.
+   */
+  async isCohortCoachOfProject(projectId: string, userId: string): Promise<boolean> {
+    const participations = await this.getAcceptedCohortsForProject(projectId);
+    return this.isCohortCoachOnCohorts(
+      participations.map((p) => p.cohort_id),
+      userId,
+    );
+  }
+
   async assertProjectAcceptedInCohort(projectId: string): Promise<string> {
     const participation = await this.getAcceptedCohortForProject(projectId);
     if (!participation) {
@@ -141,7 +188,8 @@ export class ModuleAccessService {
   }
 
   /**
-   * Accès en lecture au projet : porteur, coach/jury affecté, ou membre de l'incubateur de la cohorte.
+   * Accès en lecture au projet : porteur, coach/jury affecté, coach de la
+   * cohorte du projet, ou membre de l'incubateur d'une des cohortes.
    */
   async assertCanAccessProject(projectId: string, userId: string): Promise<void> {
     const project = await this.prisma.project.findUnique({
@@ -151,37 +199,56 @@ export class ModuleAccessService {
     if (!project) throw new NotFoundException('Projet introuvable');
     if (project.owner_id === userId) return;
 
-    const [assigned, participation] = await Promise.all([
+    const [assignedCoach, assignedJury] = await Promise.all([
       this.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH),
-      this.getAcceptedCohortForProject(projectId),
+      this.hasActiveAssignment(projectId, userId, CohortExpertRole.JURY),
     ]);
-    if (assigned) return;
-    if ((await this.canEvaluateProject(projectId, userId)) || (await this.hasActiveAssignment(projectId, userId, CohortExpertRole.JURY))) {
-      return;
-    }
+    if (assignedCoach || assignedJury) return;
 
-    if (participation?.cohort.incubator_id) {
-      const member = await this.isIncubatorMember(userId, participation.cohort.incubator_id);
-      if (member) return;
+    const participations = await this.getAcceptedCohortsForProject(projectId);
+    const cohortIds = participations.map((p) => p.cohort_id);
+
+    // Coach au niveau cohorte : accès aux livrables nécessaires à son accompagnement
+    if (await this.isCohortCoachOnCohorts(cohortIds, userId)) return;
+
+    // Jury au niveau cohorte ou via affectation d'évaluation
+    if (await this.canEvaluateProject(projectId, userId)) return;
+
+    for (const participation of participations) {
+      const incubatorId = participation.cohort.incubator_id;
+      if (!incubatorId) continue;
+      if (await this.isIncubatorMember(userId, incubatorId)) return;
     }
 
     throw new ForbiddenException("Accès refusé à ce projet");
   }
 
   /**
-   * Gestion du coaching / plan d'amélioration : coach affecté au projet
-   * ou gestionnaire de l'incubateur de la cohorte.
+   * Gestion du coaching / plan d'amélioration : coach affecté au projet,
+   * coach actif d'une cohorte du projet, ou gestionnaire de l'incubateur.
    */
   async assertCanManageProjectCoaching(projectId: string, userId: string): Promise<void> {
     if (await this.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH)) return;
 
-    const participation = await this.getAcceptedCohortForProject(projectId);
-    if (!participation) {
+    const participations = await this.getAcceptedCohortsForProject(projectId);
+    if (participations.length === 0) {
       throw new BadRequestException("Ce projet n'est pas accepté dans une cohorte");
     }
-    if (participation.cohort.incubator_id) {
-      await this.assertCanManageIncubator(participation.cohort.incubator_id, userId);
+
+    if (
+      await this.isCohortCoachOnCohorts(
+        participations.map((p) => p.cohort_id),
+        userId,
+      )
+    ) {
       return;
+    }
+
+    for (const participation of participations) {
+      const incubatorId = participation.cohort.incubator_id;
+      if (!incubatorId) continue;
+      const member = await this.isIncubatorMember(userId, incubatorId);
+      if (member && (member.role === 'ADMIN' || member.can_manage_cohorts)) return;
     }
     throw new ForbiddenException(
       "Vous n'êtes pas autorisé à gérer le coaching de ce projet",
@@ -201,22 +268,10 @@ export class ModuleAccessService {
     }
   }
 
-  // Accès évaluation : membre du jury (CohortExpert JURY) de la cohorte du projet,
-  // OU affecté via EvaluationAssignment.
+  // Accès évaluation : membre du jury (CohortExpert JURY) d'au moins une cohorte
+  // acceptée du projet, OU affecté via EvaluationAssignment sur le projet.
   async canEvaluateProject(projectId: string, userId: string): Promise<boolean> {
-    const participation = await this.getAcceptedCohortForProject(projectId);
-    if (!participation) return false;
-
-    const [byCohortExpert, byEvaluationAssignment] = await Promise.all([
-      this.prisma.cohortExpert.findFirst({
-        where: {
-          cohort_id: participation.cohort_id,
-          expert_user_id: userId,
-          role: CohortExpertRole.JURY,
-          status: CohortExpertStatus.ACTIVE,
-        },
-        select: { id: true },
-      }),
+    const [byEvaluationAssignment, participations] = await Promise.all([
       this.prisma.evaluationAssignment.findFirst({
         where: {
           project_id: projectId,
@@ -224,9 +279,24 @@ export class ModuleAccessService {
         },
         select: { id: true },
       }),
+      this.getAcceptedCohortsForProject(projectId),
     ]);
 
-    return !!(byCohortExpert || byEvaluationAssignment);
+    if (byEvaluationAssignment) return true;
+
+    const cohortIds = participations.map((p) => p.cohort_id);
+    if (cohortIds.length === 0) return false;
+
+    const byCohortExpert = await this.prisma.cohortExpert.findFirst({
+      where: {
+        cohort_id: { in: cohortIds },
+        expert_user_id: userId,
+        role: CohortExpertRole.JURY,
+        status: CohortExpertStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+    return !!byCohortExpert;
   }
 
   async assertCanEvaluateProject(projectId: string, userId: string): Promise<void> {

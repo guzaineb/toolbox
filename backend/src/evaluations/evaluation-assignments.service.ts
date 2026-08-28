@@ -1,9 +1,10 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { ResourceType } from '@prisma/client';
+import { CohortExpertRole, CohortExpertStatus, ResourceType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModuleAccessService } from '../common/services/module-access.service';
 import { AuditService } from '../audit/audit.service';
@@ -136,23 +137,36 @@ export class EvaluationAssignmentsService {
       ? await this.prisma.evaluation.findMany({
           where: {
             project_id: { in: projectIds },
-            status: 'SUBMITTED',
+            jury_user_id: { in: [...new Set(assignments.map((a) => a.jury_user_id))] },
           },
           select: {
             project_id: true,
             jury_user_id: true,
             score: true,
+            status: true,
             version: true,
           },
         })
       : [];
 
-    return assignments.map((a) => ({
-      ...a,
-      submitted: evaluations.some(
-        (e) => e.project_id === a.project_id && e.jury_user_id === a.jury_user_id,
-      ),
-    }));
+    return assignments.map((a) => {
+      // Dernière version par (projet, jury) : après une demande de
+      // ré-évaluation, un brouillon v+1 signifie « pas encore soumis ».
+      const latest = this.latestEvaluationFor(evaluations, a.project_id, a.jury_user_id);
+      return {
+        ...a,
+        submitted: latest?.status === 'SUBMITTED',
+      };
+    });
+  }
+
+  /** Évaluation de plus haute version pour un couple (projet, jury). */
+  private latestEvaluationFor<
+    T extends { project_id: string; jury_user_id?: string; version: number },
+  >(evaluations: T[], projectId: string, juryUserId: string): T | undefined {
+    return evaluations
+      .filter((e) => e.project_id === projectId && e.jury_user_id === juryUserId)
+      .sort((x, y) => y.version - x.version)[0];
   }
 
   async findOne(id: string, userId: string) {
@@ -172,29 +186,25 @@ export class EvaluationAssignmentsService {
     });
     if (!assignment) throw new NotFoundException('Affectation introuvable');
 
+    // Scénarios 15/20 : seuls le jury affecté, le porteur du projet et
+    // l'incubateur de la cohorte consultent une affectation (et ses scores).
+    // Un autre jury du même projet est refusé (403).
     const canView =
       assignment.jury_user_id === userId ||
-      assignment.project.owner_id === userId ||
-      (await this.access.hasActiveAssignment(
-        assignment.project_id,
-        userId,
-        'JURY' as any,
-      ));
+      assignment.project.owner_id === userId;
 
     if (!canView) {
       const incubatorId = await this.access.getCohortIncubatorId(assignment.cohort_id);
-      if (incubatorId) {
-        const member = await this.prisma.incubatorMember.findUnique({
-          where: {
-            user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
-          },
-          select: { id: true },
-        });
-        if (!member) {
-          throw new BadRequestException('Accès refusé à cette affectation');
-        }
-      } else if (!canView) {
-        throw new BadRequestException('Accès refusé à cette affectation');
+      const member = incubatorId
+        ? await this.prisma.incubatorMember.findUnique({
+            where: {
+              user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+            },
+            select: { id: true },
+          })
+        : null;
+      if (!member) {
+        throw new ForbiddenException('Accès refusé à cette affectation');
       }
     }
 
@@ -210,8 +220,22 @@ export class EvaluationAssignmentsService {
   }
 
   async findMyTodo(userId: string) {
+    // Le rôle est défini par cohorte (cohort_experts) : on ne retient que les
+    // affectations des cohortes où l'utilisateur est jury ACTIF. Un assignment
+    // orphelin (jury désactivé ou jamais jury de la cohorte) n'apparaît pas.
     const assignments = await this.prisma.evaluationAssignment.findMany({
-      where: { jury_user_id: userId },
+      where: {
+        jury_user_id: userId,
+        cohort: {
+          experts: {
+            some: {
+              expert_user_id: userId,
+              role: CohortExpertRole.JURY,
+              status: CohortExpertStatus.ACTIVE,
+            },
+          },
+        },
+      },
       include: {
         cohort: { select: { id: true, name: true } },
         project: {
@@ -239,9 +263,12 @@ export class EvaluationAssignmentsService {
 
     return assignments
       .map((a) => {
-        const ev = evaluations.find(
-          (e) => e.project_id === a.project_id,
-        );
+        // La tâche porte sur la dernière version : un brouillon v+1 (demande
+        // de ré-évaluation) doit réapparaître dans le todo même si une
+        // version précédente a été soumise.
+        const ev = evaluations
+          .filter((e) => e.project_id === a.project_id)
+          .sort((x, y) => y.version - x.version)[0];
         const todo = !ev || ev.status === 'DRAFT';
         return {
           ...a,

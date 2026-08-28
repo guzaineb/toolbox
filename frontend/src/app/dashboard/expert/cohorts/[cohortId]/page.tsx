@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Users, Calendar, FolderOpen, HeartHandshake,
-  BarChart3, Clock, Lightbulb, ListTodo, ChevronRight,
+  BarChart3, Clock, Lightbulb, ListTodo, ChevronRight, FolderCheck,
 } from 'lucide-react'
 import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
 import { cohortService } from '@/services/cohort.service'
+import { getErrorMessage } from '@/lib/utils'
 import { Cohort, COHORT_STATUS_LABELS } from '@/types/cohort'
 
 interface CoachingProject {
@@ -22,6 +23,8 @@ interface CoachingProject {
     recommendations_count: number
     actions_pending: number
     actions_total: number
+    gbm_progression?: number
+    documents_generated?: number
   }
 }
 
@@ -54,11 +57,8 @@ export default function ExpertCohortDetailPage() {
       ])
       setCohort(cohortData)
       setProjects(projectsData)
-    } catch (err: any) {
-      const msg = err?.response?.data?.message
-      if (Array.isArray(msg)) setError(msg[0])
-      else if (typeof msg === 'string') setError(msg)
-      else setError('Impossible de charger les données de la cohorte.')
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -208,6 +208,21 @@ export default function ExpertCohortDetailPage() {
                         <p className="text-[11px] text-ink3 mt-0.5 line-clamp-1">
                           {item.project.description}
                         </p>
+                      )}
+                      {typeof item.stats.gbm_progression === 'number' && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 max-w-[180px] h-[5px] bg-surface-2 border border-border rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${item.stats.gbm_progression >= 80 ? 'bg-moss' : item.stats.gbm_progression >= 40 ? 'bg-amber' : 'bg-blue-400'}`}
+                              style={{ width: `${item.stats.gbm_progression}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-semibold text-ink3">{item.stats.gbm_progression}% GBM</span>
+                          <span className="text-[10px] text-ink3">·</span>
+                          <span className="text-[10px] text-ink3 flex items-center gap-1">
+                            <FolderCheck size={10} /> {item.stats.documents_generated ?? 0} livrable(s)
+                          </span>
+                        </div>
                       )}
                       <div className="flex items-center gap-3 mt-2 flex-wrap">
                         {item.stats.sessions_count > 0 && (

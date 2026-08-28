@@ -19,6 +19,16 @@ import { getErrorMessage } from '@/lib/utils'
 
 const STATUS_OPTIONS: CoachingActionStatus[] = ['PENDING', 'IN_PROGRESS', 'SUBMITTED', 'COMPLETED', 'REJECTED', 'CANCELLED']
 
+const SESSION_TYPE_OPTIONS = [
+  { value: 'SUIVI', label: 'Suivi' },
+  { value: 'DIAGNOSTIC', label: 'Diagnostic' },
+  { value: 'TRAVAIL', label: 'Travail' },
+  { value: 'VALIDATION', label: 'Validation' },
+  { value: 'FINANCEMENT', label: 'Financement' },
+  { value: 'STRATEGIE', label: 'Stratégie' },
+  { value: 'AUTRE', label: 'Autre' },
+]
+
 function apiError(err: unknown, fallback: string): string {
   return getErrorMessage(err) || fallback
 }
@@ -47,6 +57,8 @@ export function AddSessionModal({
   const [scheduledAt, setScheduledAt] = useState('')
   const [duration, setDuration] = useState('60')
   const [title, setTitle] = useState('')
+  const [sessionType, setSessionType] = useState('')
+  const [objective, setObjective] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -57,6 +69,8 @@ export function AddSessionModal({
     try {
       await coachingService.createSession(projectId, {
         title: title || undefined,
+        sessionType: sessionType || undefined,
+        objective: objective || undefined,
         scheduledAt: new Date(scheduledAt).toISOString(),
         durationMinutes: parseInt(duration, 10) || undefined,
       })
@@ -77,14 +91,25 @@ export function AddSessionModal({
         </CardHeader>
         <div className="p-6">
           {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
+          <Field label="Titre">
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex. Validation du Business Model" />
+          </Field>
+          <Field label="Type de session">
+            <Select value={sessionType} onChange={(e) => setSessionType(e.target.value)}>
+              <option value="">— Choisir un type —</option>
+              {SESSION_TYPE_OPTIONS.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </Select>
+          </Field>
           <Field label="Date et heure" required>
             <Input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
           </Field>
-          <Field label="DurÃ©e (minutes)">
+          <Field label="Durée (minutes)">
             <Input type="number" min={5} max={480} value={duration} onChange={(e) => setDuration(e.target.value)} />
           </Field>
-          <Field label="Titre (optionnel)">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex. Session 1 â€” cadrage" />
+          <Field label="Objectif">
+            <Textarea value={objective} onChange={(e) => setObjective(e.target.value)} rows={2} placeholder="Ex. Vérifier la cohérence du Business Model" />
           </Field>
           <div className="flex gap-3 mt-6">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>

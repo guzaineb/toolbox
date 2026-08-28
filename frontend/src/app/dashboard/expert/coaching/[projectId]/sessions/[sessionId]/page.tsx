@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarClock } from 'lucide-react'
-import { Card, ErrorAlert } from '@/components/shared/ui'
+import { ErrorAlert } from '@/components/shared/ui'
 import { SessionWorkspace } from '@/components/coaching/SessionWorkspace'
 
 export default function CoachingSessionWorkspacePage() {
@@ -20,7 +20,7 @@ export default function CoachingSessionWorkspacePage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6 pb-16">
       <nav className="flex items-center gap-1 text-[11px] text-ink3 flex-wrap">
         <Link href="/dashboard/expert/coachings" className="hover:text-moss transition-colors">
           Coachings
@@ -30,7 +30,14 @@ export default function CoachingSessionWorkspacePage() {
           Projet
         </Link>
         <span>/</span>
-        <span className="text-ink font-medium">Session</span>
+        <Link
+          href={`/dashboard/expert/coaching/${projectId}?tab=sessions`}
+          className="hover:text-moss transition-colors"
+        >
+          Sessions
+        </Link>
+        <span>/</span>
+        <span className="text-ink font-medium">Espace de session</span>
       </nav>
 
       <div className="flex items-center gap-3">
@@ -40,14 +47,12 @@ export default function CoachingSessionWorkspacePage() {
         <div>
           <h1 className="font-syne text-[20px] font-extrabold text-ink leading-tight">Espace de session</h1>
           <p className="text-[11px] text-ink3">
-            Brief IA, notes, actions et résumé — le coach valide chaque contenu.
+            Préparer · Dérouler · Constats · Décisions · Actions · Clôture — l&apos;IA propose, le coach valide.
           </p>
         </div>
       </div>
 
-      <Card className="p-[18px]">
-        <SessionWorkspace projectId={projectId} sessionId={sessionId} />
-      </Card>
+      <SessionWorkspace projectId={projectId} sessionId={sessionId} />
     </div>
   )
 }

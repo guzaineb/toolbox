@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, ClipboardCheck, Save, Send, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, ClipboardCheck, Save, Send, CheckCircle2, FolderCheck } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ErrorAlert, SuccessAlert, Field, Textarea } from '@/components/shared/ui'
 import { evaluationService } from '@/services/evaluation.service'
+import { DeliverablesPanel } from '@/components/coaching/DeliverablesPanel'
 import { EvaluationAssignment, EvaluationModule, EvaluationCriterion } from '@/types/coaching'
 import { getErrorMessage } from '@/lib/utils'
 
@@ -21,6 +22,7 @@ export default function EvaluationTaskPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   const load = useCallback(async () => {
     if (!assignmentId) return
@@ -92,14 +94,20 @@ export default function EvaluationTaskPage() {
   const handleSubmit = async () => {
     if (!evaluation) return
     setError(null)
+    const missing = (evaluation.template?.criteria ?? []).filter((c) => scores[c.id] === '')
+    if (missing.length > 0) {
+      setError(`Veuillez renseigner tous les critères (${missing.length} manquant(s))`)
+      return
+    }
+    // Scénario 18 : la soumission est définitive — confirmation explicite.
+    setConfirming(true)
+  }
+
+  const handleConfirmedSubmit = async () => {
+    if (!evaluation) return
+    setConfirming(false)
     setSaving(true)
     try {
-      const missing = (evaluation.template?.criteria ?? []).filter((c) => scores[c.id] === '')
-      if (missing.length > 0) {
-        setError(`Veuillez renseigner tous les critères (${missing.length} manquant(s))`)
-        setSaving(false)
-        return
-      }
       const items = (evaluation.template?.criteria ?? []).map((c) => ({
         criterionId: c.id,
         score: parseInt(scores[c.id], 10),
@@ -181,6 +189,9 @@ export default function EvaluationTaskPage() {
               </span>
             )}
           </div>
+          {assignment.project?.description && (
+            <p className="text-[12px] text-ink2 mt-2 max-w-2xl line-clamp-3">{assignment.project.description}</p>
+          )}
         </div>
       </div>
 
@@ -269,6 +280,42 @@ export default function EvaluationTaskPage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* Scénario 16 : livrables nécessaires à l'évaluation (lecture seule) */}
+      <Card className="overflow-hidden">
+        <CardHeader icon={<FolderCheck size={13} />} title="Livrables du projet">
+          <Badge variant="gray">Consultation seule</Badge>
+        </CardHeader>
+        <div className="p-[18px]">
+          <DeliverablesPanel projectId={assignment.project_id} />
+        </div>
+      </Card>
+
+      {/* Scénario 18 : confirmation avant soumission définitive */}
+      {confirming && evaluation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-6"
+          onClick={(e) => e.target === e.currentTarget && setConfirming(false)}
+        >
+          <Card className="w-full max-w-[440px] p-6">
+            <h3 className="font-syne text-[15px] font-bold text-ink mb-2">Confirmer la soumission</h3>
+            <p className="text-[12.5px] text-ink2 mb-1">
+              Cette action est définitive.
+            </p>
+            <p className="text-[12.5px] text-ink3 mb-5">
+              Après soumission, vous ne pourrez plus modifier cette évaluation.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setConfirming(false)}>
+                Annuler
+              </Button>
+              <Button variant="primary" className="flex-1" loading={saving} onClick={handleConfirmedSubmit}>
+                <Send size={13} /> Confirmer
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   )

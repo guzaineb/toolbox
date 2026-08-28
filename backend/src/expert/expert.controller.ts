@@ -98,11 +98,8 @@ export class ExpertController {
     return this.service.searchByEmail(query);
   }
 
-  @Get(':id')
-  findOneExpert(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.getPublicProfile(id);
-  }
-
+  // Routes analytics déclarées avant @Get(':id') : sinon « analytics » est
+  // interprété comme un identifiant et ces endpoints sont inatteignables.
   @Get('analytics/top-experts')
   getTopExperts(@Query('limit') limit?: string, @Query('sortBy') sortBy?: 'score' | 'experience' | 'availability') {
     return this.service.getTopExperts({
@@ -114,6 +111,11 @@ export class ExpertController {
   @Get('analytics/expertise-stats')
   getExpertiseStatistics() {
     return this.service.getExpertiseStatistics();
+  }
+
+  @Get(':id')
+  findOneExpert(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getPublicProfile(id);
   }
 
   @Post('recommendations/jury')

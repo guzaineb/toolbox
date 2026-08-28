@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CoachingActionStatus, CoachingActionPriority } from '@prisma/client';
 
 export class UpdateActionDto {
@@ -25,4 +25,15 @@ export class UpdateActionDto {
   @IsOptional()
   @IsDateString()
   deadline?: string;
+
+  /** Responsable de l'action : porteur, coach ou tout utilisateur autorisé. */
+  @IsOptional()
+  @IsString()
+  responsibleUserId?: string | null;
+
+  /** Livrable concerné (clé des DOCUMENT_DEFINITIONS). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  relatedDocumentKey?: string | null;
 }
