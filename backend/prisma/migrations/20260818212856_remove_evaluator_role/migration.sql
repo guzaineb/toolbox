@@ -8,7 +8,9 @@ CREATE TYPE "CohortExpertRole_new" AS ENUM ('JURY', 'COACH');
 
 -- Step 3: Migrate columns to new enum type
 ALTER TABLE "cohort_experts" ALTER COLUMN "role" TYPE "CohortExpertRole_new" USING "role"::text::"CohortExpertRole_new";
+ALTER TABLE "project_expert_assignments" ALTER COLUMN "role" DROP DEFAULT;
 ALTER TABLE "project_expert_assignments" ALTER COLUMN "role" TYPE "CohortExpertRole_new" USING "role"::text::"CohortExpertRole_new";
+ALTER TABLE "project_expert_assignments" ALTER COLUMN "role" SET DEFAULT 'COACH';
 
 -- Step 4: Drop old enum type and rename new
 ALTER TYPE "CohortExpertRole" RENAME TO "CohortExpertRole_old";

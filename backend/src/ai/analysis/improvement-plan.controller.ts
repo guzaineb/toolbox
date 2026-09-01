@@ -14,6 +14,7 @@ import { IsOptional, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ModuleAccessService } from '../../common/services/module-access.service';
+import { recomputePlanProgress } from '../../common/utils/improvement-progress.util';
 import { ImprovementPlanStatus } from '@prisma/client';
 
 class UpdatePlanDto {
@@ -58,19 +59,32 @@ export class ImprovementPlanController {
 
   /** Validation du coach : DRAFT → ACTIVE (human-in-the-loop). */
   @Patch('improvement-plans/:id')
-  async updatePlan(@Param('id') id: string, @Body() dto: UpdatePlanDto, @Req() req: RequestUser) {
-    const plan = await this.prisma.improvementPlan.findUnique({ where: { id } });
+  async updatePlan(
+    @Param('id') id: string,
+    @Body() dto: UpdatePlanDto,
+    @Req() req: RequestUser,
+  ) {
+    const plan = await this.prisma.improvementPlan.findUnique({
+      where: { id },
+    });
     if (!plan) throw new NotFoundException('Plan introuvable');
 
-    await this.access.assertCanManageProjectCoaching(plan.project_id, req.user.id);
+    await this.access.assertCanManageProjectCoaching(
+      plan.project_id,
+      req.user.id,
+    );
 
-    if (!dto.status) throw new BadRequestException('Aucune modification fournie');
+    if (!dto.status)
+      throw new BadRequestException('Aucune modification fournie');
 
     const allowed = ['ACTIVE', 'COMPLETED', 'ARCHIVED'] as const;
     if (!allowed.includes(dto.status as (typeof allowed)[number])) {
       throw new BadRequestException('Statut de plan invalide');
     }
-    if (plan.status === ImprovementPlanStatus.DRAFT && dto.status !== 'ACTIVE') {
+    if (
+      plan.status === ImprovementPlanStatus.DRAFT &&
+      dto.status !== 'ACTIVE'
+    ) {
       throw new BadRequestException(
         "Un brouillon doit d'abord être activé avant d'être clôturé ou archivé",
       );
@@ -79,13 +93,16 @@ export class ImprovementPlanController {
     return this.prisma.improvementPlan.update({
       where: { id },
       data: {
-        status: dto.status as ImprovementPlanStatus,
+        status: dto.status,
         validated_by:
-          plan.status === ImprovementPlanStatus.DRAFT ? req.user.id : plan.validated_by,
+          plan.status === ImprovementPlanStatus.DRAFT
+            ? req.user.id
+            : plan.validated_by,
         validated_at:
-          plan.status === ImprovementPlanStatus.DRAFT ? new Date() : plan.validated_at,
-        progress:
-          dto.status === 'COMPLETED' ? 100 : plan.progress,
+          plan.status === ImprovementPlanStatus.DRAFT
+            ? new Date()
+            : plan.validated_at,
+        progress: dto.status === 'COMPLETED' ? 100 : plan.progress,
       },
       include: { objectives: true },
     });
@@ -114,7 +131,10 @@ export class ImprovementPlanController {
     });
     const isOwner = project?.owner_id === req.user.id;
     try {
-      await this.access.assertCanManageProjectCoaching(objective.plan.project_id, req.user.id);
+      await this.access.assertCanManageProjectCoaching(
+        objective.plan.project_id,
+        req.user.id,
+      );
     } catch {
       if (!isOwner) {
         throw new ForbiddenException('Accès refusé à cet objectif');
@@ -141,16 +161,7 @@ export class ImprovementPlanController {
     });
 
     // Recalcule la progression globale du plan
-    const objectives = await this.prisma.improvementObjective.findMany({
-      where: { plan_id: objective.plan_id },
-    });
-    const avg = Math.round(
-      objectives.reduce((sum, o) => sum + o.progress, 0) / Math.max(1, objectives.length),
-    );
-    await this.prisma.improvementPlan.update({
-      where: { id: objective.plan_id },
-      data: { progress: avg },
-    });
+    await recomputePlanProgress(this.prisma, objective.plan_id);
 
     void updated;
     return this.prisma.improvementObjective.findUnique({ where: { id } });

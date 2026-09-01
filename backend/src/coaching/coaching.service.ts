@@ -32,6 +32,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateEvidenceDto, ReviewEvidenceDto } from './dto/evidence.dto';
 import { CreateAiRecommendationDto } from './dto/create-ai-recommendation.dto';
 import { SessionBlockerDto } from './dto/update-session.dto';
+import { recomputeObjectiveProgress } from '../common/utils/improvement-progress.util';
 
 /** Blocage identifié par le coach, persisté en Json sur la session. */
 interface SessionBlocker {
@@ -42,7 +43,10 @@ interface SessionBlocker {
   resolvedAt?: string;
 }
 
-type IncomingBlocker = SessionBlockerDto & { id?: unknown; resolvedAt?: unknown };
+type IncomingBlocker = SessionBlockerDto & {
+  id?: unknown;
+  resolvedAt?: unknown;
+};
 
 const MAX_BLOCKERS = 30;
 
@@ -50,14 +54,19 @@ const MAX_BLOCKERS = 30;
  * Normalise la liste de blocages envoyée par le coach : identifiant stable
  * par item (pour le suivi session N → N+1), bornes de taille, champs nettoyés.
  */
-function normalizeBlockers(input: SessionBlockerDto[] | undefined): SessionBlocker[] {
+function normalizeBlockers(
+  input: SessionBlockerDto[] | undefined,
+): SessionBlocker[] {
   if (!Array.isArray(input)) return [];
   return (input as IncomingBlocker[])
     .slice(0, MAX_BLOCKERS)
     .map((b) => {
-      const title = typeof b?.title === 'string' ? b.title.trim().slice(0, 300) : '';
+      const title =
+        typeof b?.title === 'string' ? b.title.trim().slice(0, 300) : '';
       const detail =
-        typeof b?.detail === 'string' && b.detail.trim() ? b.detail.trim().slice(0, 2000) : undefined;
+        typeof b?.detail === 'string' && b.detail.trim()
+          ? b.detail.trim().slice(0, 2000)
+          : undefined;
       const resolved = b?.resolved === true;
       const resolvedAt =
         typeof b?.resolvedAt === 'string'
@@ -88,7 +97,11 @@ export class CoachingService {
 
   // ==================== SESSIONS ====================
 
-  async createSession(projectId: string, dto: CreateSessionDto, userId: string) {
+  async createSession(
+    projectId: string,
+    dto: CreateSessionDto,
+    userId: string,
+  ) {
     await this.access.assertProjectExists(projectId);
     await this.assertCanCoachOrManage(projectId, userId);
 
@@ -107,7 +120,11 @@ export class CoachingService {
         status: CoachingSessionStatus.SCHEDULED,
       },
       include: {
-        assignment: { include: { project: { select: { id: true, name: true, owner_id: true } } } },
+        assignment: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
       },
     });
 
@@ -169,12 +186,31 @@ export class CoachingService {
         },
         actions: {
           include: {
-            assignment: { select: { id: true, expert_user_id: true, expertUser: { select: { id: true, email: true, profile: true } } } },
-            responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+            assignment: {
+              select: {
+                id: true,
+                expert_user_id: true,
+                expertUser: {
+                  select: { id: true, email: true, profile: true },
+                },
+              },
+            },
+            responsibleUser: {
+              select: {
+                id: true,
+                email: true,
+                profile: { select: { first_name: true, last_name: true } },
+              },
+            },
           },
         },
         recommendations: true,
-        comments: { include: { author: { select: { id: true, email: true, profile: true } } }, orderBy: { created_at: 'asc' } },
+        comments: {
+          include: {
+            author: { select: { id: true, email: true, profile: true } },
+          },
+          orderBy: { created_at: 'asc' },
+        },
       },
     });
     if (!session) throw new NotFoundException('Session introuvable');
@@ -185,7 +221,13 @@ export class CoachingService {
   async updateSession(id: string, dto: UpdateSessionDto, userId: string) {
     const session = await this.prisma.coachingSession.findUnique({
       where: { id },
-      include: { assignment: { include: { project: { select: { id: true, name: true, owner_id: true } } } } },
+      include: {
+        assignment: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
+      },
     });
     if (!session) throw new NotFoundException('Session introuvable');
 
@@ -216,7 +258,11 @@ export class CoachingService {
 
     let status = session.status;
     if (dto.status) status = dto.status;
-    if (!dto.status && dto.scheduledAt && new Date(dto.scheduledAt).getTime() !== session.scheduled_at.getTime()) {
+    if (
+      !dto.status &&
+      dto.scheduledAt &&
+      new Date(dto.scheduledAt).getTime() !== session.scheduled_at.getTime()
+    ) {
       status = CoachingSessionStatus.RESCHEDULED;
     }
 
@@ -232,7 +278,9 @@ export class CoachingService {
         topics_discussed: dto.topicsDiscussed,
         blockers:
           dto.blockers !== undefined
-            ? (normalizeBlockers(dto.blockers) as unknown as Prisma.InputJsonValue[])
+            ? (normalizeBlockers(
+                dto.blockers,
+              ) as unknown as Prisma.InputJsonValue[])
             : undefined,
         decisions: dto.decisions,
         scheduled_at: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
@@ -244,9 +292,17 @@ export class CoachingService {
         objective_result_reason: dto.objectiveResultReason,
         status,
         completed_at:
-          status === CoachingSessionStatus.COMPLETED ? new Date() : session.completed_at,
+          status === CoachingSessionStatus.COMPLETED
+            ? new Date()
+            : session.completed_at,
       },
-      include: { assignment: { include: { project: { select: { id: true, name: true, owner_id: true } } } } },
+      include: {
+        assignment: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
+      },
     });
 
     await this.audit.log({
@@ -254,7 +310,10 @@ export class CoachingService {
       action: 'COACHING_SESSION_UPDATE',
       entityType: 'CoachingSession',
       entityId: id,
-      metadata: { ...dto, blockers: dto.blockers ? normalizeBlockers(dto.blockers) : undefined } as unknown as Prisma.InputJsonValue,
+      metadata: {
+        ...dto,
+        blockers: dto.blockers ? normalizeBlockers(dto.blockers) : undefined,
+      } as unknown as Prisma.InputJsonValue,
     });
 
     const project = updated.assignment.project;
@@ -286,7 +345,10 @@ export class CoachingService {
         resourceType: ResourceType.COACHING,
         resourceId: project.id,
       });
-    } else if (status === CoachingSessionStatus.RESCHEDULED || dto.scheduledAt) {
+    } else if (
+      status === CoachingSessionStatus.RESCHEDULED ||
+      dto.scheduledAt
+    ) {
       const { title, message } = this.messageBuilder.coachingSessionUpdated({
         projectName: project.name,
         scheduledAt: updated.scheduled_at,
@@ -309,15 +371,27 @@ export class CoachingService {
   async completeSession(id: string, dto: { report?: string }, userId: string) {
     const session = await this.prisma.coachingSession.findUnique({
       where: { id },
-      include: { assignment: { include: { project: { select: { id: true, name: true, owner_id: true } } } } },
+      include: {
+        assignment: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
+      },
     });
     if (!session) throw new NotFoundException('Session introuvable');
 
     const assignment = await this.prisma.projectExpertAssignment.findUnique({
       where: { id: session.assignment_id },
     });
-    if (!assignment || assignment.expert_user_id !== userId || assignment.status !== CohortExpertStatus.ACTIVE) {
-      throw new ForbiddenException("Seul le coach de la session peut la clôturer");
+    if (
+      !assignment ||
+      assignment.expert_user_id !== userId ||
+      assignment.status !== CohortExpertStatus.ACTIVE
+    ) {
+      throw new ForbiddenException(
+        'Seul le coach de la session peut la clôturer',
+      );
     }
 
     const completed = await this.prisma.coachingSession.update({
@@ -327,7 +401,13 @@ export class CoachingService {
         completed_at: new Date(),
         report: dto.report ?? session.report,
       },
-      include: { assignment: { include: { project: { select: { id: true, name: true, owner_id: true } } } } },
+      include: {
+        assignment: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
+      },
     });
 
     const { title, message } = this.messageBuilder.coachingSessionCompleted({
@@ -353,17 +433,30 @@ export class CoachingService {
   async startSession(id: string, userId: string) {
     const session = await this.prisma.coachingSession.findUnique({
       where: { id },
-      include: { assignment: { include: { project: { select: { id: true, name: true } } } } },
+      include: {
+        assignment: {
+          include: { project: { select: { id: true, name: true } } },
+        },
+      },
     });
     if (!session) throw new NotFoundException('Session introuvable');
 
     const assignment = await this.prisma.projectExpertAssignment.findUnique({
       where: { id: session.assignment_id },
     });
-    if (!assignment || assignment.expert_user_id !== userId || assignment.status !== CohortExpertStatus.ACTIVE) {
-      throw new ForbiddenException('Seul le coach de la session peut la démarrer');
+    if (
+      !assignment ||
+      assignment.expert_user_id !== userId ||
+      assignment.status !== CohortExpertStatus.ACTIVE
+    ) {
+      throw new ForbiddenException(
+        'Seul le coach de la session peut la démarrer',
+      );
     }
-    if (session.status !== CoachingSessionStatus.SCHEDULED && session.status !== CoachingSessionStatus.RESCHEDULED) {
+    if (
+      session.status !== CoachingSessionStatus.SCHEDULED &&
+      session.status !== CoachingSessionStatus.RESCHEDULED
+    ) {
       throw new BadRequestException(
         'Seule une session planifiée peut être démarrée',
       );
@@ -375,13 +468,21 @@ export class CoachingService {
         status: CoachingSessionStatus.IN_PROGRESS,
         started_at: new Date(),
       },
-      include: { assignment: { include: { project: { select: { id: true, name: true } } } } },
+      include: {
+        assignment: {
+          include: { project: { select: { id: true, name: true } } },
+        },
+      },
     });
   }
 
   // ==================== RECOMMANDATIONS ====================
 
-  async createRecommendation(projectId: string, dto: CreateRecommendationDto, userId: string) {
+  async createRecommendation(
+    projectId: string,
+    dto: CreateRecommendationDto,
+    userId: string,
+  ) {
     await this.access.assertProjectExists(projectId);
     await this.assertCanCoachOrManage(projectId, userId);
 
@@ -391,7 +492,9 @@ export class CoachingService {
         select: { assignment: { select: { project_id: true } } },
       });
       if (!session || session.assignment.project_id !== projectId) {
-        throw new BadRequestException('La session indiquée ne concerne pas ce projet');
+        throw new BadRequestException(
+          'La session indiquée ne concerne pas ce projet',
+        );
       }
     }
 
@@ -405,7 +508,9 @@ export class CoachingService {
         priority: dto.priority ?? CoachingActionPriority.MEDIUM,
         status: CoachingRecommendationStatus.OPEN,
       },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+      },
     });
 
     await this.audit.log({
@@ -447,17 +552,27 @@ export class CoachingService {
     });
   }
 
-  async updateRecommendation(id: string, dto: UpdateRecommendationDto, userId: string) {
+  async updateRecommendation(
+    id: string,
+    dto: UpdateRecommendationDto,
+    userId: string,
+  ) {
     const recommendation = await this.prisma.coachingRecommendation.findUnique({
       where: { id },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+      },
     });
-    if (!recommendation) throw new NotFoundException('Recommandation introuvable');
+    if (!recommendation)
+      throw new NotFoundException('Recommandation introuvable');
 
     const isAuthor = recommendation.author_id === userId;
     const isOwner = recommendation.project?.owner_id === userId;
     if (!isAuthor && !isOwner) {
-      await this.assertCanManageProjectCohort(recommendation.project_id ?? recommendation.project!.id, userId);
+      await this.assertCanManageProjectCohort(
+        recommendation.project_id ?? recommendation.project!.id,
+        userId,
+      );
     }
 
     return this.prisma.coachingRecommendation.update({
@@ -482,7 +597,9 @@ export class CoachingService {
         where: { id: dto.assignmentId },
       });
       if (!assignment || assignment.project_id !== projectId) {
-        throw new BadRequestException("L'affectation indiquée ne concerne pas ce projet");
+        throw new BadRequestException(
+          "L'affectation indiquée ne concerne pas ce projet",
+        );
       }
     }
 
@@ -491,7 +608,9 @@ export class CoachingService {
         where: { id: dto.recommendationId },
       });
       if (!rec || rec.project_id !== projectId) {
-        throw new BadRequestException('La recommandation indiquée ne concerne pas ce projet');
+        throw new BadRequestException(
+          'La recommandation indiquée ne concerne pas ce projet',
+        );
       }
     }
 
@@ -502,9 +621,28 @@ export class CoachingService {
         select: { id: true },
       });
       if (!responsible) {
-        throw new BadRequestException("L'utilisateur responsable indiqué est introuvable");
+        throw new BadRequestException(
+          "L'utilisateur responsable indiqué est introuvable",
+        );
       }
       responsibleUserId = responsible.id;
+    }
+
+    if (dto.objectiveId) {
+      const objective = await this.prisma.improvementObjective.findUnique({
+        where: { id: dto.objectiveId },
+        select: { plan: { select: { project_id: true } } },
+      });
+      if (!objective) {
+        throw new BadRequestException(
+          "L'objectif du plan d'amélioration indiqué est introuvable",
+        );
+      }
+      if (objective.plan.project_id !== projectId) {
+        throw new BadRequestException(
+          "L'objectif indiqué ne concerne pas ce projet",
+        );
+      }
     }
 
     const action = await this.prisma.coachingAction.create({
@@ -513,6 +651,7 @@ export class CoachingService {
         session_id: dto.sessionId ?? null,
         assignment_id: dto.assignmentId ?? null,
         recommendation_id: dto.recommendationId ?? null,
+        objective_id: dto.objectiveId ?? null,
         responsible_user_id: responsibleUserId ?? null,
         related_document_key: dto.relatedDocumentKey ?? null,
         title: dto.title,
@@ -524,7 +663,13 @@ export class CoachingService {
       },
       include: {
         project: { select: { id: true, name: true, owner_id: true } },
-        responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+        responsibleUser: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { first_name: true, last_name: true } },
+          },
+        },
       },
     });
 
@@ -560,6 +705,10 @@ export class CoachingService {
       resourceId: projectId,
     });
 
+    if (action.objective_id) {
+      await recomputeObjectiveProgress(this.prisma, action.objective_id);
+    }
+
     return action;
   }
 
@@ -570,9 +719,20 @@ export class CoachingService {
       where: { project_id: projectId },
       include: {
         session: { select: { id: true, title: true, scheduled_at: true } },
-        assignment: { include: { expertUser: { select: { id: true, email: true, profile: true } } } },
+        assignment: {
+          include: {
+            expertUser: { select: { id: true, email: true, profile: true } },
+          },
+        },
         recommendation: { select: { id: true, title: true } },
-        responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+        objective: { select: { id: true, title: true } },
+        responsibleUser: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { first_name: true, last_name: true } },
+          },
+        },
         createdBy: { select: { id: true, email: true } },
       },
       orderBy: { created_at: 'desc' },
@@ -582,14 +742,19 @@ export class CoachingService {
   async updateAction(id: string, dto: UpdateActionDto, userId: string) {
     const action = await this.prisma.coachingAction.findUnique({
       where: { id },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+      },
     });
     if (!action) throw new NotFoundException('Action introuvable');
 
     await this.assertCanCoachOwnerOrManage(action.project_id, userId);
 
     let responsibleUserId: string | null | undefined;
-    if (dto.responsibleUserId !== undefined && dto.responsibleUserId !== action.responsible_user_id) {
+    if (
+      dto.responsibleUserId !== undefined &&
+      dto.responsibleUserId !== action.responsible_user_id
+    ) {
       if (dto.responsibleUserId === null || dto.responsibleUserId === '') {
         responsibleUserId = null;
       } else {
@@ -598,7 +763,9 @@ export class CoachingService {
           select: { id: true },
         });
         if (!responsible) {
-          throw new BadRequestException("L'utilisateur responsable indiqué est introuvable");
+          throw new BadRequestException(
+            "L'utilisateur responsable indiqué est introuvable",
+          );
         }
         responsibleUserId = responsible.id;
       }
@@ -608,8 +775,11 @@ export class CoachingService {
     // soumettre son travail : la validation finale reste au coach/gestionnaire (F2).
     if (action.project.owner_id === userId) {
       const managesCoaching =
-        (await this.access.hasActiveAssignment(action.project_id, userId, CohortExpertRole.COACH)) ||
-        (await this.isCohortManagerOfProject(action.project_id, userId));
+        (await this.access.hasActiveAssignment(
+          action.project_id,
+          userId,
+          CohortExpertRole.COACH,
+        )) || (await this.isCohortManagerOfProject(action.project_id, userId));
       if (!managesCoaching) {
         const ownerAllowed: CoachingActionStatus[] = [
           CoachingActionStatus.PENDING,
@@ -622,8 +792,12 @@ export class CoachingService {
           dto.priority !== undefined ||
           dto.deadline !== undefined ||
           dto.relatedDocumentKey !== undefined ||
+          dto.objectiveId !== undefined ||
           dto.responsibleUserId !== undefined;
-        if (touchesFields || (dto.status !== undefined && !ownerAllowed.includes(dto.status))) {
+        if (
+          touchesFields ||
+          (dto.status !== undefined && !ownerAllowed.includes(dto.status))
+        ) {
           throw new ForbiddenException(
             'Seul le coach peut modifier ou valider une action ; le porteur peut uniquement démarrer ou soumettre.',
           );
@@ -631,8 +805,35 @@ export class CoachingService {
       }
     }
 
+    let newObjectiveId: string | null | undefined;
+    if (
+      dto.objectiveId !== undefined &&
+      dto.objectiveId !== action.objective_id
+    ) {
+      if (dto.objectiveId === null || dto.objectiveId === '') {
+        newObjectiveId = null;
+      } else {
+        const objective = await this.prisma.improvementObjective.findUnique({
+          where: { id: dto.objectiveId },
+          select: { id: true, plan: { select: { project_id: true } } },
+        });
+        if (!objective) {
+          throw new BadRequestException(
+            "L'objectif du plan d'amélioration indiqué est introuvable",
+          );
+        }
+        if (objective.plan.project_id !== action.project_id) {
+          throw new BadRequestException(
+            "L'objectif indiqué ne concerne pas ce projet",
+          );
+        }
+        newObjectiveId = objective.id;
+      }
+    }
+
     const now = new Date();
     const status = dto.status;
+    const previousObjectiveId = action.objective_id;
 
     const updated = await this.prisma.coachingAction.update({
       where: { id },
@@ -648,17 +849,29 @@ export class CoachingService {
               ? null
               : dto.relatedDocumentKey
             : undefined,
-        ...(responsibleUserId !== undefined ? { responsible_user_id: responsibleUserId } : {}),
+        ...(newObjectiveId !== undefined
+          ? { objective_id: newObjectiveId }
+          : {}),
+        ...(responsibleUserId !== undefined
+          ? { responsible_user_id: responsibleUserId }
+          : {}),
         completed_at:
           status === CoachingActionStatus.COMPLETED
             ? now
-            : status === CoachingActionStatus.REJECTED || status === CoachingActionStatus.CANCELLED
+            : status === CoachingActionStatus.REJECTED ||
+                status === CoachingActionStatus.CANCELLED
               ? null
               : action.completed_at,
       },
       include: {
         project: { select: { id: true, name: true, owner_id: true } },
-        responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
+        responsibleUser: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { first_name: true, last_name: true } },
+          },
+        },
       },
     });
 
@@ -701,6 +914,13 @@ export class CoachingService {
       });
     }
 
+    const affectedObjectives = new Set<string>();
+    if (previousObjectiveId) affectedObjectives.add(previousObjectiveId);
+    if (updated.objective_id) affectedObjectives.add(updated.objective_id);
+    for (const objectiveId of affectedObjectives) {
+      await recomputeObjectiveProgress(this.prisma, objectiveId);
+    }
+
     return updated;
   }
 
@@ -713,7 +933,9 @@ export class CoachingService {
   async addEvidence(actionId: string, dto: CreateEvidenceDto, userId: string) {
     const action = await this.prisma.coachingAction.findUnique({
       where: { id: actionId },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+      },
     });
     if (!action) throw new NotFoundException('Action introuvable');
     if (action.project.owner_id !== userId) {
@@ -721,7 +943,14 @@ export class CoachingService {
         'Seul le porteur du projet peut soumettre une preuve',
       );
     }
-    if (([CoachingActionStatus.CANCELLED, CoachingActionStatus.COMPLETED] as CoachingActionStatus[]).includes(action.status)) {
+    if (
+      (
+        [
+          CoachingActionStatus.CANCELLED,
+          CoachingActionStatus.COMPLETED,
+        ] as CoachingActionStatus[]
+      ).includes(action.status)
+    ) {
       throw new BadRequestException(
         'Impossible d’ajouter une preuve sur une action terminée ou annulée',
       );
@@ -751,10 +980,15 @@ export class CoachingService {
         })
       : null;
     const coachFallback = await this.prisma.projectExpertAssignment.findFirst({
-      where: { project_id: action.project_id, role: CohortExpertRole.COACH, status: CohortExpertStatus.ACTIVE },
+      where: {
+        project_id: action.project_id,
+        role: CohortExpertRole.COACH,
+        status: CohortExpertStatus.ACTIVE,
+      },
       select: { expert_user_id: true },
     });
-    const recipient = assignment?.expert_user_id ?? coachFallback?.expert_user_id;
+    const recipient =
+      assignment?.expert_user_id ?? coachFallback?.expert_user_id;
     if (recipient) {
       const { title, message } = this.messageBuilder.coachingActionSubmitted({
         projectName: action.project.name,
@@ -792,10 +1026,20 @@ export class CoachingService {
   /**
    * Le coach valide ou rejette une preuve (human-in-the-loop).
    */
-  async reviewEvidence(evidenceId: string, dto: ReviewEvidenceDto, userId: string) {
+  async reviewEvidence(
+    evidenceId: string,
+    dto: ReviewEvidenceDto,
+    userId: string,
+  ) {
     const evidence = await this.prisma.actionEvidence.findUnique({
       where: { id: evidenceId },
-      include: { action: { include: { project: { select: { id: true, name: true, owner_id: true } } } } },
+      include: {
+        action: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
+      },
     });
     if (!evidence) throw new NotFoundException('Preuve introuvable');
 
@@ -817,6 +1061,26 @@ export class CoachingService {
         where: { id: evidence.action_id },
         data: { status: CoachingActionStatus.IN_PROGRESS },
       });
+    } else if (dto.status === EvidenceReviewStatus.APPROVED) {
+      // La preuve est validée : l'action est accomplie (D6 — fermeture de la boucle preuve/action)
+      await this.prisma.coachingAction.update({
+        where: { id: evidence.action_id },
+        data: {
+          status: CoachingActionStatus.COMPLETED,
+          completed_at: new Date(),
+        },
+      });
+    }
+
+    const reviewedAction = await this.prisma.coachingAction.findUnique({
+      where: { id: evidence.action_id },
+      select: { objective_id: true },
+    });
+    if (reviewedAction?.objective_id) {
+      await recomputeObjectiveProgress(
+        this.prisma,
+        reviewedAction.objective_id,
+      );
     }
 
     const { title, message } = this.messageBuilder.coachingEvidenceReviewed({
@@ -841,7 +1105,11 @@ export class CoachingService {
   /**
    * Le coach transforme une suggestion IA en recommandation officielle.
    */
-  async createAiRecommendation(projectId: string, dto: CreateAiRecommendationDto, userId: string) {
+  async createAiRecommendation(
+    projectId: string,
+    dto: CreateAiRecommendationDto,
+    userId: string,
+  ) {
     await this.access.assertProjectExists(projectId);
     await this.assertCanCoachOrManage(projectId, userId);
 
@@ -850,7 +1118,9 @@ export class CoachingService {
       select: { id: true, project_id: true, type: true },
     });
     if (!analysis || analysis.project_id !== projectId) {
-      throw new BadRequestException("L'analyse IA indiquée ne concerne pas ce projet");
+      throw new BadRequestException(
+        "L'analyse IA indiquée ne concerne pas ce projet",
+      );
     }
 
     const recommendation = await this.prisma.coachingRecommendation.create({
@@ -865,7 +1135,9 @@ export class CoachingService {
         source: 'AI',
         ai_analysis_id: analysis.id,
       },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+      },
     });
 
     await this.audit.log({
@@ -914,7 +1186,7 @@ export class CoachingService {
         session_id: resource.sessionId ?? null,
         author_id: userId,
         content: dto.content,
-        resource_type: dto.resourceType as any ?? null,
+        resource_type: (dto.resourceType as any) ?? null,
         resource_id: dto.resourceId ?? null,
       },
       include: {
@@ -1030,77 +1302,88 @@ export class CoachingService {
     await this.access.assertProjectExists(projectId);
     await this.assertCanViewCoaching(projectId, userId);
 
-    const [sessions, actions, recommendations, assignments] = await Promise.all([
-      this.prisma.coachingSession.findMany({
-        where: { assignment: { project_id: projectId } },
-        orderBy: { scheduled_at: 'desc' },
-        include: {
-          assignment: {
-            select: {
-              id: true,
-              role: true,
-              status: true,
-              expert_user_id: true,
-              expertUser: {
-                select: {
-                  id: true,
-                  email: true,
-                  profile: { select: { first_name: true, last_name: true } },
+    const [sessions, actions, recommendations, assignments] = await Promise.all(
+      [
+        this.prisma.coachingSession.findMany({
+          where: { assignment: { project_id: projectId } },
+          orderBy: { scheduled_at: 'desc' },
+          include: {
+            assignment: {
+              select: {
+                id: true,
+                role: true,
+                status: true,
+                expert_user_id: true,
+                expertUser: {
+                  select: {
+                    id: true,
+                    email: true,
+                    profile: { select: { first_name: true, last_name: true } },
+                  },
                 },
               },
             },
+            actions: { select: { id: true, title: true, status: true } },
+            recommendations: {
+              select: { id: true, title: true, content: true },
+            },
           },
-          actions: { select: { id: true, title: true, status: true } },
-          recommendations: { select: { id: true, title: true, content: true } },
-        },
-      }),
-      this.prisma.coachingAction.findMany({
-        where: { project_id: projectId },
-        orderBy: { created_at: 'desc' },
-        include: {
-          session: { select: { id: true, title: true, scheduled_at: true } },
-          assignment: {
-            select: {
-              id: true,
-              expert_user_id: true,
-              expertUser: {
-                select: {
-                  id: true,
-                  profile: { select: { first_name: true, last_name: true } },
+        }),
+        this.prisma.coachingAction.findMany({
+          where: { project_id: projectId },
+          orderBy: { created_at: 'desc' },
+          include: {
+            session: { select: { id: true, title: true, scheduled_at: true } },
+            assignment: {
+              select: {
+                id: true,
+                expert_user_id: true,
+                expertUser: {
+                  select: {
+                    id: true,
+                    profile: { select: { first_name: true, last_name: true } },
+                  },
                 },
               },
             },
+            responsibleUser: {
+              select: {
+                id: true,
+                email: true,
+                profile: { select: { first_name: true, last_name: true } },
+              },
+            },
+            objective: { select: { id: true, title: true } },
           },
-          responsibleUser: { select: { id: true, email: true, profile: { select: { first_name: true, last_name: true } } } },
-        },
-      }),
-      this.prisma.coachingRecommendation.findMany({
-        where: { project_id: projectId },
-        orderBy: { created_at: 'desc' },
-        include: {
-          author: {
-            select: {
-              id: true,
-              email: true,
-              profile: { select: { first_name: true, last_name: true } },
+        }),
+        this.prisma.coachingRecommendation.findMany({
+          where: { project_id: projectId },
+          orderBy: { created_at: 'desc' },
+          include: {
+            author: {
+              select: {
+                id: true,
+                email: true,
+                profile: { select: { first_name: true, last_name: true } },
+              },
+            },
+            actions: { select: { id: true, title: true, status: true } },
+          },
+        }),
+        this.prisma.projectExpertAssignment.findMany({
+          where: { project_id: projectId },
+          include: {
+            expertUser: {
+              select: {
+                id: true,
+                email: true,
+                profile: { select: { first_name: true, last_name: true } },
+              },
             },
           },
-          actions: { select: { id: true, title: true, status: true } },
-        },
-      }),
-      this.prisma.projectExpertAssignment.findMany({
-        where: { project_id: projectId },
-        include: {
-          expertUser: {
-            select: {
-              id: true,
-              email: true,
-              profile: { select: { first_name: true, last_name: true } },
-            },
-          },
-        },
-      }),
-    ]);
+        }),
+      ],
+    );
 
     return {
       project_id: projectId,
@@ -1110,14 +1393,26 @@ export class CoachingService {
       assignments,
       counts: {
         sessions: sessions.length,
-        sessions_completed: sessions.filter((s) => s.status === CoachingSessionStatus.COMPLETED).length,
+        sessions_completed: sessions.filter(
+          (s) => s.status === CoachingSessionStatus.COMPLETED,
+        ).length,
         actions: actions.length,
-        actions_completed: actions.filter((a) => a.status === CoachingActionStatus.COMPLETED).length,
+        actions_completed: actions.filter(
+          (a) => a.status === CoachingActionStatus.COMPLETED,
+        ).length,
         actions_pending: actions.filter((a) =>
-          ([CoachingActionStatus.PENDING, CoachingActionStatus.IN_PROGRESS, CoachingActionStatus.SUBMITTED] as CoachingActionStatus[]).includes(a.status),
+          (
+            [
+              CoachingActionStatus.PENDING,
+              CoachingActionStatus.IN_PROGRESS,
+              CoachingActionStatus.SUBMITTED,
+            ] as CoachingActionStatus[]
+          ).includes(a.status),
         ).length,
         recommendations: recommendations.length,
-        recommendations_done: recommendations.filter((r) => r.status === CoachingRecommendationStatus.DONE).length,
+        recommendations_done: recommendations.filter(
+          (r) => r.status === CoachingRecommendationStatus.DONE,
+        ).length,
       },
     };
   }
@@ -1145,10 +1440,13 @@ export class CoachingService {
     });
     if (existing) return existing;
 
-    const isCohortCoach = await this.access.isCohortCoachOfProject(projectId, userId);
+    const isCohortCoach = await this.access.isCohortCoachOfProject(
+      projectId,
+      userId,
+    );
     if (!isCohortCoach) {
       throw new ForbiddenException(
-        "Vous devez être le coach affecté pour créer une session",
+        'Vous devez être le coach affecté pour créer une session',
       );
     }
 
@@ -1165,7 +1463,11 @@ export class CoachingService {
   }
 
   private async assertCanCoachOrManage(projectId: string, userId: string) {
-    const isCoach = await this.access.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH);
+    const isCoach = await this.access.hasActiveAssignment(
+      projectId,
+      userId,
+      CohortExpertRole.COACH,
+    );
     if (isCoach) return;
     await this.assertCanManageProjectCohort(projectId, userId);
   }
@@ -1186,15 +1488,25 @@ export class CoachingService {
     });
     if (project && project.owner_id === userId) return;
 
-    const isCoach = await this.access.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH);
+    const isCoach = await this.access.hasActiveAssignment(
+      projectId,
+      userId,
+      CohortExpertRole.COACH,
+    );
     if (isCoach) return;
 
-    const participations = await this.access.getAcceptedCohortsForProject(projectId);
+    const participations =
+      await this.access.getAcceptedCohortsForProject(projectId);
     for (const participation of participations) {
       const incubatorId = participation.cohort.incubator_id;
       if (incubatorId) {
         const member = await this.prisma.incubatorMember.findUnique({
-          where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
+          where: {
+            user_id_incubator_id: {
+              user_id: userId,
+              incubator_id: incubatorId,
+            },
+          },
           select: { id: true },
         });
         if (member) return;
@@ -1208,25 +1520,36 @@ export class CoachingService {
   }
 
   /** Gestionnaire de coaching au niveau cohorte : gestionnaire d'incubateur ou coach de cohorte actif. */
-  private async isCohortManagerOfProject(projectId: string, userId: string): Promise<boolean> {
-    const participations = await this.access.getAcceptedCohortsForProject(projectId);
+  private async isCohortManagerOfProject(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const participations =
+      await this.access.getAcceptedCohortsForProject(projectId);
     if (participations.length === 0) return false;
 
     for (const participation of participations) {
       const incubatorId = participation.cohort.incubator_id;
       if (!incubatorId) continue;
       const member = await this.prisma.incubatorMember.findUnique({
-        where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
+        where: {
+          user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+        },
         select: { role: true, can_manage_cohorts: true },
       });
-      if (member && (member.role === 'ADMIN' || member.can_manage_cohorts)) return true;
+      if (member && (member.role === 'ADMIN' || member.can_manage_cohorts))
+        return true;
     }
 
     return this.access.isCohortCoachOfProject(projectId, userId);
   }
 
-  private async assertCanManageProjectCohort(projectId: string, userId: string) {
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+  private async assertCanManageProjectCohort(
+    projectId: string,
+    userId: string,
+  ) {
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (!participation) {
       throw new BadRequestException(
         "Ce projet n'est pas accepté dans une cohorte",

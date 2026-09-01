@@ -1,4 +1,10 @@
-import { IsDateString, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { CoachingActionStatus, CoachingActionPriority } from '@prisma/client';
 
 export class UpdateActionDto {
@@ -36,4 +42,9 @@ export class UpdateActionDto {
   @IsString()
   @MaxLength(100)
   relatedDocumentKey?: string | null;
+
+  /** Objectif du plan d'amélioration lié (« null » pour détacher). */
+  @IsOptional()
+  @IsString()
+  objectiveId?: string | null;
 }

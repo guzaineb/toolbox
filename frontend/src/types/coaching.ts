@@ -100,6 +100,8 @@ export interface CoachingAction {
   id: string
   project_id: string
   assignment_id?: string
+  /** Objectif du plan d'amélioration lié (D6). */
+  objective_id?: string | null
   /** Responsable métier : porteur, coach ou expert (User). */
   responsible_user_id?: string | null
   /** Livrable concerné (clé des DOCUMENT_DEFINITIONS). */
@@ -121,6 +123,7 @@ export interface CoachingAction {
     expertUser?: CoachingActionResponsible
   }
   responsibleUser?: CoachingActionResponsible
+  objective?: { id: string; title: string } | null
   session?: { id: string; title?: string; scheduled_at: string }
 }
 
@@ -386,6 +389,7 @@ export interface CreateActionDto {
   deadline?: string
   sessionId?: string
   recommendationId?: string
+  objectiveId?: string
   assignmentId?: string
   responsibleUserId?: string
   relatedDocumentKey?: string

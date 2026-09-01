@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   CalendarClock, CheckCircle2, MessageSquare, Plus, X, Lightbulb, ListTodo,
@@ -16,6 +16,8 @@ import {
   CoachingActionStatus,
 } from '@/types/coaching'
 import { getErrorMessage } from '@/lib/utils'
+import { aiAnalysisService } from '@/services/ai-analysis.service'
+import { ImprovementPlan } from '@/types/ai-analysis'
 
 const STATUS_OPTIONS: CoachingActionStatus[] = ['PENDING', 'IN_PROGRESS', 'SUBMITTED', 'COMPLETED', 'REJECTED', 'CANCELLED']
 
@@ -180,8 +182,17 @@ export function AddActionModal({
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM')
   const [deadline, setDeadline] = useState('')
+  const [objectiveId, setObjectiveId] = useState('')
+  const [plans, setPlans] = useState<ImprovementPlan[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    aiAnalysisService
+      .getProjectPlans(projectId)
+      .then((list) => setPlans(list.filter((p) => p.status === 'ACTIVE')))
+      .catch(() => setPlans([]))
+  }, [projectId])
 
   const handleSubmit = async () => {
     if (!title.trim()) { setError("Le titre de l'action est requis"); return }
@@ -193,6 +204,7 @@ export function AddActionModal({
         description: description || undefined,
         priority,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
+        objectiveId: objectiveId || undefined,
       })
       onSuccess()
       onClose()
@@ -226,6 +238,16 @@ export function AddActionModal({
           </Field>
           <Field label="Ã‰chÃ©ance">
             <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+          </Field>
+          <Field label="Objectif du plan d'amÃ©lioration (optionnel)">
+            <Select value={objectiveId} onChange={(e) => setObjectiveId(e.target.value)}>
+              <option value="">Aucun</option>
+              {plans.flatMap((p) =>
+                (p.objectives ?? []).map((o) => (
+                  <option key={o.id} value={o.id}>{o.title}</option>
+                )),
+              )}
+            </Select>
           </Field>
           <div className="flex gap-3 mt-6">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>
@@ -568,6 +590,12 @@ function OwnerActionRow({
           </div>
           {action.description && (
             <div className="text-[12px] text-ink2 mt-1">{action.description}</div>
+          )}
+          {action.objective && (
+            <div className="text-[11px] text-ink3 mt-1 flex items-center gap-1">
+              <Lightbulb size={11} className="text-moss" />
+              Objectif liÃ© : <span className="text-ink font-medium">{action.objective.title}</span>
+            </div>
           )}
         </div>
         {canManage ? (

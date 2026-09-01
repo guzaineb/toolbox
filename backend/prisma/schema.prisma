@@ -745,6 +745,7 @@ model ImprovementObjective {
   updated_at      DateTime                  @updatedAt
 
   plan ImprovementPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  actions CoachingAction[] @relation("ActionImprovementObjective")
 
   @@index([plan_id])
   @@index([status])
@@ -1009,6 +1010,7 @@ model CoachingAction {
   session_id          String?
   assignment_id       String?
   recommendation_id   String?
+  objective_id        String?
   responsible_user_id String?
   related_document_key String?
   title               String
@@ -1027,6 +1029,7 @@ model CoachingAction {
   session       CoachingSession?       @relation(fields: [session_id], references: [id])
   assignment    ProjectExpertAssignment? @relation(fields: [assignment_id], references: [id])
   recommendation CoachingRecommendation? @relation(fields: [recommendation_id], references: [id])
+  objective ImprovementObjective?       @relation("ActionImprovementObjective", fields: [objective_id], references: [id], onDelete: SetNull)
   responsibleUser User?                 @relation("ActionResponsible", fields: [responsible_user_id], references: [id])
   createdBy     User                   @relation("ActionCreatedBy", fields: [created_by], references: [id])
   comments      CoachingComment[]
@@ -1035,6 +1038,7 @@ model CoachingAction {
   @@index([project_id])
   @@index([session_id])
   @@index([assignment_id])
+  @@index([objective_id])
   @@index([status])
   @@index([deadline])
   @@map("coaching_actions")

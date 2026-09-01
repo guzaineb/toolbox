@@ -116,7 +116,7 @@ class CoachingService {
     return data
   }
 
-  async updateAction(id: string, dto: { title?: string; description?: string; status?: string; priority?: string; deadline?: string; responsibleUserId?: string | null; relatedDocumentKey?: string | null }): Promise<CoachingAction> {
+  async updateAction(id: string, dto: { title?: string; description?: string; status?: string; priority?: string; deadline?: string; responsibleUserId?: string | null; relatedDocumentKey?: string | null; objectiveId?: string | null }): Promise<CoachingAction> {
     const { data } = await api.patch(`/coaching/actions/${id}`, dto)
     return data
   }

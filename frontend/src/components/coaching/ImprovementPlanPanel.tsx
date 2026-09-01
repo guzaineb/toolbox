@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { ClipboardList, Sparkles, ShieldCheck, CheckCircle2, Circle } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ErrorAlert, LoadingState } from '@/components/shared/ui'
 import { aiAnalysisService } from '@/services/ai-analysis.service'
+import { coachingService } from '@/services/coaching.service'
 import { cohortService } from '@/services/cohort.service'
+import { CoachingAction, ACTION_STATUS_LABELS } from '@/types/coaching'
 import {
   IMPROVEMENT_PLAN_STATUS_LABELS,
   ImprovementObjectiveStatus,
@@ -23,15 +25,21 @@ type Props = {
  */
 export function ImprovementPlanPanel({ projectId, canManage }: Props) {
   const [plans, setPlans] = useState<ImprovementPlan[]>([])
+  const [actions, setActions] = useState<CoachingAction[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
-    aiAnalysisService
-      .getProjectPlans(projectId)
-      .then(setPlans)
+    Promise.all([
+      aiAnalysisService.getProjectPlans(projectId),
+      coachingService.getProjectActions(projectId).catch(() => [] as CoachingAction[]),
+    ])
+      .then(([list, acts]) => {
+        setPlans(list)
+        setActions(acts)
+      })
       .catch((err: { response?: { data?: { message?: string } } }) =>
         setError(err?.response?.data?.message ?? 'Erreur de chargement'),
       )
@@ -158,6 +166,18 @@ export function ImprovementPlanPanel({ projectId, canManage }: Props) {
                       </Badge>{' '}
                       <span className="text-[10px] text-ink3 ml-1">{OBJECTIVE_STATUS_LABELS[o.status]} · {o.progress}%</span>
                     </span>
+                    {actions.filter((a) => a.objective_id === o.id).length > 0 && (
+                      <span className="block mt-2 pt-2 border-t border-border space-y-1">
+                        {actions.filter((a) => a.objective_id === o.id).map((a) => (
+                          <span key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="text-ink3 truncate">{a.title}</span>
+                            <Badge variant={a.status === 'COMPLETED' ? 'green' : a.status === 'REJECTED' || a.status === 'OVERDUE' ? 'red' : a.status === 'SUBMITTED' ? 'amber' : 'gray'}>
+                              {ACTION_STATUS_LABELS[a.status]}
+                            </Badge>
+                          </span>
+                        ))}
+                      </span>
+                    )}
                   </span>
                 </button>
               ))}
