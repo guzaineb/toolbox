@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-admin}
+      POSTGRES_DB: ${DATABASE_NAME:-toolbox}
+    volumes:
+      - toolbox_pgdata:/var/lib/postgresql/data
+    networks:
+      - toolbox_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DATABASE_USER:-postgres}
+      DB_PASSWORD: ${DATABASE_PASSWORD:-admin}
+      DB_NAME: ${DATABASE_NAME:-toolbox}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-admin}@db:5432/${DATABASE_NAME:-toolbox}?schema=public
+    networks:
+      - toolbox_net
+    ports:
+      - "3020:3000"
+    restart: unless-stopped
+    command: >
+      sh -c "node wait-for-db.js && npx prisma migrate deploy && npm run seed && npm run start:prod"
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3020
+    depends_on:
+      - api
+    networks:
+      - toolbox_net
+    ports:
+      - "3021:3000"
+    restart: unless-stopped
+
+volumes:
+  toolbox_pgdata:
+
+networks:
+  toolbox_net:
+    external: true

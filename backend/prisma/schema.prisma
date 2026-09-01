@@ -1,0 +1,1935 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================
+// ENUMS
+// ===========================
+enum UserRole {
+  ADMIN
+  EXPERT
+  PROJECT_OWNER
+  INCUBATOR_MEMBER // anciennement `incubator_membre` (valeur historique, migrée)
+}
+
+enum MemberRole {
+  ADMIN
+  PROGRAM_MANAGER
+  COHORT_MANAGER
+  REVIEW_MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  UNAVAILABLE
+}
+
+enum IncubatorMemberStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum IncubatorStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum Language {
+  FR
+  EN
+  AR
+}
+
+enum StepStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum CohortStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  ARCHIVED
+}
+
+enum ParticipationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum FundingPhase {
+  IDEATION
+  VALIDATION
+  EARLY_STAGE
+  GROWTH
+  SCALING
+}
+
+enum ImpactPeriod {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum DocumentStatus {
+  NOT_GENERATED
+  GENERATED
+  UPDATED
+}
+
+enum ParticipationOrigin {
+  APPLICATION
+  INVITATION
+}
+
+enum CohortExpertRole {
+  JURY
+  COACH
+}
+
+enum CohortExpertStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+enum CoachingSessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  MISSED
+}
+
+// Résultat de l'objectif de session, constaté par le coach à la clôture.
+enum SessionObjectiveResult {
+  ACHIEVED
+  PARTIALLY_ACHIEVED
+  NOT_ACHIEVED
+}
+
+enum CoachingActionStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  REJECTED
+  OVERDUE
+  CANCELLED
+}
+
+enum CoachingActionPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum CoachingRecommendationStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  ARCHIVED
+}
+
+// ===========================
+// COACHING & ÉVALUATION — IA (analyse, plan, preuves)
+// ===========================
+enum AiAnalysisType {
+  EVALUATION_ANALYSIS
+  JURY_ASSISTANT
+  RISK_ANALYSIS
+  PROGRESS_ANALYSIS
+  SESSION_BRIEF
+  SESSION_SUMMARY
+}
+
+enum AiAnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ImprovementPlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ImprovementObjectiveStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EvidenceType {
+  LINK
+  TEXT
+  DOCUMENT
+  RESULT
+}
+
+enum EvidenceReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum EvaluationStage {
+  INTERMEDIATE
+  FINAL
+}
+
+enum FinalDecisionType {
+  ACCEPTED
+  REJECTED
+  CONDITIONAL
+  EXTENDED
+  REEVALUATION_REQUIRED
+}
+
+enum ConditionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+enum JurySessionStatus {
+  DRAFT
+  OPEN
+  DELIBERATION
+  CLOSED
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ResourceType {
+  PROJECT
+  COHORT
+  INCUBATOR
+  EVALUATION
+  COACHING
+  DOCUMENT
+  USER
+  INCUBATOR_MEMBER
+}
+
+enum NotificationType {
+  // === EXISTANT (conservé pour compatibilité) ===
+  APPLICATION_SUBMITTED
+  INVITATION_RECEIVED
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  INVITATION_ACCEPTED
+  INVITATION_REJECTED
+
+  // === INCUBATEUR ===
+  MEMBER_JOINED
+  MEMBER_LEFT
+  COHORT_CREATED
+  COHORT_UPDATED
+  APPLICATION_OPEN
+  DOCUMENT_VERIFIED
+
+  // === PORTEUR DE PROJET ===
+  NEW_EVALUATION
+  DOCUMENT_GENERATED
+  DOCUMENT_UPDATED
+  AI_RESPONSE_READY
+  STEP_COMPLETED
+
+  // === EXPERT ===
+  ASSIGNED_AS_COACH
+  ASSIGNED_AS_JURY
+  EVALUATION_REQUESTED
+  COACHING_SCHEDULED
+  PROJECT_MATCHED
+  PROJECT_UNMATCHED
+
+  // === COACHING & ÉVALUATION (module) ===
+  COACHING_SESSION_SCHEDULED
+  COACHING_SESSION_UPDATED
+  COACHING_SESSION_CANCELLED
+  COACHING_SESSION_COMPLETED
+  COACHING_REPORT_SUBMITTED
+  COACHING_ACTION_ASSIGNED
+  COACHING_ACTION_UPDATED
+  COACHING_ACTION_COMPLETED
+  COACHING_ACTION_DEADLINE_SOON
+  COACHING_ACTION_OVERDUE
+  COACHING_RECOMMENDATION_ADDED
+  COACHING_COMMENT_ADDED
+  COACH_ASSIGNED
+  COACH_REMOVED
+  EVALUATION_AVAILABLE
+  EVALUATION_SUBMITTED
+  EVALUATION_ALL_COMPLETED
+  EVALUATION_DEADLINE_SOON
+  EVALUATION_TEMPLATE_CREATED
+  FINAL_DECISION_MADE
+  FINAL_DECISION_UPDATED
+  FINAL_DECISION_CONDITIONS_ADDED
+  CONDITION_VALIDATED
+  REEVALUATION_REQUESTED
+  AI_ANALYSIS_READY
+  COACHING_ACTION_SUBMITTED
+  COACHING_EVIDENCE_REVIEWED
+  RE_EVALUATION_AVAILABLE
+
+  // === ADMIN ===
+  NEW_USER_REGISTERED
+  NEW_INCUBATOR
+  NEW_EXPERT
+  USER_REPORTED
+  CRITICAL_ERROR
+
+  // === DOCUMENT ===
+  DOCUMENT_PENDING
+}
+
+// ===========================
+// IDENTITY — Users & Profiles
+// ===========================
+model User {
+  id                        String    @id @default(uuid())
+  email                     String    @unique
+  password_hash             String
+  is_active                 Boolean   @default(true)
+  is_verified               Boolean   @default(false)
+  verification_token        String?
+  verification_code         String?
+  verification_code_expires DateTime?
+  last_login_at             DateTime?
+  reset_password_token        String?
+  reset_password_expires      DateTime?
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @updatedAt
+  role                      UserRole?
+  profile_id                String?   @unique
+
+  profile              UserProfile?             @relation(fields: [profile_id], references: [id])
+  projectOwnerProfile  ProjectOwnerProfile?
+  expertProfile        ExpertProfile?
+  incubatorMembers     IncubatorMember[]
+  documents            IncubatorDocument[]
+  cohortExperts        CohortExpert[]           @relation("ExpertUser")
+  assignedCohorts      CohortExpert[]           @relation("AssignedBy")
+  evaluations          Evaluation[]
+  notifications        Notification[]        @relation("NotificationRecipient")
+  sentNotifications    Notification[]        @relation("NotificationSender")
+  notificationPreference NotificationPreference?
+
+  // Coaching & Évaluation
+  projectExpertAssignments        ProjectExpertAssignment[]  @relation("AssignmentExpert")
+  assignedProjectExpertAssignments ProjectExpertAssignment[] @relation("AssignmentAssignedBy")
+  coachingSessionsCreated         CoachingSession[]          @relation("SessionCreatedBy")
+  coachingActionsCreated          CoachingAction[]           @relation("ActionCreatedBy")
+  coachingActionsResponsible      CoachingAction[]           @relation("ActionResponsible")
+  coachingRecommendations         CoachingRecommendation[]   @relation("RecommendationAuthor")
+  coachingComments                CoachingComment[]          @relation("CommentAuthor")
+  evaluationTemplatesCreated      EvaluationTemplate[]       @relation("TemplateCreatedBy")
+  evaluationAssignmentsJury       EvaluationAssignment[]     @relation("EvaluationJury")
+  evaluationAssignmentsCreated    EvaluationAssignment[]     @relation("EvaluationAssignedBy")
+  finalDecisionsDecided           FinalDecision[]            @relation("DecisionDecidedBy")
+  conditionValidated              FinalDecisionCondition[]   @relation("ConditionValidatedBy")
+  jurySessionsCreated             JurySession[]              @relation("JuryCreatedBy")
+  jurySessionMemberships          JurySessionMember[]        @relation("JuryMemberUser")
+  improvementPlansCreated         ImprovementPlan[]          @relation("PlanCreatedBy")
+  auditLogs                       AuditLog[]                 @relation("AuditActor")
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                 String   @id @default(uuid())
+  first_name         String
+  last_name          String
+  phone              String?
+  avatar_url         String?
+  birth_date         DateTime?
+  country            String?
+  city               String?
+  address            String?
+  bio                String?
+  preferred_language Language  @default(FR)
+  linkedin           String?
+
+  user User?
+
+  @@map("user_profiles")
+}
+
+// ===========================
+// EXPERT
+// ===========================
+model ExpertiseArea {
+  id       String @id @default(uuid())
+  name     String
+  category String?
+
+  expertiseConnections ExpertProfileExpertiseArea[]
+
+  @@map("expertise_areas")
+}
+
+model ExpertProfile {
+  id                  String             @id @default(uuid())
+  headline            String
+  bio                 String?
+  organization        String?
+  position            String?
+  years_of_experience Int?
+  linkedin_url        String?
+  availability_status AvailabilityStatus @default(AVAILABLE)
+  user_id             String             @unique
+
+  user                 User                          @relation(fields: [user_id], references: [id])
+  expertiseConnections ExpertProfileExpertiseArea[]
+
+  @@map("expert_profiles")
+}
+
+model ExpertProfileExpertiseArea {
+  id                  String   @id @default(uuid())
+  level               String?
+  years_of_experience Int?     @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  expert_profile_id String
+  expertise_area_id String
+
+  expertProfile  ExpertProfile  @relation(fields: [expert_profile_id], references: [id], onDelete: Cascade)
+  expertiseArea  ExpertiseArea  @relation(fields: [expertise_area_id], references: [id], onDelete: Cascade)
+
+  @@unique([expert_profile_id, expertise_area_id])
+  @@map("expert_profile_expertise_areas")
+}
+
+// ===========================
+// INCUBATORS
+// ===========================
+model Incubator {
+  id                  String            @id @default(uuid())
+  name                String
+  legal_name          String?
+  slug                String            @unique
+  description         String?
+  foundation_date     DateTime?
+  organization_type   String?
+  registration_number String?
+  tax_id              String?
+  email               String?
+  phone               String?
+  website_url         String?
+  address             String?
+  country             String?
+  city                String?
+  logo_url            String?
+  verification_status VerificationStatus @default(PENDING)
+  status              IncubatorStatus    @default(ACTIVE)
+  created_by_user_id  String
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  members     IncubatorMember[]
+  documents   IncubatorDocument[]
+  invitations IncubatorInvitation[]
+  cohorts     Cohort[]
+
+  @@map("incubators")
+}
+
+model IncubatorMember {
+  id                  String               @id @default(uuid())
+  user_id             String
+  incubator_id        String
+  role                MemberRole           @default(MEMBER)
+  job_title           String?
+  department          String?
+  bio                 String?
+  status              IncubatorMemberStatus @default(ACTIVE)
+  is_primary_contact  Boolean              @default(false)
+  can_manage_programs Boolean              @default(false)
+  can_manage_cohorts  Boolean              @default(false)
+  can_manage_members  Boolean              @default(false)
+
+  user      User      @relation(fields: [user_id], references: [id])
+  incubator Incubator @relation(fields: [incubator_id], references: [id])
+
+  @@unique([user_id, incubator_id])
+  @@map("incubator_members")
+}
+
+model IncubatorInvitation {
+  id           String     @id @default(uuid())
+  token        String     @unique
+  incubator_id String
+  email        String
+  role         MemberRole
+  job_title    String?
+  expires_at   DateTime
+  created_at   DateTime   @default(now())
+
+  incubator Incubator @relation(fields: [incubator_id], references: [id])
+
+  @@map("incubator_invitations")
+}
+
+model IncubatorDocument {
+  id                  String             @id @default(uuid())
+  incubator_id        String
+  document_type       String
+  file_url            String
+  verification_status VerificationStatus @default(PENDING)
+  rejection_reason    String?
+  uploaded_by_user_id String
+  uploaded_at         DateTime           @default(now())
+
+  incubator       Incubator @relation(fields: [incubator_id], references: [id])
+  uploaded_by_user User     @relation(fields: [uploaded_by_user_id], references: [id])
+
+  @@index([incubator_id])
+  @@index([uploaded_by_user_id])
+  @@map("incubator_documents")
+}
+
+// ===========================
+// PROJECT OWNER
+// ===========================
+model ProjectOwnerProfile {
+  id                              String   @id @default(uuid())
+  current_status                  String?
+  education_level                 String?
+  field_of_study                  String?
+  occupation                      String?
+  linkedin_url                    String?
+  entrepreneurial_experience_level Int      @default(0)
+  has_previous_startup            Boolean  @default(false)
+  user_id                         String   @unique
+  created_at                      DateTime @default(now())
+  updated_at                      DateTime @updatedAt
+
+  user        User                     @relation(fields: [user_id], references: [id])
+  skills      ProjectOwnerSkill[]
+  experiences ProjectOwnerExperience[]
+
+  @@map("project_owner_profiles")
+}
+
+model ProjectOwnerSkill {
+  id                       String   @id @default(uuid())
+  skill_name               String
+  level                    String?
+  project_owner_profile_id String
+  created_at               DateTime @default(now())
+
+  profile ProjectOwnerProfile @relation(fields: [project_owner_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([project_owner_profile_id])
+  @@map("project_owner_skills")
+}
+
+model ProjectOwnerExperience {
+  id                       String   @id @default(uuid())
+  title                    String
+  organization             String
+  description              String?
+  start_date               DateTime?
+  end_date                 DateTime?
+  project_owner_profile_id String
+  created_at               DateTime @default(now())
+
+  profile ProjectOwnerProfile @relation(fields: [project_owner_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([project_owner_profile_id])
+  @@map("project_owner_experiences")
+}
+
+// ===========================
+// CORE — Projects
+// ===========================
+model Project {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  owner_id        String
+  gbm_reviewed_at DateTime?
+  is_gbm_reviewed Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Phase 1
+  idea_sketch              IdeaSketch?
+  problems_needs           ProblemsNeeds?
+  pestel                   Pestel?
+  objective                Objective?
+  mission_vision           MissionVision?
+  context_summary          ContextSummary?
+
+  // Phase 2
+  stakeholder              Stakeholder[]
+  stakeholder_map          StakeholderMap[]
+  customer_segment         CustomerSegment[]
+  value_proposition        ValueProposition?
+  test_discovery           TestDiscovery[]
+  value_proposition_pivot  ValuePropositionPivot?
+  customer_relations_channel CustomerRelationsChannel?
+  customer_journey         CustomerJourney[]
+  key_activities_resource  KeyActivitiesResource?
+  eco_design               EcoDesign?
+  eco_design_result        EcoDesignResult?
+  summary_activity         SummaryActivity?
+  cost_structure           CostStructure?
+  revenue_stream           RevenueStream?
+  cost_revenue_summary     CostRevenueSummary?
+
+  // Phase 3
+  test_preparation         TestPreparation?
+
+  // Phase 4
+  indicator                Indicator?
+
+  // Business Plan
+  management_plan          ManagementPlan?
+  marketing_plan           MarketingPlan?
+  financial_plan           FinancialPlan?
+  legal_plan               LegalPlan?
+  kpi                      Kpi?
+  executive_summary        ExecutiveSummary?
+
+  // Modules transverses
+  funding_assessment       FundingAssessment?
+  market_access            MarketAccess?
+  impact_measure           ImpactMeasure?
+
+  // Analyse SWOT
+  swot_analysis            SwotAnalysis?
+
+  // Documents générés
+  generated_documents      GeneratedDocument[]
+
+  // Relations
+  step_progresses        StepProgress[]
+  ai_interactions        AiInteraction[]
+  cohort_participations  CohortParticipation[]
+  evaluations            Evaluation[]
+
+  // Coaching & Évaluation
+  projectExpertAssignments ProjectExpertAssignment[]
+  coachingActions          CoachingAction[]
+  coachingRecommendations  CoachingRecommendation[]
+  evaluationAssignments    EvaluationAssignment[]
+  finalDecisions           FinalDecision[]
+  jurySessions             JurySession[]
+  aiAnalyses               AiAnalysis[]
+  improvementPlans         ImprovementPlan[]
+
+  @@index([name])
+  @@index([owner_id])
+  @@map("projects")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Analyses IA persistées
+// ===========================
+model AiAnalysis {
+  id            String          @id @default(uuid())
+  project_id    String
+  type          AiAnalysisType
+  status        AiAnalysisStatus @default(PENDING)
+  evaluation_id String?
+  session_id    String?
+  from_evaluation_id String?
+  to_evaluation_id   String?
+  payload       Json?
+  error         String?
+  model         String?
+  prompt_tokens Int?
+  completion_tokens Int?
+  total_tokens  Int?
+  duration_ms   Int?
+  created_by    String?
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  evaluation Evaluation? @relation("AnalysisEvaluation", fields: [evaluation_id], references: [id], onDelete: SetNull)
+  recommendations CoachingRecommendation[]
+  improvementPlans ImprovementPlan[]
+
+  @@index([project_id])
+  @@index([type])
+  @@index([status])
+  @@index([evaluation_id])
+  @@map("ai_analyses")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Plan d'amélioration
+// ===========================
+model ImprovementPlan {
+  id            String               @id @default(uuid())
+  project_id    String
+  evaluation_id String?
+  ai_analysis_id String?
+  title         String?
+  description   String?
+  status        ImprovementPlanStatus @default(DRAFT)
+  target_areas  Json?
+  progress      Int                  @default(0)
+  deadline      DateTime?
+  validated_by  String?
+  validated_at  DateTime?
+  created_by    String
+  created_at    DateTime             @default(now())
+  updated_at    DateTime             @updatedAt
+
+  project    Project                @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  evaluation Evaluation?            @relation(fields: [evaluation_id], references: [id], onDelete: SetNull)
+  aiAnalysis AiAnalysis?            @relation(fields: [ai_analysis_id], references: [id])
+  objectives ImprovementObjective[]
+  createdBy  User                   @relation("PlanCreatedBy", fields: [created_by], references: [id])
+
+  @@index([project_id])
+  @@index([status])
+  @@index([evaluation_id])
+  @@map("improvement_plans")
+}
+
+model ImprovementObjective {
+  id              String                    @id @default(uuid())
+  plan_id         String
+  title           String
+  description     String?
+  priority        CoachingActionPriority    @default(MEDIUM)
+  current_score   Float?
+  target_score    Float?
+  progress        Int                       @default(0)
+  status          ImprovementObjectiveStatus @default(PENDING)
+  deadline        DateTime?
+  created_at      DateTime                  @default(now())
+  updated_at      DateTime                  @updatedAt
+
+  plan ImprovementPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+
+  @@index([plan_id])
+  @@index([status])
+  @@map("improvement_objectives")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Preuves d'action (proof of work)
+// ===========================
+model ActionEvidence {
+  id          String               @id @default(uuid())
+  action_id   String
+  type        EvidenceType
+  title       String?
+  content     String?
+  url         String?
+  review_status EvidenceReviewStatus @default(PENDING)
+  coach_comment String?
+  reviewed_by String?
+  reviewed_at DateTime?
+  submitted_by String
+  created_at  DateTime             @default(now())
+  updated_at  DateTime             @updatedAt
+
+  action CoachingAction @relation(fields: [action_id], references: [id], onDelete: Cascade)
+
+  @@index([action_id])
+  @@index([review_status])
+  @@map("action_evidences")
+}
+
+// ===========================
+// CORE — Step Progress
+// ===========================
+model StepProgress {
+  id           String     @id @default(uuid())
+  project_id   String
+  step_key     String
+  status       StepStatus @default(NOT_STARTED)
+  completed_at DateTime?
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, step_key])
+  @@index([project_id])
+  @@index([step_key])
+  @@index([status])
+  @@map("step_progress")
+}
+
+// ===========================
+// CORE — Cohorts
+// ===========================
+model Cohort {
+  id                   String        @id @default(uuid())
+  name                 String
+  program              String?
+  description          String?
+  capacity             Int?
+  current_participants Int           @default(0)
+  application_deadline DateTime?
+  start_date           DateTime?
+  end_date             DateTime?
+  status               CohortStatus  @default(DRAFT)
+  incubator_id         String?
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
+
+  incubator      Incubator?          @relation(fields: [incubator_id], references: [id])
+  participations CohortParticipation[]
+  experts        CohortExpert[]
+
+  // Coaching & Évaluation
+  evaluationAssignments EvaluationAssignment[]
+  evaluationTemplates   EvaluationTemplate[]
+  finalDecisions        FinalDecision[]
+  jurySessions          JurySession[]
+
+  @@index([status])
+  @@index([incubator_id])
+  @@map("cohorts")
+}
+
+model CohortParticipation {
+  id           String              @id @default(uuid())
+  cohort_id    String
+  project_id   String
+  status       ParticipationStatus @default(PENDING)
+  origin       ParticipationOrigin @default(APPLICATION)
+  applied_at   DateTime            @default(now())
+  invited_at   DateTime?
+  responded_at DateTime?
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
+
+  cohort  Cohort  @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([cohort_id, project_id])
+  @@index([cohort_id])
+  @@index([project_id])
+  @@index([status])
+  @@map("cohort_participations")
+}
+
+// ===========================
+// CORE — Cohort Experts
+// ===========================
+model CohortExpert {
+  id              String            @id @default(uuid())
+  cohort_id       String
+  expert_user_id  String
+  role            CohortExpertRole
+  status          CohortExpertStatus @default(PENDING)
+  assigned_by     String
+  assigned_at     DateTime          @default(now())
+  invited_at      DateTime?
+  responded_at    DateTime?
+
+  cohort      Cohort @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  expertUser  User   @relation("ExpertUser", fields: [expert_user_id], references: [id])
+  assignedBy  User   @relation("AssignedBy", fields: [assigned_by], references: [id])
+
+  @@unique([cohort_id, expert_user_id, role])
+  @@index([cohort_id])
+  @@index([expert_user_id])
+  @@map("cohort_experts")
+}
+
+// ===========================
+// CORE — Evaluations (Jury)
+// ===========================
+model Evaluation {
+  id            String          @id @default(uuid())
+  project_id    String
+  jury_user_id  String
+  score         Float?
+  comment       String?
+  recommendation String?
+  status        EvaluationStatus @default(DRAFT)
+  submitted_at  DateTime?
+  template_id   String?
+  version       Int             @default(1)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  project   Project             @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  juryUser  User                @relation(fields: [jury_user_id], references: [id])
+  template  EvaluationTemplate? @relation(fields: [template_id], references: [id])
+  scores    EvaluationScore[]
+  aiAnalyses        AiAnalysis[]       @relation("AnalysisEvaluation")
+  improvementPlans  ImprovementPlan[]
+
+  @@unique([project_id, jury_user_id, template_id, version])
+  @@index([project_id])
+  @@index([jury_user_id])
+  @@index([status])
+  @@map("evaluations")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Affectations par projet
+// ===========================
+model ProjectExpertAssignment {
+  id           String            @id @default(uuid())
+  project_id   String
+  expert_user_id String
+  role         CohortExpertRole  @default(COACH)
+  status       CohortExpertStatus @default(ACTIVE)
+  assigned_by  String
+  assigned_at  DateTime          @default(now())
+  removed_at   DateTime?
+
+  project     Project            @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  expertUser  User               @relation("AssignmentExpert", fields: [expert_user_id], references: [id])
+  assignedBy  User               @relation("AssignmentAssignedBy", fields: [assigned_by], references: [id])
+  sessions    CoachingSession[]
+  actions     CoachingAction[]
+
+  @@unique([project_id, expert_user_id, role])
+  @@index([project_id])
+  @@index([expert_user_id])
+  @@index([status])
+  @@map("project_expert_assignments")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Sessions
+// ===========================
+model CoachingSession {
+  id               String                @id @default(uuid())
+  assignment_id    String
+  title            String?
+  objective        String?
+  session_type     String?
+  scheduled_at     DateTime
+  duration_minutes Int?
+  status           CoachingSessionStatus @default(SCHEDULED)
+  agenda           String?
+  notes            String?
+  findings         String?
+  topics_discussed String?
+  blockers         Json?
+  decisions        String?
+  report           String?
+  summary          String?
+  next_objectives  String?
+  objective_result         SessionObjectiveResult?
+  objective_result_reason  String?
+  created_by       String
+   created_at       DateTime              @default(now())
+   updated_at       DateTime              @updatedAt
+   started_at       DateTime?
+   completed_at     DateTime?
+
+  assignment ProjectExpertAssignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
+  createdBy  User                    @relation("SessionCreatedBy", fields: [created_by], references: [id])
+  actions    CoachingAction[]
+  comments   CoachingComment[]
+  recommendations CoachingRecommendation[]
+
+  @@index([assignment_id])
+  @@index([status])
+  @@map("coaching_sessions")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Recommandations
+// ===========================
+model CoachingRecommendation {
+  id          String                      @id @default(uuid())
+  session_id  String?
+  project_id  String?
+  author_id   String
+  title       String?
+  content     String
+  priority    CoachingActionPriority      @default(MEDIUM)
+  status      CoachingRecommendationStatus @default(OPEN)
+  source      String                      @default("COACH") // COACH | AI (suggestion IA validée/modifiée par le coach)
+  ai_analysis_id String?
+  created_at  DateTime                    @default(now())
+  updated_at  DateTime                    @updatedAt
+
+  session CoachingSession? @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  project Project?         @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  author  User             @relation("RecommendationAuthor", fields: [author_id], references: [id])
+  actions CoachingAction[]
+  aiAnalysis AiAnalysis?   @relation(fields: [ai_analysis_id], references: [id])
+
+  @@index([session_id])
+  @@index([project_id])
+  @@index([source])
+  @@map("coaching_recommendations")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Actions
+// ===========================
+model CoachingAction {
+  id                  String                @id @default(uuid())
+  project_id          String
+  session_id          String?
+  assignment_id       String?
+  recommendation_id   String?
+  responsible_user_id String?
+  related_document_key String?
+  title               String
+  description         String?
+  status              CoachingActionStatus  @default(PENDING)
+  priority            CoachingActionPriority @default(MEDIUM)
+  deadline            DateTime?
+  completed_at        DateTime?
+  created_by          String
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
+  deadline_reminded_at DateTime?
+  overdue_reminded_at  DateTime?
+
+  project       Project                @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  session       CoachingSession?       @relation(fields: [session_id], references: [id])
+  assignment    ProjectExpertAssignment? @relation(fields: [assignment_id], references: [id])
+  recommendation CoachingRecommendation? @relation(fields: [recommendation_id], references: [id])
+  responsibleUser User?                 @relation("ActionResponsible", fields: [responsible_user_id], references: [id])
+  createdBy     User                   @relation("ActionCreatedBy", fields: [created_by], references: [id])
+  comments      CoachingComment[]
+  evidences     ActionEvidence[]
+
+  @@index([project_id])
+  @@index([session_id])
+  @@index([assignment_id])
+  @@index([status])
+  @@index([deadline])
+  @@map("coaching_actions")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Commentaires
+// ===========================
+model CoachingComment {
+  id            String        @id @default(uuid())
+  action_id     String?
+  session_id    String?
+  author_id     String
+  content       String
+  resource_type ResourceType?
+  resource_id   String?
+  created_at    DateTime      @default(now())
+
+  action  CoachingAction?  @relation(fields: [action_id], references: [id], onDelete: Cascade)
+  session CoachingSession? @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  author  User             @relation("CommentAuthor", fields: [author_id], references: [id])
+
+  @@index([action_id])
+  @@index([session_id])
+  @@index([resource_type, resource_id])
+  @@map("coaching_comments")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Grilles d'évaluation
+// ===========================
+model EvaluationTemplate {
+  id          String          @id @default(uuid())
+  cohort_id   String
+  name        String
+  description String?
+  stage       EvaluationStage @default(FINAL)
+  published   Boolean         @default(false)
+  locked_at   DateTime?
+  created_by  String
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
+
+  cohort     Cohort             @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  createdBy  User               @relation("TemplateCreatedBy", fields: [created_by], references: [id])
+  criteria   EvaluationCriterion[]
+  evaluations Evaluation[]
+
+  @@index([cohort_id])
+  @@map("evaluation_templates")
+}
+
+model EvaluationCriterion {
+  id          String  @id @default(uuid())
+  template_id String
+  name        String
+  description String?
+  weight      Float   @default(1)
+  max_score   Int     @default(5)
+  sort_order  Int     @default(0)
+
+  template EvaluationTemplate @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  scores   EvaluationScore[]
+
+  @@index([template_id])
+  @@map("evaluation_criteria")
+}
+
+model EvaluationScore {
+  id           String  @id @default(uuid())
+  evaluation_id String
+  criterion_id String
+  score        Int
+  comment      String?
+
+  evaluation Evaluation        @relation(fields: [evaluation_id], references: [id], onDelete: Cascade)
+  criterion  EvaluationCriterion @relation(fields: [criterion_id], references: [id], onDelete: Cascade)
+
+  @@unique([evaluation_id, criterion_id])
+  @@index([evaluation_id])
+  @@map("evaluation_scores")
+}
+
+model EvaluationAssignment {
+  id               String    @id @default(uuid())
+  cohort_id        String
+  project_id       String
+  jury_user_id     String
+  assigned_by      String
+  created_at       DateTime  @default(now())
+  deadline         DateTime?
+  deadline_reminded_at DateTime?
+
+  cohort     Cohort @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  project    Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  juryUser   User   @relation("EvaluationJury", fields: [jury_user_id], references: [id])
+  assignedBy User   @relation("EvaluationAssignedBy", fields: [assigned_by], references: [id])
+
+  @@unique([cohort_id, project_id, jury_user_id])
+  @@index([cohort_id])
+  @@index([project_id])
+  @@index([jury_user_id])
+  @@index([deadline])
+  @@map("evaluation_assignments")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Décision finale & Conditions
+// ===========================
+model FinalDecision {
+  id          String           @id @default(uuid())
+  project_id  String
+  cohort_id   String
+  decision    FinalDecisionType
+  final_score Float?
+  justification String?
+  new_end_date DateTime?
+  decided_by  String
+  decided_at  DateTime         @default(now())
+  created_at  DateTime         @default(now())
+
+  project Project               @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  cohort  Cohort                @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  decidedBy User                @relation("DecisionDecidedBy", fields: [decided_by], references: [id])
+  conditions FinalDecisionCondition[]
+
+  @@index([project_id])
+  @@index([cohort_id])
+  @@map("final_decisions")
+}
+
+model FinalDecisionCondition {
+  id           String         @id @default(uuid())
+  decision_id  String
+  description  String
+  deadline     DateTime?
+  status       ConditionStatus @default(PENDING)
+  validated_by String?
+  validated_at DateTime?
+  created_at   DateTime       @default(now())
+
+  decision    FinalDecision @relation(fields: [decision_id], references: [id], onDelete: Cascade)
+  validatedBy User?         @relation("ConditionValidatedBy", fields: [validated_by], references: [id])
+
+  @@index([decision_id])
+  @@map("final_decision_conditions")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Jury / Délibération
+// ===========================
+model JurySession {
+  id                    String          @id @default(uuid())
+  project_id            String
+  cohort_id             String
+  title                 String?
+  status                JurySessionStatus @default(DRAFT)
+  observations          String?
+  reevaluation_requested Boolean        @default(false)
+  created_by            String
+  created_at            DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
+  closed_at             DateTime?
+
+  project   Project           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  cohort    Cohort            @relation(fields: [cohort_id], references: [id], onDelete: Cascade)
+  createdBy User              @relation("JuryCreatedBy", fields: [created_by], references: [id])
+  members   JurySessionMember[]
+
+  @@index([project_id])
+  @@index([cohort_id])
+  @@index([status])
+  @@map("jury_sessions")
+}
+
+model JurySessionMember {
+  id              String @id @default(uuid())
+  jury_session_id String
+  member_user_id  String
+  created_at      DateTime @default(now())
+
+  jurySession JurySession @relation(fields: [jury_session_id], references: [id], onDelete: Cascade)
+  member      User        @relation("JuryMemberUser", fields: [member_user_id], references: [id])
+
+  @@unique([jury_session_id, member_user_id])
+  @@index([member_user_id])
+  @@map("jury_session_members")
+}
+
+// ===========================
+// COACHING & ÉVALUATION — Audit log
+// ===========================
+model AuditLog {
+  id          String   @id @default(uuid())
+  actor_id    String
+  action      String
+  entity_type String
+  entity_id   String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  actor User @relation("AuditActor", fields: [actor_id], references: [id])
+
+  @@index([entity_type, entity_id])
+  @@index([actor_id])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+// ===========================
+// CORE — AI Interactions
+// ===========================
+model AiInteraction {
+  id          String   @id @default(uuid())
+  project_id  String
+  step_key    String?
+  prompt      String
+  response    String
+  model       String   @default("gpt-4")
+  tokens_used Int?
+  duration_ms Int?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([step_key])
+  @@map("ai_interactions")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 1 : Ébaucher & Définir
+// ===========================
+
+// Étape 1 — Esquissez votre idée d'entreprise
+model IdeaSketch {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  idea_initial     String?
+  product_service  String?
+  customers        String?
+  partners         String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("idea_sketches")
+}
+
+// Étape 2 — Identifier les problèmes et les besoins
+model ProblemsNeeds {
+  id                      String   @id @default(uuid())
+  project_id              String   @unique
+  environmental_challenges String?
+  social_challenges       String?
+  customer_needs          String?
+  team_motivations        String?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("problems_needs")
+}
+
+// Étape 3 — Comprendre le contexte (PESTEL)
+model Pestel {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  political_what   String?
+  political_how    String?
+  economic_what    String?
+  economic_how     String?
+  social_what      String?
+  social_how       String?
+  technological_what String?
+  technological_how  String?
+  environmental_what String?
+  environmental_how  String?
+  legal_what       String?
+  legal_how        String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("pestels")
+}
+
+// Étape 4 — Fixez vos objectifs
+model Objective {
+  id                       String   @id @default(uuid())
+  project_id               String   @unique
+  environmental_problems   String?
+  environmental_objectives String?
+  social_problems          String?
+  social_objectives        String?
+  customer_problems        String?
+  customer_objectives      String?
+  team_problems            String?
+  team_objectives          String?
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("objectives")
+}
+
+// Étape 5 — Synthétiser une mission et une vision
+model MissionVision {
+  id         String   @id @default(uuid())
+  project_id String   @unique
+  mission    String?
+  vision     String?
+  values     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("mission_visions")
+}
+
+// Étape 6 — Résumé du contexte et des objectifs (AI-generated)
+model ContextSummary {
+  id             String   @id @default(uuid())
+  project_id     String   @unique
+  summary_text   String?
+  generated_by_ai Boolean @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("context_summaries")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 2 : Construire
+// ===========================
+
+// Étape 7a — Identifier et cartographier les parties prenantes
+model Stakeholder {
+  id                  String   @id @default(uuid())
+  project_id          String
+  name                String?
+  role                String?
+  interest            String?
+  influence           String?
+  engagement_strategy String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("stakeholders")
+}
+
+// Étape 7b — Cartes des parties prenantes (donnant-donnant)
+model StakeholderMap {
+  id              String   @id @default(uuid())
+  project_id      String
+  stakeholder_name String?
+  contribution    String?
+  reward          String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("stakeholder_maps")
+}
+
+// Étape 8 — Segments de clientèle
+model CustomerSegment {
+  id              String   @id @default(uuid())
+  project_id      String
+  segment_name    String?
+  description     String?
+  pains           String?
+  gains           String?
+  functions       String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("customer_segments")
+}
+
+// Étape 9 — Canevas de propositions de valeur
+model ValueProposition {
+  id                  String   @id @default(uuid())
+  project_id          String   @unique
+  environmental_value String?
+  social_value        String?
+  pain_relievers      String?
+  gain_creators       String?
+  products_services   String?
+  value_added         String?
+  innovation_value    String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("value_propositions")
+}
+
+// Étape 10 — Tester la proposition de valeur
+model TestDiscovery {
+  id          String   @id @default(uuid())
+  project_id  String
+  hypothesis  String?
+  test_method String?
+  results     String?
+  learnings   String?
+  validated   Boolean?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("test_discoveries")
+}
+
+// Étape 11 — Pivoter la proposition de valeur
+model ValuePropositionPivot {
+  id                    String   @id @default(uuid())
+  project_id            String   @unique
+  initial_assumptions   String?
+  test_results          String?
+  pivot_decision        String?
+  new_value_proposition String?
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("value_proposition_pivots")
+}
+
+// Étape 12a — Relations avec les clients et canaux
+model CustomerRelationsChannel {
+  id                     String   @id @default(uuid())
+  project_id             String   @unique
+  customer_relationships String?
+  channels               String?
+  distribution_strategy  String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("customer_relations_channels")
+}
+
+// Étape 12b — Parcours du client
+model CustomerJourney {
+  id                String   @id @default(uuid())
+  project_id        String
+  stage_name        String?
+  touchpoints       String?
+  customer_emotions String?
+  improvement_ideas String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("customer_journeys")
+}
+
+// Étape 13 — Principales activités et ressources
+model KeyActivitiesResource {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  key_activities    String?
+  key_resources     String?
+  strategic_partners String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("key_activities_resources")
+}
+
+// Étape 14a — Écoconception de votre entreprise
+model EcoDesign {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  equipe_eco      String?
+  projet_eco      String?
+  contexte_eco    String?
+  vision_durable  String?
+  cycle_de_vie    Json?
+  performance_eco String?
+  strategies_eco  Json?
+  plan_action_eco Json?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("eco_designs")
+}
+
+// Étape 14b — Résultats de l'écoconception
+model EcoDesignResult {
+  id                  String   @id @default(uuid())
+  project_id          String   @unique
+  eco_results         String?
+  performance_analysis String?
+  improvements        String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("eco_design_results")
+}
+
+// Étape 15 — Résumé des activités et ressources (AI-generated)
+model SummaryActivity {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  activities_summary String?
+  key_achievements String?
+  next_steps       String?
+  generated_by_ai  Boolean @default(false)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("summary_activities")
+}
+
+// Étape 16 — Structure des coûts
+model CostStructure {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  fixed_costs       String?
+  variable_costs    String?
+  cost_drivers      String?
+  breakeven_analysis String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("cost_structures")
+}
+
+// Étape 17 — Flux de revenus
+model RevenueStream {
+  id                 String   @id @default(uuid())
+  project_id         String   @unique
+  revenue_sources    String?
+  pricing_strategy   String?
+  revenue_projections String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("revenue_streams")
+}
+
+// Étape 18 — Résumé des coûts et flux de recettes (AI-generated)
+model CostRevenueSummary {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  cost_summary    String?
+  revenue_summary String?
+  financial_health String?
+  generated_by_ai Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("cost_revenue_summaries")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 3 : Tester
+// ===========================
+
+// Étape 19 — Préparez le test !
+model TestPreparation {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  test_objectives  String?
+  test_method     String?
+  success_criteria String?
+  resources_needed String?
+  timeline        String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("test_preparations")
+}
+
+// ===========================
+// MODULE 1 — GBM Phase 4 : Mesurer & Améliorer
+// ===========================
+
+// Étape 20 — Indicateurs
+model Indicator {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  environmental_kpis String?
+  social_kpis      String?
+  economic_kpis    String?
+  measurement_method String?
+  review_frequency String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("indicators")
+}
+
+// ===========================
+// MODULE 2 — Plan d'Affaires Vert
+// ===========================
+model ManagementPlan {
+  id                      String   @id @default(uuid())
+  project_id              String   @unique
+  problemes_gestion       String?
+  ressources_humaines     String?
+  actifs_physiques        String?
+  ressources_intellectuelles String?
+  production_fournisseurs String?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("management_plans")
+}
+
+model MarketingPlan {
+  id                     String   @id @default(uuid())
+  project_id             String   @unique
+  clients_valeur         String?
+  analyse_marche         String?
+  concurrents            String?
+  offre_prix             String?
+  branding_positionnement String?
+  canaux_communication   String?
+  relation_client        String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("marketing_plans")
+}
+
+model FinancialPlan {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  point_depart      String?
+  couts_configuration Float?
+  capital           Float?
+  compte_resultat   Json?
+  cash_flow         Json?
+  bilan             Json?
+  seuil_rentabilite Float?
+  revenus_3ans      Json?
+  autres_mesures    String?
+  rapport_financier String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("financial_plans")
+}
+
+model LegalPlan {
+  id               String   @id @default(uuid())
+  project_id       String   @unique
+  statut_juridique String?
+  immatriculation  String?
+  contrats         String?
+  assurances       String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("legal_plans")
+}
+
+model Kpi {
+  id                String   @id @default(uuid())
+  project_id        String   @unique
+  kpis              Json?
+  objectifs_mesure  String?
+  revues_performance String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("kpis")
+}
+
+model ExecutiveSummary {
+  id              String   @id @default(uuid())
+  project_id      String   @unique
+  resume_executif String?
+  generated_by_ai Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("executive_summaries")
+}
+
+// ===========================
+// MODULE 4 — Accès au Financement
+// ===========================
+model FundingAssessment {
+  id                     String       @id @default(uuid())
+  project_id             String       @unique
+  reponses_questionnaire Json?
+  score_maturite         Int?
+  phase_maturite         FundingPhase?
+  opportunites_financement Json?
+  opportunites_pays      String?
+  strategie_levee_fonds  String?
+  completed_at           DateTime?
+  created_at             DateTime     @default(now())
+  updated_at             DateTime     @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("funding_assessments")
+}
+
+// ===========================
+// MODULE 5 — Accès au Marché
+// ===========================
+model MarketAccess {
+  id                  String   @id @default(uuid())
+  project_id          String   @unique
+  essence_marque      String?
+  alignement_objectifs String?
+  positionnement      String?
+  identite_visuelle   String?
+  narration           String?
+  messages_cles       Json?
+  canaux_marketing    Json?
+  partenariats_market Json?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("market_accesses")
+}
+
+// ===========================
+// MODULE 6 — Mesure de l'Impact
+// ===========================
+model ImpactMeasure {
+  id                  String       @id @default(uuid())
+  project_id          String       @unique
+  kpis_environnementaux Json?
+  kpis_sociaux        Json?
+  kpis_economiques    Json?
+  methode_mesure      String?
+  periode_mesure      ImpactPeriod?
+  objectifs_impact    Json?
+  resultats_actuels   Json?
+  rapport_impact      String?
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("impact_measures")
+}
+
+// ===========================
+// MODULE — Analyse SWOT (AI-generated)
+// ===========================
+model SwotAnalysis {
+  id           String   @id @default(uuid())
+  project_id   String   @unique
+  strengths    String?
+  weaknesses   String?
+  opportunities String?
+  threats      String?
+  generated_at DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("swot_analyses")
+}
+
+// ===========================
+// MODULE — Documents générés
+// ===========================
+model GeneratedDocument {
+  id            String         @id @default(uuid())
+  project_id    String
+  document_key  String
+  title         String
+  status        DocumentStatus @default(NOT_GENERATED)
+  content       String?
+  generated_at  DateTime?
+  updated_at    DateTime       @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, document_key])
+  @@index([project_id])
+  @@map("generated_documents")
+}
+
+// ===========================
+// MODULE — Notifications in-app
+// ===========================
+model Notification {
+  id            String             @id @default(uuid())
+  user_id       String
+  sender_id     String?                                    // Qui a déclenché l'action (optionnel)
+  title         String
+  message       String
+  type          NotificationType
+  priority      NotificationPriority @default(MEDIUM)       // priorité de la notification
+  resource_type ResourceType?                               // type de ressource concernée (optionnel)
+  resource_id   String?                                     // ID de la ressource concernée (optionnel)
+  link          String?
+  is_read       Boolean            @default(false)
+  read_at       DateTime?                                   // date de première lecture
+  is_archived   Boolean            @default(false)           // archivage soft-delete
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
+
+  user   User  @relation("NotificationRecipient", fields: [user_id], references: [id])
+  sender User? @relation("NotificationSender", fields: [sender_id], references: [id])
+
+  @@index([user_id])
+  @@index([user_id, is_read])
+  @@index([user_id, is_archived])
+  @@index([user_id, type])
+  @@index([sender_id])
+  @@index([created_at])
+  @@index([resource_type, resource_id])
+  @@map("notifications")
+}
+
+// ===========================
+// MODULE — Préférences de notification utilisateur
+// ===========================
+model NotificationPreference {
+  id                String   @id @default(uuid())
+  user_id           String   @unique
+  in_app_enabled    Boolean  @default(true)                  // notifications in-app
+  email_enabled     Boolean  @default(true)                  // notifications par email
+  realtime_enabled  Boolean  @default(true)                  // notifications temps réel (WebSocket)
+
+  // Catégories activables/désactivables individuellement
+  coaching_enabled  Boolean  @default(true)
+  evaluation_enabled Boolean @default(true)
+  cohort_enabled    Boolean  @default(true)
+  invitation_enabled Boolean @default(true)
+  document_enabled  Boolean  @default(true)
+  ai_enabled        Boolean  @default(true)
+  admin_enabled     Boolean  @default(true)
+
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("notification_preferences")
+}
