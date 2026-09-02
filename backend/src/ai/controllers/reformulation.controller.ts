@@ -1,8 +1,19 @@
-import { Controller, Post, Body, Req, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ModuleAccessService } from '../../common/services/module-access.service';
 import { ReformulationService } from '../reformulation.service';
-import { ReformulateStepDto, ReformulateTextDto } from '../dto/reformulation.dto';
+import {
+  ReformulateStepDto,
+  ReformulateTextDto,
+} from '../dto/reformulation.dto';
 
 type RequestUser = { user: { id: string } };
 
@@ -15,7 +26,10 @@ export class ReformulationController {
   ) {}
 
   @Post('step')
-  async reformulateStep(@Body() dto: ReformulateStepDto, @Req() req: RequestUser) {
+  async reformulateStep(
+    @Body() dto: ReformulateStepDto,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanAccessProject(dto.projectId, req.user.id);
     try {
       const result = await this.reformulation.reformulateStep(
@@ -25,15 +39,16 @@ export class ReformulationController {
       );
       return { success: true, data: result };
     } catch (error) {
-      const status = error.message.includes('pas trouvée')
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message.includes('pas trouvée')
         ? HttpStatus.NOT_FOUND
         : HttpStatus.INTERNAL_SERVER_ERROR;
-      throw new HttpException({ success: false, message: error.message }, status);
+      throw new HttpException({ success: false, message }, status);
     }
   }
 
   @Post('text')
-  async reformulateText(@Body() dto: ReformulateTextDto, @Req() _req: RequestUser) {
+  async reformulateText(@Body() dto: ReformulateTextDto) {
     try {
       const result = await this.reformulation.reformulateText(
         dto.text,
@@ -42,8 +57,9 @@ export class ReformulationController {
       );
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
+        { success: false, message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

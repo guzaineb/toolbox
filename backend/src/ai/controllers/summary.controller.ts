@@ -1,4 +1,12 @@
-import { Controller, Post, Param, Req, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  Req,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ModuleAccessService } from '../../common/services/module-access.service';
 import { SummaryService } from '../summary.service';
@@ -15,57 +23,89 @@ export class SummaryController {
   ) {}
 
   @Post('context/:projectId')
-  async generateContextSummary(@Param() params: ProjectIdParam, @Req() req: RequestUser) {
+  async generateContextSummary(
+    @Param() params: ProjectIdParam,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanAccessProject(params.projectId, req.user.id);
     try {
-      const result = await this.summary.generateContextSummary(params.projectId);
+      const result = await this.summary.generateContextSummary(
+        params.projectId,
+      );
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
-        error.message.includes('not found') ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR,
+        { success: false, message },
+        message.includes('not found')
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Post('activity/:projectId')
-  async generateActivitySummary(@Param() params: ProjectIdParam, @Req() req: RequestUser) {
+  async generateActivitySummary(
+    @Param() params: ProjectIdParam,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanAccessProject(params.projectId, req.user.id);
     try {
-      const result = await this.summary.generateActivitySummary(params.projectId);
+      const result = await this.summary.generateActivitySummary(
+        params.projectId,
+      );
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
-        error.message.includes('not found') ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR,
+        { success: false, message },
+        message.includes('not found')
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Post('cost-revenue/:projectId')
-  async generateCostRevenueSummary(@Param() params: ProjectIdParam, @Req() req: RequestUser) {
+  async generateCostRevenueSummary(
+    @Param() params: ProjectIdParam,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanAccessProject(params.projectId, req.user.id);
     try {
-      const result = await this.summary.generateCostRevenueSummary(params.projectId);
+      const result = await this.summary.generateCostRevenueSummary(
+        params.projectId,
+      );
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
-        error.message.includes('not found') ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR,
+        { success: false, message },
+        message.includes('not found')
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Post('executive/:projectId')
-  async generateExecutiveSummary(@Param() params: ProjectIdParam, @Req() req: RequestUser) {
+  async generateExecutiveSummary(
+    @Param() params: ProjectIdParam,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanAccessProject(params.projectId, req.user.id);
     try {
-      const result = await this.summary.generateExecutiveSummary(params.projectId);
+      const result = await this.summary.generateExecutiveSummary(
+        params.projectId,
+      );
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
-        error.message.includes('not found') ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR,
+        { success: false, message },
+        message.includes('not found')
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Req, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ModuleAccessService } from '../../common/services/module-access.service';
 import { ChatbotService } from '../chatbot.service';
@@ -27,8 +35,9 @@ export class ChatbotController {
       );
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
+        { success: false, message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -42,10 +51,11 @@ export class ChatbotController {
       const result = await this.chatbot.indexProject(dto.projectId);
       return { success: true, data: result };
     } catch (error) {
-      const status = error.message.includes('not found')
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message.includes('not found')
         ? HttpStatus.NOT_FOUND
         : HttpStatus.INTERNAL_SERVER_ERROR;
-      throw new HttpException({ success: false, message: error.message }, status);
+      throw new HttpException({ success: false, message }, status);
     }
   }
 }

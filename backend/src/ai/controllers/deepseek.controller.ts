@@ -1,4 +1,12 @@
-import { Controller, Post, Body, HttpException, HttpStatus, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LlmService } from '../llm.service';
 import { GenerateDto, ChatDto } from '../dto/deepseek.dto';
@@ -44,8 +52,9 @@ export class LlmController {
       });
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
+        { success: false, message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -62,8 +71,9 @@ export class LlmController {
       });
       return { success: true, data: result };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
-        { success: false, message: error.message },
+        { success: false, message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
