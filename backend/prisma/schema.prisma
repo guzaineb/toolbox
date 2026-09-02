@@ -647,6 +647,7 @@ model Project {
 
   // Documents générés
   generated_documents      GeneratedDocument[]
+  rag_documents            RagDocument[]
 
   // Relations
   step_progresses        StepProgress[]
@@ -1882,6 +1883,33 @@ model GeneratedDocument {
   @@unique([project_id, document_key])
   @@index([project_id])
   @@map("generated_documents")
+}
+
+// État d'indexation RAG (ChromaDB) par morceau (chunk) — permet l'indexation incrémentale.
+// Chaque ligne correspond à un chunk déjà indexé (ou à indexer) dans la collection Chroma
+// du projet. Le hash de contenu permet de détecter les changements sans ré-embarquer tout.
+model RagDocument {
+  id            String    @id @default(uuid())
+  project_id    String
+  document_key  String // clé stable de la source (ex: gbm1.idea_initial, bp.executive_summary)
+  chunk_index   Int // index du morceau au sein du document source
+  chroma_id     String // id stable du vecteur dans Chroma (projectId_documentKey_chunkIndex)
+  content_hash  String // hash SHA-256 du contenu du chunk (détection de changement)
+  module        String?
+  section       String?
+  source        String?
+  language      String    @default("fr")
+  page          Int?
+  dimension     Int       @default(384) // dimension du vecteur embarqué (verrouillée)
+  distance_fn   String    @default("cosine")
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, document_key, chunk_index])
+  @@index([project_id, document_key])
+  @@map("rag_documents")
 }
 
 // ===========================

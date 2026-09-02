@@ -17,6 +17,9 @@ import { ImprovementPlannerService } from './analysis/improvement-planner.servic
 import { RiskAnalysisService } from './analysis/risk-analysis.service';
 import { JuryAiService } from './analysis/jury-ai.service';
 import { ProgressAnalysisService } from './analysis/progress-analysis.service';
+import { RagPipelineService } from './rag/rag-pipeline.service';
+import { ChunkerService } from './rag/chunker.service';
+import { RagDocumentPlanBuilder } from './rag/rag-document-plan';
 import { AiAnalysisController } from './analysis/ai-analysis.controller';
 import { ImprovementPlanController } from './analysis/improvement-plan.controller';
 
@@ -36,6 +39,9 @@ import { ImprovementPlanController } from './analysis/improvement-plan.controlle
     RiskAnalysisService,
     JuryAiService,
     ProgressAnalysisService,
+    RagPipelineService,
+    ChunkerService,
+    RagDocumentPlanBuilder,
   ],
   controllers: [
     LlmController,
