@@ -12,6 +12,7 @@ import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 const SECTIONS = [
   { id: 'management', label: '2.1 Gestion' },
@@ -47,6 +48,7 @@ export default function BusinessPlanPage() {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [gating, setGating] = useState<BusinessPlanGatingStatus | null>(null)
   const [finalizing, setFinalizing] = useState(false)
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -101,13 +103,7 @@ export default function BusinessPlanPage() {
   }
 
   const handleSectionChange = (next: string) => {
-    if (dirty && next !== section) {
-      const ok = window.confirm(
-        'Vous avez des modifications non sauvegardées dans cette section. Continuer sans sauvegarder ?',
-      )
-      if (!ok) return
-    }
-    setSection(next)
+    guardLeave(() => setSection(next))
   }
 
   const handleSave = async () => {
@@ -193,7 +189,7 @@ export default function BusinessPlanPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => guardLeave(() => router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <div>
@@ -211,7 +207,7 @@ export default function BusinessPlanPage() {
       <TabNav tabs={SECTIONS} active={section} onChange={handleSectionChange} />
 
       {gating && (
-        <GbmGatingCard gating={gating} onFinalize={handleFinalize} finalizing={finalizing} router={router} projectId={projectId} />
+        <GbmGatingCard gating={gating} onFinalize={handleFinalize} finalizing={finalizing} router={router} projectId={projectId} guardLeave={guardLeave} />
       )}
 
       <Card className="p-0 overflow-hidden">
@@ -286,6 +282,8 @@ export default function BusinessPlanPage() {
           </Button>
         </div>
       </div>
+
+      {modal}
     </div>
   )
 }
@@ -348,12 +346,14 @@ function GbmGatingCard({
   finalizing,
   projectId,
   router,
+  guardLeave,
 }: {
   gating: BusinessPlanGatingStatus
   onFinalize: () => void
   finalizing: boolean
   projectId: string
   router: ReturnType<typeof useRouter>
+  guardLeave: (action: () => void) => void
 }) {
   if (gating.status === 'FINAL') {
     const date = gating.finalizedAt
@@ -397,7 +397,7 @@ function GbmGatingCard({
                     <li key={step.stepKey} className="flex items-center gap-2">
                       <span className="text-xs text-amber-dark">•</span>
                       <button
-                        onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=${step.stepKey}`)}
+                        onClick={() => guardLeave(() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=${step.stepKey}`))}
                         className="text-xs text-moss underline underline-offset-2 hover:text-moss-mid"
                       >
                         {step.title}
@@ -416,7 +416,7 @@ function GbmGatingCard({
         ) : (
           <Button
             variant="outline"
-            onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm`)}
+            onClick={() => guardLeave(() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm`))}
           >
             Remplir le GBM
           </Button>

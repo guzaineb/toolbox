@@ -12,6 +12,18 @@ import { SectionStepService } from '../common/services/section-step.service';
 import { ModuleAccessService } from '../common/services/module-access.service';
 import { GBM_STEPS, getStepConfig, StepConfig } from './step-config';
 import { ALL_STEPS } from './step-registry';
+import { getOneToManyRule, isValidOneToManyItem } from './step-validation';
+
+/** Détail d'une étape GBM insuffisante pour la révision (D3). */
+export interface GbmStepIssue {
+  stepKey: string;
+  title: string;
+  relation: 'one-to-one' | 'one-to-many';
+  status: 'EMPTY' | 'INCOMPLETE';
+  detail: string;
+  items?: number;
+  requiredFields?: string[];
+}
 
 @Injectable()
 export class GbmService {
@@ -102,7 +114,7 @@ export class GbmService {
       data: { project_id: projectId, ...filteredData },
     });
 
-    await this.sections.markStepComplete(projectId, stepKey);
+    await this.syncStepStatus(projectId, stepKey);
 
     return item;
   }
@@ -165,6 +177,20 @@ export class GbmService {
     const config = getStepConfig(stepKey);
     if (!config) return;
 
+    if (config.relation === 'one-to-many') {
+      // D3 : un one-to-many n'est COMPLETED que s'il contient ≥1 élément valide ;
+      // des éléments présents mais incomplets => IN_PROGRESS ; 0 élément => NOT_STARTED.
+      const items = await this.findOneToManyItems(projectId, config);
+      if (items.length === 0) {
+        await this.sections.markStepProgress(projectId, stepKey, 'NOT_STARTED');
+      } else if (this.anyValidOneToMany(stepKey, items)) {
+        await this.sections.markStepComplete(projectId, stepKey);
+      } else {
+        await this.sections.markStepProgress(projectId, stepKey, 'IN_PROGRESS');
+      }
+      return;
+    }
+
     const model = this.getModel(config);
     const count = await model.count({ where: { project_id: projectId } });
 
@@ -175,20 +201,54 @@ export class GbmService {
     }
   }
 
+  private async findOneToManyItems(projectId: string, config: StepConfig): Promise<any[]> {
+    const model = this.getModel(config);
+    return model.findMany({ where: { project_id: projectId } });
+  }
+
+  private anyValidOneToMany(stepKey: string, items: any[]): boolean {
+    const rule = getOneToManyRule(stepKey);
+    if (!rule) return false;
+    return items.some(item => isValidOneToManyItem(stepKey, item));
+  }
+
   /**
    * Étapes GBM obligatoires pour considérer le GBM « suffisamment complet »
-   * (les 15 étapes one-to-one non générées par IA — aligné avec reviewGbm).
-   * Réutilisé par le gating Business Plan (D7).
+   * (les 15 étapes one-to-one non générées par IA + les 5 étapes one-to-many,
+   * chacune devant contenir ≥1 élément valide — aligné avec reviewGbm, D3).
+   * Réutilisé par le gating Business Plan (D7) et les documents.
    */
   async getMissingRequiredSteps(projectId: string): Promise<StepConfig[]> {
-    const required = GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated);
+    const required = [
+      ...GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated),
+      ...GBM_STEPS.filter(s => s.relation === 'one-to-many'),
+    ];
     const missing: StepConfig[] = [];
     for (const step of required) {
-      const model = this.getModel(step);
-      const record = await model.findUnique({ where: { project_id: projectId } });
-      if (!record) missing.push(step);
+      const hasValidContent = await this.stepHasValidContent(projectId, step);
+      if (!hasValidContent) missing.push(step);
     }
     return missing;
+  }
+
+  /** Vrai si une étape requise contient du contenu réel (champ non vide pour un one-to-one,
+   *  ≥1 élément valide pour un one-to-many). */
+  private async stepHasValidContent(projectId: string, step: StepConfig): Promise<boolean> {
+    const model = this.getModel(step);
+
+    if (step.relation === 'one-to-many') {
+      const items = await this.findOneToManyItems(projectId, step);
+      return this.anyValidOneToMany(step.stepKey, items);
+    }
+
+    const record = await model.findUnique({ where: { project_id: projectId } });
+    if (!record) return false;
+    const allowed = this.getAllowedFields(step.model);
+    return allowed.some(key => {
+      const value = (record as any)[key];
+      if (typeof value === 'string') return value.trim() !== '';
+      return value !== undefined && value !== null && value !== '';
+    });
   }
 
   /** Vrai si toutes les étapes GBM obligatoires sont remplies (D7). */
@@ -196,15 +256,75 @@ export class GbmService {
     return (await this.getMissingRequiredSteps(projectId)).length === 0;
   }
 
+  /** Détail des étapes GBM insuffisantes pour la révision (aligné sur
+   *  getMissingRequiredSteps, mais avec un diagnostic exploitable par le porteur). */
+  private async getReviewIssues(projectId: string): Promise<GbmStepIssue[]> {
+    const required = [
+      ...GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated),
+      ...GBM_STEPS.filter(s => s.relation === 'one-to-many'),
+    ];
+    const issues: GbmStepIssue[] = [];
+    for (const step of required) {
+      const issue = await this.getStepIssue(projectId, step);
+      if (issue) issues.push(issue);
+    }
+    return issues;
+  }
+
+  private async getStepIssue(projectId: string, step: StepConfig): Promise<GbmStepIssue | null> {
+    if (step.relation === 'one-to-many') {
+      const items = await this.findOneToManyItems(projectId, step);
+      if (this.anyValidOneToMany(step.stepKey, items)) return null;
+
+      const rule = getOneToManyRule(step.stepKey);
+      const requiredFields = rule
+        ? [
+            rule.idLabel,
+            ...(rule.allOf ?? []).map(f => f.label),
+            ...(rule.anyOf?.length ? [rule.anyOf.map(f => f.label).join(' ou ')] : []),
+          ]
+        : undefined;
+
+      return items.length === 0
+        ? {
+            stepKey: step.stepKey,
+            title: step.title,
+            relation: 'one-to-many',
+            status: 'EMPTY',
+            detail: 'Aucun élément ajouté : ajoutez au moins un élément complet.',
+            items: 0,
+            requiredFields,
+          }
+        : {
+            stepKey: step.stepKey,
+            title: step.title,
+            relation: 'one-to-many',
+            status: 'INCOMPLETE',
+            detail: `${items.length} élément(s) présent(s), mais aucun ne satisfait les champs requis.`,
+            items: items.length,
+            requiredFields,
+          };
+    }
+
+    if (await this.stepHasValidContent(projectId, step)) return null;
+    return {
+      stepKey: step.stepKey,
+      title: step.title,
+      relation: 'one-to-one',
+      status: 'EMPTY',
+      detail: 'Étape non remplie : renseignez au moins un champ.',
+    };
+  }
+
   async reviewGbm(projectId: string, userId: string) {
     await this.sections.ensureOwnership(projectId, userId);
 
-    const missingSteps = (await this.getMissingRequiredSteps(projectId)).map(s => s.title);
+    const issues = await this.getReviewIssues(projectId);
 
-    if (missingSteps.length > 0) {
+    if (issues.length > 0) {
       throw new BadRequestException({
-        message: 'Complete all GBM steps before review',
-        missingSteps,
+        message: 'Complétez toutes les étapes GBM avant la révision',
+        missingSteps: issues,
       });
     }
 

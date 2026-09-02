@@ -9,6 +9,7 @@ import { PHASE_LABELS } from '@/types/funding'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import { projectContextService } from '@/services/project-context.service'
 import type { ChecklistItem, FundingSuggestion } from '@/types/project-context'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 const QUESTIONS = [
   { key: 'q1',  label: 'Problème marché clairement défini ?' },
@@ -40,6 +41,8 @@ export default function FundingPage() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(true)
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [info, setInfo] = useState('')
+  const [dirty, setDirty] = useState(false)
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
 
   useEffect(() => {
     const load = async () => {
@@ -75,6 +78,7 @@ export default function FundingPage() {
       applied += 1
     }
     setAnswers(next)
+    setDirty(true)
     setInfo(applied > 0 ? `${applied} réponses préremplies depuis vos données GBM — vérifiez avant de soumettre.` : '')
   }
 
@@ -90,6 +94,7 @@ export default function FundingPage() {
       const result = await fundingService.submitQuestionnaire(projectId, answers)
       setAssessment(result)
       setShowResults(true)
+      setDirty(false)
     } catch { setError('Erreur lors de la soumission') }
     finally { setSubmitting(false) }
   }
@@ -105,7 +110,7 @@ export default function FundingPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => guardLeave(() => router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <h1 className="font-syne text-lg font-extrabold text-ink">Accès au Financement</h1>
@@ -179,7 +184,7 @@ export default function FundingPage() {
               <span className="text-sm text-ink flex-1">{q.key.replace('q', 'Q')}. {q.label}</span>
               <div className="flex gap-1">
                 <button
-                  onClick={() => setAnswers((prev: any) => ({ ...prev, [q.key]: true }))}
+                  onClick={() => { setDirty(true); setAnswers((prev: any) => ({ ...prev, [q.key]: true })) }}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
                     answers[q.key] === true
                       ? 'bg-moss text-white border-moss'
@@ -189,7 +194,7 @@ export default function FundingPage() {
                   Oui
                 </button>
                 <button
-                  onClick={() => setAnswers((prev: any) => ({ ...prev, [q.key]: false }))}
+                  onClick={() => { setDirty(true); setAnswers((prev: any) => ({ ...prev, [q.key]: false })) }}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
                     answers[q.key] === false
                       ? 'bg-red text-white border-red'
@@ -221,7 +226,7 @@ export default function FundingPage() {
               <textarea
                 className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y"
                 value={opportunites}
-                onChange={e => setOpportunites(e.target.value)}
+                onChange={e => { setDirty(true); setOpportunites(e.target.value) }}
                 rows={3}
                 placeholder="Décrivez les opportunités de financement identifiées..."
               />
@@ -231,6 +236,7 @@ export default function FundingPage() {
                 className="mt-3"
                 onClick={async () => {
                   await fundingService.updateAssessment(projectId, { opportunites_pays: opportunites })
+                  setDirty(false)
                 }}
               >
                 <Check size={13} /> Sauvegarder
@@ -246,6 +252,8 @@ export default function FundingPage() {
           )}
         </>
       )}
+
+      {modal}
     </div>
   )
 }

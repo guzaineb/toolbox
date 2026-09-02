@@ -11,6 +11,7 @@ import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 const SECTIONS = [
   { id: 'env',        label: 'KPIs Environnementaux' },
@@ -35,6 +36,8 @@ export default function ImpactPage() {
   const [progress, setProgress] = useState<any>(null)
   const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [dirty, setDirty] = useState(false)
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -65,6 +68,7 @@ export default function ImpactPage() {
     try {
       await impactService.update(projectId, formData)
       setSaved(true)
+      setDirty(false)
       setTimeout(() => setSaved(false), 2000)
       const p = await impactService.getProgress(projectId)
       setProgress(p)
@@ -76,6 +80,7 @@ export default function ImpactPage() {
     setGenLoading(true)
     try {
       const result = await impactService.generateReport(projectId)
+      setDirty(true)
       setFormData((prev: any) => ({ ...prev, rapport_impact: result.rapport_impact }))
     } catch { setError('Erreur de génération') }
     finally { setGenLoading(false) }
@@ -101,7 +106,7 @@ export default function ImpactPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => guardLeave(() => router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <div>
@@ -116,7 +121,7 @@ export default function ImpactPage() {
         )}
       </div>
 
-      <TabNav tabs={SECTIONS} active={section} onChange={setSection} />
+      <TabNav tabs={SECTIONS} active={section} onChange={(id) => guardLeave(() => setSection(id))} />
 
       {error && <ErrorAlert message={error} />}
       {saved && <SuccessAlert message="Sauvegardé ✓" />}
@@ -140,7 +145,7 @@ export default function ImpactPage() {
                       type="text"
                       className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss"
                       value={(formData as any)[f.key] || ''}
-                      onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
+                      onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value })) }}
                     />
                   ) : (
                     <textarea
@@ -152,6 +157,7 @@ export default function ImpactPage() {
                       }
                       onChange={e => {
                         const val = e.target.value
+                        setDirty(true)
                         setFormData((prev: any) => ({ ...prev, [f.key]: val }))
                       }}
                       rows={6}
@@ -202,6 +208,8 @@ export default function ImpactPage() {
           </Button>
         </div>
       </div>
+
+      {modal}
     </div>
   )
 }

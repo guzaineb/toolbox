@@ -473,6 +473,74 @@ export const GBM_STEPS: GbmStepMeta[] = [
 
 export const ONE_TO_MANY_STEP_KEYS = GBM_STEPS.filter(s => s.relation === 'one-to-many').map(s => s.key)
 
+/**
+ * Règles de validité minimale d'un élément des étapes GBM one-to-many (D3).
+ * Miroir frontal de `backend/src/gbm/step-validation.ts` : une étape est complétée
+ * si elle contient ≥1 élément valide.
+ */
+export interface OneToManyStepRule {
+  stepKey: string
+  /** Champ identifiant (obligatoire). */
+  idField?: string
+  /** Tous ces champs doivent être renseignés. */
+  allOf?: string[]
+  /** Au moins un de ces champs doit être renseigné. */
+  anyOf?: string[]
+}
+
+export const ONE_TO_MANY_RULES: Record<string, OneToManyStepRule> = {
+  gbm_7a: { stepKey: 'gbm_7a', idField: 'name', anyOf: ['role', 'interest', 'influence', 'engagement_strategy'] },
+  gbm_7b: { stepKey: 'gbm_7b', idField: 'stakeholder_name', allOf: ['contribution', 'reward'] },
+  gbm_8: { stepKey: 'gbm_8', idField: 'segment_name', anyOf: ['pains', 'gains', 'functions'] },
+  gbm_10: { stepKey: 'gbm_10', idField: 'hypothesis', anyOf: ['test_method', 'results', 'learnings'] },
+  gbm_12b: { stepKey: 'gbm_12b', idField: 'stage_name', anyOf: ['touchpoints', 'customer_emotions', 'improvement_ideas'] },
+}
+
+export function getOneToManyRule(stepKey: string): OneToManyStepRule | undefined {
+  return ONE_TO_MANY_RULES[stepKey]
+}
+
+function isBlank(value: unknown): boolean {
+  if (value === undefined || value === null) return true
+  if (typeof value === 'string') return value.trim() === ''
+  return false
+}
+
+function fieldLabel(stepKey: string, fieldKey: string): string {
+  const meta = getStepMeta(stepKey)
+  return meta?.fields.find(f => f.key === fieldKey)?.label ?? fieldKey
+}
+
+/** Champs requis manquants d'un élément. Liste vide = élément valide. */
+export function missingOneToManyFields(stepKey: string, item: Record<string, unknown>): string[] {
+  const rule = getOneToManyRule(stepKey)
+  if (!rule) return []
+
+  const missing: string[] = []
+  if (rule.idField && isBlank(item[rule.idField])) {
+    missing.push(fieldLabel(stepKey, rule.idField))
+  }
+
+  for (const key of rule.allOf ?? []) {
+    if (isBlank(item[key])) missing.push(fieldLabel(stepKey, key))
+  }
+
+  const anyOf = rule.anyOf ?? []
+  if (anyOf.length > 0 && !anyOf.some(key => !isBlank(item[key]))) {
+    missing.push(anyOf.map(key => fieldLabel(stepKey, key)).join(' ou '))
+  }
+
+  return missing
+}
+
+export function isValidOneToManyItem(stepKey: string, item: Record<string, unknown>): boolean {
+  return missingOneToManyFields(stepKey, item).length === 0
+}
+
+export function countValidOneToManyItems(stepKey: string, items: Record<string, unknown>[]): number {
+  return items.filter(item => isValidOneToManyItem(stepKey, item)).length
+}
+
 export function getStepMeta(key: string): GbmStepMeta | undefined {
   return GBM_STEPS.find(s => s.key === key)
 }

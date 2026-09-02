@@ -10,6 +10,7 @@ import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 const SECTIONS = [
   { id: 'essence',      label: 'Brand Essence' },
@@ -34,6 +35,8 @@ export default function MarketPage() {
   const [error, setError] = useState('')
   const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [dirty, setDirty] = useState(false)
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -62,6 +65,7 @@ export default function MarketPage() {
     try {
       await marketService.update(projectId, formData)
       setSaved(true)
+      setDirty(false)
       setTimeout(() => setSaved(false), 2000)
     } catch { setError('Erreur de sauvegarde') }
     finally { setSaving(false) }
@@ -82,13 +86,13 @@ export default function MarketPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => guardLeave(() => router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <h1 className="font-syne text-lg font-extrabold text-ink">Accès au Marché</h1>
       </div>
 
-      <TabNav tabs={SECTIONS} active={section} onChange={setSection} />
+      <TabNav tabs={SECTIONS} active={section} onChange={(id) => guardLeave(() => setSection(id))} />
 
       {error && <ErrorAlert message={error} />}
       {saved && <SuccessAlert message="Sauvegardé ✓" />}
@@ -105,7 +109,7 @@ export default function MarketPage() {
               <textarea
                 className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[120px] resize-y"
                 value={currentField ? (formData[currentField.key] || '') : ''}
-                onChange={e => setFormData((prev: any) => ({ ...prev, [currentField?.key || '']: e.target.value }))}
+                onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [currentField?.key || '']: e.target.value })) }}
                 rows={6}
                 placeholder={`Décrivez ${(currentField?.label || '').toLowerCase()}...`}
               />
@@ -120,6 +124,8 @@ export default function MarketPage() {
           {saved ? <><Check size={14} /> Sauvegardé</> : 'Sauvegarder'}
         </Button>
       </div>
+
+      {modal}
     </div>
   )
 }

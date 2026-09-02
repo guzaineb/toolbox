@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Check, Loader2, Lock, Sparkles } from 'lucide-react'
 import { gbmService } from '@/services/gbm.service'
 import { getStepGuide } from '@/data/gbm/guides'
-import { GBM_STEPS, getStepIndex, getStepMeta, isAiStep, isOneToMany } from '@/data/gbm/steps'
+import { GBM_STEPS, getStepIndex, getStepMeta, isAiStep, isOneToMany, isValidOneToManyItem } from '@/data/gbm/steps'
 import type { GbmStepMeta } from '@/data/gbm/steps'
-import type { GbmProgress } from '@/types/gbm'
+import type { GbmProgress, GbmStepIssue } from '@/types/gbm'
 import { Badge, Button, Card, CardHeader, ErrorAlert, Progress, SuccessAlert } from '@/components/shared/ui'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
 import { GbmNavbar } from './GbmNavbar'
@@ -16,6 +16,7 @@ import { OneToManyManager, type OneToManyManagerHandle } from './OneToManyManage
 import { GuidePanel } from './GuidePanel'
 import { GbmChatbot } from './GbmChatbot'
 import { cn, getErrorMessage } from '@/lib/utils'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 type StepStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED'
 
@@ -26,7 +27,7 @@ const statusLabel: Record<StepStatus, { text: string; variant: 'green' | 'amber'
   NOT_STARTED: { text: 'À faire', variant: 'gray' },
 }
 
-export function GbmWizard({ projectId }: { projectId: string }) {
+export function GbmWizard({ projectId, onRegisterLeave }: { projectId: string; onRegisterLeave?: (fn: (action: () => void) => void) => void }) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -45,8 +46,18 @@ export function GbmWizard({ projectId }: { projectId: string }) {
   const [saved, setSaved] = useState(false)
   const [reviewing, setReviewing] = useState(false)
   const [reviewDone, setReviewDone] = useState(false)
+  const [reviewIssues, setReviewIssues] = useState<GbmStepIssue[] | null>(null)
   const [lockNotice, setLockNotice] = useState('')
   const managerRef = useRef<OneToManyManagerHandle>(null)
+  const [pendingItems, setPendingItems] = useState(false)
+  const dirty = !isOneToMany(currentStep)
+    ? cache[currentStep] !== undefined && JSON.stringify(formData) !== JSON.stringify(cache[currentStep])
+    : pendingItems
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
+
+  useEffect(() => {
+    onRegisterLeave?.(guardLeave)
+  }, [onRegisterLeave, guardLeave])
 
   const refreshProgress = useCallback(async () => {
     try {
@@ -102,7 +113,12 @@ export function GbmWizard({ projectId }: { projectId: string }) {
     const meta = getStepMeta(key)
     const data = cache[key]
     if (!meta || data === undefined || data === null) return false
-    if (meta.relation === 'one-to-many') return Array.isArray(data) && data.length > 0
+    if (meta.relation === 'one-to-many') {
+      return (
+        Array.isArray(data) &&
+        data.some(item => isValidOneToManyItem(key, item as Record<string, unknown>))
+      )
+    }
     return meta.fields.some(f => {
       const v = (data as Record<string, unknown>)[f.key]
       if (f.type === 'checkbox') return v === true
@@ -129,18 +145,13 @@ export function GbmWizard({ projectId }: { projectId: string }) {
     setLockNotice('')
     setSaved(false)
     if (key === currentStep) return
-    if (
-      !isOneToMany(currentStep) &&
-      cache[currentStep] !== undefined &&
-      JSON.stringify(formData) !== JSON.stringify(cache[currentStep])
-    ) {
-      const ok = window.confirm(
-        'Vous avez des modifications non sauvegardées dans cette étape. Continuer sans sauvegarder ?',
-      )
-      if (!ok) return
+    const nav = () => router.replace(`?step=${key}`, { scroll: false })
+    if (dirty) {
+      guardLeave(nav)
+    } else {
+      nav()
     }
-    router.replace(`?step=${key}`, { scroll: false })
-  }, [router, currentStep, cache, formData])
+  }, [router, currentStep, dirty, guardLeave])
 
   const goTo = useCallback((key: string) => {
     if (lockedOf(key)) {
@@ -224,7 +235,7 @@ export function GbmWizard({ projectId }: { projectId: string }) {
     if (!canContinue) {
       setLockNotice(
         isOneToMany(currentStep)
-          ? 'Ajoutez au moins un élément pour continuer.'
+          ? 'Ajoutez au moins un élément complet (champs requis) pour continuer.'
           : 'Sauvegardez cette étape pour continuer.',
       )
       return
@@ -239,19 +250,18 @@ export function GbmWizard({ projectId }: { projectId: string }) {
   const handleReview = async () => {
     setReviewing(true)
     setError('')
+    setReviewIssues(null)
     try {
       await gbmService.reviewGbm(projectId)
       setReviewDone(true)
     } catch (e) {
-      const err = e as { response?: { data?: { message?: string | { missingSteps?: string[] } } } }
-      const msg = err?.response?.data?.message
-      setError(
-        typeof msg === 'string'
-          ? msg
-          : msg?.missingSteps
-            ? `Étapes manquantes : ${msg.missingSteps.join(', ')}`
-            : 'Erreur lors de la révision',
-      )
+      const res = (e as { response?: { data?: { message?: string | { message: string; missingSteps?: GbmStepIssue[] } } } })?.response
+      const msg = res?.data?.message
+      if (typeof msg === 'object' && msg?.missingSteps?.length) {
+        setReviewIssues(msg.missingSteps)
+      } else {
+        setError(typeof msg === 'string' ? msg : getErrorMessage(e))
+      }
     } finally {
       setReviewing(false)
     }
@@ -307,6 +317,31 @@ export function GbmWizard({ projectId }: { projectId: string }) {
               )}
               {saved && <SuccessAlert message="Étape sauvegardée ✓" className="mb-4" />}
 
+              {reviewIssues && reviewIssues.length > 0 && (
+                <div className="mb-4 rounded-lg border border-red/18 bg-red-light px-3 py-3">
+                  <div className="text-[12px] font-semibold text-red mb-1.5 flex items-center gap-1.5">
+                    <Lock size={12} /> Révision bloquée — complétez les étapes suivantes :
+                  </div>
+                  <ul className="space-y-2">
+                    {reviewIssues.map(issue => (
+                      <li key={issue.stepKey} className="text-[12px] text-ink flex items-start gap-2">
+                        <span className="font-medium text-ink">{issue.title}</span>
+                        <span className="text-ink2">— {issue.detail}</span>
+                        {issue.requiredFields && issue.requiredFields.length > 0 && (
+                          <span className="text-ink3">(requis : {issue.requiredFields.join(', ')})</span>
+                        )}
+                        <button
+                          onClick={() => navigateTo(issue.stepKey)}
+                          className="text-moss hover:underline flex-shrink-0"
+                        >
+                          Voir l&apos;étape
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 size={24} className="animate-spin text-moss" />
@@ -318,6 +353,7 @@ export function GbmWizard({ projectId }: { projectId: string }) {
                   stepId={currentStep}
                   fields={stepMeta.fields}
                   onChanged={async () => { await refreshProgress(); await refreshCurrentStep() }}
+                  onPendingChange={setPendingItems}
                 />
               ) : (
                 <StepForm fields={stepMeta.fields} data={formData} onChange={handleFieldChange} />
@@ -406,6 +442,8 @@ export function GbmWizard({ projectId }: { projectId: string }) {
       <div className="xl:hidden space-y-4">
         {rightColumn}
       </div>
+
+      {modal}
     </div>
   )
 }

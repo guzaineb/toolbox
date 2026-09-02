@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, FileDown } from 'lucide-react'
 import { GbmWizard } from '@/components/gbm/GbmWizard'
@@ -12,6 +12,7 @@ function GbmPageContent() {
   const router = useRouter()
   const projectId = params.projectId as string
   const [pdfLoading, setPdfLoading] = useState(false)
+  const leaveRef = useRef<((action: () => void) => void) | null>(null)
 
   const handleDownloadPdf = async () => {
     setPdfLoading(true)
@@ -35,7 +36,7 @@ function GbmPageContent() {
   return (
     <div className="max-w-7xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => (leaveRef.current ? leaveRef.current(() => router.back()) : router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <div className="flex-1">
@@ -46,7 +47,7 @@ function GbmPageContent() {
           <FileDown size={14} /> Télécharger BMC (PDF)
         </Button>
       </div>
-      <GbmWizard projectId={projectId} />
+      <GbmWizard projectId={projectId} onRegisterLeave={(fn) => { leaveRef.current = fn }} />
     </div>
   )
 }

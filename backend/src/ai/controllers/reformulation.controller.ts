@@ -1,15 +1,22 @@
-import { Controller, Post, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Req, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 import { ReformulationService } from '../reformulation.service';
 import { ReformulateStepDto, ReformulateTextDto } from '../dto/reformulation.dto';
+
+type RequestUser = { user: { id: string } };
 
 @Controller('ai/reformulation')
 @UseGuards(JwtAuthGuard)
 export class ReformulationController {
-  constructor(private readonly reformulation: ReformulationService) {}
+  constructor(
+    private readonly reformulation: ReformulationService,
+    private readonly access: ModuleAccessService,
+  ) {}
 
   @Post('step')
-  async reformulateStep(@Body() dto: ReformulateStepDto) {
+  async reformulateStep(@Body() dto: ReformulateStepDto, @Req() req: RequestUser) {
+    await this.access.assertCanAccessProject(dto.projectId, req.user.id);
     try {
       const result = await this.reformulation.reformulateStep(
         dto.projectId,
@@ -26,7 +33,7 @@ export class ReformulationController {
   }
 
   @Post('text')
-  async reformulateText(@Body() dto: ReformulateTextDto) {
+  async reformulateText(@Body() dto: ReformulateTextDto, @Req() _req: RequestUser) {
     try {
       const result = await this.reformulation.reformulateText(
         dto.text,
