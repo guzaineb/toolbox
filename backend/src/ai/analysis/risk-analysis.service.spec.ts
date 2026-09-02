@@ -41,7 +41,10 @@ describe('RiskAnalysisService', () => {
     }).compile();
     service = module.get<RiskAnalysisService>(RiskAnalysisService);
 
-    contextMock.build.mockResolvedValue({ projectName: 'ÉcoPot', contextText: 'Données réelles' });
+    contextMock.build.mockResolvedValue({
+      projectName: 'ÉcoPot',
+      contextText: 'Données réelles',
+    });
   });
 
   it('should be defined', () => {
@@ -49,7 +52,10 @@ describe('RiskAnalysisService', () => {
   });
 
   it('should return null when the project has no context data', async () => {
-    contextMock.build.mockResolvedValue({ projectName: 'Vide', contextText: '' });
+    contextMock.build.mockResolvedValue({
+      projectName: 'Vide',
+      contextText: '',
+    });
     await expect(service.analyze('p1', 'u1')).resolves.toBeNull();
     expect(llmMock.chat).not.toHaveBeenCalled();
   });
@@ -83,7 +89,7 @@ describe('RiskAnalysisService', () => {
     expect(payload!.risks).toHaveLength(2);
     // Le prompt impose de ne pas inventer d'informations
     const promptArg = llmMock.chat.mock.calls[0][0][1].content as string;
-    expect(promptArg).toContain("ne jamais inventer");
+    expect(promptArg).toContain('ne jamais inventer');
     expect(prismaMock.aiAnalysis.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

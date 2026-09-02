@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
@@ -22,20 +26,19 @@ export class ProjectsService {
       },
     });
 
-    const { title, message } = this.messageBuilder.projectCreated({ projectName: project.name });
-    this.eventEmitter.emit(
-      NotificationEvent.PROJECT_CREATED,
-      {
-        event: NotificationEvent.PROJECT_CREATED,
-        recipients: [{ userId }],
-        title,
-        message,
-        link: `/project-owner/projects/${project.id}`,
-        senderId: userId,
-        resourceType: 'PROJECT',
-        resourceId: project.id,
-      } as NotificationPayload,
-    );
+    const { title, message } = this.messageBuilder.projectCreated({
+      projectName: project.name,
+    });
+    this.eventEmitter.emit(NotificationEvent.PROJECT_CREATED, {
+      event: NotificationEvent.PROJECT_CREATED,
+      recipients: [{ userId }],
+      title,
+      message,
+      link: `/project-owner/projects/${project.id}`,
+      senderId: userId,
+      resourceType: 'PROJECT',
+      resourceId: project.id,
+    } as NotificationPayload);
 
     return project;
   }
@@ -48,9 +51,14 @@ export class ProjectsService {
   }
 
   async findOwnedOrThrow(projectId: string, userId: string) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) throw new NotFoundException('Projet introuvable');
-    if (project.owner_id !== userId) throw new ForbiddenException('Vous n\'êtes pas le propriétaire de ce projet');
+    if (project.owner_id !== userId)
+      throw new ForbiddenException(
+        "Vous n'êtes pas le propriétaire de ce projet",
+      );
     return project;
   }
 

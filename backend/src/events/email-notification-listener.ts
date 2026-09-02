@@ -19,21 +19,35 @@ export class EmailNotificationListener {
     console.log('[EmailNotificationListener] Event received:', payload.event);
     const config = NOTIFICATION_EVENT_MAP[payload.event];
     if (!config) {
-      console.log('[EmailNotificationListener] No config for event:', payload.event);
+      console.log(
+        '[EmailNotificationListener] No config for event:',
+        payload.event,
+      );
       return;
     }
     if (!config.requiresEmail) {
-      console.log('[EmailNotificationListener] Email not required for event:', payload.event);
+      console.log(
+        '[EmailNotificationListener] Email not required for event:',
+        payload.event,
+      );
       return;
     }
 
-    console.log('[EmailNotificationListener] Processing email for event:', payload.event);
+    console.log(
+      '[EmailNotificationListener] Processing email for event:',
+      payload.event,
+    );
     for (const recipient of payload.recipients) {
       const shouldSend = await this.notificationsService.shouldSendEmail(
         recipient.userId,
         config.category,
       );
-      console.log('[EmailNotificationListener] shouldSendEmail for', recipient.userId, ':', shouldSend);
+      console.log(
+        '[EmailNotificationListener] shouldSendEmail for',
+        recipient.userId,
+        ':',
+        shouldSend,
+      );
       if (!shouldSend) continue;
 
       let email = recipient.email;
@@ -45,7 +59,10 @@ export class EmailNotificationListener {
           include: { profile: true },
         });
         if (!user?.email) {
-          console.log('[EmailNotificationListener] User has no email, skipping:', recipient.userId);
+          console.log(
+            '[EmailNotificationListener] User has no email, skipping:',
+            recipient.userId,
+          );
           continue;
         }
         email = user.email;
@@ -54,7 +71,12 @@ export class EmailNotificationListener {
           : user.email;
       }
 
-      console.log('[EmailNotificationListener] Sending email to:', email, 'type:', config.type);
+      console.log(
+        '[EmailNotificationListener] Sending email to:',
+        email,
+        'type:',
+        config.type,
+      );
       await this.mailService.sendNotificationEmail({
         to: email,
         type: config.type,

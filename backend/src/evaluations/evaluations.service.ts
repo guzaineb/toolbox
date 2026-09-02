@@ -97,20 +97,19 @@ export class EvaluationsService {
     });
 
     if (project) {
-      const { title, message } = this.messageBuilder.newEvaluation({ projectName: project.name });
-      this.eventEmitter.emit(
-        NotificationEvent.NEW_EVALUATION,
-        {
-          event: NotificationEvent.NEW_EVALUATION,
-          recipients: [{ userId: project.owner_id }],
-          title,
-          message,
-          link: `/project-owner/projects/${projectId}/evaluations`,
-          senderId: userId,
-          resourceType: 'PROJECT',
-          resourceId: projectId,
-        } as NotificationPayload,
-      );
+      const { title, message } = this.messageBuilder.newEvaluation({
+        projectName: project.name,
+      });
+      this.eventEmitter.emit(NotificationEvent.NEW_EVALUATION, {
+        event: NotificationEvent.NEW_EVALUATION,
+        recipients: [{ userId: project.owner_id }],
+        title,
+        message,
+        link: `/project-owner/projects/${projectId}/evaluations`,
+        senderId: userId,
+        resourceType: 'PROJECT',
+        resourceId: projectId,
+      } as NotificationPayload);
     }
 
     return evaluation;
@@ -143,11 +142,11 @@ export class EvaluationsService {
       );
     }
 
-    const cohortIds = evaluation.project.cohort_participations.map((p) => p.cohort_id);
+    const cohortIds = evaluation.project.cohort_participations.map(
+      (p) => p.cohort_id,
+    );
     if (cohortIds.length === 0) {
-      throw new BadRequestException(
-        "Ce projet n'est associé à aucune cohorte",
-      );
+      throw new BadRequestException("Ce projet n'est associé à aucune cohorte");
     }
 
     const assignment = await this.prisma.cohortExpert.findFirst({
@@ -186,10 +185,7 @@ export class EvaluationsService {
     return this.prisma.evaluation.findMany({
       where: {
         project_id: projectId,
-        OR: [
-          { status: EvaluationStatus.SUBMITTED },
-          { jury_user_id: userId },
-        ],
+        OR: [{ status: EvaluationStatus.SUBMITTED }, { jury_user_id: userId }],
       },
       include: {
         juryUser: {
@@ -253,7 +249,9 @@ export class EvaluationsService {
       const isOwner = evaluation.project.owner_id === userId;
       const isJury = evaluation.jury_user_id === userId;
       const isCohortMember =
-        (await this.access.getAcceptedCohortForProject(evaluation.project.id)) &&
+        (await this.access.getAcceptedCohortForProject(
+          evaluation.project.id,
+        )) &&
         (await this.access.canEvaluateProject(evaluation.project.id, userId));
       const isIncubatorMember = await this.isIncubatorMember(
         evaluation.project.id,
@@ -271,7 +269,8 @@ export class EvaluationsService {
     projectId: string,
     userId: string,
   ): Promise<boolean> {
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (!participation?.cohort.incubator_id) return false;
     const member = await this.prisma.incubatorMember.findUnique({
       where: {
@@ -354,7 +353,9 @@ export class EvaluationsService {
         data: { template_id: template.id },
         include: {
           scores: true,
-          template: { include: { criteria: { orderBy: { sort_order: 'asc' } } } },
+          template: {
+            include: { criteria: { orderBy: { sort_order: 'asc' } } },
+          },
           project: { select: { id: true, name: true } },
         },
       });
@@ -403,7 +404,9 @@ export class EvaluationsService {
       );
     }
 
-    const validCriterionIds = new Set(evaluation.template?.criteria.map((c) => c.id) ?? []);
+    const validCriterionIds = new Set(
+      evaluation.template?.criteria.map((c) => c.id) ?? [],
+    );
     const criteriaMap = new Map(
       (evaluation.template?.criteria ?? []).map((c) => [c.id, c]),
     );
@@ -533,7 +536,11 @@ export class EvaluationsService {
 
     await this.checkAllSubmittedAndNotify(evaluation.project.id);
 
-    return { ...submitted, total: computation.total, total20: computation.total20 };
+    return {
+      ...submitted,
+      total: computation.total,
+      total20: computation.total20,
+    };
   }
 
   private async checkAllSubmittedAndNotify(projectId: string) {
@@ -543,7 +550,9 @@ export class EvaluationsService {
     if (!assignment) return;
 
     const [totalAssignments, submittedCount] = await Promise.all([
-      this.prisma.evaluationAssignment.count({ where: { project_id: projectId } }),
+      this.prisma.evaluationAssignment.count({
+        where: { project_id: projectId },
+      }),
       this.prisma.evaluation.count({
         where: { project_id: projectId, status: EvaluationStatus.SUBMITTED },
       }),
@@ -575,7 +584,9 @@ export class EvaluationsService {
     });
   }
 
-  private async getIncubatorMembersForCohort(cohortId: string): Promise<string[]> {
+  private async getIncubatorMembersForCohort(
+    cohortId: string,
+  ): Promise<string[]> {
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
       select: { incubator_id: true },
@@ -677,21 +688,35 @@ export class EvaluationsService {
       .map((e) => {
         if (!e.template) return null;
         const computation = computeWeightedScore(e.template.criteria, e.scores);
-        return { evaluation: e, total: computation.total, total20: computation.total20 };
+        return {
+          evaluation: e,
+          total: computation.total,
+          total20: computation.total20,
+        };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
 
     const average20 =
       totals.length > 0
-        ? Math.round((totals.reduce((s, x) => s + x.total20, 0) / totals.length) * 100) / 100
+        ? Math.round(
+            (totals.reduce((s, x) => s + x.total20, 0) / totals.length) * 100,
+          ) / 100
         : null;
 
-    const criterionMap = new Map<string, { name: string; weight: number; max_score: number; sums: number[] }>();
+    const criterionMap = new Map<
+      string,
+      { name: string; weight: number; max_score: number; sums: number[] }
+    >();
     for (const t of totals) {
       const criteria = t.evaluation.template?.criteria ?? [];
       for (const c of criteria) {
         if (!criterionMap.has(c.id)) {
-          criterionMap.set(c.id, { name: c.name, weight: c.weight, max_score: c.max_score, sums: [] });
+          criterionMap.set(c.id, {
+            name: c.name,
+            weight: c.weight,
+            max_score: c.max_score,
+            sums: [],
+          });
         }
         const s = t.evaluation.scores.find((x) => x.criterion_id === c.id);
         criterionMap.get(c.id)!.sums.push(s ? s.score : 0);
@@ -704,7 +729,8 @@ export class EvaluationsService {
       weight: c.weight,
       max_score: c.max_score,
       average:
-        Math.round((c.sums.reduce((a, b) => a + b, 0) / c.sums.length) * 100) / 100,
+        Math.round((c.sums.reduce((a, b) => a + b, 0) / c.sums.length) * 100) /
+        100,
     }));
 
     return {
@@ -723,7 +749,10 @@ export class EvaluationsService {
     };
   }
 
-  private async canViewSummary(projectId: string, userId: string): Promise<boolean> {
+  private async canViewSummary(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: { owner_id: true },
@@ -732,7 +761,8 @@ export class EvaluationsService {
 
     if (await this.access.canEvaluateProject(projectId, userId)) return true;
 
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (participation?.cohort.incubator_id) {
       const member = await this.prisma.incubatorMember.findUnique({
         where: {
@@ -764,9 +794,12 @@ export class EvaluationsService {
     await this.access.assertProjectExists(projectId);
     await this.access.assertCanManageProjectCoaching(projectId, userId);
 
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (!participation) {
-      throw new BadRequestException("Ce projet n'est pas accepté dans une cohorte");
+      throw new BadRequestException(
+        "Ce projet n'est pas accepté dans une cohorte",
+      );
     }
 
     const template = await this.prisma.evaluationTemplate.findFirst({
@@ -789,7 +822,11 @@ export class EvaluationsService {
       throw new BadRequestException('Aucun jury affecté à ce projet');
     }
 
-    const created: Array<{ evaluationId: string; juryUserId: string; version: number }> = [];
+    const created: Array<{
+      evaluationId: string;
+      juryUserId: string;
+      version: number;
+    }> = [];
     for (const assignment of assignments) {
       const latest = await this.prisma.evaluation.findFirst({
         where: {

@@ -27,7 +27,8 @@ export class EvaluationTemplatesService {
   async create(cohortId: string, dto: CreateTemplateDto, userId: string) {
     await this.access.assertCanManageCohort(cohortId, userId);
 
-    if (dto.stage === undefined || dto.stage === null) dto.stage = EvaluationStage.FINAL;
+    if (dto.stage === undefined || dto.stage === null)
+      dto.stage = EvaluationStage.FINAL;
 
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
@@ -40,7 +41,7 @@ export class EvaluationTemplatesService {
         cohort_id: cohortId,
         name: dto.name,
         description: dto.description,
-        stage: dto.stage!,
+        stage: dto.stage,
         published: false,
         created_by: userId,
         criteria: {
@@ -210,7 +211,9 @@ export class EvaluationTemplatesService {
     await this.access.assertCanManageCohort(template.cohort_id, userId);
 
     if (template.criteria.length === 0) {
-      throw new BadRequestException('La grille doit contenir au moins un critère');
+      throw new BadRequestException(
+        'La grille doit contenir au moins un critère',
+      );
     }
     const total = template.criteria.reduce((sum, c) => sum + c.weight, 0);
     if (Math.abs(total - 100) > WEIGHT_TOLERANCE) {

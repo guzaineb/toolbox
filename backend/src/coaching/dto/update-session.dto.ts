@@ -113,4 +113,3 @@ export class UpdateSessionDto {
   @IsString()
   objectiveResultReason?: string;
 }
-

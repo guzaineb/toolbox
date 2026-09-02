@@ -26,7 +26,4 @@ export class CreateProjectOwnerDto {
   @IsOptional()
   @IsString()
   field_of_study?: string;
-
-
-
 }

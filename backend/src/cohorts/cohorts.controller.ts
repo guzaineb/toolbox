@@ -66,37 +66,25 @@ export class CohortsController {
 
   @Post('cohorts/:id/publish')
   @HttpCode(HttpStatus.OK)
-  publish(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  publish(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortsService.publish(id, req.user.id);
   }
 
   @Post('cohorts/:id/start')
   @HttpCode(HttpStatus.OK)
-  start(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  start(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortsService.start(id, req.user.id);
   }
 
   @Post('cohorts/:id/close')
   @HttpCode(HttpStatus.OK)
-  close(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  close(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortsService.close(id, req.user.id);
   }
 
   @Post('cohorts/:id/archive')
   @HttpCode(HttpStatus.OK)
-  archive(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  archive(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortsService.archive(id, req.user.id);
   }
 

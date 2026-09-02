@@ -22,7 +22,7 @@ import { MailService } from '../mail/mail.service';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy,MailService],
+  providers: [AuthService, JwtStrategy, MailService],
   controllers: [AuthController],
 })
 export class AuthModule {}

@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MaturityScoreService, MATURITY_WEIGHTS } from './maturity-score.service';
+import {
+  MaturityScoreService,
+  MATURITY_WEIGHTS,
+} from './maturity-score.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 describe('MaturityScoreService', () => {
@@ -25,26 +28,48 @@ describe('MaturityScoreService', () => {
     recsTotal?: number;
     recsDone?: number;
   }) => {
-    prismaMock.stepProgress.count.mockImplementation(({ where }: { where: Record<string, unknown> }) => {
-      if (!where.status) return Promise.resolve(opts.bpTotal ?? 0);
-      const prefix = (where.step_key as { startsWith?: string }).startsWith;
-      return Promise.resolve(prefix === 'gbm_' ? (opts.gbmCompleted ?? 0) : (opts.bpCompleted ?? 0));
-    });
-    prismaMock.coachingAction.count.mockImplementation(({ where }: { where: Record<string, unknown> }) =>
-      Promise.resolve(where.status ? (opts.actionsCompleted ?? 0) : (opts.actionsTotal ?? 0)),
+    prismaMock.stepProgress.count.mockImplementation(
+      ({ where }: { where: Record<string, unknown> }) => {
+        if (!where.status) return Promise.resolve(opts.bpTotal ?? 0);
+        const prefix = (where.step_key as { startsWith?: string }).startsWith;
+        return Promise.resolve(
+          prefix === 'gbm_'
+            ? (opts.gbmCompleted ?? 0)
+            : (opts.bpCompleted ?? 0),
+        );
+      },
     );
-    prismaMock.coachingSession.count.mockImplementation(({ where }: { where: Record<string, unknown> }) =>
-      Promise.resolve(where.status ? (opts.sessionsCompleted ?? 0) : (opts.sessionsTotal ?? 0)),
+    prismaMock.coachingAction.count.mockImplementation(
+      ({ where }: { where: Record<string, unknown> }) =>
+        Promise.resolve(
+          where.status
+            ? (opts.actionsCompleted ?? 0)
+            : (opts.actionsTotal ?? 0),
+        ),
     );
-    prismaMock.coachingRecommendation.count.mockImplementation(({ where }: { where: Record<string, unknown> }) =>
-      Promise.resolve(where.status ? (opts.recsDone ?? 0) : (opts.recsTotal ?? 0)),
+    prismaMock.coachingSession.count.mockImplementation(
+      ({ where }: { where: Record<string, unknown> }) =>
+        Promise.resolve(
+          where.status
+            ? (opts.sessionsCompleted ?? 0)
+            : (opts.sessionsTotal ?? 0),
+        ),
+    );
+    prismaMock.coachingRecommendation.count.mockImplementation(
+      ({ where }: { where: Record<string, unknown> }) =>
+        Promise.resolve(
+          where.status ? (opts.recsDone ?? 0) : (opts.recsTotal ?? 0),
+        ),
     );
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MaturityScoreService, { provide: PrismaService, useValue: prismaMock }],
+      providers: [
+        MaturityScoreService,
+        { provide: PrismaService, useValue: prismaMock },
+      ],
     }).compile();
     service = module.get<MaturityScoreService>(MaturityScoreService);
   });
@@ -106,7 +131,9 @@ describe('MaturityScoreService', () => {
     const result = await service.compute('p1');
 
     expect(result.globalScore).toBe(100);
-    const byName = Object.fromEntries(result.dimensions.map((d) => [d.name, d]));
+    const byName = Object.fromEntries(
+      result.dimensions.map((d) => [d.name, d]),
+    );
     expect(byName.evaluation.score).toBe(100);
     expect(byName.gbm.score).toBe(100);
     expect(byName.business_plan.score).toBe(100);
@@ -146,7 +173,9 @@ describe('MaturityScoreService', () => {
     ]);
 
     const result = await service.compute('p1');
-    const byName = Object.fromEntries(result.dimensions.map((d) => [d.name, d]));
+    const byName = Object.fromEntries(
+      result.dimensions.map((d) => [d.name, d]),
+    );
 
     expect(byName.evaluation.score).toBe(60); // 12/20 → 60
     expect(byName.gbm.score).toBeCloseTo((11 / 21) * 100, 0);

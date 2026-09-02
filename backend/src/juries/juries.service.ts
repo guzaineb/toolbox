@@ -44,11 +44,17 @@ export class JuriesService {
         status: JurySessionStatus.DRAFT,
         created_by: userId,
         members: {
-          create: dto.memberUserIds.map((member_user_id) => ({ member_user_id })),
+          create: dto.memberUserIds.map((member_user_id) => ({
+            member_user_id,
+          })),
         },
       },
       include: {
-        members: { include: { member: { select: { id: true, email: true, profile: true } } } },
+        members: {
+          include: {
+            member: { select: { id: true, email: true, profile: true } },
+          },
+        },
         project: { select: { id: true, name: true, owner_id: true } },
       },
     });
@@ -71,7 +77,11 @@ export class JuriesService {
     return this.prisma.jurySession.findMany({
       where: { project_id: projectId },
       include: {
-        members: { include: { member: { select: { id: true, email: true, profile: true } } } },
+        members: {
+          include: {
+            member: { select: { id: true, email: true, profile: true } },
+          },
+        },
       },
       orderBy: { created_at: 'desc' },
     });
@@ -81,7 +91,11 @@ export class JuriesService {
     const session = await this.prisma.jurySession.findUnique({
       where: { id },
       include: {
-        members: { include: { member: { select: { id: true, email: true, profile: true } } } },
+        members: {
+          include: {
+            member: { select: { id: true, email: true, profile: true } },
+          },
+        },
         project: { select: { id: true, name: true, owner_id: true } },
       },
     });
@@ -119,7 +133,11 @@ export class JuriesService {
     };
 
     if (dto.memberUserIds) {
-      await this.validateMembers(session.project_id, session.cohort_id, dto.memberUserIds);
+      await this.validateMembers(
+        session.project_id,
+        session.cohort_id,
+        dto.memberUserIds,
+      );
       data.members = {
         deleteMany: {},
         create: dto.memberUserIds.map((member_user_id) => ({ member_user_id })),
@@ -130,7 +148,11 @@ export class JuriesService {
       where: { id },
       data,
       include: {
-        members: { include: { member: { select: { id: true, email: true, profile: true } } } },
+        members: {
+          include: {
+            member: { select: { id: true, email: true, profile: true } },
+          },
+        },
         project: { select: { id: true, name: true, owner_id: true } },
       },
     });
@@ -150,7 +172,11 @@ export class JuriesService {
     return this.update(id, { status: JurySessionStatus.CLOSED }, userId);
   }
 
-  private async validateMembers(projectId: string, cohortId: string, memberUserIds: string[]) {
+  private async validateMembers(
+    projectId: string,
+    cohortId: string,
+    memberUserIds: string[],
+  ) {
     for (const memberUserId of memberUserIds) {
       const user = await this.prisma.user.findUnique({
         where: { id: memberUserId },
@@ -167,15 +193,16 @@ export class JuriesService {
         },
         select: { id: true },
       });
-      const isJuryAssignment = await this.prisma.projectExpertAssignment.findFirst({
-        where: {
-          project_id: projectId,
-          expert_user_id: memberUserId,
-          role: 'JURY',
-          status: 'ACTIVE',
-        },
-        select: { id: true },
-      });
+      const isJuryAssignment =
+        await this.prisma.projectExpertAssignment.findFirst({
+          where: {
+            project_id: projectId,
+            expert_user_id: memberUserId,
+            role: 'JURY',
+            status: 'ACTIVE',
+          },
+          select: { id: true },
+        });
 
       if (!isJuryCohortExpert && !isJuryAssignment) {
         throw new BadRequestException(
@@ -192,7 +219,8 @@ export class JuriesService {
     });
     if (project && project.owner_id === userId) return;
 
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (participation?.cohort.incubator_id) {
       const member = await this.prisma.incubatorMember.findUnique({
         where: {

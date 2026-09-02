@@ -65,26 +65,26 @@ export class CohortExpertsService {
       },
     });
 
-    const event = dto.role === 'COACH' ? NotificationEvent.ASSIGNED_AS_COACH : NotificationEvent.ASSIGNED_AS_JURY;
+    const event =
+      dto.role === 'COACH'
+        ? NotificationEvent.ASSIGNED_AS_COACH
+        : NotificationEvent.ASSIGNED_AS_JURY;
     const { title, message } = this.messageBuilder.expertAssignment({
       role: dto.role as 'JURY' | 'COACH',
       cohortName: cohort.name,
       incubatorName: cohort.incubator.name,
     });
 
-    this.eventEmitter.emit(
+    this.eventEmitter.emit(event, {
       event,
-      {
-        event,
-        recipients: [{ userId: dto.expertUserId }],
-        title,
-        message,
-        link: `/incubator/cohorts/${cohortId}`,
-        senderId: userId,
-        resourceType: 'COHORT',
-        resourceId: cohortId,
-      } as NotificationPayload,
-    );
+      recipients: [{ userId: dto.expertUserId }],
+      title,
+      message,
+      link: `/incubator/cohorts/${cohortId}`,
+      senderId: userId,
+      resourceType: 'COHORT',
+      resourceId: cohortId,
+    } as NotificationPayload);
 
     return assignment;
   }
@@ -137,19 +137,16 @@ export class CohortExpertsService {
       incubatorName: cohort.incubator!.name,
     });
 
-    this.eventEmitter.emit(
-      NotificationEvent.INVITATION_SENT,
-      {
-        event: NotificationEvent.INVITATION_SENT,
-        recipients: [{ userId: dto.expertUserId }],
-        title,
-        message,
-        link: `/incubator/cohorts/${cohortId}`,
-        senderId: userId,
-        resourceType: 'COHORT',
-        resourceId: cohortId,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(NotificationEvent.INVITATION_SENT, {
+      event: NotificationEvent.INVITATION_SENT,
+      recipients: [{ userId: dto.expertUserId }],
+      title,
+      message,
+      link: `/incubator/cohorts/${cohortId}`,
+      senderId: userId,
+      resourceType: 'COHORT',
+      resourceId: cohortId,
+    } as NotificationPayload);
 
     return invitation;
   }
@@ -203,25 +200,24 @@ export class CohortExpertsService {
 
     const memberIds = members.map((m) => m.user_id);
     if (memberIds.length > 0) {
-      const { title, message } = this.messageBuilder.expertApplicationSubmitted({
-        role: dto.role as 'JURY' | 'COACH',
-        cohortName: cohort.name,
-        incubatorName: cohort.incubator!.name,
-      });
-
-      this.eventEmitter.emit(
-        NotificationEvent.APPLICATION_SUBMITTED,
+      const { title, message } = this.messageBuilder.expertApplicationSubmitted(
         {
-          event: NotificationEvent.APPLICATION_SUBMITTED,
-          recipients: memberIds.map((id) => ({ userId: id })),
-          title,
-          message,
-          link: `/incubator/cohorts/${cohortId}`,
-          senderId: userId,
-          resourceType: 'COHORT',
-          resourceId: cohortId,
-        } as NotificationPayload,
+          role: dto.role as 'JURY' | 'COACH',
+          cohortName: cohort.name,
+          incubatorName: cohort.incubator!.name,
+        },
       );
+
+      this.eventEmitter.emit(NotificationEvent.APPLICATION_SUBMITTED, {
+        event: NotificationEvent.APPLICATION_SUBMITTED,
+        recipients: memberIds.map((id) => ({ userId: id })),
+        title,
+        message,
+        link: `/incubator/cohorts/${cohortId}`,
+        senderId: userId,
+        resourceType: 'COHORT',
+        resourceId: cohortId,
+      } as NotificationPayload);
     }
 
     return application;
@@ -238,10 +234,12 @@ export class CohortExpertsService {
     });
     if (!assignment) throw new NotFoundException('Invitation introuvable');
     if (assignment.expert_user_id !== userId) {
-      throw new ForbiddenException("Cette invitation ne vous est pas destinée");
+      throw new ForbiddenException('Cette invitation ne vous est pas destinée');
     }
     if (assignment.status !== CohortExpertStatus.PENDING) {
-      throw new BadRequestException("Seules les invitations en attente peuvent être acceptées");
+      throw new BadRequestException(
+        'Seules les invitations en attente peuvent être acceptées',
+      );
     }
 
     const updated = await this.prisma.cohortExpert.update({
@@ -259,26 +257,24 @@ export class CohortExpertsService {
     });
 
     const incubatorName = assignment.cohort.incubator?.name ?? 'Incubateur';
-    const { title, message } = this.messageBuilder.invitationAcceptedByRecipient({
-      entityType: 'expert',
-      role: assignment.role as 'JURY' | 'COACH',
-      cohortName: assignment.cohort.name,
-      incubatorName,
-    });
+    const { title, message } =
+      this.messageBuilder.invitationAcceptedByRecipient({
+        entityType: 'expert',
+        role: assignment.role as 'JURY' | 'COACH',
+        cohortName: assignment.cohort.name,
+        incubatorName,
+      });
 
-    this.eventEmitter.emit(
-      NotificationEvent.INVITATION_ACCEPTED,
-      {
-        event: NotificationEvent.INVITATION_ACCEPTED,
-        recipients: [{ userId: assignment.assigned_by }],
-        title,
-        message,
-        link: `/incubator/cohorts/${assignment.cohort_id}`,
-        senderId: userId,
-        resourceType: 'COHORT',
-        resourceId: assignment.cohort_id,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(NotificationEvent.INVITATION_ACCEPTED, {
+      event: NotificationEvent.INVITATION_ACCEPTED,
+      recipients: [{ userId: assignment.assigned_by }],
+      title,
+      message,
+      link: `/incubator/cohorts/${assignment.cohort_id}`,
+      senderId: userId,
+      resourceType: 'COHORT',
+      resourceId: assignment.cohort_id,
+    } as NotificationPayload);
 
     return updated;
   }
@@ -294,10 +290,12 @@ export class CohortExpertsService {
     });
     if (!assignment) throw new NotFoundException('Invitation introuvable');
     if (assignment.expert_user_id !== userId) {
-      throw new ForbiddenException("Cette invitation ne vous est pas destinée");
+      throw new ForbiddenException('Cette invitation ne vous est pas destinée');
     }
     if (assignment.status !== CohortExpertStatus.PENDING) {
-      throw new BadRequestException("Seules les invitations en attente peuvent être refusées");
+      throw new BadRequestException(
+        'Seules les invitations en attente peuvent être refusées',
+      );
     }
 
     const updated = await this.prisma.cohortExpert.update({
@@ -309,26 +307,24 @@ export class CohortExpertsService {
     });
 
     const incubatorName = assignment.cohort.incubator?.name ?? 'Incubateur';
-    const { title, message } = this.messageBuilder.invitationRejectedByRecipient({
-      entityType: 'expert',
-      role: assignment.role as 'JURY' | 'COACH',
-      cohortName: assignment.cohort.name,
-      incubatorName,
-    });
+    const { title, message } =
+      this.messageBuilder.invitationRejectedByRecipient({
+        entityType: 'expert',
+        role: assignment.role as 'JURY' | 'COACH',
+        cohortName: assignment.cohort.name,
+        incubatorName,
+      });
 
-    this.eventEmitter.emit(
-      NotificationEvent.INVITATION_REJECTED,
-      {
-        event: NotificationEvent.INVITATION_REJECTED,
-        recipients: [{ userId: assignment.assigned_by }],
-        title,
-        message,
-        link: `/incubator/cohorts/${assignment.cohort_id}`,
-        senderId: userId,
-        resourceType: 'COHORT',
-        resourceId: assignment.cohort_id,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(NotificationEvent.INVITATION_REJECTED, {
+      event: NotificationEvent.INVITATION_REJECTED,
+      recipients: [{ userId: assignment.assigned_by }],
+      title,
+      message,
+      link: `/incubator/cohorts/${assignment.cohort_id}`,
+      senderId: userId,
+      resourceType: 'COHORT',
+      resourceId: assignment.cohort_id,
+    } as NotificationPayload);
 
     return updated;
   }
@@ -347,10 +343,15 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
+    await this.access.assertCanManageCohorts(
+      userId,
+      assignment.cohort.incubator_id,
+    );
 
     if (assignment.status !== CohortExpertStatus.PENDING) {
-      throw new BadRequestException("Seules les candidatures en attente peuvent être acceptées");
+      throw new BadRequestException(
+        'Seules les candidatures en attente peuvent être acceptées',
+      );
     }
 
     const updated = await this.prisma.cohortExpert.update({
@@ -374,20 +375,20 @@ export class CohortExpertsService {
       incubatorName,
     });
 
-    const event = assignment.role === 'COACH' ? NotificationEvent.ASSIGNED_AS_COACH : NotificationEvent.ASSIGNED_AS_JURY;
-    this.eventEmitter.emit(
+    const event =
+      assignment.role === 'COACH'
+        ? NotificationEvent.ASSIGNED_AS_COACH
+        : NotificationEvent.ASSIGNED_AS_JURY;
+    this.eventEmitter.emit(event, {
       event,
-      {
-        event,
-        recipients: [{ userId: assignment.expert_user_id }],
-        title,
-        message,
-        link: `/incubator/cohorts/${assignment.cohort_id}`,
-        senderId: userId,
-        resourceType: 'COHORT',
-        resourceId: assignment.cohort_id,
-      } as NotificationPayload,
-    );
+      recipients: [{ userId: assignment.expert_user_id }],
+      title,
+      message,
+      link: `/incubator/cohorts/${assignment.cohort_id}`,
+      senderId: userId,
+      resourceType: 'COHORT',
+      resourceId: assignment.cohort_id,
+    } as NotificationPayload);
 
     return updated;
   }
@@ -406,10 +407,15 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
+    await this.access.assertCanManageCohorts(
+      userId,
+      assignment.cohort.incubator_id,
+    );
 
     if (assignment.status !== CohortExpertStatus.PENDING) {
-      throw new BadRequestException("Seules les candidatures en attente peuvent être refusées");
+      throw new BadRequestException(
+        'Seules les candidatures en attente peuvent être refusées',
+      );
     }
 
     const updated = await this.prisma.cohortExpert.update({
@@ -427,19 +433,16 @@ export class CohortExpertsService {
       incubatorName,
     });
 
-    this.eventEmitter.emit(
-      NotificationEvent.APPLICATION_REJECTED,
-      {
-        event: NotificationEvent.APPLICATION_REJECTED,
-        recipients: [{ userId: assignment.expert_user_id }],
-        title,
-        message,
-        link: `/incubator/cohorts/${assignment.cohort_id}`,
-        senderId: userId,
-        resourceType: 'COHORT',
-        resourceId: assignment.cohort_id,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(NotificationEvent.APPLICATION_REJECTED, {
+      event: NotificationEvent.APPLICATION_REJECTED,
+      recipients: [{ userId: assignment.expert_user_id }],
+      title,
+      message,
+      link: `/incubator/cohorts/${assignment.cohort_id}`,
+      senderId: userId,
+      resourceType: 'COHORT',
+      resourceId: assignment.cohort_id,
+    } as NotificationPayload);
 
     return updated;
   }
@@ -509,11 +512,7 @@ export class CohortExpertsService {
     return assignment;
   }
 
-  async update(
-    id: string,
-    dto: UpdateCohortExpertDto,
-    userId: string,
-  ) {
+  async update(id: string, dto: UpdateCohortExpertDto, userId: string) {
     const assignment = await this.prisma.cohortExpert.findUnique({
       where: { id },
       include: { cohort: true },
@@ -523,7 +522,10 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
+    await this.access.assertCanManageCohorts(
+      userId,
+      assignment.cohort.incubator_id,
+    );
 
     if (dto.role && dto.role !== assignment.role) {
       const duplicate = await this.prisma.cohortExpert.findUnique({
@@ -566,7 +568,10 @@ export class CohortExpertsService {
       throw new BadRequestException('Cohorte sans incubateur');
     }
 
-    await this.access.assertCanManageCohorts(userId, assignment.cohort.incubator_id);
+    await this.access.assertCanManageCohorts(
+      userId,
+      assignment.cohort.incubator_id,
+    );
 
     return this.prisma.cohortExpert.update({
       where: { id },

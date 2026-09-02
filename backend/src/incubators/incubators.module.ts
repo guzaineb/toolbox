@@ -4,7 +4,7 @@ import { IncubatorsController } from './incubators.controller';
 
 @Module({
   controllers: [IncubatorsController],
-  providers: [IncubatorsService],  
+  providers: [IncubatorsService],
   exports: [IncubatorsService],
 })
 export class IncubatorsModule {}

@@ -46,22 +46,38 @@ export class MaturityScoreService {
     ] = await Promise.all([
       this.getLatestEvaluationScore20(projectId),
       this.prisma.stepProgress.count({
-        where: { project_id: projectId, status: 'COMPLETED', step_key: { startsWith: 'gbm_' } },
+        where: {
+          project_id: projectId,
+          status: 'COMPLETED',
+          step_key: { startsWith: 'gbm_' },
+        },
       }),
       this.prisma.stepProgress.count({
         where: { project_id: projectId, step_key: { startsWith: 'bp_' } },
       }),
       this.prisma.stepProgress.count({
-        where: { project_id: projectId, status: 'COMPLETED', step_key: { startsWith: 'bp_' } },
+        where: {
+          project_id: projectId,
+          status: 'COMPLETED',
+          step_key: { startsWith: 'bp_' },
+        },
       }),
       this.prisma.coachingAction.count({ where: { project_id: projectId } }),
-      this.prisma.coachingAction.count({ where: { project_id: projectId, status: 'COMPLETED' } }),
-      this.prisma.coachingSession.count({ where: { assignment: { project_id: projectId } } }),
+      this.prisma.coachingAction.count({
+        where: { project_id: projectId, status: 'COMPLETED' },
+      }),
+      this.prisma.coachingSession.count({
+        where: { assignment: { project_id: projectId } },
+      }),
       this.prisma.coachingSession.count({
         where: { assignment: { project_id: projectId }, status: 'COMPLETED' },
       }),
-      this.prisma.coachingRecommendation.count({ where: { project_id: projectId } }),
-      this.prisma.coachingRecommendation.count({ where: { project_id: projectId, status: 'DONE' } }),
+      this.prisma.coachingRecommendation.count({
+        where: { project_id: projectId },
+      }),
+      this.prisma.coachingRecommendation.count({
+        where: { project_id: projectId, status: 'DONE' },
+      }),
     ]);
 
     const [project, testValidated] = await Promise.all([
@@ -71,7 +87,11 @@ export class MaturityScoreService {
           marketing_plan: { select: { analyse_marche: true } },
           market_access: { select: { positionnement: true } },
           impact_measure: {
-            select: { kpis_environnementaux: true, kpis_sociaux: true, resultats_actuels: true },
+            select: {
+              kpis_environnementaux: true,
+              kpis_sociaux: true,
+              resultats_actuels: true,
+            },
           },
         },
       }),
@@ -82,7 +102,8 @@ export class MaturityScoreService {
     ]);
 
     // Évaluation (30%) : dernier score /20 (moyenne jurys) ramené sur 100
-    const evaluationScore = latestEvaluation !== null ? round2(latestEvaluation * 5) : 0;
+    const evaluationScore =
+      latestEvaluation !== null ? round2(latestEvaluation * 5) : 0;
 
     // GBM (20%) : part des étapes complétées sur les 24 étapes du référentiel
     const gbmScore = round2(Math.min(100, (gbmCompleted / 24) * 100));
@@ -96,7 +117,9 @@ export class MaturityScoreService {
       nonEmpty(project?.market_access?.positionnement),
       !!testValidated,
     ];
-    const marketScore = round2((marketSignals.filter(Boolean).length / marketSignals.length) * 100);
+    const marketScore = round2(
+      (marketSignals.filter(Boolean).length / marketSignals.length) * 100,
+    );
 
     // Impact (10%) : moyenne de 3 signaux KPIs/résultats renseignés
     const impactSignals: boolean[] = [
@@ -104,22 +127,44 @@ export class MaturityScoreService {
       hasJsonValue(project?.impact_measure?.kpis_sociaux),
       hasJsonValue(project?.impact_measure?.resultats_actuels),
     ];
-    const impactScore = round2((impactSignals.filter(Boolean).length / impactSignals.length) * 100);
+    const impactScore = round2(
+      (impactSignals.filter(Boolean).length / impactSignals.length) * 100,
+    );
 
     // Progression coaching (10%) : moyenne des taux d'actions complétées,
     // de sessions réalisées et de recommandations traitées
     const actionRate = actionsTotal > 0 ? actionsCompleted / actionsTotal : 0;
-    const sessionRate = sessionsTotal > 0 ? sessionsCompleted / sessionsTotal : 0;
-    const recommendationRate = recommendationsTotal > 0 ? recommendationsDone / recommendationsTotal : 0;
-    const coachingScore = round2(((actionRate + sessionRate + recommendationRate) / 3) * 100);
+    const sessionRate =
+      sessionsTotal > 0 ? sessionsCompleted / sessionsTotal : 0;
+    const recommendationRate =
+      recommendationsTotal > 0 ? recommendationsDone / recommendationsTotal : 0;
+    const coachingScore = round2(
+      ((actionRate + sessionRate + recommendationRate) / 3) * 100,
+    );
 
     const dimensions: MaturityDimension[] = [
-      { name: 'evaluation', score: evaluationScore, weight: MATURITY_WEIGHTS.evaluation },
+      {
+        name: 'evaluation',
+        score: evaluationScore,
+        weight: MATURITY_WEIGHTS.evaluation,
+      },
       { name: 'gbm', score: gbmScore, weight: MATURITY_WEIGHTS.gbm },
-      { name: 'business_plan', score: bpScore, weight: MATURITY_WEIGHTS.businessPlan },
-      { name: 'market_validation', score: marketScore, weight: MATURITY_WEIGHTS.market },
+      {
+        name: 'business_plan',
+        score: bpScore,
+        weight: MATURITY_WEIGHTS.businessPlan,
+      },
+      {
+        name: 'market_validation',
+        score: marketScore,
+        weight: MATURITY_WEIGHTS.market,
+      },
       { name: 'impact', score: impactScore, weight: MATURITY_WEIGHTS.impact },
-      { name: 'coaching_progress', score: coachingScore, weight: MATURITY_WEIGHTS.coaching },
+      {
+        name: 'coaching_progress',
+        score: coachingScore,
+        weight: MATURITY_WEIGHTS.coaching,
+      },
     ];
 
     const globalScore = round2(
@@ -128,7 +173,11 @@ export class MaturityScoreService {
 
     return {
       globalScore,
-      dimensions: dimensions.map(({ name, score, weight }) => ({ name, score, weight })),
+      dimensions: dimensions.map(({ name, score, weight }) => ({
+        name,
+        score,
+        weight,
+      })),
       computedAt: new Date().toISOString(),
     };
   }
@@ -136,7 +185,9 @@ export class MaturityScoreService {
   /**
    * Dernier score d'évaluation soumis (/20), moyenné entre jurys sur la version la plus récente.
    */
-  private async getLatestEvaluationScore20(projectId: string): Promise<number | null> {
+  private async getLatestEvaluationScore20(
+    projectId: string,
+  ): Promise<number | null> {
     const evaluations = await this.prisma.evaluation.findMany({
       where: { project_id: projectId, status: 'SUBMITTED' },
       include: { template: { include: { criteria: true } }, scores: true },
@@ -148,8 +199,8 @@ export class MaturityScoreService {
 
     const latestVersion = Math.max(...withTemplate.map((e) => e.version));
     const latestRound = withTemplate.filter((e) => e.version === latestVersion);
-    const scores = latestRound.map((e) =>
-      computeWeightedScore(e.template!.criteria, e.scores).total20,
+    const scores = latestRound.map(
+      (e) => computeWeightedScore(e.template!.criteria, e.scores).total20,
     );
     return round2(scores.reduce((a, b) => a + b, 0) / scores.length);
   }
@@ -163,6 +214,6 @@ function hasJsonValue(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === 'string') return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === 'object') return Object.keys(value as object).length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
   return false;
 }

@@ -22,7 +22,9 @@ export class SummaryService {
     private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
-  async generateContextSummary(projectId: string): Promise<{ summaryText: string }> {
+  async generateContextSummary(
+    projectId: string,
+  ): Promise<{ summaryText: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -82,27 +84,34 @@ Rédige un résumé de contexte professionnel et concis (300-400 mots) qui synth
       },
     });
 
-    await this.indexInChroma(projectId, 'context_summary', saved.summary_text || '');
-
-    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé de contexte IA' });
-    this.eventEmitter.emit(
-      NotificationEvent.AI_RESPONSE_READY,
-      {
-        event: NotificationEvent.AI_RESPONSE_READY,
-        recipients: [{ userId: project.owner_id }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/documents`,
-        senderId: project.owner_id,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
+    await this.indexInChroma(
+      projectId,
+      'context_summary',
+      saved.summary_text || '',
     );
+
+    const { title, message } = this.messageBuilder.aiResponseReady({
+      label: 'Résumé de contexte IA',
+    });
+    this.eventEmitter.emit(NotificationEvent.AI_RESPONSE_READY, {
+      event: NotificationEvent.AI_RESPONSE_READY,
+      recipients: [{ userId: project.owner_id }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/documents`,
+      senderId: project.owner_id,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return { summaryText: saved.summary_text || '' };
   }
 
-  async generateActivitySummary(projectId: string): Promise<{ activitiesSummary: string; keyAchievements: string; nextSteps: string }> {
+  async generateActivitySummary(projectId: string): Promise<{
+    activitiesSummary: string;
+    keyAchievements: string;
+    nextSteps: string;
+  }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -126,8 +135,8 @@ PARTENAIRES STRATÉGIQUES : ${project.key_activities_resource?.strategic_partner
 ÉCOCONCEPTION : ${project.eco_design?.projet_eco || 'Non renseigné'}
 RÉSULTATS ÉCOCONCEPTION : ${project.eco_design_result?.eco_results || 'Non renseigné'}
 
-PARTIES PRENANTES : ${project.stakeholder?.map(s => s.name).join(', ') || 'Non renseigné'}
-SEGMENTS CLIENTS : ${project.customer_segment?.map(c => c.segment_name).join(', ') || 'Non renseigné'}
+PARTIES PRENANTES : ${project.stakeholder?.map((s) => s.name).join(', ') || 'Non renseigné'}
+SEGMENTS CLIENTS : ${project.customer_segment?.map((c) => c.segment_name).join(', ') || 'Non renseigné'}
 PROPOSITION DE VALEUR : ${project.value_proposition?.value_added || 'Non renseigné'}
 
 Rédige un résumé structuré avec 3 sections :
@@ -139,7 +148,11 @@ Retourne UNIQUEMENT un objet JSON valide avec les clés : activities_summary, ke
 
     const response = await this.llm.generate(prompt, { temperature: 0.5 });
 
-    let parsed: { activities_summary?: string; key_achievements?: string; next_steps?: string } = {};
+    let parsed: {
+      activities_summary?: string;
+      key_achievements?: string;
+      next_steps?: string;
+    } = {};
     try {
       parsed = JSON.parse(response.content);
     } catch {
@@ -167,22 +180,25 @@ Retourne UNIQUEMENT un objet JSON valide avec les clés : activities_summary, ke
       },
     });
 
-    await this.indexInChroma(projectId, 'activity_summary', saved.activities_summary || '');
-
-    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé d\'activité IA' });
-    this.eventEmitter.emit(
-      NotificationEvent.AI_RESPONSE_READY,
-      {
-        event: NotificationEvent.AI_RESPONSE_READY,
-        recipients: [{ userId: project.owner_id }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/documents`,
-        senderId: project.owner_id,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
+    await this.indexInChroma(
+      projectId,
+      'activity_summary',
+      saved.activities_summary || '',
     );
+
+    const { title, message } = this.messageBuilder.aiResponseReady({
+      label: "Résumé d'activité IA",
+    });
+    this.eventEmitter.emit(NotificationEvent.AI_RESPONSE_READY, {
+      event: NotificationEvent.AI_RESPONSE_READY,
+      recipients: [{ userId: project.owner_id }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/documents`,
+      senderId: project.owner_id,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return {
       activitiesSummary: saved.activities_summary || '',
@@ -191,7 +207,11 @@ Retourne UNIQUEMENT un objet JSON valide avec les clés : activities_summary, ke
     };
   }
 
-  async generateCostRevenueSummary(projectId: string): Promise<{ costSummary: string; revenueSummary: string; financialHealth: string }> {
+  async generateCostRevenueSummary(projectId: string): Promise<{
+    costSummary: string;
+    revenueSummary: string;
+    financialHealth: string;
+  }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -217,7 +237,11 @@ Retourne UNIQUEMENT un objet JSON avec les clés : cost_summary, revenue_summary
 
     const response = await this.llm.generate(prompt, { temperature: 0.3 });
 
-    let parsed: { cost_summary?: string; revenue_summary?: string; financial_health?: string } = {};
+    let parsed: {
+      cost_summary?: string;
+      revenue_summary?: string;
+      financial_health?: string;
+    } = {};
     try {
       parsed = JSON.parse(response.content);
     } catch {
@@ -241,22 +265,25 @@ Retourne UNIQUEMENT un objet JSON avec les clés : cost_summary, revenue_summary
       },
     });
 
-    await this.indexInChroma(projectId, 'cost_revenue_summary', `Coûts: ${saved.cost_summary || ''}. Revenus: ${saved.revenue_summary || ''}. Santé: ${saved.financial_health || ''}`);
-
-    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé coûts/revenus IA' });
-    this.eventEmitter.emit(
-      NotificationEvent.AI_RESPONSE_READY,
-      {
-        event: NotificationEvent.AI_RESPONSE_READY,
-        recipients: [{ userId: project.owner_id }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/documents`,
-        senderId: project.owner_id,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
+    await this.indexInChroma(
+      projectId,
+      'cost_revenue_summary',
+      `Coûts: ${saved.cost_summary || ''}. Revenus: ${saved.revenue_summary || ''}. Santé: ${saved.financial_health || ''}`,
     );
+
+    const { title, message } = this.messageBuilder.aiResponseReady({
+      label: 'Résumé coûts/revenus IA',
+    });
+    this.eventEmitter.emit(NotificationEvent.AI_RESPONSE_READY, {
+      event: NotificationEvent.AI_RESPONSE_READY,
+      recipients: [{ userId: project.owner_id }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/documents`,
+      senderId: project.owner_id,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return {
       costSummary: saved.cost_summary || '',
@@ -265,7 +292,9 @@ Retourne UNIQUEMENT un objet JSON avec les clés : cost_summary, revenue_summary
     };
   }
 
-  async generateExecutiveSummary(projectId: string): Promise<{ executiveSummary: string }> {
+  async generateExecutiveSummary(
+    projectId: string,
+  ): Promise<{ executiveSummary: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -307,40 +336,51 @@ Rédige un executive summary professionnel de 400-500 mots destiné à des inves
       },
     });
 
-    await this.indexInChroma(projectId, 'executive_summary', saved.resume_executif || '');
-
-    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Résumé exécutif IA' });
-    this.eventEmitter.emit(
-      NotificationEvent.AI_RESPONSE_READY,
-      {
-        event: NotificationEvent.AI_RESPONSE_READY,
-        recipients: [{ userId: project.owner_id }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/documents`,
-        senderId: project.owner_id,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
+    await this.indexInChroma(
+      projectId,
+      'executive_summary',
+      saved.resume_executif || '',
     );
+
+    const { title, message } = this.messageBuilder.aiResponseReady({
+      label: 'Résumé exécutif IA',
+    });
+    this.eventEmitter.emit(NotificationEvent.AI_RESPONSE_READY, {
+      event: NotificationEvent.AI_RESPONSE_READY,
+      recipients: [{ userId: project.owner_id }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/documents`,
+      senderId: project.owner_id,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return { executiveSummary: saved.resume_executif || '' };
   }
 
-  private async indexInChroma(projectId: string, stepKey: string, content: string): Promise<void> {
+  private async indexInChroma(
+    projectId: string,
+    stepKey: string,
+    content: string,
+  ): Promise<void> {
     if (!content || content.trim().length < 10) return;
 
     try {
       const embeddings = await this.embeddings.generate([content]);
-      const documents: RagDocument[] = [{
-        id: `${projectId}_${stepKey}_${Date.now()}`,
-        content: `[${stepKey}] ${content}`,
-        metadata: { project_id: projectId, step_key: stepKey },
-      }];
+      const documents: RagDocument[] = [
+        {
+          id: `${projectId}_${stepKey}_${Date.now()}`,
+          content: `[${stepKey}] ${content}`,
+          metadata: { project_id: projectId, step_key: stepKey },
+        },
+      ];
       await this.chroma.addDocuments(projectId, documents, embeddings);
       this.logger.log(`Indexed ${stepKey} in Chroma for project ${projectId}`);
     } catch (error) {
-      this.logger.warn(`Failed to index ${stepKey} in Chroma: ${error.message}`);
+      this.logger.warn(
+        `Failed to index ${stepKey} in Chroma: ${error.message}`,
+      );
     }
   }
 }

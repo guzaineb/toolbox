@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LlmService } from '../ai/llm.service';
 import { DocumentPromptsService } from './document-prompts.service';
@@ -12,16 +17,44 @@ import { GbmService } from '../gbm/gbm.service';
 
 export const DOCUMENT_DEFINITIONS = [
   { key: 'idea_sketch', title: "Fiche d'idée", icon: 'Lightbulb' },
-  { key: 'problems_needs', title: 'Analyse des problèmes et besoins', icon: 'AlertTriangle' },
+  {
+    key: 'problems_needs',
+    title: 'Analyse des problèmes et besoins',
+    icon: 'AlertTriangle',
+  },
   { key: 'pestel', title: 'Rapport PESTEL', icon: 'Globe' },
   { key: 'swot', title: 'Analyse SWOT', icon: 'Target' },
-  { key: 'mission_vision', title: 'Mission, Vision et Valeurs', icon: 'Compass' },
-  { key: 'stakeholders', title: 'Cartographie des parties prenantes', icon: 'Users' },
-  { key: 'customer_segments', title: 'Analyse des segments clients', icon: 'UserCheck' },
+  {
+    key: 'mission_vision',
+    title: 'Mission, Vision et Valeurs',
+    icon: 'Compass',
+  },
+  {
+    key: 'stakeholders',
+    title: 'Cartographie des parties prenantes',
+    icon: 'Users',
+  },
+  {
+    key: 'customer_segments',
+    title: 'Analyse des segments clients',
+    icon: 'UserCheck',
+  },
   { key: 'value_proposition', title: 'Proposition de valeur', icon: 'Gem' },
-  { key: 'test_reports', title: 'Rapport des tests terrain', icon: 'FlaskConical' },
-  { key: 'customer_journey', title: 'Cartographie du parcours client', icon: 'Route' },
-  { key: 'gbm_canvas', title: 'Green Business Model Canvas final', icon: 'LayoutGrid' },
+  {
+    key: 'test_reports',
+    title: 'Rapport des tests terrain',
+    icon: 'FlaskConical',
+  },
+  {
+    key: 'customer_journey',
+    title: 'Cartographie du parcours client',
+    icon: 'Route',
+  },
+  {
+    key: 'gbm_canvas',
+    title: 'Green Business Model Canvas final',
+    icon: 'LayoutGrid',
+  },
   { key: 'management_plan', title: 'Plan de gestion', icon: 'ClipboardList' },
   { key: 'marketing_plan', title: 'Plan marketing', icon: 'Megaphone' },
   { key: 'financial_plan', title: 'Plan financier', icon: 'DollarSign' },
@@ -30,7 +63,11 @@ export const DOCUMENT_DEFINITIONS = [
   { key: 'executive_summary', title: 'Résumé exécutif', icon: 'FileText' },
   { key: 'eco_design_report', title: "Rapport d'éco-conception", icon: 'Leaf' },
   { key: 'funding_dossier', title: 'Dossier de financement', icon: 'Wallet' },
-  { key: 'market_strategy', title: "Stratégie d'accès au marché", icon: 'Target' },
+  {
+    key: 'market_strategy',
+    title: "Stratégie d'accès au marché",
+    icon: 'Target',
+  },
   { key: 'impact_report', title: "Rapport d'impact durable", icon: 'Activity' },
 ];
 
@@ -65,14 +102,16 @@ export class DocumentsService {
   async getDocumentsList(projectId: string, userId: string) {
     await this.access.assertCanAccessProject(projectId, userId);
 
-    const docs = await (this.prisma as any).generatedDocument.findMany({
+    const docs = (await (this.prisma as any).generatedDocument.findMany({
       where: { project_id: projectId },
       orderBy: { document_key: 'asc' },
-    }) as any[];
+    })) as any[];
 
-    const docMap = new Map<string, any>(docs.map((d: any) => [d.document_key, d]));
+    const docMap = new Map<string, any>(
+      docs.map((d: any) => [d.document_key, d]),
+    );
 
-    return DOCUMENT_DEFINITIONS.map(def => {
+    return DOCUMENT_DEFINITIONS.map((def) => {
       const dbDoc = docMap.get(def.key);
       return {
         key: def.key,
@@ -89,12 +128,15 @@ export class DocumentsService {
   async getDocument(projectId: string, documentKey: string, userId: string) {
     await this.access.assertCanAccessProject(projectId, userId);
 
-    const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
+    const def = DOCUMENT_DEFINITIONS.find((d) => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);
 
     const doc = await (this.prisma as any).generatedDocument.findUnique({
       where: {
-        project_id_document_key: { project_id: projectId, document_key: documentKey },
+        project_id_document_key: {
+          project_id: projectId,
+          document_key: documentKey,
+        },
       },
     });
 
@@ -109,10 +151,14 @@ export class DocumentsService {
     };
   }
 
-  async generateDocument(projectId: string, documentKey: string, userId: string) {
+  async generateDocument(
+    projectId: string,
+    documentKey: string,
+    userId: string,
+  ) {
     await this.sections.ensureOwnership(projectId, userId);
 
-    const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
+    const def = DOCUMENT_DEFINITIONS.find((d) => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);
 
     // Gating D7 : ne pas générer de livrable Business Plan tant que le GBM est incomplet.
@@ -122,13 +168,19 @@ export class DocumentsService {
         throw new ForbiddenException({
           message:
             'Le GBM doit être suffisamment complet avant de générer ce document du Plan d’Affaires.',
-          missingSteps: missing.map(s => ({ stepKey: s.stepKey, title: s.title })),
+          missingSteps: missing.map((s) => ({
+            stepKey: s.stepKey,
+            title: s.title,
+          })),
         });
       }
     }
 
     const config = this.prompts.getDocumentConfig(documentKey);
-    if (!config) throw new NotFoundException(`Pas de prompt configuré pour: ${documentKey}`);
+    if (!config)
+      throw new NotFoundException(
+        `Pas de prompt configuré pour: ${documentKey}`,
+      );
 
     const project = await this.prompts.getProjectData(projectId);
     if (!project) throw new NotFoundException('Projet introuvable');
@@ -137,26 +189,39 @@ export class DocumentsService {
 
     let response;
     try {
-      response = await this.llm.generate(prompt, { temperature: 0.5, maxTokens: 2000 });
+      response = await this.llm.generate(prompt, {
+        temperature: 0.5,
+        maxTokens: 2000,
+      });
     } catch (error: any) {
-      this.logger.error(`AI generation failed for ${documentKey}: ${error.message}`);
+      this.logger.error(
+        `AI generation failed for ${documentKey}: ${error.message}`,
+      );
       response = {
         content: `Document généré en mode dégradé. Le contenu sera complet lorsque le service IA sera configuré.`,
         model: 'fallback',
       };
     }
 
-    const existingDoc = await (this.prisma as any).generatedDocument.findUnique({
-      where: {
-        project_id_document_key: { project_id: projectId, document_key: documentKey },
+    const existingDoc = await (this.prisma as any).generatedDocument.findUnique(
+      {
+        where: {
+          project_id_document_key: {
+            project_id: projectId,
+            document_key: documentKey,
+          },
+        },
       },
-    });
+    );
 
     const isUpdate = existingDoc && existingDoc.status === 'GENERATED';
 
     const saved = await (this.prisma as any).generatedDocument.upsert({
       where: {
-        project_id_document_key: { project_id: projectId, document_key: documentKey },
+        project_id_document_key: {
+          project_id: projectId,
+          document_key: documentKey,
+        },
       },
       create: {
         project_id: projectId,
@@ -184,24 +249,23 @@ export class DocumentsService {
     });
 
     const isNew = !isUpdate;
-    const eventName = isNew ? NotificationEvent.DOCUMENT_GENERATED : NotificationEvent.DOCUMENT_UPDATED;
+    const eventName = isNew
+      ? NotificationEvent.DOCUMENT_GENERATED
+      : NotificationEvent.DOCUMENT_UPDATED;
     const { title, message } = isNew
       ? this.messageBuilder.documentGenerated({ title: def.title })
       : this.messageBuilder.documentUpdated({ title: def.title });
 
-    this.eventEmitter.emit(
-      eventName,
-      {
-        event: eventName,
-        recipients: [{ userId }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/documents`,
-        senderId: userId,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(eventName, {
+      event: eventName,
+      recipients: [{ userId }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/documents`,
+      senderId: userId,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return {
       key: saved.document_key,
@@ -222,7 +286,12 @@ export class DocumentsService {
         results.push(result);
       } catch (error: any) {
         this.logger.warn(`Failed to generate ${def.key}: ${error.message}`);
-        results.push({ key: def.key, title: def.title, status: 'ERROR', error: error.message });
+        results.push({
+          key: def.key,
+          title: def.title,
+          status: 'ERROR',
+          error: error.message,
+        });
       }
     }
     return results;

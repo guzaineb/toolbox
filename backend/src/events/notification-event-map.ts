@@ -6,7 +6,14 @@ export const NOTIFICATION_EVENT_MAP: Record<
   {
     type: NotificationType;
     priority: NotificationPriority;
-    category: 'coaching' | 'evaluation' | 'cohort' | 'invitation' | 'document' | 'ai' | 'admin';
+    category:
+      | 'coaching'
+      | 'evaluation'
+      | 'cohort'
+      | 'invitation'
+      | 'document'
+      | 'ai'
+      | 'admin';
     requiresEmail: boolean;
   }
 > = {

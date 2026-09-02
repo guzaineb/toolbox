@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Param, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EcoDesignService } from './eco-design.service';
 import { ProjectIdParam } from './dto/eco-design.dto';
@@ -14,12 +22,19 @@ export class EcoDesignController {
   }
 
   @Patch()
-  update(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam, @Body() data: any) {
+  update(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+    @Body() data: any,
+  ) {
     return this.eco.update(params.projectId, data, req.user.id);
   }
 
   @Get('progress')
-  getProgress(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+  getProgress(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+  ) {
     return this.eco.getProgress(params.projectId, req.user.id);
   }
 }

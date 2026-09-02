@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Param, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MarketService } from './market.service';
 import { ProjectIdParam } from './dto/market.dto';
@@ -14,12 +22,19 @@ export class MarketController {
   }
 
   @Patch()
-  update(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam, @Body() data: any) {
+  update(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+    @Body() data: any,
+  ) {
     return this.market.update(params.projectId, data, req.user.id);
   }
 
   @Get('progress')
-  getProgress(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+  getProgress(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+  ) {
     return this.market.getProgress(params.projectId, req.user.id);
   }
 }

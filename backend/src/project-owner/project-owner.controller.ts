@@ -1,5 +1,11 @@
 import {
-  Controller, Post, Body, Get, UseGuards, Req, Patch,
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Patch,
   Delete,
   Param,
   Query,
@@ -16,7 +22,10 @@ export class ProjectOwnerController {
   constructor(private service: ProjectOwnerService) {}
 
   @Post()
-  create(@Req() req: { user: { id: string } }, @Body() dto: CreateProjectOwnerDto) {
+  create(
+    @Req() req: { user: { id: string } },
+    @Body() dto: CreateProjectOwnerDto,
+  ) {
     return this.service.create(req.user.id, dto);
   }
 
@@ -27,24 +36,33 @@ export class ProjectOwnerController {
 
   // ✅ Upsert : crée si inexistant, met à jour sinon
   @Patch('me')
-  update(@Req() req: { user: { id: string } }, @Body() dto: CreateProjectOwnerDto) {
+  update(
+    @Req() req: { user: { id: string } },
+    @Body() dto: CreateProjectOwnerDto,
+  ) {
     return this.service.upsert(req.user.id, dto);
   }
-    @Post('skills')
+  @Post('skills')
   addSkill(@Req() req: { user: { id: string } }, @Body() dto: CreateSkillDto) {
     return this.service.addSkill(req.user.id, dto);
   }
-    @Get('skills')
+  @Get('skills')
   getSkills(@Req() req: { user: { id: string } }) {
     return this.service.getSkills(req.user.id);
   }
 
   @Delete('skills/:id')
-  deleteSkill(@Req() req: { user: { id: string } }, @Param('id') skillId: string) {
+  deleteSkill(
+    @Req() req: { user: { id: string } },
+    @Param('id') skillId: string,
+  ) {
     return this.service.deleteSkill(req.user.id, skillId);
   }
- @Post('experiences')
-  addExperience(@Req() req: { user: { id: string } }, @Body() dto: CreateExperienceDto) {
+  @Post('experiences')
+  addExperience(
+    @Req() req: { user: { id: string } },
+    @Body() dto: CreateExperienceDto,
+  ) {
     return this.service.addExperience(req.user.id, dto);
   }
 
@@ -54,10 +72,13 @@ export class ProjectOwnerController {
   }
 
   @Delete('experiences/:id')
-  deleteExperience(@Req() req: { user: { id: string } }, @Param('id') expId: string) {
+  deleteExperience(
+    @Req() req: { user: { id: string } },
+    @Param('id') expId: string,
+  ) {
     return this.service.deleteExperience(req.user.id, expId);
   }
-   @Get('admin/all')
+  @Get('admin/all')
   async adminFindAll(@Query('page') page = '1', @Query('limit') limit = '20') {
     return this.service.findAll(+page, +limit);
   }
@@ -66,5 +87,4 @@ export class ProjectOwnerController {
   findOne(@Param('id') profileId: string) {
     return this.service.findById(profileId);
   }
-
 }

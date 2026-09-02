@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FundingPhase } from '@prisma/client';
 import { SectionStepService } from '../common/services/section-step.service';
@@ -12,13 +16,17 @@ const MATURITY_QUESTIONS = [
   'Produit profitable déjà sur le marché',
   'Équilibre coûts/revenus et burn rate connus',
   'Entreprise déjà profitable',
-  'Numéro d\'enregistrement officiel et statut légal',
+  "Numéro d'enregistrement officiel et statut légal",
   'Équipe complète et active',
   'Portfolio produits établi en vente',
-  'Marchés d\'expansion futurs identifiés',
+  "Marchés d'expansion futurs identifiés",
 ];
 
-const FUNDING_ALLOWED_FIELDS = ['opportunites_financement', 'opportunites_pays', 'strategie_levee_fonds'];
+const FUNDING_ALLOWED_FIELDS = [
+  'opportunites_financement',
+  'opportunites_pays',
+  'strategie_levee_fonds',
+];
 
 @Injectable()
 export class FundingService {
@@ -51,13 +59,17 @@ export class FundingService {
     return record || {};
   }
 
-  async submitQuestionnaire(projectId: string, reponses: Record<string, boolean>, userId: string) {
+  async submitQuestionnaire(
+    projectId: string,
+    reponses: Record<string, boolean>,
+    userId: string,
+  ) {
     await this.sections.ensureOwnership(projectId, userId);
 
     const expectedKeys = Array.from({ length: 12 }, (_, i) => `q${i + 1}`);
     this.sections.assertMissingAnswers(reponses, expectedKeys);
 
-    const score = expectedKeys.filter(key => reponses[key] === true).length;
+    const score = expectedKeys.filter((key) => reponses[key] === true).length;
     const phase = this.calculatePhase(score);
 
     return this.sections.saveSection(

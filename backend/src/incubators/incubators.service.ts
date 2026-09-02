@@ -1,8 +1,15 @@
-import {Injectable,NotFoundException,BadRequestException,} from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIncubatorDto } from './dto/create-incubator.dto';
 import { UpdateIncubatorDto } from './dto/update-incubator.dto';
-import { UpdateStatusDto, UpdateVerificationDto } from './dto/update-status.dto';
+import {
+  UpdateStatusDto,
+  UpdateVerificationDto,
+} from './dto/update-status.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
@@ -19,7 +26,9 @@ export class IncubatorsService {
   ) {}
 
   async create(userId: string, dto: CreateIncubatorDto) {
-    const existing = await this.prisma.incubator.findUnique({ where: { slug: dto.slug } });
+    const existing = await this.prisma.incubator.findUnique({
+      where: { slug: dto.slug },
+    });
     if (existing) throw new BadRequestException('Ce slug est déjà utilisé');
 
     const saved = await this.prisma.incubator.create({
@@ -46,21 +55,20 @@ export class IncubatorsService {
       where: { role: 'ADMIN', is_active: true },
       select: { id: true },
     });
-    const adminIds = admins.map(a => a.id);
+    const adminIds = admins.map((a) => a.id);
     if (adminIds.length > 0) {
-      const { title, message } = this.messageBuilder.newIncubator({ name: saved.name });
-      this.eventEmitter.emit(
-        NotificationEvent.NEW_INCUBATOR,
-        {
-          event: NotificationEvent.NEW_INCUBATOR,
-          recipients: adminIds.map(id => ({ userId: id })),
-          title,
-          message,
-          senderId: userId,
-          resourceType: 'INCUBATOR',
-          resourceId: saved.id,
-        } as NotificationPayload,
-      );
+      const { title, message } = this.messageBuilder.newIncubator({
+        name: saved.name,
+      });
+      this.eventEmitter.emit(NotificationEvent.NEW_INCUBATOR, {
+        event: NotificationEvent.NEW_INCUBATOR,
+        recipients: adminIds.map((id) => ({ userId: id })),
+        title,
+        message,
+        senderId: userId,
+        resourceType: 'INCUBATOR',
+        resourceId: saved.id,
+      } as NotificationPayload);
     }
 
     return saved;
@@ -94,12 +102,15 @@ export class IncubatorsService {
     return members.map((m) => m.incubator).filter(Boolean);
   }
 
-  async update( id: string, dto: UpdateIncubatorDto, userId: string,) {
+  async update(id: string, dto: UpdateIncubatorDto, userId: string) {
     await this.access.assertIncubatorAdmin(userId, id);
 
     if (dto.slug) {
-      const existing = await this.prisma.incubator.findUnique({ where: { slug: dto.slug } });
-      if (existing && existing.id !== id) throw new BadRequestException('Ce slug est déjà utilisé');
+      const existing = await this.prisma.incubator.findUnique({
+        where: { slug: dto.slug },
+      });
+      if (existing && existing.id !== id)
+        throw new BadRequestException('Ce slug est déjà utilisé');
     }
 
     return this.prisma.incubator.update({
@@ -114,9 +125,12 @@ export class IncubatorsService {
     return { message: 'Incubateur supprimé' };
   }
 
-  async updateStatus(id: string, dto: UpdateStatusDto, userId: string,) {
+  async updateStatus(id: string, dto: UpdateStatusDto, userId: string) {
     await this.access.assertIncubatorAdmin(userId, id);
-    const incubator = await this.prisma.incubator.findUnique({ where: { id }, select: { name: true } });
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id },
+      select: { name: true },
+    });
     const updated = await this.prisma.incubator.update({
       where: { id },
       data: { status: dto.status },
@@ -126,31 +140,32 @@ export class IncubatorsService {
       where: { incubator_id: id, status: 'ACTIVE' },
       select: { user_id: true },
     });
-    const memberIds = members.map(m => m.user_id);
+    const memberIds = members.map((m) => m.user_id);
     if (memberIds.length > 0) {
       const { title, message } = this.messageBuilder.incubatorStatusChanged({
         name: incubator?.name ?? 'Incubateur',
         status: dto.status,
       });
-      this.eventEmitter.emit(
-        NotificationEvent.INCUBATOR_STATUS_CHANGED,
-        {
-          event: NotificationEvent.INCUBATOR_STATUS_CHANGED,
-          recipients: memberIds.map(id => ({ userId: id })),
-          title,
-          message,
-          link: `/incubator/${id}`,
-          senderId: userId,
-          resourceType: 'INCUBATOR',
-          resourceId: id,
-        } as NotificationPayload,
-      );
+      this.eventEmitter.emit(NotificationEvent.INCUBATOR_STATUS_CHANGED, {
+        event: NotificationEvent.INCUBATOR_STATUS_CHANGED,
+        recipients: memberIds.map((id) => ({ userId: id })),
+        title,
+        message,
+        link: `/incubator/${id}`,
+        senderId: userId,
+        resourceType: 'INCUBATOR',
+        resourceId: id,
+      } as NotificationPayload);
     }
 
     return updated;
   }
 
-  async updateVerification(id: string, dto: UpdateVerificationDto, userId: string,) {
+  async updateVerification(
+    id: string,
+    dto: UpdateVerificationDto,
+    userId: string,
+  ) {
     await this.access.assertIncubatorAdmin(userId, id);
     return this.prisma.incubator.update({
       where: { id },
@@ -163,53 +178,58 @@ export class IncubatorsService {
 
     const now = new Date();
 
-    const [cohorts, allParticipations, cohortExperts, evaluations, coachingSessions] =
-      await Promise.all([
-        this.prisma.cohort.findMany({
-          where: { incubator_id: incubatorId },
-          select: {
-            id: true,
-            status: true,
-            capacity: true,
-            current_participants: true,
+    const [
+      cohorts,
+      allParticipations,
+      cohortExperts,
+      evaluations,
+      coachingSessions,
+    ] = await Promise.all([
+      this.prisma.cohort.findMany({
+        where: { incubator_id: incubatorId },
+        select: {
+          id: true,
+          status: true,
+          capacity: true,
+          current_participants: true,
+        },
+      }),
+      this.prisma.cohortParticipation.findMany({
+        where: { cohort: { incubator_id: incubatorId } },
+        select: {
+          status: true,
+          applied_at: true,
+          responded_at: true,
+          project_id: true,
+        },
+      }),
+      this.prisma.cohortExpert.findMany({
+        where: { cohort: { incubator_id: incubatorId }, status: 'ACTIVE' },
+        select: { expert_user_id: true, role: true },
+      }),
+      this.prisma.evaluation.findMany({
+        where: {
+          project: {
+            cohort_participations: {
+              some: { cohort: { incubator_id: incubatorId } },
+            },
           },
-        }),
-        this.prisma.cohortParticipation.findMany({
-          where: { cohort: { incubator_id: incubatorId } },
-          select: {
-            status: true,
-            applied_at: true,
-            responded_at: true,
-            project_id: true,
-          },
-        }),
-        this.prisma.cohortExpert.findMany({
-          where: { cohort: { incubator_id: incubatorId }, status: 'ACTIVE' },
-          select: { expert_user_id: true, role: true },
-        }),
-        this.prisma.evaluation.findMany({
-          where: {
+        },
+        select: { id: true },
+      }),
+      this.prisma.coachingSession.findMany({
+        where: {
+          assignment: {
             project: {
               cohort_participations: {
                 some: { cohort: { incubator_id: incubatorId } },
               },
             },
           },
-          select: { id: true },
-        }),
-        this.prisma.coachingSession.findMany({
-          where: {
-            assignment: {
-              project: {
-                cohort_participations: {
-                  some: { cohort: { incubator_id: incubatorId } },
-                },
-              },
-            },
-          },
-          select: { id: true },
-        }),
-      ]);
+        },
+        select: { id: true },
+      }),
+    ]);
 
     const totalCohorts = cohorts.length;
     const cohortsByStatus = {
@@ -222,10 +242,12 @@ export class IncubatorsService {
     const averageFillRate =
       cohortsWithCapacity.length > 0
         ? Math.round(
-            cohortsWithCapacity.reduce(
+            (cohortsWithCapacity.reduce(
               (sum, c) => sum + c.current_participants / c.capacity!,
               0,
-            ) / cohortsWithCapacity.length * 100,
+            ) /
+              cohortsWithCapacity.length) *
+              100,
           )
         : 0;
 
@@ -234,20 +256,22 @@ export class IncubatorsService {
       PENDING: allParticipations.filter((p) => p.status === 'PENDING').length,
       ACCEPTED: allParticipations.filter((p) => p.status === 'ACCEPTED').length,
       REJECTED: allParticipations.filter((p) => p.status === 'REJECTED').length,
-      WITHDRAWN: allParticipations.filter((p) => p.status === 'WITHDRAWN').length,
+      WITHDRAWN: allParticipations.filter((p) => p.status === 'WITHDRAWN')
+        .length,
     };
     const acceptanceRate =
-      participationStatusCounts.ACCEPTED + participationStatusCounts.REJECTED > 0
+      participationStatusCounts.ACCEPTED + participationStatusCounts.REJECTED >
+      0
         ? Math.round(
             (participationStatusCounts.ACCEPTED /
-              (participationStatusCounts.ACCEPTED + participationStatusCounts.REJECTED)) *
+              (participationStatusCounts.ACCEPTED +
+                participationStatusCounts.REJECTED)) *
               100,
           )
         : 0;
 
-    const uniqueExperts = new Set(
-      cohortExperts.map((e) => e.expert_user_id),
-    ).size;
+    const uniqueExperts = new Set(cohortExperts.map((e) => e.expert_user_id))
+      .size;
     const juryCount = cohortExperts.filter((e) => e.role === 'JURY').length;
     const coachCount = cohortExperts.filter((e) => e.role === 'COACH').length;
 
@@ -263,7 +287,8 @@ export class IncubatorsService {
                 (new Date(p.responded_at!).getTime() -
                   new Date(p.applied_at).getTime()),
               0,
-            ) / respondedParticipations.length /
+            ) /
+              respondedParticipations.length /
               (1000 * 60 * 60 * 24),
           )
         : 0;
@@ -296,5 +321,4 @@ export class IncubatorsService {
       coachingSessions: coachingSessions.length,
     };
   }
-
 }

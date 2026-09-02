@@ -1,5 +1,7 @@
 import {
-  Injectable, BadRequestException, NotFoundException,
+  Injectable,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { StepStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -67,12 +69,19 @@ export class GbmService {
     });
   }
 
-  async updateStep(projectId: string, stepKey: string, data: any, userId: string) {
+  async updateStep(
+    projectId: string,
+    stepKey: string,
+    data: any,
+    userId: string,
+  ) {
     await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
     if (config.relation !== 'one-to-one') {
-      throw new BadRequestException(`Step ${stepKey} is one-to-many. Use add/list/delete endpoints.`);
+      throw new BadRequestException(
+        `Step ${stepKey} is one-to-many. Use add/list/delete endpoints.`,
+      );
     }
 
     const model = this.getModel(config);
@@ -100,12 +109,19 @@ export class GbmService {
     return record;
   }
 
-  async addStepItem(projectId: string, stepKey: string, data: any, userId: string) {
+  async addStepItem(
+    projectId: string,
+    stepKey: string,
+    data: any,
+    userId: string,
+  ) {
     await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
     if (config.relation !== 'one-to-many') {
-      throw new BadRequestException(`Step ${stepKey} is one-to-one. Use PATCH to update.`);
+      throw new BadRequestException(
+        `Step ${stepKey} is one-to-one. Use PATCH to update.`,
+      );
     }
 
     const model = this.getModel(config);
@@ -127,12 +143,20 @@ export class GbmService {
     return this.getMany(projectId, config);
   }
 
-  async updateStepItem(projectId: string, stepKey: string, itemId: string, data: any, userId: string) {
+  async updateStepItem(
+    projectId: string,
+    stepKey: string,
+    itemId: string,
+    data: any,
+    userId: string,
+  ) {
     await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
     if (config.relation !== 'one-to-many') {
-      throw new BadRequestException(`Step ${stepKey} is one-to-one. Use PATCH to update.`);
+      throw new BadRequestException(
+        `Step ${stepKey} is one-to-one. Use PATCH to update.`,
+      );
     }
 
     const model = this.getModel(config);
@@ -152,7 +176,12 @@ export class GbmService {
     return updated;
   }
 
-  async deleteStepItem(projectId: string, stepKey: string, itemId: string, userId: string) {
+  async deleteStepItem(
+    projectId: string,
+    stepKey: string,
+    itemId: string,
+    userId: string,
+  ) {
     await this.sections.ensureOwnership(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
@@ -201,7 +230,10 @@ export class GbmService {
     }
   }
 
-  private async findOneToManyItems(projectId: string, config: StepConfig): Promise<any[]> {
+  private async findOneToManyItems(
+    projectId: string,
+    config: StepConfig,
+  ): Promise<any[]> {
     const model = this.getModel(config);
     return model.findMany({ where: { project_id: projectId } });
   }
@@ -209,7 +241,7 @@ export class GbmService {
   private anyValidOneToMany(stepKey: string, items: any[]): boolean {
     const rule = getOneToManyRule(stepKey);
     if (!rule) return false;
-    return items.some(item => isValidOneToManyItem(stepKey, item));
+    return items.some((item) => isValidOneToManyItem(stepKey, item));
   }
 
   /**
@@ -220,8 +252,8 @@ export class GbmService {
    */
   async getMissingRequiredSteps(projectId: string): Promise<StepConfig[]> {
     const required = [
-      ...GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated),
-      ...GBM_STEPS.filter(s => s.relation === 'one-to-many'),
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-one' && !s.aiGenerated),
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-many'),
     ];
     const missing: StepConfig[] = [];
     for (const step of required) {
@@ -233,7 +265,10 @@ export class GbmService {
 
   /** Vrai si une étape requise contient du contenu réel (champ non vide pour un one-to-one,
    *  ≥1 élément valide pour un one-to-many). */
-  private async stepHasValidContent(projectId: string, step: StepConfig): Promise<boolean> {
+  private async stepHasValidContent(
+    projectId: string,
+    step: StepConfig,
+  ): Promise<boolean> {
     const model = this.getModel(step);
 
     if (step.relation === 'one-to-many') {
@@ -244,8 +279,8 @@ export class GbmService {
     const record = await model.findUnique({ where: { project_id: projectId } });
     if (!record) return false;
     const allowed = this.getAllowedFields(step.model);
-    return allowed.some(key => {
-      const value = (record as any)[key];
+    return allowed.some((key) => {
+      const value = record[key];
       if (typeof value === 'string') return value.trim() !== '';
       return value !== undefined && value !== null && value !== '';
     });
@@ -260,8 +295,8 @@ export class GbmService {
    *  getMissingRequiredSteps, mais avec un diagnostic exploitable par le porteur). */
   private async getReviewIssues(projectId: string): Promise<GbmStepIssue[]> {
     const required = [
-      ...GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated),
-      ...GBM_STEPS.filter(s => s.relation === 'one-to-many'),
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-one' && !s.aiGenerated),
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-many'),
     ];
     const issues: GbmStepIssue[] = [];
     for (const step of required) {
@@ -271,7 +306,10 @@ export class GbmService {
     return issues;
   }
 
-  private async getStepIssue(projectId: string, step: StepConfig): Promise<GbmStepIssue | null> {
+  private async getStepIssue(
+    projectId: string,
+    step: StepConfig,
+  ): Promise<GbmStepIssue | null> {
     if (step.relation === 'one-to-many') {
       const items = await this.findOneToManyItems(projectId, step);
       if (this.anyValidOneToMany(step.stepKey, items)) return null;
@@ -280,8 +318,10 @@ export class GbmService {
       const requiredFields = rule
         ? [
             rule.idLabel,
-            ...(rule.allOf ?? []).map(f => f.label),
-            ...(rule.anyOf?.length ? [rule.anyOf.map(f => f.label).join(' ou ')] : []),
+            ...(rule.allOf ?? []).map((f) => f.label),
+            ...(rule.anyOf?.length
+              ? [rule.anyOf.map((f) => f.label).join(' ou ')]
+              : []),
           ]
         : undefined;
 
@@ -291,7 +331,8 @@ export class GbmService {
             title: step.title,
             relation: 'one-to-many',
             status: 'EMPTY',
-            detail: 'Aucun élément ajouté : ajoutez au moins un élément complet.',
+            detail:
+              'Aucun élément ajouté : ajoutez au moins un élément complet.',
             items: 0,
             requiredFields,
           }
@@ -338,19 +379,16 @@ export class GbmService {
     });
 
     const { title, message } = this.messageBuilder.stepCompleted();
-    this.eventEmitter.emit(
-      NotificationEvent.STEP_COMPLETED,
-      {
-        event: NotificationEvent.STEP_COMPLETED,
-        recipients: [{ userId }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/gbm`,
-        senderId: userId,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(NotificationEvent.STEP_COMPLETED, {
+      event: NotificationEvent.STEP_COMPLETED,
+      recipients: [{ userId }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/gbm`,
+      senderId: userId,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return { message: 'GBM review completed', gbm_reviewed_at: reviewedAt };
   }
@@ -363,25 +401,38 @@ export class GbmService {
       select: { step_key: true, status: true },
     });
 
-    const gbmSteps = GBM_STEPS.map(s => s.stepKey);
-    const projectSteps = steps.filter(s => gbmSteps.includes(s.step_key));
+    const gbmSteps = GBM_STEPS.map((s) => s.stepKey);
+    const projectSteps = steps.filter((s) => gbmSteps.includes(s.step_key));
 
     const total = gbmSteps.length;
-    const completed = projectSteps.filter(s => s.status === 'COMPLETED').length;
-    const inProgress = projectSteps.filter(s => s.status === 'IN_PROGRESS').length;
-    const blocked = projectSteps.filter(s => s.status === 'BLOCKED').length;
-    const notStarted = projectSteps.filter(s => s.status === 'NOT_STARTED' || !s.status).length;
+    const completed = projectSteps.filter(
+      (s) => s.status === 'COMPLETED',
+    ).length;
+    const inProgress = projectSteps.filter(
+      (s) => s.status === 'IN_PROGRESS',
+    ).length;
+    const blocked = projectSteps.filter((s) => s.status === 'BLOCKED').length;
+    const notStarted = projectSteps.filter(
+      (s) => s.status === 'NOT_STARTED' || !s.status,
+    ).length;
 
-    const phaseBreakdown = [1, 2, 3, 4, 5].map(phase => {
-      const phaseStepKeys = GBM_STEPS.filter(s => s.phase === phase).map(s => s.stepKey);
-      const phaseSteps = projectSteps.filter(s => phaseStepKeys.includes(s.step_key));
+    const phaseBreakdown = [1, 2, 3, 4, 5].map((phase) => {
+      const phaseStepKeys = GBM_STEPS.filter((s) => s.phase === phase).map(
+        (s) => s.stepKey,
+      );
+      const phaseSteps = projectSteps.filter((s) =>
+        phaseStepKeys.includes(s.step_key),
+      );
       const phaseTotal = phaseStepKeys.length;
-      const phaseCompleted = phaseSteps.filter(s => s.status === 'COMPLETED').length;
+      const phaseCompleted = phaseSteps.filter(
+        (s) => s.status === 'COMPLETED',
+      ).length;
       return {
         phase,
         total: phaseTotal,
         completed: phaseCompleted,
-        percentage: phaseTotal > 0 ? Math.round((phaseCompleted / phaseTotal) * 100) : 0,
+        percentage:
+          phaseTotal > 0 ? Math.round((phaseCompleted / phaseTotal) * 100) : 0,
       };
     });
 
@@ -393,17 +444,20 @@ export class GbmService {
       notStarted,
       percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
       phases: phaseBreakdown,
-      steps: projectSteps.filter(s => gbmSteps.includes(s.step_key)),
+      steps: projectSteps.filter((s) => gbmSteps.includes(s.step_key)),
     };
   }
 
   async initializeProjectSteps(projectId: string, userId: string) {
     await this.sections.ensureOwnership(projectId, userId);
 
-    const operations = ALL_STEPS.map(step =>
+    const operations = ALL_STEPS.map((step) =>
       this.prisma.stepProgress.upsert({
         where: {
-          project_id_step_key: { project_id: projectId, step_key: step.stepKey },
+          project_id_step_key: {
+            project_id: projectId,
+            step_key: step.stepKey,
+          },
         },
         create: {
           project_id: projectId,
@@ -417,7 +471,6 @@ export class GbmService {
     await this.prisma.$transaction(operations);
     return { initialized: true, count: ALL_STEPS.length };
   }
-
 
   private filterStepFields(config: StepConfig, data: any): any {
     const allowedFields = this.getAllowedFields(config.model);
@@ -434,34 +487,145 @@ export class GbmService {
     const fieldMap: Record<string, string[]> = {
       // Phase 1
       ideaSketch: ['idea_initial', 'product_service', 'customers', 'partners'],
-      problemsNeeds: ['environmental_challenges', 'social_challenges', 'customer_needs', 'team_motivations'],
-      pestel: ['political_what', 'political_how', 'economic_what', 'economic_how', 'social_what', 'social_how', 'technological_what', 'technological_how', 'environmental_what', 'environmental_how', 'legal_what', 'legal_how'],
-      objective: ['environmental_problems', 'environmental_objectives', 'social_problems', 'social_objectives', 'customer_problems', 'customer_objectives', 'team_problems', 'team_objectives'],
+      problemsNeeds: [
+        'environmental_challenges',
+        'social_challenges',
+        'customer_needs',
+        'team_motivations',
+      ],
+      pestel: [
+        'political_what',
+        'political_how',
+        'economic_what',
+        'economic_how',
+        'social_what',
+        'social_how',
+        'technological_what',
+        'technological_how',
+        'environmental_what',
+        'environmental_how',
+        'legal_what',
+        'legal_how',
+      ],
+      objective: [
+        'environmental_problems',
+        'environmental_objectives',
+        'social_problems',
+        'social_objectives',
+        'customer_problems',
+        'customer_objectives',
+        'team_problems',
+        'team_objectives',
+      ],
       missionVision: ['mission', 'vision', 'values'],
       contextSummary: ['summary_text', 'generated_by_ai'],
 
       // Phase 2
-      stakeholder: ['name', 'role', 'interest', 'influence', 'engagement_strategy'],
+      stakeholder: [
+        'name',
+        'role',
+        'interest',
+        'influence',
+        'engagement_strategy',
+      ],
       stakeholderMap: ['stakeholder_name', 'contribution', 'reward'],
-      customerSegment: ['segment_name', 'description', 'pains', 'gains', 'functions'],
-      valueProposition: ['environmental_value', 'social_value', 'pain_relievers', 'gain_creators', 'products_services', 'value_added', 'innovation_value'],
-      testDiscovery: ['hypothesis', 'test_method', 'results', 'learnings', 'validated'],
-      valuePropositionPivot: ['initial_assumptions', 'test_results', 'pivot_decision', 'new_value_proposition'],
-      customerRelationsChannel: ['customer_relationships', 'channels', 'distribution_strategy'],
-      customerJourney: ['stage_name', 'touchpoints', 'customer_emotions', 'improvement_ideas'],
-      keyActivitiesResource: ['key_activities', 'key_resources', 'strategic_partners'],
-      ecoDesign: ['equipe_eco', 'projet_eco', 'contexte_eco', 'vision_durable', 'cycle_de_vie', 'performance_eco', 'strategies_eco', 'plan_action_eco'],
+      customerSegment: [
+        'segment_name',
+        'description',
+        'pains',
+        'gains',
+        'functions',
+      ],
+      valueProposition: [
+        'environmental_value',
+        'social_value',
+        'pain_relievers',
+        'gain_creators',
+        'products_services',
+        'value_added',
+        'innovation_value',
+      ],
+      testDiscovery: [
+        'hypothesis',
+        'test_method',
+        'results',
+        'learnings',
+        'validated',
+      ],
+      valuePropositionPivot: [
+        'initial_assumptions',
+        'test_results',
+        'pivot_decision',
+        'new_value_proposition',
+      ],
+      customerRelationsChannel: [
+        'customer_relationships',
+        'channels',
+        'distribution_strategy',
+      ],
+      customerJourney: [
+        'stage_name',
+        'touchpoints',
+        'customer_emotions',
+        'improvement_ideas',
+      ],
+      keyActivitiesResource: [
+        'key_activities',
+        'key_resources',
+        'strategic_partners',
+      ],
+      ecoDesign: [
+        'equipe_eco',
+        'projet_eco',
+        'contexte_eco',
+        'vision_durable',
+        'cycle_de_vie',
+        'performance_eco',
+        'strategies_eco',
+        'plan_action_eco',
+      ],
       ecoDesignResult: ['eco_results', 'performance_analysis', 'improvements'],
-      summaryActivity: ['activities_summary', 'key_achievements', 'next_steps', 'generated_by_ai'],
-      costStructure: ['fixed_costs', 'variable_costs', 'cost_drivers', 'breakeven_analysis'],
-      revenueStream: ['revenue_sources', 'pricing_strategy', 'revenue_projections'],
-      costRevenueSummary: ['cost_summary', 'revenue_summary', 'financial_health', 'generated_by_ai'],
+      summaryActivity: [
+        'activities_summary',
+        'key_achievements',
+        'next_steps',
+        'generated_by_ai',
+      ],
+      costStructure: [
+        'fixed_costs',
+        'variable_costs',
+        'cost_drivers',
+        'breakeven_analysis',
+      ],
+      revenueStream: [
+        'revenue_sources',
+        'pricing_strategy',
+        'revenue_projections',
+      ],
+      costRevenueSummary: [
+        'cost_summary',
+        'revenue_summary',
+        'financial_health',
+        'generated_by_ai',
+      ],
 
       // Phase 3
-      testPreparation: ['test_objectives', 'test_method', 'success_criteria', 'resources_needed', 'timeline'],
+      testPreparation: [
+        'test_objectives',
+        'test_method',
+        'success_criteria',
+        'resources_needed',
+        'timeline',
+      ],
 
       // Phase 4
-      indicator: ['environmental_kpis', 'social_kpis', 'economic_kpis', 'measurement_method', 'review_frequency'],
+      indicator: [
+        'environmental_kpis',
+        'social_kpis',
+        'economic_kpis',
+        'measurement_method',
+        'review_frequency',
+      ],
 
       // Phase 5
       swotAnalysis: ['strengths', 'weaknesses', 'opportunities', 'threats'],
@@ -469,10 +633,18 @@ export class GbmService {
     return fieldMap[modelName] || [];
   }
 
-  private async generateAiSummary(projectId: string, stepKey: string, record: any) {
+  private async generateAiSummary(
+    projectId: string,
+    stepKey: string,
+    record: any,
+  ) {
     try {
       const context = await this.buildAiContext(projectId, stepKey);
-      const summary = await this.ai.generateSummary(projectId, stepKey, context);
+      const summary = await this.ai.generateSummary(
+        projectId,
+        stepKey,
+        context,
+      );
 
       const config = getStepConfig(stepKey);
       if (!config) return;
@@ -497,7 +669,10 @@ export class GbmService {
     }
   }
 
-  private async buildAiContext(projectId: string, stepKey: string): Promise<Record<string, any>> {
+  private async buildAiContext(
+    projectId: string,
+    stepKey: string,
+  ): Promise<Record<string, any>> {
     const base = { project_id: projectId };
 
     switch (stepKey) {

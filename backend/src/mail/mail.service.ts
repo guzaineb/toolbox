@@ -238,7 +238,12 @@ export class MailService {
     });
   }
 
-  async sendInvitation(email: string, incubatorName: string, token: string, incubatorId: string): Promise<void> {
+  async sendInvitation(
+    email: string,
+    incubatorName: string,
+    token: string,
+    incubatorId: string,
+  ): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const inviteUrl = `${frontendUrl}/accept-invite?token=${token}&incubatorId=${incubatorId}`;
 
@@ -275,7 +280,11 @@ export class MailService {
     });
   }
 
-  async sendDocumentVerification(email: string, documentType: string, status: string): Promise<void> {
+  async sendDocumentVerification(
+    email: string,
+    documentType: string,
+    status: string,
+  ): Promise<void> {
     const isApproved = status === 'APPROVED';
     const statusColor = isApproved ? '#2d7a52' : '#c2410c';
     const icon = isApproved ? '✅' : '❌';
@@ -303,16 +312,20 @@ export class MailService {
         </div>
       </div>
 
-      ${!isApproved ? `
+      ${
+        !isApproved
+          ? `
         <div class="info-note">
           📄 Pour toute question, contactez l’équipe support.<br>
           Vous pouvez soumettre un nouveau document depuis votre espace.
         </div>
-      ` : `
+      `
+          : `
         <div class="info-note">
           🎉 Votre profil est maintenant complet. Accédez à tous les services.
         </div>
-      `}
+      `
+      }
     `;
 
     await this.transporter.sendMail({

@@ -18,4 +18,6 @@ export class SubmitQuestionnaireDto {
   reponses: Record<string, boolean>;
 }
 
-export class UpdateFundingAssessmentDto extends PartialType(FundingAssessmentDto) {}
+export class UpdateFundingAssessmentDto extends PartialType(
+  FundingAssessmentDto,
+) {}

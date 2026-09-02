@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EvaluationAiService } from './evaluation-ai.service';
 import { asNumber, asString } from './ai-json.util';
-import { CoachingActionPriority, ImprovementObjectiveStatus } from '@prisma/client';
+import {
+  CoachingActionPriority,
+  ImprovementObjectiveStatus,
+} from '@prisma/client';
 
 export interface GeneratedObjective {
   title: string;
@@ -35,8 +38,15 @@ export class ImprovementPlannerService {
     projectId: string,
     evaluationId: string,
     userId: string,
-  ): Promise<{ planId: string; analysisAvailable: boolean } | { planId: null; analysisAvailable: false }> {
-    const payload = await this.evaluationAi.analyzeEvaluation(projectId, evaluationId, userId);
+  ): Promise<
+    | { planId: string; analysisAvailable: boolean }
+    | { planId: null; analysisAvailable: false }
+  > {
+    const payload = await this.evaluationAi.analyzeEvaluation(
+      projectId,
+      evaluationId,
+      userId,
+    );
     if (!payload) return { planId: null, analysisAvailable: false };
 
     const analysis = await this.prisma.aiAnalysis.findFirst({
@@ -81,7 +91,12 @@ export class ImprovementPlannerService {
 
   buildDraft(payload: {
     summary: string;
-    weaknesses: Array<{ area: string; severity?: string; description: string; evidence?: string | null }>;
+    weaknesses: Array<{
+      area: string;
+      severity?: string;
+      description: string;
+      evidence?: string | null;
+    }>;
     risks: Array<{ area: string; severity?: string; description: string }>;
     recommendations: Array<{ title: string; priority: string; reason: string }>;
   }): GeneratedPlan {
@@ -108,7 +123,8 @@ export class ImprovementPlannerService {
       .filter((w) => (w.severity ?? 'MEDIUM') === 'HIGH')
       .slice(0, 3);
     for (const weak of weakPoints) {
-      if (objectives.some((o) => o.title.toLowerCase().includes(weak.area))) continue;
+      if (objectives.some((o) => o.title.toLowerCase().includes(weak.area)))
+        continue;
       objectives.push({
         title: `Réduire le risque : ${weak.area}`,
         description: weak.description,
@@ -120,7 +136,11 @@ export class ImprovementPlannerService {
     }
 
     const targetAreas = [
-      ...new Set(payload.weaknesses.map((w) => w.area).concat(objectives.map((o) => o.targetArea))),
+      ...new Set(
+        payload.weaknesses
+          .map((w) => w.area)
+          .concat(objectives.map((o) => o.targetArea)),
+      ),
     ].slice(0, 6);
 
     return {

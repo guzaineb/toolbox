@@ -12,7 +12,10 @@ export class MaturityController {
   ) {}
 
   @Get()
-  async getMaturity(@Param('projectId') projectId: string, @Req() req: { user: { id: string } }) {
+  async getMaturity(
+    @Param('projectId') projectId: string,
+    @Req() req: { user: { id: string } },
+  ) {
     await this.access.assertCanAccessProject(projectId, req.user.id);
     return this.maturityScore.compute(projectId);
   }

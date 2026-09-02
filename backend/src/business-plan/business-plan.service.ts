@@ -198,7 +198,7 @@ export class BusinessPlanService {
       status: project.business_plan_status ?? null,
       finalizedAt: project.business_plan_finalized_at ?? null,
       isGbmReady: missing.length === 0,
-      missingSteps: missing.map(s => ({
+      missingSteps: missing.map((s) => ({
         stepKey: s.stepKey,
         title: s.title,
       })),
@@ -216,7 +216,10 @@ export class BusinessPlanService {
       throw new BadRequestException({
         message:
           'Le GBM doit être suffisamment complet avant de finaliser le Plan d’Affaires.',
-        missingSteps: missing.map(s => ({ stepKey: s.stepKey, title: s.title })),
+        missingSteps: missing.map((s) => ({
+          stepKey: s.stepKey,
+          title: s.title,
+        })),
       });
     }
 

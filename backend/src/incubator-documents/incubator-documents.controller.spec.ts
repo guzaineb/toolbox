@@ -11,7 +11,9 @@ describe('IncubatorDocumentsController', () => {
       providers: [{ provide: IncubatorDocumentsService, useValue: {} }],
     }).compile();
 
-    controller = module.get<IncubatorDocumentsController>(IncubatorDocumentsController);
+    controller = module.get<IncubatorDocumentsController>(
+      IncubatorDocumentsController,
+    );
   });
 
   it('should be defined', () => {

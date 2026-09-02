@@ -31,8 +31,11 @@ export function computeWeightedScore(
 
   for (const criterion of criteria) {
     const found = scores.find((s) => s.criterion_id === criterion.id);
-    const raw = found ? Math.max(0, Math.min(found.score, criterion.max_score)) : 0;
-    const percentage = criterion.max_score > 0 ? (raw / criterion.max_score) * 100 : 0;
+    const raw = found
+      ? Math.max(0, Math.min(found.score, criterion.max_score))
+      : 0;
+    const percentage =
+      criterion.max_score > 0 ? (raw / criterion.max_score) * 100 : 0;
     const contribution = (percentage / 100) * criterion.weight;
     total += contribution;
 

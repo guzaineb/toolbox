@@ -4,7 +4,12 @@ import { LlmService } from '../llm.service';
 import { ChromaService } from '../chroma.service';
 import { EmbeddingsService } from '../embeddings.service';
 import { ProjectContextBuilderService } from './project-context.service';
-import { asNumber, asString, asStringArray, parseWithRetry } from './ai-json.util';
+import {
+  asNumber,
+  asString,
+  asStringArray,
+  parseWithRetry,
+} from './ai-json.util';
 import { AiAnalysisType, Prisma } from '@prisma/client';
 import { RagDocument } from '../interfaces/ai.types';
 
@@ -33,8 +38,17 @@ export interface EvaluationAnalysisPayload {
 }
 
 const AREAS = [
-  'impact', 'market', 'finance', 'team', 'product', 'customer_acquisition',
-  'operations', 'legal', 'innovation', 'business_model', 'general',
+  'impact',
+  'market',
+  'finance',
+  'team',
+  'product',
+  'customer_acquisition',
+  'operations',
+  'legal',
+  'innovation',
+  'business_model',
+  'general',
 ];
 const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'];
@@ -51,7 +65,11 @@ export class EvaluationAiService {
     private readonly contextBuilder: ProjectContextBuilderService,
   ) {}
 
-  async analyzeEvaluation(projectId: string, evaluationId: string, userId: string): Promise<EvaluationAnalysisPayload | null> {
+  async analyzeEvaluation(
+    projectId: string,
+    evaluationId: string,
+    userId: string,
+  ): Promise<EvaluationAnalysisPayload | null> {
     const analysis = await this.prisma.aiAnalysis.create({
       data: {
         project_id: projectId,
@@ -65,26 +83,37 @@ export class EvaluationAiService {
     const started = Date.now();
     try {
       const context = await this.contextBuilder.build(projectId);
-      const ragContext = await this.retrieveRagContext(projectId, context.contextText);
+      const ragContext = await this.retrieveRagContext(
+        projectId,
+        context.contextText,
+      );
 
-      const prompt = this.buildPrompt(context.projectName, context.contextText, ragContext);
+      const prompt = this.buildPrompt(
+        context.projectName,
+        context.contextText,
+        ragContext,
+      );
       const result = await parseWithRetry<EvaluationAnalysisPayload>(
         (repair) =>
           repair
-            ? this.llm.chat(
-                [
-                  { role: 'system', content: this.systemPrompt() },
-                  { role: 'user', content: `${prompt}\n\n${repair}` },
-                ],
-                { temperature: 0.3, maxTokens: 2500 },
-              ).then((r) => r.content)
-            : this.llm.chat(
-                [
-                  { role: 'system', content: this.systemPrompt() },
-                  { role: 'user', content: prompt },
-                ],
-                { temperature: 0.3, maxTokens: 2500 },
-              ).then((r) => r.content),
+            ? this.llm
+                .chat(
+                  [
+                    { role: 'system', content: this.systemPrompt() },
+                    { role: 'user', content: `${prompt}\n\n${repair}` },
+                  ],
+                  { temperature: 0.3, maxTokens: 2500 },
+                )
+                .then((r) => r.content)
+            : this.llm
+                .chat(
+                  [
+                    { role: 'system', content: this.systemPrompt() },
+                    { role: 'user', content: prompt },
+                  ],
+                  { temperature: 0.3, maxTokens: 2500 },
+                )
+                .then((r) => r.content),
         (parsed) => this.validatePayload(parsed),
       );
 
@@ -113,14 +142,16 @@ export class EvaluationAiService {
       return payload;
     } catch (error) {
       this.logger.warn(`analyzeEvaluation failed: ${error.message}`);
-      await this.prisma.aiAnalysis.update({
-        where: { id: analysis.id },
-        data: {
-          status: 'FAILED',
-          error: error.message?.slice(0, 500) ?? 'Erreur inconnue',
-          duration_ms: Date.now() - started,
-        },
-      }).catch(() => undefined);
+      await this.prisma.aiAnalysis
+        .update({
+          where: { id: analysis.id },
+          data: {
+            status: 'FAILED',
+            error: error.message?.slice(0, 500) ?? 'Erreur inconnue',
+            duration_ms: Date.now() - started,
+          },
+        })
+        .catch(() => undefined);
       return null;
     }
   }
@@ -129,21 +160,23 @@ export class EvaluationAiService {
    * RAG : uniquement si un contexte documentaire pertinent existe.
    * Échoue silencieusement (ChromaDB indisponible = analyse dégradée mais fonctionnelle).
    */
-  private async retrieveRagContext(projectId: string, contextText: string): Promise<string> {
+  private async retrieveRagContext(
+    projectId: string,
+    contextText: string,
+  ): Promise<string> {
     try {
       const query = contextText.slice(0, 800);
       const [queryEmbedding] = await this.embeddings.generate([query]);
       if (!queryEmbedding) return '';
-      const results: { documents: RagDocument[]; distances: number[] } = await this.chroma.query(
-        projectId,
-        queryEmbedding,
-        4,
-      );
+      const results: { documents: RagDocument[]; distances: number[] } =
+        await this.chroma.query(projectId, queryEmbedding, 4);
       const relevant = results.documents
         .filter((_, i) => (results.distances[i] ?? 2) < 1.2)
         .slice(0, 3);
       if (relevant.length === 0) return '';
-      return relevant.map((doc, i) => `[Doc ${i + 1}] ${doc.content.slice(0, 700)}`).join('\n');
+      return relevant
+        .map((doc, i) => `[Doc ${i + 1}] ${doc.content.slice(0, 700)}`)
+        .join('\n');
     } catch {
       return '';
     }
@@ -157,7 +190,11 @@ Règles absolues :
 - Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour.`;
   }
 
-  private buildPrompt(projectName: string, contextText: string, ragContext: string): string {
+  private buildPrompt(
+    projectName: string,
+    contextText: string,
+    ragContext: string,
+  ): string {
     return `Analyse le projet « ${projectName} » à partir du contexte ci-dessous.
 
 === CONTEXTE PROJET ===
@@ -206,7 +243,10 @@ Contraintes :
     risks: AnalysisPoint[];
     opportunities: AnalysisPoint[];
   } {
-    const mapPoint = (item: unknown, withSeverity: boolean): AnalysisPoint | null => {
+    const mapPoint = (
+      item: unknown,
+      withSeverity: boolean,
+    ): AnalysisPoint | null => {
       if (!item || typeof item !== 'object') return null;
       const p = item as Record<string, unknown>;
       const description = asString(p.description);
@@ -216,16 +256,23 @@ Contraintes :
         area: AREAS.includes(rawArea) ? rawArea : 'general',
         description: description.slice(0, 600),
         severity:
-          withSeverity && SEVERITIES.includes((asString(p.severity) ?? '').toUpperCase())
+          withSeverity &&
+          SEVERITIES.includes((asString(p.severity) ?? '').toUpperCase())
             ? (asString(p.severity) as string).toUpperCase()
             : undefined,
         evidence: asString(p.evidence),
         confidence: withSeverity ? undefined : clampConfidence(p.confidence),
       };
     };
-    const mapList = (value: unknown, withSeverity: boolean): AnalysisPoint[] => {
+    const mapList = (
+      value: unknown,
+      withSeverity: boolean,
+    ): AnalysisPoint[] => {
       if (!Array.isArray(value)) return [];
-      return value.map((i) => mapPoint(i, withSeverity)).filter((x): x is AnalysisPoint => x !== null).slice(0, 6);
+      return value
+        .map((i) => mapPoint(i, withSeverity))
+        .filter((x): x is AnalysisPoint => x !== null)
+        .slice(0, 6);
     };
     const clampConfidence = (v: unknown): number | null => {
       const n = asNumber(v);

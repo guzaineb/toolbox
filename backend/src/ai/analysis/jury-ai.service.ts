@@ -46,17 +46,19 @@ IMPORTANT : tu ne proposes AUCUNE note ni score — c'est le rôle exclusif du j
 
     const result = await parseWithRetry<JuryAssistantPayload>(
       () =>
-        this.llm.chat(
-          [
-            {
-              role: 'system',
-              content:
-                "Tu prépares des dossiers d'évaluation pour des jurys. Tu cites uniquement les données fournies, sans jamais proposer de note. Réponds UNIQUEMENT en JSON.",
-            },
-            { role: 'user', content: prompt },
-          ],
-          { temperature: 0.3, maxTokens: 2000 },
-        ).then((r) => r.content),
+        this.llm
+          .chat(
+            [
+              {
+                role: 'system',
+                content:
+                  "Tu prépares des dossiers d'évaluation pour des jurys. Tu cites uniquement les données fournies, sans jamais proposer de note. Réponds UNIQUEMENT en JSON.",
+              },
+              { role: 'user', content: prompt },
+            ],
+            { temperature: 0.3, maxTokens: 2000 },
+          )
+          .then((r) => r.content),
       (parsed) => this.validate(parsed),
     );
 

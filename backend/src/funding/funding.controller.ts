@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Param, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FundingService } from './funding.service';
 import { ProjectIdParam, SubmitQuestionnaireDto } from './dto/funding.dto';
@@ -14,7 +23,10 @@ export class FundingController {
   }
 
   @Get()
-  getAssessment(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+  getAssessment(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+  ) {
     return this.funding.getAssessment(params.projectId, req.user.id);
   }
 
@@ -24,11 +36,19 @@ export class FundingController {
     @Param() params: ProjectIdParam,
     @Body() dto: SubmitQuestionnaireDto,
   ) {
-    return this.funding.submitQuestionnaire(params.projectId, dto.reponses, req.user.id);
+    return this.funding.submitQuestionnaire(
+      params.projectId,
+      dto.reponses,
+      req.user.id,
+    );
   }
 
   @Patch()
-  updateAssessment(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam, @Body() data: any) {
+  updateAssessment(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+    @Body() data: any,
+  ) {
     return this.funding.updateAssessment(params.projectId, data, req.user.id);
   }
 }

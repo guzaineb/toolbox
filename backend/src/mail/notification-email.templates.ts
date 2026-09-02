@@ -7,7 +7,10 @@ export interface NotificationTemplateConfig {
   subjectPrefix: string;
 }
 
-export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, NotificationTemplateConfig> = {
+export const NOTIFICATION_EMAIL_TEMPLATES: Record<
+  NotificationType,
+  NotificationTemplateConfig
+> = {
   // ─── INVITATIONS ──────────────────────────────────────
   [NotificationType.INVITATION_RECEIVED]: {
     icon: '📩',
@@ -263,13 +266,13 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, Notification
     icon: '⏰',
     gradientFrom: '#c2410c',
     gradientTo: '#9a3412',
-    subjectPrefix: 'Échéance d\'évaluation',
+    subjectPrefix: "Échéance d'évaluation",
   },
   [NotificationType.EVALUATION_TEMPLATE_CREATED]: {
     icon: '📋',
     gradientFrom: '#c9a84c',
     gradientTo: '#b88a2a',
-    subjectPrefix: 'Grille d\'évaluation créée',
+    subjectPrefix: "Grille d'évaluation créée",
   },
   [NotificationType.FINAL_DECISION_MADE]: {
     icon: '⚖️',
@@ -325,13 +328,13 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<NotificationType, Notification
     icon: '📎',
     gradientFrom: '#c9a84c',
     gradientTo: '#b88a2a',
-    subjectPrefix: 'Preuve d\'action soumise',
+    subjectPrefix: "Preuve d'action soumise",
   },
   [NotificationType.COACHING_EVIDENCE_REVIEWED]: {
     icon: '✅',
     gradientFrom: '#2d7a52',
     gradientTo: '#1d5a3a',
-    subjectPrefix: 'Preuve d\'action examinée',
+    subjectPrefix: "Preuve d'action examinée",
   },
 
   // ─── ADMIN ────────────────────────────────────────────

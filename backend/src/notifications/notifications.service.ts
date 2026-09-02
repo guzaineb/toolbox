@@ -102,12 +102,9 @@ export class NotificationsService {
 
   // ==================== FIND ALL (paginated, filtered) ====================
 
-  async findAllByUser(
-    userId: string,
-    params?: boolean | FindAllParams,
-  ) {
+  async findAllByUser(userId: string, params?: boolean | FindAllParams) {
     const query: FindAllParams =
-      typeof params === 'boolean' ? { unreadOnly: params } : params ?? {};
+      typeof params === 'boolean' ? { unreadOnly: params } : (params ?? {});
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -294,16 +291,25 @@ export class NotificationsService {
     },
   ) {
     const mapped: Record<string, unknown> = {};
-    if (data.inAppEnabled !== undefined) mapped.in_app_enabled = data.inAppEnabled;
-    if (data.emailEnabled !== undefined) mapped.email_enabled = data.emailEnabled;
-    if (data.realtimeEnabled !== undefined) mapped.realtime_enabled = data.realtimeEnabled;
-    if (data.coachingEnabled !== undefined) mapped.coaching_enabled = data.coachingEnabled;
-    if (data.evaluationEnabled !== undefined) mapped.evaluation_enabled = data.evaluationEnabled;
-    if (data.cohortEnabled !== undefined) mapped.cohort_enabled = data.cohortEnabled;
-    if (data.invitationEnabled !== undefined) mapped.invitation_enabled = data.invitationEnabled;
-    if (data.documentEnabled !== undefined) mapped.document_enabled = data.documentEnabled;
+    if (data.inAppEnabled !== undefined)
+      mapped.in_app_enabled = data.inAppEnabled;
+    if (data.emailEnabled !== undefined)
+      mapped.email_enabled = data.emailEnabled;
+    if (data.realtimeEnabled !== undefined)
+      mapped.realtime_enabled = data.realtimeEnabled;
+    if (data.coachingEnabled !== undefined)
+      mapped.coaching_enabled = data.coachingEnabled;
+    if (data.evaluationEnabled !== undefined)
+      mapped.evaluation_enabled = data.evaluationEnabled;
+    if (data.cohortEnabled !== undefined)
+      mapped.cohort_enabled = data.cohortEnabled;
+    if (data.invitationEnabled !== undefined)
+      mapped.invitation_enabled = data.invitationEnabled;
+    if (data.documentEnabled !== undefined)
+      mapped.document_enabled = data.documentEnabled;
     if (data.aiEnabled !== undefined) mapped.ai_enabled = data.aiEnabled;
-    if (data.adminEnabled !== undefined) mapped.admin_enabled = data.adminEnabled;
+    if (data.adminEnabled !== undefined)
+      mapped.admin_enabled = data.adminEnabled;
 
     const prefs = await this.prisma.notificationPreference.upsert({
       where: { user_id: userId },

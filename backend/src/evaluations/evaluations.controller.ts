@@ -41,10 +41,7 @@ export class EvaluationsController {
   }
 
   @Get('evaluations/:id')
-  findOne(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.evaluationsService.findOne(id, req.user.id);
   }
 
@@ -109,6 +106,10 @@ export class EvaluationsController {
     @Body() dto: RequestReevaluationDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.evaluationsService.requestReevaluation(projectId, dto, req.user.id);
+    return this.evaluationsService.requestReevaluation(
+      projectId,
+      dto,
+      req.user.id,
+    );
   }
 }

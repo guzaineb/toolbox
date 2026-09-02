@@ -51,7 +51,9 @@ describe('EvaluationTemplatesService', () => {
       ],
     }).compile();
 
-    service = module.get<EvaluationTemplatesService>(EvaluationTemplatesService);
+    service = module.get<EvaluationTemplatesService>(
+      EvaluationTemplatesService,
+    );
   });
 
   it('should refuse to publish a template whose weights do not sum to 100', async () => {

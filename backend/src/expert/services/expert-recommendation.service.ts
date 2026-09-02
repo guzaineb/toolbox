@@ -12,7 +12,7 @@ export class ExpertRecommendationService {
   async recommendForProject(
     projectId: string,
     limit: number = 3,
-    options?: { minScore?: number; excludeIds?: string[] }
+    options?: { minScore?: number; excludeIds?: string[] },
   ) {
     const project = await this.getProjectRequirements(projectId);
     const experts = await this.getAvailableExperts(options?.excludeIds);
@@ -25,23 +25,23 @@ export class ExpertRecommendationService {
           minYearsExperience: project.minYearsExperience,
         });
         return { expert, score: match.matchPercentage };
-      })
+      }),
     );
 
     const filtered = options?.minScore
-      ? scored.filter(s => s.score >= options.minScore!)
+      ? scored.filter((s) => s.score >= options.minScore!)
       : scored;
 
     return filtered
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(item => item.expert);
+      .map((item) => item.expert);
   }
 
   async recommendCoachs(
     cohortId: string,
     limit: number = 3,
-    excludeIds: string[] = []
+    excludeIds: string[] = [],
   ) {
     const cohort = await this.getCohortRequirements(cohortId);
     const experts = await this.getAvailableExperts(excludeIds);
@@ -50,13 +50,13 @@ export class ExpertRecommendationService {
       experts.map(async (expert) => {
         const score = this.scoringService.computeCoachScore(expert);
         return { expert, score };
-      })
+      }),
     );
 
     return scored
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(item => item.expert);
+      .map((item) => item.expert);
   }
 
   async getTopExperts(options: {
@@ -73,7 +73,10 @@ export class ExpertRecommendationService {
     const scored = await Promise.all(
       experts.map(async (expert) => {
         const expertises = expert.expertiseConnections || [];
-        const { score } = this.scoringService.computeExpertScore(expert, expertises);
+        const { score } = this.scoringService.computeExpertScore(
+          expert,
+          expertises,
+        );
         return {
           id: expert.id,
           headline: expert.headline,
@@ -82,12 +85,13 @@ export class ExpertRecommendationService {
           years_of_experience: expert.years_of_experience,
           availability_status: expert.availability_status,
         };
-      })
+      }),
     );
 
     const sortFunctions: any = {
       score: (a, b) => b.score - a.score,
-      experience: (a, b) => (b.years_of_experience || 0) - (a.years_of_experience || 0),
+      experience: (a, b) =>
+        (b.years_of_experience || 0) - (a.years_of_experience || 0),
       availability: (a, b) => {
         const order: any = { AVAILABLE: 3, BUSY: 2, UNAVAILABLE: 1 };
         return order[b.availability_status] - order[a.availability_status];

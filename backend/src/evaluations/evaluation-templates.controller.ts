@@ -39,10 +39,7 @@ export class EvaluationTemplatesController {
   }
 
   @Get('evaluation-templates/:id')
-  findOne(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.templatesService.findOne(id, req.user.id);
   }
 

@@ -31,7 +31,13 @@ export class CoachingSchedulerService {
     const now = new Date();
     const overdueActions = await this.prisma.coachingAction.findMany({
       where: {
-        status: { in: [CoachingActionStatus.PENDING, CoachingActionStatus.IN_PROGRESS, CoachingActionStatus.SUBMITTED] },
+        status: {
+          in: [
+            CoachingActionStatus.PENDING,
+            CoachingActionStatus.IN_PROGRESS,
+            CoachingActionStatus.SUBMITTED,
+          ],
+        },
         deadline: { lt: now },
       },
       include: {
@@ -63,7 +69,9 @@ export class CoachingSchedulerService {
     }
 
     if (overdueActions.length > 0) {
-      this.logger.log(`${overdueActions.length} action(s) en retard marquée(s) OVERDUE`);
+      this.logger.log(
+        `${overdueActions.length} action(s) en retard marquée(s) OVERDUE`,
+      );
     }
   }
 
@@ -73,7 +81,13 @@ export class CoachingSchedulerService {
 
     const soonActions = await this.prisma.coachingAction.findMany({
       where: {
-        status: { in: [CoachingActionStatus.PENDING, CoachingActionStatus.IN_PROGRESS, CoachingActionStatus.SUBMITTED] },
+        status: {
+          in: [
+            CoachingActionStatus.PENDING,
+            CoachingActionStatus.IN_PROGRESS,
+            CoachingActionStatus.SUBMITTED,
+          ],
+        },
         deadline: { gte: now, lte: in24h },
         deadline_reminded_at: null,
       },
@@ -88,10 +102,12 @@ export class CoachingSchedulerService {
         data: { deadline_reminded_at: now },
       });
 
-      const { title, message } = this.messageBuilder.coachingActionDeadlineSoon({
-        actionTitle: action.title,
-        deadline: action.deadline!,
-      });
+      const { title, message } = this.messageBuilder.coachingActionDeadlineSoon(
+        {
+          actionTitle: action.title,
+          deadline: action.deadline!,
+        },
+      );
       this.access.notify({
         event: NotificationEvent.COACHING_ACTION_DEADLINE_SOON,
         recipients: [{ userId: action.project.owner_id }],
@@ -104,7 +120,9 @@ export class CoachingSchedulerService {
     }
 
     if (soonActions.length > 0) {
-      this.logger.log(`${soonActions.length} rappel(s) d'échéance proche envoyé(s)`);
+      this.logger.log(
+        `${soonActions.length} rappel(s) d'échéance proche envoyé(s)`,
+      );
     }
   }
 }

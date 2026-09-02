@@ -30,7 +30,9 @@ describe('AssignmentsService', () => {
   const audit = { log: jest.fn() };
   const messageBuilder = {
     coachAssigned: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
-    evaluationAvailable: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
+    evaluationAvailable: jest
+      .fn()
+      .mockReturnValue({ title: 'T', message: 'M' }),
     coachRemoved: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
   };
 
@@ -69,7 +71,11 @@ describe('AssignmentsService', () => {
     });
 
     await expect(
-      service.assign('project-1', { expertUserId: 'user-1', role: 'COACH' }, 'admin-1'),
+      service.assign(
+        'project-1',
+        { expertUserId: 'user-1', role: 'COACH' },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
 
     expect(prisma.projectExpertAssignment.create).not.toHaveBeenCalled();
@@ -78,13 +84,20 @@ describe('AssignmentsService', () => {
   it('should reject a duplicate assignment for the same expert/role', async () => {
     access.assertProjectExists.mockResolvedValue(undefined);
     access.assertCanManageCohort.mockResolvedValue(undefined);
-    prisma.user.findUnique.mockResolvedValue({ id: 'expert-1', role: 'EXPERT' });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'expert-1',
+      role: 'EXPERT',
+    });
     prisma.projectExpertAssignment.findUnique.mockResolvedValue({
       id: 'existing-1',
     });
 
     await expect(
-      service.assign('project-1', { expertUserId: 'expert-1', role: 'COACH' }, 'admin-1'),
+      service.assign(
+        'project-1',
+        { expertUserId: 'expert-1', role: 'COACH' },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
 
     expect(prisma.projectExpertAssignment.create).not.toHaveBeenCalled();

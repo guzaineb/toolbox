@@ -1,4 +1,12 @@
-﻿import { IsEmail, IsEnum, IsOptional, isString, IsString, MinLength, ValidateNested } from 'class-validator';
+﻿import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  isString,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProfileDto } from '../../profiles/dto/create-profile.dto';
 import { UserRole } from '@prisma/client';
@@ -10,12 +18,11 @@ export class CreateUserDto {
   @IsString()
   @MinLength(6)
   password: string;
- 
+
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
   @ValidateNested()
   @Type(() => ProfileDto)
-
   profile: ProfileDto;
 }

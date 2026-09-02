@@ -10,7 +10,13 @@ import { NotificationMessageBuilder } from '../events/notification-message-build
 describe('FinalDecisionsService', () => {
   let service: FinalDecisionsService;
   let prisma: {
-    finalDecision: { findFirst: jest.Mock; create: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; update: jest.Mock };
+    finalDecision: {
+      findFirst: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
+    };
     finalDecisionCondition: {
       findUnique: jest.Mock;
       update: jest.Mock;
@@ -30,9 +36,15 @@ describe('FinalDecisionsService', () => {
   const audit = { log: jest.fn() };
   const messageBuilder = {
     finalDecisionMade: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
-    reevaluationRequested: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
-    finalDecisionUpdated: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
-    finalDecisionConditionsAdded: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
+    reevaluationRequested: jest
+      .fn()
+      .mockReturnValue({ title: 'T', message: 'M' }),
+    finalDecisionUpdated: jest
+      .fn()
+      .mockReturnValue({ title: 'T', message: 'M' }),
+    finalDecisionConditionsAdded: jest
+      .fn()
+      .mockReturnValue({ title: 'T', message: 'M' }),
     conditionValidated: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
   };
 

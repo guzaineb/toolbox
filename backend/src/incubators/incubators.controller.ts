@@ -1,9 +1,24 @@
-import {Controller, Post, Body, Get, Param, UseGuards, Req, Patch, Delete, HttpCode, HttpStatus,} from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  UseGuards,
+  Req,
+  Patch,
+  Delete,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { IncubatorsService } from './incubators.service';
 import { CreateIncubatorDto } from './dto/create-incubator.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateIncubatorDto } from './dto/update-incubator.dto';
-import { UpdateStatusDto, UpdateVerificationDto } from './dto/update-status.dto';
+import {
+  UpdateStatusDto,
+  UpdateVerificationDto,
+} from './dto/update-status.dto';
 
 @Controller('incubators')
 export class IncubatorsController {
@@ -17,7 +32,10 @@ export class IncubatorsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Req() req: { user: { id: string } }, @Body() dto: CreateIncubatorDto) {
+  create(
+    @Req() req: { user: { id: string } },
+    @Body() dto: CreateIncubatorDto,
+  ) {
     return this.incubatorsService.create(req.user.id, dto);
   }
 
@@ -28,10 +46,7 @@ export class IncubatorsController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/dashboard')
-  getDashboard(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  getDashboard(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.incubatorsService.getDashboard(id, req.user.id);
   }
 
@@ -41,24 +56,22 @@ export class IncubatorsController {
   }
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update( @Param('id') id: string,
+  update(
+    @Param('id') id: string,
     @Body() dto: UpdateIncubatorDto,
     @Req() req: { user: { id: string } },
   ) {
     return this.incubatorsService.update(id, dto, req.user.id);
   }
 
-    @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  remove(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.incubatorsService.remove(id, req.user.id);
   }
 
- @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
@@ -77,6 +90,4 @@ export class IncubatorsController {
   ) {
     return this.incubatorsService.updateVerification(id, dto, req.user.id);
   }
-
-
 }

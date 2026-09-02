@@ -86,7 +86,10 @@ export class CoachingController {
   /** Brief préparé par l'IA avant la session (le coach garde la main sur le contenu). */
   @Post('coaching/sessions/:id/ai-brief')
   @HttpCode(HttpStatus.OK)
-  async aiSessionBrief(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+  async aiSessionBrief(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
     const payload = await this.coachingAi.generateBrief(id, req.user.id);
     return { success: !!payload, data: payload };
   }
@@ -94,7 +97,10 @@ export class CoachingController {
   /** Résumé proposé par l'IA en fin de session ; le coach l'applique ensuite via PATCH s'il le valide. */
   @Post('coaching/sessions/:id/ai-summary')
   @HttpCode(HttpStatus.OK)
-  async aiSessionSummary(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+  async aiSessionSummary(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
     const payload = await this.coachingAi.summarizeSession(id, req.user.id);
     return { success: !!payload, data: payload };
   }
@@ -108,7 +114,11 @@ export class CoachingController {
     @Body() dto: CreateRecommendationDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.coachingService.createRecommendation(projectId, dto, req.user.id);
+    return this.coachingService.createRecommendation(
+      projectId,
+      dto,
+      req.user.id,
+    );
   }
 
   @Get('projects/:projectId/coaching/recommendations')
@@ -116,7 +126,10 @@ export class CoachingController {
     @Param('projectId') projectId: string,
     @Req() req: { user: { id: string } },
   ) {
-    return this.coachingService.findRecommendationsByProject(projectId, req.user.id);
+    return this.coachingService.findRecommendationsByProject(
+      projectId,
+      req.user.id,
+    );
   }
 
   @Patch('coaching/recommendations/:id')
@@ -136,7 +149,11 @@ export class CoachingController {
     @Body() dto: CreateAiRecommendationDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.coachingService.createAiRecommendation(projectId, dto, req.user.id);
+    return this.coachingService.createAiRecommendation(
+      projectId,
+      dto,
+      req.user.id,
+    );
   }
 
   // ==================== ACTIONS ====================

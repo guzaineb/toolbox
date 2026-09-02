@@ -6,10 +6,7 @@ import { ExpertRecommendationService } from './services/expert-recommendation.se
 
 @Module({
   controllers: [ExpertController],
-  providers: [ExpertService,
-    ExpertScoringService,
-    ExpertRecommendationService,
-  ],
+  providers: [ExpertService, ExpertScoringService, ExpertRecommendationService],
   exports: [ExpertService],
 })
 export class ExpertModule {}

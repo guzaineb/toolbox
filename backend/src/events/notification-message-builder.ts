@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class NotificationMessageBuilder {
-
   // ==================== COHORT PARTICIPATIONS (existing) ====================
 
   invitationSent(params: {
@@ -34,7 +33,10 @@ export class NotificationMessageBuilder {
   }): { title: string; message: string } {
     const verb = params.origin === 'invitation' ? 'invitation' : 'candidature';
     return {
-      title: params.origin === 'invitation' ? 'Invitation acceptée' : 'Candidature acceptée',
+      title:
+        params.origin === 'invitation'
+          ? 'Invitation acceptée'
+          : 'Candidature acceptée',
       message: `Votre ${verb} à la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} » a été acceptée.`,
     };
   }
@@ -46,7 +48,10 @@ export class NotificationMessageBuilder {
   }): { title: string; message: string } {
     const verb = params.origin === 'invitation' ? 'invitation' : 'candidature';
     return {
-      title: params.origin === 'invitation' ? 'Invitation refusée' : 'Candidature refusée',
+      title:
+        params.origin === 'invitation'
+          ? 'Invitation refusée'
+          : 'Candidature refusée',
       message: `Votre ${verb} à la cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} » a été refusée.`,
     };
   }
@@ -171,21 +176,30 @@ export class NotificationMessageBuilder {
 
   // ==================== INCUBATOR MEMBER ====================
 
-  memberJoined(params: { incubatorName: string }): { title: string; message: string } {
+  memberJoined(params: { incubatorName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Membre ajouté',
       message: `Vous avez été ajouté comme membre de l'incubateur « ${params.incubatorName} ».`,
     };
   }
 
-  memberUpdated(params: { incubatorName: string }): { title: string; message: string } {
+  memberUpdated(params: { incubatorName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Rôle mis à jour',
       message: `Votre rôle dans l'incubateur « ${params.incubatorName} » a été mis à jour.`,
     };
   }
 
-  memberRemoved(params: { incubatorName: string }): { title: string; message: string } {
+  memberRemoved(params: { incubatorName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Membre retiré',
       message: `Vous avez été retiré de l'incubateur « ${params.incubatorName} ».`,
@@ -194,10 +208,10 @@ export class NotificationMessageBuilder {
 
   // ==================== INCUBATOR DOCUMENT ====================
 
-  documentPending(params: {
-    documentType?: string;
-    incubatorName?: string;
-  }): { title: string; message: string } {
+  documentPending(params: { documentType?: string; incubatorName?: string }): {
+    title: string;
+    message: string;
+  } {
     const docLabel = params.documentType ?? 'document';
     const incubator = params.incubatorName
       ? ` dans l'incubateur « ${params.incubatorName} »`
@@ -208,7 +222,10 @@ export class NotificationMessageBuilder {
     };
   }
 
-  documentVerified(params: { status: 'APPROVED' | 'REJECTED' }): { title: string; message: string } {
+  documentVerified(params: { status: 'APPROVED' | 'REJECTED' }): {
+    title: string;
+    message: string;
+  } {
     const label = params.status === 'APPROVED' ? 'approuvé' : 'rejeté';
     return {
       title: 'Document vérifié',
@@ -218,20 +235,20 @@ export class NotificationMessageBuilder {
 
   // ==================== COHORT ====================
 
-  cohortCreated(params: {
-    cohortName: string;
-    incubatorName: string;
-  }): { title: string; message: string } {
+  cohortCreated(params: { cohortName: string; incubatorName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Nouvelle cohorte',
       message: `La cohorte « ${params.cohortName} » a été créée dans l'incubateur « ${params.incubatorName} ».`,
     };
   }
 
-  applicationOpen(params: {
-    cohortName: string;
-    incubatorName: string;
-  }): { title: string; message: string } {
+  applicationOpen(params: { cohortName: string; incubatorName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Cohorte ouverte aux candidatures',
       message: `La cohorte « ${params.cohortName} » de l'incubateur « ${params.incubatorName} » est maintenant ouverte aux candidatures.`,
@@ -247,7 +264,10 @@ export class NotificationMessageBuilder {
     };
   }
 
-  incubatorStatusChanged(params: { name: string; status: string }): { title: string; message: string } {
+  incubatorStatusChanged(params: { name: string; status: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: "Statut de l'incubateur modifié",
       message: `Le statut de l'incubateur « ${params.name} » est passé à « ${params.status} ».`,
@@ -256,7 +276,10 @@ export class NotificationMessageBuilder {
 
   // ==================== EVALUATION / COACHING ====================
 
-  newEvaluation(params: { projectName: string }): { title: string; message: string } {
+  newEvaluation(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Nouvelle évaluation',
       message: `Vous avez reçu une nouvelle évaluation pour le projet « ${params.projectName} ».`,
@@ -265,7 +288,10 @@ export class NotificationMessageBuilder {
 
   // ==================== PROJECT ====================
 
-  projectCreated(params: { projectName: string }): { title: string; message: string } {
+  projectCreated(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Projet créé',
       message: `Votre projet « ${params.projectName} » a été créé avec succès.`,
@@ -274,14 +300,20 @@ export class NotificationMessageBuilder {
 
   // ==================== DOCUMENT GENERATION ====================
 
-  documentGenerated(params: { title: string }): { title: string; message: string } {
+  documentGenerated(params: { title: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Document généré',
       message: `Le document « ${params.title} » a été généré avec succès.`,
     };
   }
 
-  documentUpdated(params: { title: string }): { title: string; message: string } {
+  documentUpdated(params: { title: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Document mis à jour',
       message: `Le document « ${params.title} » a été mis à jour.`,
@@ -290,7 +322,10 @@ export class NotificationMessageBuilder {
 
   // ==================== AUTH ====================
 
-  newUserRegistered(params: { email: string }): { title: string; message: string } {
+  newUserRegistered(params: { email: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Inscription réussie',
       message: `Bienvenue sur ToolBox, ${params.email} ! Votre compte a été créé avec succès.`,
@@ -308,8 +343,12 @@ export class NotificationMessageBuilder {
 
   // ==================== AI ====================
 
-  aiResponseReady(params: { label: string }): { title: string; message: string } {
-    const lowerLabel = params.label.charAt(0).toLowerCase() + params.label.slice(1);
+  aiResponseReady(params: { label: string }): {
+    title: string;
+    message: string;
+  } {
+    const lowerLabel =
+      params.label.charAt(0).toLowerCase() + params.label.slice(1);
     return {
       title: `${params.label} généré`,
       message: `Votre ${lowerLabel} est prêt.`,
@@ -338,31 +377,40 @@ export class NotificationMessageBuilder {
     };
   }
 
-  coachingSessionUpdated(params: {
-    projectName: string;
-    scheduledAt: Date;
-  }): { title: string; message: string } {
+  coachingSessionUpdated(params: { projectName: string; scheduledAt: Date }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Session de coaching modifiée',
       message: `La session de coaching du projet « ${params.projectName} » a été reprogrammée au ${params.scheduledAt.toLocaleString('fr-FR')}.`,
     };
   }
 
-  coachingSessionCancelled(params: { projectName: string }): { title: string; message: string } {
+  coachingSessionCancelled(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Session de coaching annulée',
       message: `La session de coaching du projet « ${params.projectName} » a été annulée.`,
     };
   }
 
-  coachingSessionCompleted(params: { projectName: string }): { title: string; message: string } {
+  coachingSessionCompleted(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Session de coaching terminée',
       message: `La session de coaching du projet « ${params.projectName} » a été clôturée. Le compte-rendu est disponible.`,
     };
   }
 
-  coachingReportSubmitted(params: { projectName: string }): { title: string; message: string } {
+  coachingReportSubmitted(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Compte-rendu de coaching',
       message: `Le compte-rendu de coaching du projet « ${params.projectName} » a été soumis.`,
@@ -379,59 +427,81 @@ export class NotificationMessageBuilder {
     };
   }
 
-  coachingActionUpdated(params: {
-    projectName: string;
-    actionTitle: string;
-  }): { title: string; message: string } {
+  coachingActionUpdated(params: { projectName: string; actionTitle: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Action de coaching mise à jour',
       message: `L'action « ${params.actionTitle} » du projet « ${params.projectName} » a été mise à jour.`,
     };
   }
 
-  coachingActionCompleted(params: { actionTitle: string }): { title: string; message: string } {
+  coachingActionCompleted(params: { actionTitle: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Action de coaching terminée',
       message: `L'action « ${params.actionTitle} » a été marquée comme terminée.`,
     };
   }
 
-  coachingActionDeadlineSoon(params: { actionTitle: string; deadline: Date }): { title: string; message: string } {
+  coachingActionDeadlineSoon(params: { actionTitle: string; deadline: Date }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Échéance proche',
       message: `L'action « ${params.actionTitle} » arrive à échéance le ${params.deadline.toLocaleDateString('fr-FR')}.`,
     };
   }
 
-  coachingActionOverdue(params: { actionTitle: string }): { title: string; message: string } {
+  coachingActionOverdue(params: { actionTitle: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Action en retard',
       message: `L'action « ${params.actionTitle} » est en retard.`,
     };
   }
 
-  coachingRecommendationAdded(params: { projectName: string }): { title: string; message: string } {
+  coachingRecommendationAdded(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Recommandation de coaching',
       message: `Une nouvelle recommandation a été ajoutée pour le projet « ${params.projectName} ».`,
     };
   }
 
-  coachingCommentAdded(params: { projectName: string }): { title: string; message: string } {
+  coachingCommentAdded(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Commentaire de coaching',
       message: `Un commentaire a été ajouté sur le coaching du projet « ${params.projectName} ».`,
     };
   }
 
-  coachingActionSubmitted(params: { projectName: string; actionTitle: string }): { title: string; message: string } {
+  coachingActionSubmitted(params: {
+    projectName: string;
+    actionTitle: string;
+  }): { title: string; message: string } {
     return {
       title: 'Preuve d’action soumise',
       message: `Le porteur a soumis une preuve pour l'action « ${params.actionTitle} » du projet « ${params.projectName} ». Votre validation est attendue.`,
     };
   }
 
-  coachingEvidenceReviewed(params: { projectName: string; actionTitle: string; approved: boolean }): { title: string; message: string } {
+  coachingEvidenceReviewed(params: {
+    projectName: string;
+    actionTitle: string;
+    approved: boolean;
+  }): { title: string; message: string } {
     return {
       title: params.approved ? 'Preuve validée' : 'Preuve à compléter',
       message: params.approved
@@ -440,101 +510,140 @@ export class NotificationMessageBuilder {
     };
   }
 
-  aiAnalysisReady(params: { projectName: string; analysisType?: string }): { title: string; message: string } {
+  aiAnalysisReady(params: { projectName: string; analysisType?: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Analyse IA disponible',
       message: `Une nouvelle analyse IA est disponible pour le projet « ${params.projectName} »${params.analysisType ? ` (${params.analysisType})` : ''}.`,
     };
   }
 
-  reEvaluationAvailable(params: { projectName: string }): { title: string; message: string } {
+  reEvaluationAvailable(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Ré-évaluation disponible',
       message: `Une grille de ré-évaluation est prête pour le projet « ${params.projectName} ». Vous pouvez renseigner la nouvelle évaluation.`,
     };
   }
 
-  coachAssigned(params: { projectName: string }): { title: string; message: string } {
+  coachAssigned(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Coach affecté',
       message: `Vous avez été affecté comme coach du projet « ${params.projectName} ».`,
     };
   }
 
-  coachRemoved(params: { projectName: string }): { title: string; message: string } {
+  coachRemoved(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Coach retiré',
       message: `Vous n'êtes plus coach du projet « ${params.projectName} ».`,
     };
   }
 
-  evaluationAvailable(params: { projectName: string }): { title: string; message: string } {
+  evaluationAvailable(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Évaluation disponible',
       message: `Une évaluation est disponible pour le projet « ${params.projectName} ».`,
     };
   }
 
-  evaluationSubmitted(params: { projectName: string }): { title: string; message: string } {
+  evaluationSubmitted(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Évaluation soumise',
       message: `Une évaluation a été soumise pour le projet « ${params.projectName} ».`,
     };
   }
 
-  evaluationAllCompleted(params: { projectName: string }): { title: string; message: string } {
+  evaluationAllCompleted(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Toutes les évaluations reçues',
       message: `Toutes les évaluations ont été soumises pour le projet « ${params.projectName} ».`,
     };
   }
 
-  evaluationDeadlineSoon(params: { projectName: string; deadline: Date }): { title: string; message: string } {
+  evaluationDeadlineSoon(params: { projectName: string; deadline: Date }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: "Échéance d'évaluation",
       message: `L'évaluation du projet « ${params.projectName} » doit être rendue avant le ${params.deadline.toLocaleDateString('fr-FR')}.`,
     };
   }
 
-  evaluationTemplateCreated(params: { templateName: string; cohortName: string }): { title: string; message: string } {
+  evaluationTemplateCreated(params: {
+    templateName: string;
+    cohortName: string;
+  }): { title: string; message: string } {
     return {
       title: "Grille d'évaluation créée",
       message: `La grille « ${params.templateName} » a été créée pour la cohorte « ${params.cohortName} ».`,
     };
   }
 
-  finalDecisionMade(params: {
-    projectName: string;
-    decision: string;
-  }): { title: string; message: string } {
+  finalDecisionMade(params: { projectName: string; decision: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Décision finale',
       message: `Une décision finale (« ${params.decision} ») a été rendue pour le projet « ${params.projectName} ».`,
     };
   }
 
-  finalDecisionUpdated(params: { projectName: string; decision: string }): { title: string; message: string } {
+  finalDecisionUpdated(params: { projectName: string; decision: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Décision finale mise à jour',
       message: `La décision finale du projet « ${params.projectName} » est désormais « ${params.decision} ».`,
     };
   }
 
-  finalDecisionConditionsAdded(params: { projectName: string; count: number }): { title: string; message: string } {
+  finalDecisionConditionsAdded(params: {
+    projectName: string;
+    count: number;
+  }): { title: string; message: string } {
     return {
       title: 'Conditions de la décision',
       message: `${params.count} condition(s) ont été ajoutées à la décision du projet « ${params.projectName} ».`,
     };
   }
 
-  conditionValidated(params: { conditionDescription: string }): { title: string; message: string } {
+  conditionValidated(params: { conditionDescription: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Condition validée',
       message: `La condition « ${params.conditionDescription} » a été validée.`,
     };
   }
 
-  reevaluationRequested(params: { projectName: string }): { title: string; message: string } {
+  reevaluationRequested(params: { projectName: string }): {
+    title: string;
+    message: string;
+  } {
     return {
       title: 'Réévaluation demandée',
       message: `Une réévaluation a été demandée pour le projet « ${params.projectName} ».`,

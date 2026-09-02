@@ -1,4 +1,19 @@
-import {  Controller,Post,Body,Get,Patch,Delete,Param,UseGuards,Req,HttpCode,HttpStatus,ParseUUIDPipe,Query,ValidationPipe,} from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  UseGuards,
+  Req,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+  Query,
+  ValidationPipe,
+} from '@nestjs/common';
 
 import { CreateExpertDto } from './dto/create-expert.dto';
 import { UpdateExpertDto } from './dto/update-expert.dto';
@@ -26,7 +41,10 @@ export class ExpertController {
   }
 
   @Patch('me')
-  updateProfile(@Req() req: { user: { id: string } }, @Body() dto: UpdateExpertDto) {
+  updateProfile(
+    @Req() req: { user: { id: string } },
+    @Body() dto: UpdateExpertDto,
+  ) {
     return this.service.upsert(req.user.id, dto);
   }
 
@@ -53,13 +71,19 @@ export class ExpertController {
 
   @Post('me/expertises')
   @HttpCode(HttpStatus.CREATED)
-  addExpertise(@Req() req: { user: { id: string } }, @Body() dto: AddExpertiseDto) {
+  addExpertise(
+    @Req() req: { user: { id: string } },
+    @Body() dto: AddExpertiseDto,
+  ) {
     return this.service.addExpertise(req.user.id, dto);
   }
 
   @Post('me/expertises/batch')
   @HttpCode(HttpStatus.CREATED)
-  addMultipleExpertises(@Req() req: { user: { id: string } }, @Body() body: { expertises: AddExpertiseDto[] }) {
+  addMultipleExpertises(
+    @Req() req: { user: { id: string } },
+    @Body() body: { expertises: AddExpertiseDto[] },
+  ) {
     return this.service.addMultipleExpertise(req.user.id, body.expertises);
   }
 
@@ -69,12 +93,20 @@ export class ExpertController {
     @Param('expertiseAreaId', ParseUUIDPipe) expertiseAreaId: string,
     @Body() dto: UpdateExpertiseLevelDto,
   ) {
-    return this.service.updateExpertiseLevel(req.user.id, expertiseAreaId, dto.level, dto.years_of_experience);
+    return this.service.updateExpertiseLevel(
+      req.user.id,
+      expertiseAreaId,
+      dto.level,
+      dto.years_of_experience,
+    );
   }
 
   @Delete('me/expertises/:expertiseAreaId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeExpertise(@Req() req: { user: { id: string } }, @Param('expertiseAreaId', ParseUUIDPipe) expertiseAreaId: string) {
+  removeExpertise(
+    @Req() req: { user: { id: string } },
+    @Param('expertiseAreaId', ParseUUIDPipe) expertiseAreaId: string,
+  ) {
     return this.service.removeExpertise(req.user.id, expertiseAreaId);
   }
 
@@ -84,7 +116,10 @@ export class ExpertController {
   }
 
   @Post('me/match-project')
-  matchWithProject(@Req() req: { user: { id: string } }, @Body() dto: MatchProjectDto) {
+  matchWithProject(
+    @Req() req: { user: { id: string } },
+    @Body() dto: MatchProjectDto,
+  ) {
     return this.service.matchWithProject(req.user.id, dto);
   }
 
@@ -101,7 +136,10 @@ export class ExpertController {
   // Routes analytics déclarées avant @Get(':id') : sinon « analytics » est
   // interprété comme un identifiant et ces endpoints sont inatteignables.
   @Get('analytics/top-experts')
-  getTopExperts(@Query('limit') limit?: string, @Query('sortBy') sortBy?: 'score' | 'experience' | 'availability') {
+  getTopExperts(
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: 'score' | 'experience' | 'availability',
+  ) {
     return this.service.getTopExperts({
       limit: limit ? parseInt(limit) : 10,
       sortBy: sortBy || 'score',
@@ -120,11 +158,20 @@ export class ExpertController {
 
   @Post('recommendations/jury')
   recommendJury(@Body() body: { projectId: string; limit?: number }) {
-    return this.service.recommendJuryForProject(body.projectId, body.limit || 3);
+    return this.service.recommendJuryForProject(
+      body.projectId,
+      body.limit || 3,
+    );
   }
 
   @Post('recommendations/coachs')
-  recommendCoachs(@Body() body: { cohortId: string; limit?: number; excludeIds?: string[] }) {
-    return this.service.recommendCoachsForCohort(body.cohortId, body.limit || 3, body.excludeIds || []);
+  recommendCoachs(
+    @Body() body: { cohortId: string; limit?: number; excludeIds?: string[] },
+  ) {
+    return this.service.recommendCoachsForCohort(
+      body.cohortId,
+      body.limit || 3,
+      body.excludeIds || [],
+    );
   }
 }

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { ExpertScore, ScoreDetails } from '../interfaces/score-details.interface';
-import { ProjectMatch, MatchDetails } from '../interfaces/match-details.interface';
+import {
+  ExpertScore,
+  ScoreDetails,
+} from '../interfaces/score-details.interface';
+import {
+  ProjectMatch,
+  MatchDetails,
+} from '../interfaces/match-details.interface';
 
 @Injectable()
 export class ExpertScoringService {
@@ -34,16 +40,21 @@ export class ExpertScoringService {
 
   // ==================== SCORES AVEC DÉTAILS ====================
 
-  computeExpertScore(
-    profile: any,
-    expertises: any[]
-  ): ExpertScore {
-    const experienceScore = this.computeExperienceScore(profile.years_of_experience || 0);
+  computeExpertScore(profile: any, expertises: any[]): ExpertScore {
+    const experienceScore = this.computeExperienceScore(
+      profile.years_of_experience || 0,
+    );
     const diversityScore = this.computeDiversityScore(expertises.length);
     const levelsScore = this.computeLevelsScore(expertises);
-    const availabilityScore = this.computeAvailabilityScore(profile.availability_status);
+    const availabilityScore = this.computeAvailabilityScore(
+      profile.availability_status,
+    );
 
-    const totalScore = experienceScore.score + diversityScore.score + levelsScore.score + availabilityScore.score;
+    const totalScore =
+      experienceScore.score +
+      diversityScore.score +
+      levelsScore.score +
+      availabilityScore.score;
 
     return {
       score: Math.min(Math.floor(totalScore), 100),
@@ -59,12 +70,15 @@ export class ExpertScoringService {
   matchWithProject(
     profile: any,
     expertises: any[],
-    requirements: { requiredAreas: string[]; minYearsExperience: number }
+    requirements: { requiredAreas: string[]; minYearsExperience: number },
   ): ProjectMatch {
-    const skillsMatch = this.computeSkillsMatch(expertises, requirements.requiredAreas);
+    const skillsMatch = this.computeSkillsMatch(
+      expertises,
+      requirements.requiredAreas,
+    );
     const experienceMatch = this.computeExperienceMatch(
       profile.years_of_experience || 0,
-      requirements.minYearsExperience
+      requirements.minYearsExperience,
     );
 
     let matchScore = skillsMatch.score + experienceMatch.score;
@@ -87,23 +101,37 @@ export class ExpertScoringService {
 
   computeCoachScore(profile: any): number {
     const pedagogyScore = this.computePedagogyScore(profile.bio ?? undefined);
-    const seniorityScore = this.computeSeniorityScore(profile.years_of_experience || 0);
-    const availabilityScore = this.getRawAvailabilityScore(profile.availability_status);
-    const diversityScore = Math.min((profile.expertiseConnections?.length || 0) * 5, this.WEIGHTS.COACH_DIVERSITY_MAX);
+    const seniorityScore = this.computeSeniorityScore(
+      profile.years_of_experience || 0,
+    );
+    const availabilityScore = this.getRawAvailabilityScore(
+      profile.availability_status,
+    );
+    const diversityScore = Math.min(
+      (profile.expertiseConnections?.length || 0) * 5,
+      this.WEIGHTS.COACH_DIVERSITY_MAX,
+    );
 
-    const totalScore = pedagogyScore + seniorityScore + availabilityScore + diversityScore;
+    const totalScore =
+      pedagogyScore + seniorityScore + availabilityScore + diversityScore;
 
     return Math.min(totalScore, 100);
   }
 
   // ==================== MÉTHODES PRIVÉES AVEC DÉTAILS ====================
 
-  private computeExperienceScore(years: number): { years: number; score: number } {
+  private computeExperienceScore(years: number): {
+    years: number;
+    score: number;
+  } {
     const score = Math.min(years / 20, 1) * this.WEIGHTS.EXPERIENCE;
     return { years, score };
   }
 
-  private computeDiversityScore(count: number): { count: number; score: number } {
+  private computeDiversityScore(count: number): {
+    count: number;
+    score: number;
+  } {
     const score = Math.min(count / 5, 1) * this.WEIGHTS.DIVERSITY;
     return { count, score };
   }
@@ -127,17 +155,22 @@ export class ExpertScoringService {
     return { average: avgLevel, score: avgScore };
   }
 
-  private computeAvailabilityScore(status: string): { status: string; score: number } {
+  private computeAvailabilityScore(status: string): {
+    status: string;
+    score: number;
+  } {
     const score = this.AVAILABILITY_SCORES[status] || 0;
     return { status, score };
   }
 
   private computeSkillsMatch(
     expertises: any[],
-    requiredAreas: string[]
+    requiredAreas: string[],
   ): { matched: number; required: number; score: number } {
-    const expertAreaIds = new Set(expertises.map((e: any) => e.expertiseArea?.id));
-    const matched = requiredAreas.filter(id => expertAreaIds.has(id)).length;
+    const expertAreaIds = new Set(
+      expertises.map((e: any) => e.expertiseArea?.id),
+    );
+    const matched = requiredAreas.filter((id) => expertAreaIds.has(id)).length;
     const score = (matched / requiredAreas.length) * this.WEIGHTS.MATCH_SKILLS;
 
     return { matched, required: requiredAreas.length, score };
@@ -145,7 +178,7 @@ export class ExpertScoringService {
 
   private computeExperienceMatch(
     years: number,
-    required: number
+    required: number,
   ): { years: number; required: number; score: number } {
     let score: number;
     if (years >= required) {
@@ -167,9 +200,15 @@ export class ExpertScoringService {
 
   private computePedagogyScore(bio?: string): number {
     if (!bio) return 0;
-    const pedagogyKeywords = ['formation', 'mentor', 'coach', 'pédagogie', 'enseignement'];
-    const hasPedagogy = pedagogyKeywords.some(keyword =>
-      bio.toLowerCase().includes(keyword)
+    const pedagogyKeywords = [
+      'formation',
+      'mentor',
+      'coach',
+      'pédagogie',
+      'enseignement',
+    ];
+    const hasPedagogy = pedagogyKeywords.some((keyword) =>
+      bio.toLowerCase().includes(keyword),
     );
     return hasPedagogy ? this.WEIGHTS.COACH_PEDAGOGY : 0;
   }

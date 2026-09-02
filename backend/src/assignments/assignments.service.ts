@@ -77,7 +77,11 @@ export class AssignmentsService {
       action: 'ASSIGNMENT_CREATE',
       entityType: 'ProjectExpertAssignment',
       entityId: assignment.id,
-      metadata: { project_id: projectId, expert_user_id: dto.expertUserId, role: dto.role },
+      metadata: {
+        project_id: projectId,
+        expert_user_id: dto.expertUserId,
+        role: dto.role,
+      },
     });
 
     if (dto.role === CohortExpertRole.COACH) {
@@ -150,10 +154,7 @@ export class AssignmentsService {
       },
     });
     if (!assignment) throw new NotFoundException('Affectation introuvable');
-    await this.assertCanViewProjectAssignments(
-      assignment.project_id,
-      userId,
-    );
+    await this.assertCanViewProjectAssignments(assignment.project_id, userId);
     return assignment;
   }
 
@@ -329,13 +330,17 @@ export class AssignmentsService {
 
     if (project.owner_id === userId) return;
 
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (participation) {
       const incubatorId = participation.cohort.incubator_id;
       if (incubatorId) {
         const member = await this.prisma.incubatorMember.findUnique({
           where: {
-            user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+            user_id_incubator_id: {
+              user_id: userId,
+              incubator_id: incubatorId,
+            },
           },
           select: { id: true },
         });
@@ -349,8 +354,6 @@ export class AssignmentsService {
     });
     if (assignment) return;
 
-    throw new ForbiddenException(
-      'Accès refusé aux affectations de ce projet',
-    );
+    throw new ForbiddenException('Accès refusé aux affectations de ce projet');
   }
 }

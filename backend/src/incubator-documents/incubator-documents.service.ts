@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { VerifyDocumentDto } from './dto/verify-document.dto';
 import * as fs from 'fs';
@@ -16,9 +20,14 @@ export class IncubatorDocumentsService {
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
     private readonly access: ModuleAccessService,
-  ) { }
+  ) {}
 
-  async create(incubatorId: string, fileUrl: string, userId: string, documentType: string) {
+  async create(
+    incubatorId: string,
+    fileUrl: string,
+    userId: string,
+    documentType: string,
+  ) {
     const doc = await this.prisma.incubatorDocument.create({
       data: {
         incubator_id: incubatorId,
@@ -29,30 +38,32 @@ export class IncubatorDocumentsService {
       },
     });
 
-    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id: incubatorId },
+      select: { name: true },
+    });
     const members = await this.prisma.incubatorMember.findMany({
       where: { incubator_id: incubatorId, status: 'ACTIVE' },
       select: { user_id: true },
     });
-    const memberIds = members.map(m => m.user_id).filter(id => id !== userId);
+    const memberIds = members
+      .map((m) => m.user_id)
+      .filter((id) => id !== userId);
     if (memberIds.length > 0) {
       const { title, message } = this.messageBuilder.documentPending({
         documentType,
         incubatorName: incubator?.name,
       });
-      this.eventEmitter.emit(
-        NotificationEvent.DOCUMENT_PENDING,
-        {
-          event: NotificationEvent.DOCUMENT_PENDING,
-          recipients: memberIds.map(id => ({ userId: id })),
-          title,
-          message,
-          link: `/incubator/${incubatorId}/documents`,
-          senderId: userId,
-          resourceType: 'INCUBATOR',
-          resourceId: incubatorId,
-        } as NotificationPayload,
-      );
+      this.eventEmitter.emit(NotificationEvent.DOCUMENT_PENDING, {
+        event: NotificationEvent.DOCUMENT_PENDING,
+        recipients: memberIds.map((id) => ({ userId: id })),
+        title,
+        message,
+        link: `/incubator/${incubatorId}/documents`,
+        senderId: userId,
+        resourceType: 'INCUBATOR',
+        resourceId: incubatorId,
+      } as NotificationPayload);
     }
 
     return doc;
@@ -69,7 +80,7 @@ export class IncubatorDocumentsService {
       orderBy: { uploaded_at: 'desc' },
     });
 
-    return rows.map(row => {
+    return rows.map((row) => {
       const profile = row.uploaded_by_user?.profile;
       return {
         id: row.id,
@@ -97,9 +108,14 @@ export class IncubatorDocumentsService {
     return doc;
   }
 
-  async remove(id: string, incubatorId: string, userId: string,): Promise<{ message: string }> {
+  async remove(
+    id: string,
+    incubatorId: string,
+    userId: string,
+  ): Promise<{ message: string }> {
     const member = await this.access.isIncubatorMember(userId, incubatorId);
-    if (!member) throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
+    if (!member)
+      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     const doc = await this.findOne(id);
 
     if (doc.file_url) {
@@ -113,7 +129,12 @@ export class IncubatorDocumentsService {
     return { message: 'Document supprimé' };
   }
 
-  async verify(id: string, incubatorId: string, dto: VerifyDocumentDto, userId: string) {
+  async verify(
+    id: string,
+    incubatorId: string,
+    dto: VerifyDocumentDto,
+    userId: string,
+  ) {
     await this.access.assertIncubatorAdmin(userId, incubatorId);
     const doc = await this.findOne(id);
 
@@ -121,24 +142,26 @@ export class IncubatorDocumentsService {
       where: { id },
       data: {
         verification_status: dto.verification_status,
-        rejection_reason: dto.verification_status === 'REJECTED' ? (dto.rejection_reason || null) : null,
+        rejection_reason:
+          dto.verification_status === 'REJECTED'
+            ? dto.rejection_reason || null
+            : null,
       },
     });
 
-    const { title, message } = this.messageBuilder.documentVerified({ status: dto.verification_status as 'APPROVED' | 'REJECTED' });
-    this.eventEmitter.emit(
-      NotificationEvent.DOCUMENT_VERIFIED,
-      {
-        event: NotificationEvent.DOCUMENT_VERIFIED,
-        recipients: [{ userId: doc.uploaded_by_user_id }],
-        title,
-        message,
-        link: `/incubator/${incubatorId}/documents`,
-        senderId: userId,
-        resourceType: 'INCUBATOR',
-        resourceId: incubatorId,
-      } as NotificationPayload,
-    );
+    const { title, message } = this.messageBuilder.documentVerified({
+      status: dto.verification_status,
+    });
+    this.eventEmitter.emit(NotificationEvent.DOCUMENT_VERIFIED, {
+      event: NotificationEvent.DOCUMENT_VERIFIED,
+      recipients: [{ userId: doc.uploaded_by_user_id }],
+      title,
+      message,
+      link: `/incubator/${incubatorId}/documents`,
+      senderId: userId,
+      resourceType: 'INCUBATOR',
+      resourceId: incubatorId,
+    } as NotificationPayload);
 
     return result;
   }
