@@ -4,12 +4,23 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, FileText, Download, RefreshCw, Loader2, Check,
-  Eye, Sparkles, AlertCircle, Clock,
+  Eye, Sparkles, AlertCircle, Clock, Lock,
 } from 'lucide-react'
 import { Card, CardHeader, Button, Badge, ErrorAlert, SuccessAlert } from '@/components/shared/ui'
 import { documentsService, type GeneratedDocument } from '@/services/documents.service'
+import { businessPlanService } from '@/services/business-plan.service'
+import type { BusinessPlanGatingStatus } from '@/types/business-plan'
 import { cn, formatDate } from '@/lib/utils'
 import { useAutoDismiss } from '@/hooks/use-auto-dismiss'
+
+const BUSINESS_PLAN_DOCUMENT_KEYS = new Set([
+  'management_plan',
+  'marketing_plan',
+  'financial_plan',
+  'legal_plan',
+  'kpi_plan',
+  'executive_summary',
+])
 
 const ICON_MAP: Record<string, any> = {
   Lightbulb: () => <span className="text-yellow-500">💡</span>,
@@ -52,11 +63,13 @@ export default function DocumentsPage() {
   const [success, setSuccess] = useState('')
   const dismissSuccess = useAutoDismiss(() => setSuccess(''), 3000)
   const [previewDoc, setPreviewDoc] = useState<GeneratedDocument | null>(null)
+  const [gating, setGating] = useState<BusinessPlanGatingStatus | null>(null)
 
   const loadDocuments = useCallback(async () => {
     try {
       const docs = await documentsService.getDocumentsList(projectId)
       setDocuments(docs)
+      setGating(await businessPlanService.getGatingStatus(projectId))
     } catch {
       setError('Erreur lors du chargement des documents')
     } finally {
@@ -75,8 +88,20 @@ export default function DocumentsPage() {
       setDocuments(prev => prev.map(d => d.key === key ? { ...d, ...doc } : d))
       setSuccess(`Document "${doc.title}" généré avec succès`)
       dismissSuccess()
-    } catch {
-      setError('Erreur lors de la génération du document')
+    } catch (e: unknown) {
+      if (BUSINESS_PLAN_DOCUMENT_KEYS.has(key)) {
+        const err = e as { response?: { data?: { message?: { missingSteps?: unknown[] } } } }
+        const missingCount = err?.response?.data?.message?.missingSteps?.length
+        if (missingCount) {
+          setError(
+            `GBM incomplet : complétez ${missingCount} étape(s) du GBM avant de générer ce document.`,
+          )
+        } else {
+          setError('GBM incomplet : complétez le Modèle d’Affaires Vert avant de générer ce document.')
+        }
+      } else {
+        setError('Erreur lors de la génération du document')
+      }
     } finally {
       setGenerating(null)
     }
@@ -161,6 +186,44 @@ export default function DocumentsPage() {
       {/* Alerts */}
       {error && <ErrorAlert message={error} className="mb-4" />}
       {success && <SuccessAlert message={success} className="mb-4" />}
+
+      {/* GBM gating banner */}
+      {gating && gating.status !== 'FINAL' && !gating.isGbmReady && (
+        <Card className="p-4 border border-amber/30 bg-amber-light/20">
+          <div className="flex items-start gap-3">
+            <Lock size={18} className="text-amber-dark shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-ink">
+                Certains documents (Plan d&apos;Affaires) sont momentanément indisponibles
+              </p>
+              <p className="text-xs text-ink2 mt-1">
+                La génération des documents du Plan d&apos;Affaires est bloquée tant que le GBM est incomplet.
+                Complétez les étapes ci-dessous puis revenez.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {gating.missingSteps.map(step => (
+                  <li key={step.stepKey} className="flex items-center gap-2">
+                    <span className="text-xs text-amber-dark">•</span>
+                    <button
+                      onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=${step.stepKey}`)}
+                      className="text-xs text-moss underline underline-offset-2 hover:text-moss-mid"
+                    >
+                      {step.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm`)}
+            >
+              Remplir le GBM
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Documents List */}
       <div className="space-y-2">

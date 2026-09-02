@@ -128,6 +128,8 @@ export class ProjectContextService {
       management: () => this.buildManagement(context),
       marketing: () => this.buildMarketing(context),
       financial: () => this.buildFinancial(context),
+      legal: () => this.buildLegal(context),
+      kpis: () => this.buildKpi(context),
       'eco-design': () => this.buildEcoDesign(context),
       impact: () => this.buildImpact(context),
       market: () => this.buildMarket(context),
@@ -627,6 +629,57 @@ export class ProjectContextService {
         );
         break;
 
+      case 'legal':
+        items.push(
+          {
+            key: 'statut_juridique',
+            label: 'Statut juridique / aspects légaux',
+            ok: this.has(pestel, ['legal_what', 'legal_how']),
+            sourceLabel: 'PESTEL',
+          },
+          {
+            key: 'contrats',
+            label: 'Contrats / partenaires',
+            ok:
+              this.has(key_activities_resource, ['strategic_partners']) ||
+              this.has(idea_sketch, ['partners']),
+            sourceLabel: 'Activités et ressources',
+          },
+        );
+        break;
+
+      case 'kpis':
+        items.push(
+          {
+            key: 'kpis',
+            label: 'Indicateurs de performance (KPIs)',
+            ok: this.has(indicator, [
+              'environmental_kpis',
+              'social_kpis',
+              'economic_kpis',
+            ]),
+            sourceLabel: 'Indicateurs (GBM)',
+          },
+          {
+            key: 'objectifs_mesure',
+            label: 'Objectifs de mesure',
+            ok: this.has(objective, [
+              'environmental_objectives',
+              'social_objectives',
+              'customer_objectives',
+              'team_objectives',
+            ]),
+            sourceLabel: 'Objectifs',
+          },
+          {
+            key: 'revues_performance',
+            label: 'Revues de performance',
+            ok: this.has(indicator, ['measurement_method', 'review_frequency']),
+            sourceLabel: 'Indicateurs (GBM)',
+          },
+        );
+        break;
+
       default:
         break;
     }
@@ -940,6 +993,122 @@ export class ProjectContextService {
       fields,
       checklist: this.checklistFor(context, 'financial'),
       computed: { financial: computed },
+    };
+  }
+
+  private buildLegal(context: any): Omit<PrefillResult, 'module'> {
+    const { pestel, idea_sketch, key_activities_resource } = context;
+    const fields: Record<string, PrefillField> = {};
+
+    const legal = this.join(
+      pestel?.legal_what
+        ? `Aspects légaux (PESTEL) : ${pestel.legal_what}`
+        : null,
+      pestel?.legal_how
+        ? `Actions prévues (PESTEL) : ${pestel.legal_how}`
+        : null,
+    );
+    if (legal) {
+      fields.statut_juridique = this.field(
+        legal,
+        'Pestel',
+        'PESTEL',
+        this.short(pestel?.legal_what),
+      );
+    }
+
+    const contrats = this.join(
+      key_activities_resource?.strategic_partners
+        ? `Partenaires stratégiques (à formaliser par contrat) :\n${key_activities_resource.strategic_partners}`
+        : null,
+      idea_sketch?.partners
+        ? `Partenaires (idée) : ${idea_sketch.partners}`
+        : null,
+    );
+    if (contrats) {
+      fields.contrats = this.field(
+        contrats,
+        'KeyActivitiesResource',
+        'Activités et ressources',
+        this.short(key_activities_resource?.strategic_partners) ||
+          this.short(idea_sketch?.partners),
+      );
+    }
+
+    return {
+      fields,
+      checklist: this.checklistFor(context, 'legal'),
+    };
+  }
+
+  private buildKpi(context: any): Omit<PrefillResult, 'module'> {
+    const { indicator, objective } = context;
+    const fields: Record<string, PrefillField> = {};
+
+    const kpisJson = this.toJsonText({
+      'KPIs environnementaux': this.splitLines(indicator?.environmental_kpis),
+      'KPIs sociaux': this.splitLines(indicator?.social_kpis),
+      'KPIs économiques': this.splitLines(indicator?.economic_kpis),
+    });
+    if (
+      indicator?.environmental_kpis ||
+      indicator?.social_kpis ||
+      indicator?.economic_kpis
+    ) {
+      fields.kpis = this.field(
+        kpisJson,
+        'Indicator',
+        'Indicateurs (GBM)',
+        this.short(indicator?.environmental_kpis) ||
+          this.short(indicator?.social_kpis) ||
+          this.short(indicator?.economic_kpis),
+      );
+    }
+
+    const objectifs = this.toJsonText({
+      'Objectifs environnementaux': this.splitLines(
+        objective?.environmental_objectives,
+      ),
+      'Objectifs sociaux': this.splitLines(objective?.social_objectives),
+      'Objectifs clients': this.splitLines(objective?.customer_objectives),
+      'Objectifs équipe': this.splitLines(objective?.team_objectives),
+    });
+    if (
+      objective?.environmental_objectives ||
+      objective?.social_objectives ||
+      objective?.customer_objectives ||
+      objective?.team_objectives
+    ) {
+      fields.objectifs_mesure = this.field(
+        objectifs,
+        'Objective',
+        'Objectifs',
+        this.short(objective?.environmental_objectives) ||
+          this.short(objective?.customer_objectives),
+      );
+    }
+
+    const revues = this.join(
+      indicator?.measurement_method
+        ? `Méthode de mesure :\n${indicator.measurement_method}`
+        : null,
+      indicator?.review_frequency
+        ? `Fréquence de revue :\n${indicator.review_frequency}`
+        : null,
+    );
+    if (revues) {
+      fields.revues_performance = this.field(
+        revues,
+        'Indicator',
+        'Indicateurs (GBM)',
+        this.short(indicator?.measurement_method) ||
+          this.short(indicator?.review_frequency),
+      );
+    }
+
+    return {
+      fields,
+      checklist: this.checklistFor(context, 'kpis'),
     };
   }
 

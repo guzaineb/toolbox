@@ -8,6 +8,7 @@ import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
 import { SectionStepService } from '../common/services/section-step.service';
 import { ModuleAccessService } from '../common/services/module-access.service';
+import { GbmService } from '../gbm/gbm.service';
 
 export const DOCUMENT_DEFINITIONS = [
   { key: 'idea_sketch', title: "Fiche d'idée", icon: 'Lightbulb' },
@@ -33,6 +34,19 @@ export const DOCUMENT_DEFINITIONS = [
   { key: 'impact_report', title: "Rapport d'impact durable", icon: 'Activity' },
 ];
 
+/**
+ * Document de livraison du volet « Plan d'Affaires » : leur génération est
+ * bloquée tant que le GBM n'est pas suffisamment complet (D7).
+ */
+const BUSINESS_PLAN_DOCUMENT_KEYS = new Set([
+  'management_plan',
+  'marketing_plan',
+  'financial_plan',
+  'legal_plan',
+  'kpi_plan',
+  'executive_summary',
+]);
+
 @Injectable()
 export class DocumentsService {
   private readonly logger = new Logger(DocumentsService.name);
@@ -45,6 +59,7 @@ export class DocumentsService {
     private readonly prompts: DocumentPromptsService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
+    private readonly gbm: GbmService,
   ) {}
 
   async getDocumentsList(projectId: string, userId: string) {
@@ -99,6 +114,18 @@ export class DocumentsService {
 
     const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);
+
+    // Gating D7 : ne pas générer de livrable Business Plan tant que le GBM est incomplet.
+    if (BUSINESS_PLAN_DOCUMENT_KEYS.has(documentKey)) {
+      const missing = await this.gbm.getMissingRequiredSteps(projectId);
+      if (missing.length > 0) {
+        throw new ForbiddenException({
+          message:
+            'Le GBM doit être suffisamment complet avant de générer ce document du Plan d’Affaires.',
+          missingSteps: missing.map(s => ({ stepKey: s.stepKey, title: s.title })),
+        });
+      }
+    }
 
     const config = this.prompts.getDocumentConfig(documentKey);
     if (!config) throw new NotFoundException(`Pas de prompt configuré pour: ${documentKey}`);

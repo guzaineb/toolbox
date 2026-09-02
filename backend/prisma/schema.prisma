@@ -97,6 +97,10 @@ enum DocumentStatus {
   UPDATED
 }
 
+enum BusinessPlanStatus {
+  FINAL
+}
+
 enum ParticipationOrigin {
   APPLICATION
   INVITATION
@@ -589,6 +593,8 @@ model Project {
   owner_id        String
   gbm_reviewed_at DateTime?
   is_gbm_reviewed Boolean  @default(false)
+  business_plan_status BusinessPlanStatus?
+  business_plan_finalized_at DateTime?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

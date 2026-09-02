@@ -1,5 +1,5 @@
 import api from './api'
-import type { BusinessPlanProgress } from '@/types/business-plan'
+import type { BusinessPlanProgress, BusinessPlanGatingStatus } from '@/types/business-plan'
 
 const base = (projectId: string) => `/projects/${projectId}/business-plan`
 
@@ -32,4 +32,10 @@ export const businessPlanService = {
   // Progress
   getProgress: (projectId: string): Promise<BusinessPlanProgress> =>
     api.get(`${base(projectId)}/progress`).then(r => r.data),
+
+  // Finalisation / gating GBM (D7)
+  getGatingStatus: (projectId: string): Promise<BusinessPlanGatingStatus> =>
+    api.get(`${base(projectId)}/status`).then(r => r.data),
+  finalize: (projectId: string) =>
+    api.post(`${base(projectId)}/finalize`).then(r => r.data),
 }

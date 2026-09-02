@@ -62,3 +62,12 @@ export const BP_STEP_LABELS: Record<string, string> = {
   bp_2_5: 'Mesure et attente (KPIs)',
   bp_2_6: 'Résumé analytique',
 }
+
+export type BusinessPlanFinalizationStatus = 'FINAL' | null
+
+export interface BusinessPlanGatingStatus {
+  status: BusinessPlanFinalizationStatus
+  finalizedAt: string | null
+  isGbmReady: boolean
+  missingSteps: { stepKey: string; title: string }[]
+}

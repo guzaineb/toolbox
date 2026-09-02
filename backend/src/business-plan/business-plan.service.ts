@@ -8,6 +8,7 @@ import { AiService } from '../ai/ai.service';
 import { SectionStepService } from '../common/services/section-step.service';
 import { ProgressService } from '../common/services/progress.service';
 import { ProjectContextService } from '../common/services/project-context.service';
+import { GbmService } from '../gbm/gbm.service';
 
 @Injectable()
 export class BusinessPlanService {
@@ -17,6 +18,7 @@ export class BusinessPlanService {
     private readonly progress: ProgressService,
     private readonly ai: AiService,
     private readonly projectContext: ProjectContextService,
+    private readonly gbm: GbmService,
   ) {}
 
   private async upsertModel(
@@ -177,5 +179,60 @@ export class BusinessPlanService {
       'bp_2.6',
     ];
     return this.progress.compute(projectId, stepKeys);
+  }
+
+  /**
+   * État du gating GBM → Business Plan (D7) :
+   * statut de finalisation, disponibilité GBM et liste des étapes manquantes.
+   */
+  async getFinalizationStatus(projectId: string, userId: string) {
+    await this.sections.ensureOwnership(projectId, userId);
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { business_plan_status: true, business_plan_finalized_at: true },
+    });
+    if (!project) throw new NotFoundException('Projet introuvable');
+
+    const missing = await this.gbm.getMissingRequiredSteps(projectId);
+    return {
+      status: project.business_plan_status ?? null,
+      finalizedAt: project.business_plan_finalized_at ?? null,
+      isGbmReady: missing.length === 0,
+      missingSteps: missing.map(s => ({
+        stepKey: s.stepKey,
+        title: s.title,
+      })),
+    };
+  }
+
+  /**
+   * Finalise le Business Plan. Interdit tant que le GBM est incomplet (D7).
+   */
+  async finalizeBusinessPlan(projectId: string, userId: string) {
+    await this.sections.ensureOwnership(projectId, userId);
+
+    const missing = await this.gbm.getMissingRequiredSteps(projectId);
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        message:
+          'Le GBM doit être suffisamment complet avant de finaliser le Plan d’Affaires.',
+        missingSteps: missing.map(s => ({ stepKey: s.stepKey, title: s.title })),
+      });
+    }
+
+    const finalizeAt = new Date();
+    const project = await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        business_plan_status: 'FINAL',
+        business_plan_finalized_at: finalizeAt,
+      },
+    });
+
+    return {
+      message: 'Plan d’Affaires finalisé',
+      status: project.business_plan_status,
+      finalized_at: project.business_plan_finalized_at,
+    };
   }
 }

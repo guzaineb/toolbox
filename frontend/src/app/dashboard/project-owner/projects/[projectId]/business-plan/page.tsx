@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, Check, Sparkles, FileText } from 'lucide-react'
+import { ArrowLeft, Loader2, Check, Sparkles, FileText, Lock, BadgeCheck } from 'lucide-react'
 import { businessPlanService } from '@/services/business-plan.service'
-import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav, Badge } from '@/components/shared/ui'
+import type { BusinessPlanGatingStatus } from '@/types/business-plan'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
 import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
 import { DataProvenance } from '@/components/shared/DataProvenance'
@@ -25,6 +26,8 @@ const PREFILL_MODULES: Record<string, string> = {
   management: 'management',
   marketing: 'marketing',
   financial: 'financial',
+  legal: 'legal',
+  kpis: 'kpis',
 }
 
 export default function BusinessPlanPage() {
@@ -42,6 +45,8 @@ export default function BusinessPlanPage() {
   const [genLoading, setGenLoading] = useState(false)
   const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [gating, setGating] = useState<BusinessPlanGatingStatus | null>(null)
+  const [finalizing, setFinalizing] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -69,6 +74,11 @@ export default function BusinessPlanPage() {
       const p = await businessPlanService.getProgress(projectId)
       setProgress(p)
       setDirty(false)
+      try {
+        setGating(await businessPlanService.getGatingStatus(projectId))
+      } catch {
+        setGating(null)
+      }
     } catch {
       setError('Erreur de chargement')
     } finally {
@@ -156,6 +166,28 @@ export default function BusinessPlanPage() {
     }
   }
 
+  const handleFinalize = async () => {
+    const ok = window.confirm(
+      'Finaliser le Plan d’Affaires ? Le GBM doit être complet. Vous pourrez toujours le modifier ensuite.',
+    )
+    if (!ok) return
+    setFinalizing(true)
+    setError('')
+    try {
+      await businessPlanService.finalize(projectId)
+      const fresh = await businessPlanService.getGatingStatus(projectId)
+      setGating(fresh)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } }
+      const msg = err?.response?.data?.message
+      setError(typeof msg === 'string' ? msg : 'Erreur lors de la finalisation du Plan d’Affaires.')
+    } finally {
+      setFinalizing(false)
+    }
+  }
+
   const fields = getSectionFields(section)
 
   return (
@@ -177,6 +209,10 @@ export default function BusinessPlanPage() {
       </div>
 
       <TabNav tabs={SECTIONS} active={section} onChange={handleSectionChange} />
+
+      {gating && (
+        <GbmGatingCard gating={gating} onFinalize={handleFinalize} finalizing={finalizing} router={router} projectId={projectId} />
+      )}
 
       <Card className="p-0 overflow-hidden">
         <CardHeader
@@ -304,4 +340,88 @@ function getSectionFields(section: string) {
     ],
   }
   return map[section] || []
+}
+
+function GbmGatingCard({
+  gating,
+  onFinalize,
+  finalizing,
+  projectId,
+  router,
+}: {
+  gating: BusinessPlanGatingStatus
+  onFinalize: () => void
+  finalizing: boolean
+  projectId: string
+  router: ReturnType<typeof useRouter>
+}) {
+  if (gating.status === 'FINAL') {
+    const date = gating.finalizedAt
+      ? new Date(gating.finalizedAt).toLocaleDateString('fr-FR')
+      : ''
+    return (
+      <Card className="p-4 border border-moss/25 bg-moss/[.06]">
+        <div className="flex items-center gap-3">
+          <BadgeCheck size={18} className="text-moss shrink-0" />
+          <div className="flex items-center gap-2 flex-1">
+            <Badge variant="green">Plan d&apos;Affaires finalisé</Badge>
+            {date && <span className="text-xs text-ink3">le {date}</span>}
+          </div>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="p-4 border border-amber/30 bg-amber-light/20">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <Lock size={18} className="text-amber-dark shrink-0 mt-0.5" />
+          <div>
+            {gating.isGbmReady ? (
+              <>
+                <p className="text-sm font-bold text-ink">Vous êtes en mode brouillon</p>
+                <p className="text-xs text-ink2 mt-1">
+                  Votre GBM est complet. Vous pouvez finaliser votre Plan d&apos;Affaires.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold text-ink">Plan d&apos;Affaires en brouillon</p>
+                <p className="text-xs text-ink2 mt-1">
+                  Finalisation bloquée : le Modèle d&apos;Affaires Vert (GBM) est incomplet.
+                  Complétez les étapes ci-dessous puis validez la révision GBM pour finaliser votre Plan d&apos;Affaires.
+                </p>
+                <ul className="mt-3 space-y-1.5">
+                  {gating.missingSteps.map(step => (
+                    <li key={step.stepKey} className="flex items-center gap-2">
+                      <span className="text-xs text-amber-dark">•</span>
+                      <button
+                        onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=${step.stepKey}`)}
+                        className="text-xs text-moss underline underline-offset-2 hover:text-moss-mid"
+                      >
+                        {step.title}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+        {gating.isGbmReady ? (
+          <Button variant="amber" onClick={onFinalize} loading={finalizing}>
+            <BadgeCheck size={14} /> Finaliser le Plan d&apos;Affaires
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm`)}
+          >
+            Remplir le GBM
+          </Button>
+        )}
+      </div>
+    </Card>
+  )
 }

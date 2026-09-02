@@ -77,4 +77,14 @@ export class BusinessPlanController {
   getProgress(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
     return this.bp.getProgress(params.projectId, req.user.id);
   }
+
+  @Get('status')
+  getStatus(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+    return this.bp.getFinalizationStatus(params.projectId, req.user.id);
+  }
+
+  @Post('finalize')
+  finalize(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+    return this.bp.finalizeBusinessPlan(params.projectId, req.user.id);
+  }
 }

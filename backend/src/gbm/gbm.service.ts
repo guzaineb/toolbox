@@ -175,19 +175,31 @@ export class GbmService {
     }
   }
 
+  /**
+   * Étapes GBM obligatoires pour considérer le GBM « suffisamment complet »
+   * (les 15 étapes one-to-one non générées par IA — aligné avec reviewGbm).
+   * Réutilisé par le gating Business Plan (D7).
+   */
+  async getMissingRequiredSteps(projectId: string): Promise<StepConfig[]> {
+    const required = GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated);
+    const missing: StepConfig[] = [];
+    for (const step of required) {
+      const model = this.getModel(step);
+      const record = await model.findUnique({ where: { project_id: projectId } });
+      if (!record) missing.push(step);
+    }
+    return missing;
+  }
+
+  /** Vrai si toutes les étapes GBM obligatoires sont remplies (D7). */
+  async isGbmReady(projectId: string): Promise<boolean> {
+    return (await this.getMissingRequiredSteps(projectId)).length === 0;
+  }
+
   async reviewGbm(projectId: string, userId: string) {
     await this.sections.ensureOwnership(projectId, userId);
 
-    const missingSteps: string[] = [];
-    const oneToOneModels = GBM_STEPS.filter(s => s.relation === 'one-to-one' && !s.aiGenerated);
-
-    for (const step of oneToOneModels) {
-      const model = this.getModel(step);
-      const record = await model.findUnique({ where: { project_id: projectId } });
-      if (!record) {
-        missingSteps.push(step.title);
-      }
-    }
+    const missingSteps = (await this.getMissingRequiredSteps(projectId)).map(s => s.title);
 
     if (missingSteps.length > 0) {
       throw new BadRequestException({
