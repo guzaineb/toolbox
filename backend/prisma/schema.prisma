@@ -649,6 +649,7 @@ model Project {
   // Documents générés
   generated_documents      GeneratedDocument[]
   rag_documents            RagDocument[]
+  uploaded_documents       UploadedDocument[]
   conversations            Conversation[]
 
   // Relations
@@ -1912,6 +1913,34 @@ model RagDocument {
   @@unique([project_id, document_key, chunk_index])
   @@index([project_id, document_key])
   @@map("rag_documents")
+}
+
+enum UploadedDocumentStatus {
+  PENDING
+  PROCESSING
+  INDEXED
+  FAILED
+}
+
+model UploadedDocument {
+  id            String                 @id @default(uuid())
+  project_id    String
+  owner_id      String
+  filename      String
+  original_name String
+  mime_type     String
+  size          Int
+  status        UploadedDocumentStatus @default(PENDING)
+  error_message String?
+  chunk_count   Int?                   @default(0)
+  created_at    DateTime               @default(now())
+  indexed_at    DateTime?
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([project_id, owner_id])
+  @@map("uploaded_documents")
 }
 
 // ===========================

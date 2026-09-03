@@ -44,6 +44,20 @@ export class LlmService {
       try {
         const startTime = Date.now();
 
+        const body: Record<string, unknown> = {
+          model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+        };
+
+        if (options?.tools && options.tools.length > 0) {
+          body.tools = options.tools;
+          if (options.toolChoice) {
+            body.tool_choice = options.toolChoice;
+          }
+        }
+
         const response = await fetch(
           'https://api.groq.com/openai/v1/chat/completions',
           {
@@ -52,12 +66,7 @@ export class LlmService {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${apiKey}`,
             },
-            body: JSON.stringify({
-              model,
-              messages,
-              temperature,
-              max_tokens: maxTokens,
-            }),
+            body: JSON.stringify(body),
           },
         );
 
@@ -78,6 +87,8 @@ export class LlmService {
         return {
           content: data.choices[0]?.message?.content || '',
           model: data.model,
+          toolCalls: data.choices[0]?.message?.tool_calls ?? undefined,
+          finishReason: data.choices[0]?.finish_reason ?? undefined,
           usage: data.usage
             ? {
                 promptTokens: data.usage.prompt_tokens,

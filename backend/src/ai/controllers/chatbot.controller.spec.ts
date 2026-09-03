@@ -67,6 +67,7 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
       );
       expect(chatbotMock.ask).toHaveBeenCalledWith(
         '11111111-1111-1111-1111-111111111111',
+        'user-1',
         'question',
         undefined,
       );

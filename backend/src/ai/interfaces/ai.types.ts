@@ -1,17 +1,41 @@
 export interface LlmMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
+  toolCallId?: string;
+  name?: string;
+}
+
+export interface LlmTool {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+}
+
+export interface LlmToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
 }
 
 export interface LlmOptions {
   model?: string;
   temperature?: number;
   maxTokens?: number;
+  tools?: LlmTool[];
+  toolChoice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
 }
 
 export interface LlmResponse {
   content: string;
   model: string;
+  toolCalls?: LlmToolCall[];
+  finishReason?: string;
   usage?: {
     promptTokens: number;
     completionTokens: number;

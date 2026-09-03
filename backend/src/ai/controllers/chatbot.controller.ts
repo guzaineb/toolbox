@@ -24,12 +24,11 @@ export class ChatbotController {
 
   @Post('ask')
   async ask(@Body() dto: ChatbotAskDto, @Req() req: RequestUser) {
-    // Identité prise uniquement depuis req.user (jamais du corps de requête).
-    // Refuse toute tentative d'interroger un projet auquel l'utilisateur n'a pas accès.
     await this.access.assertCanAccessProject(dto.projectId, req.user.id);
     try {
       const result = await this.chatbot.ask(
         dto.projectId,
+        req.user.id,
         dto.question,
         dto.conversationHistory,
       );
