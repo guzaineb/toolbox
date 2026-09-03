@@ -27,7 +27,7 @@ export class TranscriptionService {
     const formData = new FormData();
 
     const ext = filename.split('.').pop() || 'webm';
-    const blob = new Blob([audioBuffer], { type: mimeType || 'audio/webm' });
+    const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType || 'audio/webm' });
     formData.append('file', blob, filename || `recording.${ext}`);
     formData.append('model', this.model);
     formData.append('response_format', 'verbose_json');

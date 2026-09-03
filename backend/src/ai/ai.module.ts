@@ -5,6 +5,7 @@ import { ProjectToolsModule } from './tools/project-tools.module';
 import { DocumentModule } from './documents/document.module';
 import { RagCoreModule } from './rag-core.module';
 import { ProjectStateModule } from './project-state/project-state.module';
+import { VoiceModule } from './voice/voice.module';
 import { AiService } from './ai.service';
 import { LlmService } from './llm.service';
 import { EmbeddingsService } from './embeddings.service';
@@ -37,6 +38,7 @@ import { ImprovementPlanController } from './analysis/improvement-plan.controlle
     RagCoreModule,
     DocumentModule,
     ProjectStateModule,
+    VoiceModule,
   ],
   providers: [
     AiService,

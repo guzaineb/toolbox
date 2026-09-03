@@ -73,6 +73,24 @@ export async function deleteDocument(documentId: string, projectId: string): Pro
   await api.delete(`/ai/documents/${documentId}`, { params: { projectId } })
 }
 
+// ── Voice ──
+
+export async function transcribeAudio(
+  projectId: string,
+  audioBlob: Blob,
+  language?: string,
+): Promise<{ text: string; language?: string; duration?: number }> {
+  const formData = new FormData()
+  formData.append('audio', audioBlob, 'recording.webm')
+  formData.append('projectId', projectId)
+  if (language) formData.append('language', language)
+
+  const { data } = await api.post('/ai/voice/transcribe', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data.data
+}
+
 // ── Conversations ──
 
 export async function listConversations(

@@ -210,7 +210,7 @@ export default function CoachChat({ projectId }: CoachChatProps) {
       {/* Voice panel */}
       {showVoice && (
         <div className="px-4 py-2 border-t border-ink/[.08]">
-          <VoiceRecorder onTranscript={handleSend} />
+          <VoiceRecorder projectId={projectId} onTranscript={handleSend} />
         </div>
       )}
 
