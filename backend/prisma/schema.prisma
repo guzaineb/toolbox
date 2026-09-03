@@ -373,6 +373,7 @@ model User {
   jurySessionMemberships          JurySessionMember[]        @relation("JuryMemberUser")
   improvementPlansCreated         ImprovementPlan[]          @relation("PlanCreatedBy")
   auditLogs                       AuditLog[]                 @relation("AuditActor")
+  conversations                  Conversation[]
 
   @@map("users")
 }
@@ -648,6 +649,7 @@ model Project {
   // Documents générés
   generated_documents      GeneratedDocument[]
   rag_documents            RagDocument[]
+  conversations            Conversation[]
 
   // Relations
   step_progresses        StepProgress[]
@@ -1970,4 +1972,41 @@ model NotificationPreference {
   user User @relation(fields: [user_id], references: [id])
 
   @@map("notification_preferences")
+}
+
+// ===========================
+// MODULE — Mémoire conversationnelle du chatbot
+// ===========================
+
+model Conversation {
+  id         String   @id @default(uuid())
+  project_id String
+  owner_id   String
+  title      String?  // titre auto-généré ou manuel
+  summary    String?  // résumé des anciennes conversations (optionnel)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  project  Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  owner    User      @relation(fields: [owner_id], references: [id])
+  messages Message[]
+
+  @@index([project_id, owner_id])
+  @@index([project_id, created_at])
+  @@map("conversations")
+}
+
+model Message {
+  id              String   @id @default(uuid())
+  conversation_id String
+  role            String   // "user" | "assistant" | "system"
+  content         String
+  sources         Json?    // sources RAG utilisées pour cette réponse
+  context_used    Boolean  @default(false)
+  created_at      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id, created_at])
+  @@map("messages")
 }

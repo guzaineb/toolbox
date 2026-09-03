@@ -1,0 +1,271 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConversationService } from './conversation.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
+
+describe('ConversationService', () => {
+  let service: ConversationService;
+
+  const prismaMock = {
+    project: { findUnique: jest.fn() },
+    conversation: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      count: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    message: { count: jest.fn() },
+  };
+
+  beforeEach(() => {
+    prismaMock.project.findUnique.mockReset();
+    prismaMock.conversation.create.mockReset();
+    prismaMock.conversation.findMany.mockReset();
+    prismaMock.conversation.findFirst.mockReset();
+    prismaMock.conversation.findUnique.mockReset();
+    prismaMock.conversation.count.mockReset();
+    prismaMock.conversation.update.mockReset();
+    prismaMock.conversation.delete.mockReset();
+    prismaMock.message.count.mockReset();
+  });
+
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ConversationService,
+        { provide: PrismaService, useValue: prismaMock },
+      ],
+    }).compile();
+
+    service = module.get<ConversationService>(ConversationService);
+  });
+
+  function mockProjectAccess(projectId: string, ownerId: string) {
+    prismaMock.project.findUnique.mockImplementation(
+      async (args: { where: { id: string } }) => {
+        if (args.where.id === projectId) {
+          return { id: projectId, owner_id: ownerId };
+        }
+        return null;
+      },
+    );
+  }
+
+  describe('Création', () => {
+    it('crée une conversation liée au projet et au propriétaire', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      prismaMock.conversation.create.mockResolvedValue({
+        id: 'conv-1',
+        title: null,
+        created_at: new Date(),
+      });
+
+      const result = await service.create('proj-a', 'user-1');
+      expect(result.id).toBe('conv-1');
+      expect(prismaMock.conversation.create).toHaveBeenCalledWith({
+        data: {
+          project_id: 'proj-a',
+          owner_id: 'user-1',
+          title: null,
+        },
+      });
+    });
+
+    it('accepte un titre personnalisé', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      prismaMock.conversation.create.mockResolvedValue({
+        id: 'conv-2',
+        title: 'Mon titre',
+        created_at: new Date(),
+      });
+
+      await service.create('proj-a', 'user-1', 'Mon titre');
+      expect(prismaMock.conversation.create).toHaveBeenCalledWith({
+        data: {
+          project_id: 'proj-a',
+          owner_id: 'user-1',
+          title: 'Mon titre',
+        },
+      });
+    });
+  });
+
+  describe('Isolation inter-projets', () => {
+    it('les conversations du projet A ne sont pas visibles depuis le projet B', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      prismaMock.conversation.findMany.mockResolvedValue([]);
+      prismaMock.conversation.count.mockResolvedValue(0);
+
+      const resultA = await service.listByProject('proj-a', 'user-1');
+      expect(resultA.conversations).toHaveLength(0);
+
+      mockProjectAccess('proj-b', 'user-1');
+      prismaMock.conversation.findMany.mockResolvedValue([
+        {
+          id: 'conv-b1',
+          title: 'Conv B',
+          created_at: new Date(),
+          messages: [],
+          _count: { messages: 3 },
+        },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(1);
+
+      const resultB = await service.listByProject('proj-b', 'user-1');
+      expect(resultB.conversations).toHaveLength(1);
+      expect(resultB.conversations[0].id).toBe('conv-b1');
+
+      expect(resultA.conversations).toHaveLength(0);
+    });
+
+    it('un utilisateur ne peut pas accéder à la conversation d\'un autre utilisateur', async () => {
+      prismaMock.conversation.findUnique.mockResolvedValue({
+        id: 'conv-1',
+        project_id: 'proj-a',
+        owner_id: 'user-1',
+      });
+
+      await expect(
+        service.getById('conv-1', 'proj-a', 'user-2'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('une conversation du projet A ne peut pas être lue depuis le projet B', async () => {
+      prismaMock.conversation.findUnique.mockResolvedValue({
+        id: 'conv-1',
+        project_id: 'proj-a',
+        owner_id: 'user-1',
+      });
+
+      await expect(
+        service.getById('conv-1', 'proj-b', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('un utilisateur ne peut pas supprimer la conversation d\'un autre', async () => {
+      prismaMock.conversation.findUnique.mockResolvedValue({
+        id: 'conv-1',
+        project_id: 'proj-a',
+        owner_id: 'user-1',
+      });
+
+      await expect(
+        service.delete('conv-1', 'proj-a', 'user-2'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+  describe('getOrCreateActive', () => {
+    it('crée une conversation si la dernière a des messages', async () => {
+      prismaMock.project.findUnique.mockResolvedValue({
+        id: 'proj-a',
+        owner_id: 'user-1',
+      });
+      prismaMock.conversation.findFirst.mockResolvedValue({
+        id: 'conv-existing',
+        title: null,
+        created_at: new Date(),
+        _count: { messages: 5 },
+      });
+      prismaMock.conversation.create.mockResolvedValue({
+        id: 'conv-new',
+        title: null,
+        created_at: new Date(),
+      });
+
+      const result = await service.getOrCreateActive('proj-a', 'user-1');
+      expect(result.id).toBe('conv-new');
+    });
+
+    it('réutilise une conversation vide existante', async () => {
+      prismaMock.project.findUnique.mockResolvedValue({
+        id: 'proj-a',
+        owner_id: 'user-1',
+      });
+      prismaMock.conversation.findFirst.mockResolvedValue({
+        id: 'conv-empty',
+        title: null,
+        created_at: new Date(),
+        _count: { messages: 0 },
+      });
+
+      const result = await service.getOrCreateActive('proj-a', 'user-1');
+      expect(result.id).toBe('conv-empty');
+      expect(prismaMock.conversation.create).not.toHaveBeenCalled();
+    });
+
+    it('crée une nouvelle conversation si aucune n\'existe', async () => {
+      prismaMock.project.findUnique.mockResolvedValue({
+        id: 'proj-a',
+        owner_id: 'user-1',
+      });
+      prismaMock.conversation.findFirst.mockResolvedValue(null);
+      prismaMock.conversation.create.mockResolvedValue({
+        id: 'conv-new',
+        title: null,
+        created_at: new Date(),
+      });
+
+      const result = await service.getOrCreateActive('proj-a', 'user-1');
+      expect(result.id).toBe('conv-new');
+    });
+  });
+  });
+
+  describe('Pagination', () => {
+    it('retourne les conversations avec count et pagination', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      prismaMock.conversation.findMany.mockResolvedValue([
+        {
+          id: 'conv-1',
+          title: 'Conv 1',
+          created_at: new Date(),
+          messages: [{ created_at: new Date() }],
+          _count: { messages: 10 },
+        },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(15);
+
+      const result = await service.listByProject('proj-a', 'user-1', 1, 10);
+      expect(result.total).toBe(15);
+      expect(result.conversations).toHaveLength(1);
+      expect(result.conversations[0].messageCount).toBe(10);
+    });
+  });
+
+  describe('Suppression', () => {
+    it('supprime une conversation existante', async () => {
+      prismaMock.conversation.findUnique.mockResolvedValue({
+        id: 'conv-1',
+        project_id: 'proj-a',
+        owner_id: 'user-1',
+      });
+      prismaMock.conversation.delete.mockResolvedValue({});
+
+      await service.delete('conv-1', 'proj-a', 'user-1');
+      expect(prismaMock.conversation.delete).toHaveBeenCalledWith({
+        where: { id: 'conv-1' },
+      });
+    });
+  });
+
+  describe('Inexistant', () => {
+    it('lance une erreur si le projet n\'existe pas', async () => {
+      prismaMock.project.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.create('proj-unknown', 'user-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('lance une erreur si la conversation n\'existe pas', async () => {
+      prismaMock.conversation.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.getById('conv-unknown', 'proj-a', 'user-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+});

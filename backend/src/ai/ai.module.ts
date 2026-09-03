@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MaturityModule } from '../maturity/maturity.module';
+import { ConversationModule } from './conversation/conversation.module';
 import { AiService } from './ai.service';
 import { LlmService } from './llm.service';
 import { EmbeddingsService } from './embeddings.service';
@@ -27,7 +28,7 @@ import { AiAnalysisController } from './analysis/ai-analysis.controller';
 import { ImprovementPlanController } from './analysis/improvement-plan.controller';
 
 @Module({
-  imports: [MaturityModule],
+  imports: [MaturityModule, ConversationModule],
   providers: [
     AiService,
     LlmService,
