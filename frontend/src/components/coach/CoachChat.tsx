@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { MessageSquare, ChevronDown, Plus } from 'lucide-react'
+import { MessageSquare, ChevronDown, Plus, AlertTriangle } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import DocumentUploader from './DocumentUploader'
@@ -12,6 +12,7 @@ import {
   listDocuments,
   listConversations,
   listConversationMessages,
+  getRagHealth,
 } from '@/services/coach.service'
 import type {
   ChatMessage as ChatMessageType,
@@ -19,6 +20,7 @@ import type {
   UploadedDocument,
   Conversation,
   ConversationMessage,
+  RagHealthResult,
 } from '@/types/coach'
 
 interface CoachChatProps {
@@ -41,6 +43,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showConversationList, setShowConversationList] = useState(false)
+  const [ragHealth, setRagHealth] = useState<RagHealthResult | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const loadedRef = useRef(false)
 
@@ -62,6 +65,15 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
       setDocuments(result.documents)
     } catch {
       // silent
+    }
+  }, [projectId])
+
+  const loadRagHealth = useCallback(async () => {
+    try {
+      const result = await getRagHealth(projectId)
+      setRagHealth(result)
+    } catch {
+      setRagHealth(null)
     }
   }, [projectId])
 
@@ -122,7 +134,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
 
     const init = async () => {
       setInitialLoading(true)
-      await loadDocuments()
+      await Promise.all([loadDocuments(), loadRagHealth()])
       const convs = await loadConversations()
 
       if (convs.length > 0) {
@@ -136,7 +148,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
     }
 
     init()
-  }, [loadDocuments, loadConversations, loadConversationMessages])
+  }, [loadDocuments, loadRagHealth, loadConversations, loadConversationMessages])
 
   const handleSend = useCallback(
     async (question: string) => {
@@ -164,6 +176,10 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         } else if (activeConversationId) {
           await loadConversations()
         }
+
+        if (result.ragStatus === 'RAG_UNAVAILABLE') {
+          await loadRagHealth()
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Erreur inconnue'
         setError(msg)
@@ -175,7 +191,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         setLoading(false)
       }
     },
-    [projectId, messages, activeConversationId, loadConversations],
+    [projectId, messages, activeConversationId, loadConversations, loadRagHealth],
   )
 
   const handleRetry = useCallback(() => {
@@ -268,6 +284,16 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
           )}
         </div>
       </div>
+
+      {/* RAG status banner */}
+      {ragHealth && ragHealth.overall === 'degraded' && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-light/30 border-b border-amber/15 text-[10px] font-dm text-amber-dark">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            La recherche documentaire (RAG) est indisponible. Les réponses du coach se basent uniquement sur les données structurées du projet.
+          </span>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">

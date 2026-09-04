@@ -31,6 +31,7 @@ import { ChunkerService } from './rag/chunker.service';
 import { RagDocumentPlanBuilder } from './rag/rag-document-plan';
 import { AiAnalysisController } from './analysis/ai-analysis.controller';
 import { ImprovementPlanController } from './analysis/improvement-plan.controller';
+import { RagHealthController } from './controllers/rag-health.controller';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { ImprovementPlanController } from './analysis/improvement-plan.controlle
     ProjectStateController,
     AiAnalysisController,
     ImprovementPlanController,
+    RagHealthController,
   ],
   exports: [
     AiService,

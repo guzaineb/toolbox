@@ -139,6 +139,15 @@ export interface ConversationMessage {
   createdAt: string
 }
 
+// ── RAG Health ──
+
+export interface RagHealthResult {
+  embeddings: { available: boolean; reason?: string }
+  chroma: { available: boolean; reason?: string }
+  indexedCount: number
+  overall: 'healthy' | 'degraded'
+}
+
 // ── UI Helpers ──
 
 export const MATURITY_LABELS: Record<MaturityLevel, string> = {

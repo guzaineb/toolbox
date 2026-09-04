@@ -6,6 +6,7 @@ import type {
   UploadedDocumentsResult,
   Conversation,
   ConversationMessage,
+  RagHealthResult,
 } from '@/types/coach'
 
 // ── Project State ──
@@ -109,4 +110,11 @@ export async function listConversationMessages(
     params: { projectId },
   })
   return data.data?.messages ?? data.data ?? []
+}
+
+// ── RAG Health ──
+
+export async function getRagHealth(projectId: string): Promise<RagHealthResult> {
+  const { data } = await api.get('/ai/rag/health', { params: { projectId } })
+  return data.data
 }
