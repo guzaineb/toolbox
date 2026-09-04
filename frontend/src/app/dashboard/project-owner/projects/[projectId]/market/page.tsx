@@ -11,6 +11,7 @@ import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const SECTIONS = [
   { id: 'essence',      label: 'Brand Essence' },
@@ -124,6 +125,13 @@ export default function MarketPage() {
           {saved ? <><Check size={14} /> Sauvegardé</> : 'Sauvegarder'}
         </Button>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="MARKET"
+        section={currentField?.label}
+        formData={formData}
+      />
 
       {modal}
     </div>

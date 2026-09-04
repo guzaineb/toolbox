@@ -1,12 +1,12 @@
 import api from './api'
 import type {
   ProjectState,
-  ChatMessage,
   ChatbotAskResult,
   UploadedDocumentsResult,
   Conversation,
   ConversationMessage,
   RagHealthResult,
+  ModuleContext,
 } from '@/types/coach'
 
 // ── Project State ──
@@ -21,12 +21,12 @@ export async function getProjectState(projectId: string): Promise<ProjectState> 
 export async function askCoach(
   projectId: string,
   question: string,
-  conversationHistory?: ChatMessage[],
+  moduleContext?: ModuleContext,
 ): Promise<ChatbotAskResult> {
   const { data } = await api.post('/ai/chatbot/ask', {
     projectId,
     question,
-    conversationHistory,
+    ...moduleContext,
   })
   return data.data
 }
@@ -99,7 +99,7 @@ export async function listConversations(
   projectId: string,
 ): Promise<Conversation[]> {
   const { data } = await api.get('/ai/conversations', { params: { projectId } })
-  return data.data?.conversations ?? data.data ?? []
+  return data.data?.conversations ?? []
 }
 
 export async function listConversationMessages(
@@ -109,7 +109,7 @@ export async function listConversationMessages(
   const { data } = await api.get(`/ai/conversations/${conversationId}/messages`, {
     params: { projectId },
   })
-  return data.data?.messages ?? data.data ?? []
+  return data.data?.messages ?? []
 }
 
 // ── RAG Health ──

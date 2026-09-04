@@ -79,6 +79,13 @@ export interface ChatMessage {
   content: string
 }
 
+export interface ModuleContext {
+  module?: string
+  section?: string
+  step?: string
+  context?: string
+}
+
 export interface ChatSource {
   id: string
   documentKey: string

@@ -15,6 +15,7 @@ import { StepForm } from './StepForm'
 import { OneToManyManager, type OneToManyManagerHandle } from './OneToManyManager'
 import { GuidePanel } from './GuidePanel'
 import { GbmChatbot } from './GbmChatbot'
+import { ContextualCoachPanel } from '@/components/coach'
 import { cn, getErrorMessage } from '@/lib/utils'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
@@ -387,6 +388,15 @@ export function GbmWizard({ projectId, onRegisterLeave }: { projectId: string; o
               Suivant <ArrowRight size={14} />
             </Button>
           </div>
+
+          {/* Contextual Coach */}
+          <ContextualCoachPanel
+            projectId={projectId}
+            module="GBM"
+            section={stepMeta.title}
+            step={currentStep}
+            formData={formData}
+          />
 
           {/* Review section — last step */}
           {isLastStep && (

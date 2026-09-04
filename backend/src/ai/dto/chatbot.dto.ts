@@ -27,6 +27,22 @@ export class ChatbotAskDto {
   @ValidateNested({ each: true })
   @Type(() => ConversationMessageDto)
   conversationHistory?: ConversationMessageDto[];
+
+  @IsOptional()
+  @IsString()
+  module?: string;
+
+  @IsOptional()
+  @IsString()
+  section?: string;
+
+  @IsOptional()
+  @IsString()
+  step?: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
 }
 
 export class ChatbotIndexDto {

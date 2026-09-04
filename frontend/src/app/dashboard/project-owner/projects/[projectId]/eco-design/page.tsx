@@ -11,6 +11,7 @@ import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const PHASES = [
   { id: 'preparer',    label: 'Préparer la valise', fields: ['equipe_eco','projet_eco','contexte_eco','vision_durable'] },
@@ -140,6 +141,13 @@ export default function EcoDesignPage() {
           {saved ? <><Check size={14} /> Sauvegardé</> : 'Sauvegarder'}
         </Button>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="ECO_DESIGN"
+        section={PHASES.find(p => p.id === phase)?.label}
+        formData={formData}
+      />
 
       {modal}
     </div>

@@ -31,6 +31,9 @@ export class ChatbotController {
         req.user.id,
         dto.question,
         dto.conversationHistory,
+        dto.module || dto.section || dto.step || dto.context
+          ? { module: dto.module, section: dto.section, step: dto.step, context: dto.context }
+          : undefined,
       );
       return { success: true, data: result };
     } catch (error) {

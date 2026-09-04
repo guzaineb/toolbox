@@ -10,6 +10,13 @@ import { MessageService } from './conversation/message.service';
 
 const MAX_TOOL_ITERATIONS = 4;
 
+export interface ModuleContext {
+  module?: string;
+  section?: string;
+  step?: string;
+  context?: string;
+}
+
 export interface ChatbotAskResult {
   answer: string;
   sources: RagDocument[];
@@ -45,6 +52,7 @@ export class ChatbotService {
     userId: string,
     question: string,
     conversationHistory?: { role: 'user' | 'assistant'; content: string }[],
+    moduleContext?: ModuleContext,
   ): Promise<ChatbotAskResult> {
     if (!projectId || !projectId.trim()) {
       throw new Error('projectId is required');
@@ -163,6 +171,16 @@ export class ChatbotService {
 
     const projectName = project?.name ?? coachingContext?.projectName ?? 'Projet';
 
+    const moduleContextBlock = moduleContext?.module
+      ? `\nCONTEXTE MODULE :
+- Module actuel : ${moduleContext.module}
+${moduleContext.section ? `- Section : ${moduleContext.section}` : ''}
+${moduleContext.step ? `- Étape : ${moduleContext.step}` : ''}
+${moduleContext.context ? `\nDonnées du formulaire en cours :\n${moduleContext.context}` : ''}
+L'utilisateur travaille ACTUELLEMENT sur ce module. Concentre ta réponse sur cette section.
+Pour les actions suggérées, propose des actions adaptées à ce module (expliquer, identifier les informations manquantes, détecter les incohérences, suggérer des améliorations, analyser la réponse, indiquer la prochaine étape).`
+      : '';
+
     const systemMessage = {
       role: 'system' as const,
       content: `Tu es un assistant spécialiste en entrepreneuriat vert et durable. Tu aides les porteurs de projet à développer leur business model.
@@ -171,7 +189,7 @@ IDENTITÉ DU PROJET :
 - Nom du projet : ${projectName}
 - ID du projet : ${projectId}
 L'utilisateur travaille sur CE projet. Tu connais déjà son ID et son nom.
-
+${moduleContextBlock}
 Contexte du projet (documents RAG + données structurées + coaching) :
 ${contextBlock}
 ${ragNote}

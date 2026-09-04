@@ -10,6 +10,7 @@ import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import { projectContextService } from '@/services/project-context.service'
 import type { ChecklistItem, FundingSuggestion } from '@/types/project-context'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const QUESTIONS = [
   { key: 'q1',  label: 'Problème marché clairement défini ?' },
@@ -215,6 +216,13 @@ export default function FundingPage() {
           {showResults ? 'Actualiser le score' : 'Soumettre le questionnaire'}
         </Button>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="FUNDING"
+        section="Questionnaire de maturité"
+        formData={answers}
+      />
 
       {/* Opportunities & Strategy */}
       {showResults && (

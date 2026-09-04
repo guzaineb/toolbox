@@ -242,6 +242,95 @@ describe('ConversationService', () => {
     });
   });
 
+  describe('Persistance des conversations', () => {
+    it('listByProject retourne les conversations les plus récentes en premier', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 86400000);
+      prismaMock.conversation.findMany.mockResolvedValue([
+        {
+          id: 'conv-today',
+          title: 'Aujourd\'hui',
+          created_at: now,
+          messages: [{ created_at: now }],
+          _count: { messages: 2 },
+        },
+        {
+          id: 'conv-yesterday',
+          title: 'Hier',
+          created_at: yesterday,
+          messages: [{ created_at: yesterday }],
+          _count: { messages: 5 },
+        },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(2);
+
+      const result = await service.listByProject('proj-a', 'user-1');
+      expect(result.conversations).toHaveLength(2);
+      expect(result.conversations[0].id).toBe('conv-today');
+      expect(result.conversations[0].messageCount).toBe(2);
+      expect(result.conversations[1].id).toBe('conv-yesterday');
+      expect(result.conversations[1].messageCount).toBe(5);
+    });
+
+    it('listByProject retourne lastMessageAt basé sur le dernier message', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      const lastMsgDate = new Date('2026-03-01T15:00:00Z');
+      prismaMock.conversation.findMany.mockResolvedValue([
+        {
+          id: 'conv-1',
+          title: 'Conv 1',
+          created_at: new Date('2026-01-01'),
+          messages: [{ created_at: lastMsgDate }],
+          _count: { messages: 8 },
+        },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(1);
+
+      const result = await service.listByProject('proj-a', 'user-1');
+      expect(result.conversations[0].lastMessageAt).toEqual(lastMsgDate);
+    });
+
+    it('listByProject retourne lastMessageAt null si pas de messages', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      prismaMock.conversation.findMany.mockResolvedValue([
+        {
+          id: 'conv-empty',
+          title: 'Vide',
+          created_at: new Date(),
+          messages: [],
+          _count: { messages: 0 },
+        },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(1);
+
+      const result = await service.listByProject('proj-a', 'user-1');
+      expect(result.conversations[0].lastMessageAt).toBeNull();
+      expect(result.conversations[0].messageCount).toBe(0);
+    });
+
+    it('deux utilisateurs ont des conversations séparées dans le même projet', async () => {
+      mockProjectAccess('proj-a', 'user-1');
+      prismaMock.conversation.findMany.mockResolvedValue([
+        { id: 'conv-u1', title: null, created_at: new Date(), messages: [], _count: { messages: 2 } },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(1);
+
+      const result1 = await service.listByProject('proj-a', 'user-1');
+      expect(result1.conversations).toHaveLength(1);
+      expect(result1.conversations[0].id).toBe('conv-u1');
+
+      prismaMock.conversation.findMany.mockResolvedValue([
+        { id: 'conv-u2', title: null, created_at: new Date(), messages: [], _count: { messages: 4 } },
+      ]);
+      prismaMock.conversation.count.mockResolvedValue(1);
+
+      const result2 = await service.listByProject('proj-a', 'user-2');
+      expect(result2.conversations).toHaveLength(1);
+      expect(result2.conversations[0].id).toBe('conv-u2');
+    });
+  });
+
   describe('Suppression', () => {
     it('supprime une conversation existante', async () => {
       prismaMock.conversation.findUnique.mockResolvedValue({

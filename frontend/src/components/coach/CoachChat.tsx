@@ -31,6 +31,8 @@ export interface CoachChatHandle {
   sendMessage: (msg: string) => void
 }
 
+const conversationStorageKey = (projectId: string) => `coach_active_conversation_${projectId}`
+
 const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, ref) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [sourcesMap, setSourcesMap] = useState<Record<number, ChatSource[]>>({})
@@ -117,15 +119,25 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
     setMessages([])
     setSourcesMap({})
     setShowConversationList(false)
-  }, [])
+    try {
+      localStorage.removeItem(conversationStorageKey(projectId))
+    } catch {
+      // localStorage may be unavailable
+    }
+  }, [projectId])
 
   const handleSelectConversation = useCallback(
     async (conversationId: string) => {
       setActiveConversationId(conversationId)
       setShowConversationList(false)
+      try {
+        localStorage.setItem(conversationStorageKey(projectId), conversationId)
+      } catch {
+        // localStorage may be unavailable
+      }
       await loadConversationMessages(conversationId)
     },
-    [loadConversationMessages],
+    [loadConversationMessages, projectId],
   )
 
   useEffect(() => {
@@ -138,17 +150,35 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
       const convs = await loadConversations()
 
       if (convs.length > 0) {
-        const latest = convs[0]
-        setActiveConversationId(latest.id)
-        if (latest.messageCount > 0) {
-          await loadConversationMessages(latest.id)
+        let restoredId: string | null = null
+        try {
+          restoredId = localStorage.getItem(conversationStorageKey(projectId))
+        } catch {
+          // localStorage may be unavailable
+        }
+
+        const targetId =
+          restoredId && convs.some((c) => c.id === restoredId)
+            ? restoredId
+            : convs[0].id
+
+        setActiveConversationId(targetId)
+        const target = convs.find((c) => c.id === targetId)
+        if (target && target.messageCount > 0) {
+          await loadConversationMessages(targetId)
+        }
+
+        try {
+          localStorage.setItem(conversationStorageKey(projectId), targetId)
+        } catch {
+          // localStorage may be unavailable
         }
       }
       setInitialLoading(false)
     }
 
     init()
-  }, [loadDocuments, loadRagHealth, loadConversations, loadConversationMessages])
+  }, [loadDocuments, loadRagHealth, loadConversations, loadConversationMessages, projectId])
 
   const handleSend = useCallback(
     async (question: string) => {
@@ -159,7 +189,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
       setMessages((prev) => [...prev, userMsg])
 
       try {
-        const result = await askCoach(projectId, question, messages)
+        const result = await askCoach(projectId, question)
 
         const assistantMsg: ChatMessageType = { role: 'assistant', content: result.answer }
         setMessages((prev) => {
@@ -172,6 +202,11 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
 
         if (!activeConversationId && result.conversationId) {
           setActiveConversationId(result.conversationId)
+          try {
+            localStorage.setItem(conversationStorageKey(projectId), result.conversationId)
+          } catch {
+            // localStorage may be unavailable
+          }
           await loadConversations()
         } else if (activeConversationId) {
           await loadConversations()
@@ -191,7 +226,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         setLoading(false)
       }
     },
-    [projectId, messages, activeConversationId, loadConversations, loadRagHealth],
+    [projectId, activeConversationId, loadConversations, loadRagHealth],
   )
 
   const handleRetry = useCallback(() => {

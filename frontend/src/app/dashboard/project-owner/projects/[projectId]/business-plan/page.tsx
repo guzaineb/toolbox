@@ -13,6 +13,7 @@ import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const SECTIONS = [
   { id: 'management', label: '2.1 Gestion' },
@@ -282,6 +283,13 @@ export default function BusinessPlanPage() {
           </Button>
         </div>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="BUSINESS_PLAN"
+        section={SECTIONS.find(s => s.id === section)?.label}
+        formData={formData}
+      />
 
       {modal}
     </div>

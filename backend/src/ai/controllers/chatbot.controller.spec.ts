@@ -70,6 +70,7 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'question',
         undefined,
+        undefined,
       );
       expect(result).toEqual({
         success: true,
@@ -127,6 +128,167 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         ),
       ).rejects.toThrow(NotFoundException);
       expect(chatbotMock.ask).not.toHaveBeenCalled();
+    });
+
+    it('passe le module context quand fourni (GBM)', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Explique cette étape',
+          module: 'GBM',
+          section: 'Idée initiale',
+          step: 'gbm_1',
+          context: 'ideaSketch: Solar farm',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Explique cette étape',
+        undefined,
+        { module: 'GBM', section: 'Idée initiale', step: 'gbm_1', context: 'ideaSketch: Solar farm' },
+      );
+    });
+
+    it('passe le module context pour BUSINESS_PLAN', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Analyse ma réponse',
+          module: 'BUSINESS_PLAN',
+          section: '2.1 Gestion',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Analyse ma réponse',
+        undefined,
+        { module: 'BUSINESS_PLAN', section: '2.1 Gestion', step: undefined, context: undefined },
+      );
+    });
+
+    it('module context absent quand aucun champ module fourni', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Question générale',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Question générale',
+        undefined,
+        undefined,
+      );
+    });
+
+    it('passe le module context pour MARKET', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Quelles infos manquent ?',
+          module: 'MARKET',
+          section: 'Positionnement',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Quelles infos manquent ?',
+        undefined,
+        { module: 'MARKET', section: 'Positionnement', step: undefined, context: undefined },
+      );
+    });
+
+    it('passe le module context pour FUNDING', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Prochaine étape ?',
+          module: 'FUNDING',
+          section: 'Questionnaire de maturité',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Prochaine étape ?',
+        undefined,
+        { module: 'FUNDING', section: 'Questionnaire de maturité', step: undefined, context: undefined },
+      );
+    });
+
+    it('passe le module context pour IMPACT', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Améliore mon rapport',
+          module: 'IMPACT',
+          section: 'Rapport',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Améliore mon rapport',
+        undefined,
+        { module: 'IMPACT', section: 'Rapport', step: undefined, context: undefined },
+      );
+    });
+
+    it('passe le module context pour ECO_DESIGN', async () => {
+      accessMock.assertCanAccessProject.mockResolvedValue(undefined);
+      chatbotMock.ask.mockResolvedValue({ answer: 'ok' });
+
+      await controller.ask(
+        {
+          projectId: '11111111-1111-1111-1111-111111111111',
+          question: 'Incohérences ?',
+          module: 'ECO_DESIGN',
+          section: 'Configurer le cycle de vie',
+        },
+        req('user-1'),
+      );
+
+      expect(chatbotMock.ask).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        'user-1',
+        'Incohérences ?',
+        undefined,
+        { module: 'ECO_DESIGN', section: 'Configurer le cycle de vie', step: undefined, context: undefined },
+      );
     });
   });
 

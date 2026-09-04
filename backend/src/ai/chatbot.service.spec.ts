@@ -365,4 +365,100 @@ describe('ChatbotService (tool loop + memory)', () => {
       );
     });
   });
+
+  describe('ask - module context in system prompt', () => {
+    it('includes module context when provided (GBM)', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'GBM',
+        section: 'Idée initiale',
+        step: 'gbm_1',
+        context: 'ideaSketch: Solar farm',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('CONTEXTE MODULE');
+      expect(systemMsg.content).toContain('Module actuel : GBM');
+      expect(systemMsg.content).toContain('Section : Idée initiale');
+      expect(systemMsg.content).toContain('Étape : gbm_1');
+      expect(systemMsg.content).toContain('ideaSketch: Solar farm');
+      expect(systemMsg.content).toContain('Concentre ta réponse sur cette section');
+    });
+
+    it('includes module context for BUSINESS_PLAN', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'BUSINESS_PLAN',
+        section: '2.1 Gestion',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Module actuel : BUSINESS_PLAN');
+      expect(systemMsg.content).toContain('Section : 2.1 Gestion');
+    });
+
+    it('includes module context for MARKET', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'MARKET',
+        section: 'Positionnement',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Module actuel : MARKET');
+      expect(systemMsg.content).toContain('Section : Positionnement');
+    });
+
+    it('includes module context for FUNDING', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'FUNDING',
+        section: 'Questionnaire de maturité',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Module actuel : FUNDING');
+    });
+
+    it('includes module context for IMPACT', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'IMPACT',
+        section: 'Rapport',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Module actuel : IMPACT');
+      expect(systemMsg.content).toContain('Section : Rapport');
+    });
+
+    it('includes module context for ECO_DESIGN', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'ECO_DESIGN',
+        section: 'Configurer le cycle de vie',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Module actuel : ECO_DESIGN');
+      expect(systemMsg.content).toContain('Section : Configurer le cycle de vie');
+    });
+
+    it('omits CONTEXTE MODULE block when no module context provided', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).not.toContain('CONTEXTE MODULE');
+      expect(systemMsg.content).not.toContain('Module actuel');
+    });
+
+    it('includes suggested actions list in module context', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question', undefined, {
+        module: 'GBM',
+        section: 'Idée initiale',
+      });
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('expliquer');
+      expect(systemMsg.content).toContain('identifier les informations manquantes');
+      expect(systemMsg.content).toContain('détecter les incohérences');
+      expect(systemMsg.content).toContain('suggérer des améliorations');
+      expect(systemMsg.content).toContain('analyser la réponse');
+      expect(systemMsg.content).toContain('prochaine étape');
+    });
+  });
 });

@@ -12,6 +12,7 @@ import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const SECTIONS = [
   { id: 'env',        label: 'KPIs Environnementaux' },
@@ -208,6 +209,13 @@ export default function ImpactPage() {
           </Button>
         </div>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="IMPACT"
+        section={SECTIONS.find(s => s.id === section)?.label}
+        formData={formData}
+      />
 
       {modal}
     </div>
