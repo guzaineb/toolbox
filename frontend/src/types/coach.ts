@@ -113,6 +113,17 @@ export interface Conversation {
   title: string | null
   summary: string | null
   messageCount: number
+  lastMessageAt: string | null
+  createdAt: string
+}
+
+export interface ConversationMessage {
+  id: string
+  role: string
+  content: string
+  sources: unknown
+  contextUsed: boolean
+  createdAt: string
 }
 
 // ── UI Helpers ──

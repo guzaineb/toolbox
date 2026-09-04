@@ -1,14 +1,25 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { cn } from '@/lib/utils'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, ChevronDown, Plus } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import DocumentUploader from './DocumentUploader'
 import VoiceRecorder from './VoiceRecorder'
-import { askCoach, indexProject, listDocuments } from '@/services/coach.service'
-import type { ChatMessage as ChatMessageType, ChatSource, UploadedDocument } from '@/types/coach'
+import {
+  askCoach,
+  indexProject,
+  listDocuments,
+  listConversations,
+  listConversationMessages,
+} from '@/services/coach.service'
+import type {
+  ChatMessage as ChatMessageType,
+  ChatSource,
+  UploadedDocument,
+  Conversation,
+  ConversationMessage,
+} from '@/types/coach'
 
 interface CoachChatProps {
   projectId: string
@@ -22,11 +33,16 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [sourcesMap, setSourcesMap] = useState<Record<number, ChatSource[]>>({})
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showUpload, setShowUpload] = useState(false)
   const [showVoice, setShowVoice] = useState(false)
   const [documents, setDocuments] = useState<UploadedDocument[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+  const [showConversationList, setShowConversationList] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const loadedRef = useRef(false)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -49,9 +65,78 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
     }
   }, [projectId])
 
+  const loadConversationMessages = useCallback(
+    async (conversationId: string) => {
+      try {
+        const result: ConversationMessage[] = await listConversationMessages(conversationId, projectId)
+        const loaded: ChatMessageType[] = result.map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        }))
+        setMessages(loaded)
+
+        const newSourcesMap: Record<number, ChatSource[]> = {}
+        result.forEach((m, i) => {
+          if (m.sources && Array.isArray(m.sources) && (m.sources as ChatSource[]).length > 0) {
+            newSourcesMap[i] = m.sources as ChatSource[]
+          }
+        })
+        setSourcesMap(newSourcesMap)
+      } catch {
+        setMessages([])
+      }
+    },
+    [projectId],
+  )
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const result = await listConversations(projectId)
+      setConversations(result)
+      return result
+    } catch {
+      setConversations([])
+      return []
+    }
+  }, [projectId])
+
+  const handleNewConversation = useCallback(() => {
+    setActiveConversationId(null)
+    setMessages([])
+    setSourcesMap({})
+    setShowConversationList(false)
+  }, [])
+
+  const handleSelectConversation = useCallback(
+    async (conversationId: string) => {
+      setActiveConversationId(conversationId)
+      setShowConversationList(false)
+      await loadConversationMessages(conversationId)
+    },
+    [loadConversationMessages],
+  )
+
   useEffect(() => {
-    loadDocuments()
-  }, [loadDocuments])
+    if (loadedRef.current) return
+    loadedRef.current = true
+
+    const init = async () => {
+      setInitialLoading(true)
+      await loadDocuments()
+      const convs = await loadConversations()
+
+      if (convs.length > 0) {
+        const latest = convs[0]
+        setActiveConversationId(latest.id)
+        if (latest.messageCount > 0) {
+          await loadConversationMessages(latest.id)
+        }
+      }
+      setInitialLoading(false)
+    }
+
+    init()
+  }, [loadDocuments, loadConversations, loadConversationMessages])
 
   const handleSend = useCallback(
     async (question: string) => {
@@ -72,6 +157,13 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
           }
           return next
         })
+
+        if (!activeConversationId && result.conversationId) {
+          setActiveConversationId(result.conversationId)
+          await loadConversations()
+        } else if (activeConversationId) {
+          await loadConversations()
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Erreur inconnue'
         setError(msg)
@@ -83,7 +175,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         setLoading(false)
       }
     },
-    [projectId, messages],
+    [projectId, messages, activeConversationId, loadConversations],
   )
 
   const handleRetry = useCallback(() => {
@@ -118,6 +210,8 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
     }
   }, [projectId, loadDocuments])
 
+  const activeConversation = conversations.find((c) => c.id === activeConversationId)
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -126,11 +220,63 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
           <MessageSquare className="w-4 h-4 text-moss" />
           <h3 className="text-[12px] font-bold text-ink font-syne">Conversation avec le Coach</h3>
         </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleNewConversation}
+            className="text-[10px] font-dm text-ink3 hover:text-moss transition-colors p-1 rounded"
+            title="Nouvelle conversation"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+
+          {conversations.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowConversationList(!showConversationList)}
+                className="flex items-center gap-1 text-[10px] font-dm text-ink3 hover:text-ink2 transition-colors px-1.5 py-1 rounded border border-ink/[.08]"
+              >
+                <span className="max-w-[100px] truncate">
+                  {activeConversation?.title || `Conversation ${conversations.length}`}
+                </span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {showConversationList && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-ink/[.08] rounded-[10px] shadow-lg z-50 py-1 max-h-48 overflow-y-auto">
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv.id)}
+                      className={`w-full text-left px-3 py-2 text-[10px] font-dm transition-colors ${
+                        conv.id === activeConversationId
+                          ? 'bg-moss-light/30 text-moss font-medium'
+                          : 'text-ink2 hover:bg-ink/[.03]'
+                      }`}
+                    >
+                      <div className="truncate">
+                        {conv.title || `Conversation`}
+                      </div>
+                      <div className="text-[9px] text-ink3 mt-0.5">
+                        {conv.messageCount} message{conv.messageCount !== 1 ? 's' : ''}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
-        {messages.length === 0 && (
+        {initialLoading ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-8 h-8 border-2 border-moss/30 border-t-moss rounded-full animate-spin mb-3" />
+            <p className="text-[11px] text-ink3 font-dm">Chargement de la conversation…</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-10 h-10 rounded-full bg-moss/10 flex items-center justify-center mb-3">
               <MessageSquare className="w-5 h-5 text-moss" />
@@ -169,17 +315,17 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
               </button>
             </div>
           </div>
+        ) : (
+          messages.map((msg, i) => (
+            <ChatMessage
+              key={i}
+              role={msg.role}
+              content={msg.content}
+              sources={sourcesMap[i]}
+              onRetry={msg.role === 'assistant' && i === messages.length - 1 ? handleRetry : undefined}
+            />
+          ))
         )}
-
-        {messages.map((msg, i) => (
-          <ChatMessage
-            key={i}
-            role={msg.role}
-            content={msg.content}
-            sources={sourcesMap[i]}
-            onRetry={msg.role === 'assistant' && i === messages.length - 1 ? handleRetry : undefined}
-          />
-        ))}
 
         {loading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
           <ChatMessage role="assistant" content="" loading />

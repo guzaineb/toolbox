@@ -17,6 +17,7 @@ import { LlmController } from './controllers/deepseek.controller';
 import { SummaryController } from './controllers/summary.controller';
 import { ReformulationController } from './controllers/reformulation.controller';
 import { ChatbotController } from './controllers/chatbot.controller';
+import { ConversationController } from './controllers/conversation.controller';
 import { ProjectStateController } from './project-state/project-state.controller';
 import { ProjectContextBuilderService } from './analysis/project-context.service';
 import { EvaluationAiService } from './analysis/evaluation-ai.service';
@@ -65,6 +66,7 @@ import { ImprovementPlanController } from './analysis/improvement-plan.controlle
     SummaryController,
     ReformulationController,
     ChatbotController,
+    ConversationController,
     ProjectStateController,
     AiAnalysisController,
     ImprovementPlanController,

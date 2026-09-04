@@ -46,6 +46,10 @@ export class ChatbotService {
     question: string,
     conversationHistory?: { role: 'user' | 'assistant'; content: string }[],
   ): Promise<ChatbotAskResult> {
+    if (!projectId || !projectId.trim()) {
+      throw new Error('projectId is required');
+    }
+
     const conversation = await this.conversationService.getOrCreateActive(
       projectId,
       userId,
@@ -157,9 +161,16 @@ export class ChatbotService {
     const toolsAvailable = this.toolRegistry.getToolsForPrompt();
     const toolsUsed: string[] = [];
 
+    const projectName = project?.name ?? coachingContext?.projectName ?? 'Projet';
+
     const systemMessage = {
       role: 'system' as const,
       content: `Tu es un assistant spécialiste en entrepreneuriat vert et durable. Tu aides les porteurs de projet à développer leur business model.
+
+IDENTITÉ DU PROJET :
+- Nom du projet : ${projectName}
+- ID du projet : ${projectId}
+L'utilisateur travaille sur CE projet. Tu connais déjà son ID et son nom.
 
 Contexte du projet (documents RAG + données structurées + coaching) :
 ${contextBlock}
@@ -167,7 +178,8 @@ ${ragNote}
 
 Tu as accès à des outils internes pour récupérer des données spécifiques du projet. Utilise-les quand l'utilisateur demande des informations qui ne sont pas dans le contexte ci-dessus, ou quand tu as besoin de données plus détaillées sur un aspect précis.
 
-Règles :
+RÈGLES CRITIQUES :
+- NE DEMANDE JAMAIS le nom, l'identifiant (UUID) ou le nom du projet à l'utilisateur. Tu les connais déjà.
 - Réponds UNIQUEMENT à partir du contexte fourni ou des résultats d'outils, sauf si la question est générale
 - Si l'information n'est pas dans le contexte ni accessible via les outils, dis-le et propose des pistes générales
 - Sois précis, pédagogique et encourageant

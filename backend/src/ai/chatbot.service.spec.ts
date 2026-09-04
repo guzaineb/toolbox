@@ -287,6 +287,74 @@ describe('ChatbotService (tool loop + memory)', () => {
     });
   });
 
+  describe('ask - project identity in system prompt', () => {
+    it('includes project name and UUID in system message', async () => {
+      prismaMock.project.findUnique.mockResolvedValue({
+        id: PROJECT_ID,
+        name: 'Solar Farm Alpha',
+        context_summary: null,
+        summary_activity: null,
+        executive_summary: null,
+        mission_vision: null,
+        value_proposition: null,
+      });
+
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Nom du projet : Solar Farm Alpha');
+      expect(systemMsg.content).toContain(`ID du projet : ${PROJECT_ID}`);
+    });
+
+    it('includes anti-UUID instruction', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('NE DEMANDE JAMAIS');
+      expect(systemMsg.content).toContain('UUID');
+    });
+
+    it('falls back to coachingContext.projectName when Prisma returns null', async () => {
+      prismaMock.project.findUnique.mockResolvedValue(null);
+      contextBuilderMock.build.mockResolvedValue({
+        contextText: 'context',
+        projectName: 'Coaching Project',
+      });
+
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Nom du projet : Coaching Project');
+    });
+
+    it('falls back to "Projet" when both sources are null', async () => {
+      prismaMock.project.findUnique.mockResolvedValue(null);
+      contextBuilderMock.build.mockResolvedValue({
+        contextText: 'context',
+        projectName: undefined,
+      });
+
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Nom du projet : Projet');
+    });
+  });
+
+  describe('ask - projectId validation', () => {
+    it('rejects empty projectId', async () => {
+      await expect(
+        service.ask('', USER_ID, 'question'),
+      ).rejects.toThrow('projectId is required');
+    });
+
+    it('rejects whitespace-only projectId', async () => {
+      await expect(
+        service.ask('   ', USER_ID, 'question'),
+      ).rejects.toThrow('projectId is required');
+    });
+  });
+
   describe('ask - userId never in args', () => {
     it('userId comes from server, not from request body', async () => {
       await service.ask(PROJECT_ID, 'server-user', 'question');

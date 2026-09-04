@@ -5,6 +5,7 @@ import type {
   ChatbotAskResult,
   UploadedDocumentsResult,
   Conversation,
+  ConversationMessage,
 } from '@/types/coach'
 
 // ── Project State ──
@@ -98,4 +99,14 @@ export async function listConversations(
 ): Promise<Conversation[]> {
   const { data } = await api.get('/ai/conversations', { params: { projectId } })
   return data.data?.conversations ?? data.data ?? []
+}
+
+export async function listConversationMessages(
+  conversationId: string,
+  projectId: string,
+): Promise<ConversationMessage[]> {
+  const { data } = await api.get(`/ai/conversations/${conversationId}/messages`, {
+    params: { projectId },
+  })
+  return data.data?.messages ?? data.data ?? []
 }
