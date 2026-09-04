@@ -1,21 +1,24 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { cn } from '@/lib/utils'
-import { MessageSquare, ChevronDown } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import DocumentUploader from './DocumentUploader'
 import VoiceRecorder from './VoiceRecorder'
 import { askCoach, indexProject, listDocuments } from '@/services/coach.service'
-import { Button } from '@/components/shared/ui'
 import type { ChatMessage as ChatMessageType, ChatSource, UploadedDocument } from '@/types/coach'
 
 interface CoachChatProps {
   projectId: string
 }
 
-export default function CoachChat({ projectId }: CoachChatProps) {
+export interface CoachChatHandle {
+  sendMessage: (msg: string) => void
+}
+
+const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, ref) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [sourcesMap, setSourcesMap] = useState<Record<number, ChatSource[]>>({})
   const [loading, setLoading] = useState(false)
@@ -23,12 +26,15 @@ export default function CoachChat({ projectId }: CoachChatProps) {
   const [showUpload, setShowUpload] = useState(false)
   const [showVoice, setShowVoice] = useState(false)
   const [documents, setDocuments] = useState<UploadedDocument[]>([])
-  const [showHistory, setShowHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
+
+  useImperativeHandle(ref, () => ({
+    sendMessage: (msg: string) => handleSend(msg),
+  }))
 
   useEffect(() => {
     scrollToBottom()
@@ -119,15 +125,6 @@ export default function CoachChat({ projectId }: CoachChatProps) {
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-moss" />
           <h3 className="text-[12px] font-bold text-ink font-syne">Conversation avec le Coach</h3>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className="p-1.5 rounded-lg hover:bg-ink/[.04] text-ink3 hover:text-ink2 transition-colors"
-            title="Historique"
-          >
-            <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showHistory && 'rotate-180')} />
-          </button>
         </div>
       </div>
 
@@ -225,4 +222,8 @@ export default function CoachChat({ projectId }: CoachChatProps) {
       </div>
     </div>
   )
-}
+})
+
+CoachChat.displayName = 'CoachChat'
+
+export default CoachChat

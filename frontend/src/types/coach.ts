@@ -10,6 +10,7 @@ export interface StepInfo {
   phase: number
   status: string
   hasData: boolean
+  aiGenerated?: boolean
 }
 
 export interface CategoryScore {
@@ -35,6 +36,10 @@ export interface Inconsistency {
   area: string
   description: string
   severity: InconsistencySeverity
+  module?: string
+  evidence?: string
+  recommendation?: string
+  action?: string
 }
 
 export interface ProjectState {

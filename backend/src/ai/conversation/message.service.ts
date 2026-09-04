@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 
 export type MessageRecord = {
   id: string;
@@ -22,7 +23,10 @@ export type PaginatedMessages = {
 export class MessageService {
   private readonly logger = new Logger(MessageService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: ModuleAccessService,
+  ) {}
 
   async addMessage(
     conversationId: string,
@@ -161,7 +165,7 @@ export class MessageService {
 
   async getRecentConversationsWithSummary(
     projectId: string,
-    ownerId: string,
+    userId: string,
     limit = 5,
   ): Promise<
     {
@@ -171,8 +175,10 @@ export class MessageService {
       messageCount: number;
     }[]
   > {
+    await this.access.assertCanAccessProject(projectId, userId);
+
     const conversations = await this.prisma.conversation.findMany({
-      where: { project_id: projectId, owner_id: ownerId },
+      where: { project_id: projectId },
       orderBy: { created_at: 'desc' },
       take: limit,
       include: {
@@ -191,25 +197,21 @@ export class MessageService {
   private async verifyConversationAccess(
     conversationId: string,
     projectId: string,
-    ownerId: string,
+    userId: string,
   ): Promise<void> {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
-      select: { project_id: true, owner_id: true },
+      select: { project_id: true },
     });
 
     if (!conversation) {
       throw new NotFoundException(`Conversation introuvable: ${conversationId}`);
     }
     if (conversation.project_id !== projectId) {
-      throw new ForbiddenException(
+      throw new NotFoundException(
         'Cette conversation n\'appartient pas à ce projet',
       );
     }
-    if (conversation.owner_id !== ownerId) {
-      throw new ForbiddenException(
-        'Vous n\'êtes pas autorisé à accéder à cette conversation',
-      );
-    }
+    await this.access.assertCanAccessProject(projectId, userId);
   }
 }

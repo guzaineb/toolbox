@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 
 export type ConversationSummary = {
   id: string;
@@ -13,7 +14,10 @@ export type ConversationSummary = {
 export class ConversationService {
   private readonly logger = new Logger(ConversationService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: ModuleAccessService,
+  ) {}
 
   async create(
     projectId: string,
@@ -42,13 +46,13 @@ export class ConversationService {
 
   async listByProject(
     projectId: string,
-    ownerId: string,
+    userId: string,
     page = 1,
     limit = 20,
   ): Promise<{ conversations: ConversationSummary[]; total: number }> {
-    await this.verifyProjectAccess(projectId, ownerId);
+    await this.verifyProjectAccess(projectId, userId);
 
-    const where = { project_id: projectId, owner_id: ownerId };
+    const where = { project_id: projectId };
     const skip = (page - 1) * limit;
 
     const [conversations, total] = await Promise.all([
@@ -84,7 +88,7 @@ export class ConversationService {
   async getById(
     conversationId: string,
     projectId: string,
-    ownerId: string,
+    userId: string,
   ): Promise<{
     id: string;
     title: string | null;
@@ -99,15 +103,11 @@ export class ConversationService {
       throw new NotFoundException(`Conversation introuvable: ${conversationId}`);
     }
     if (conversation.project_id !== projectId) {
-      throw new ForbiddenException(
+      throw new NotFoundException(
         'Cette conversation n\'appartient pas à ce projet',
       );
     }
-    if (conversation.owner_id !== ownerId) {
-      throw new ForbiddenException(
-        'Vous n\'êtes pas autorisé à accéder à cette conversation',
-      );
-    }
+    await this.verifyProjectAccess(projectId, userId);
 
     return {
       id: conversation.id,
@@ -134,7 +134,13 @@ export class ConversationService {
   async updateSummary(
     conversationId: string,
     summary: string,
+    projectId?: string,
+    userId?: string,
   ): Promise<void> {
+    if (projectId && userId) {
+      await this.verifyProjectAccess(projectId, userId);
+    }
+
     await this.prisma.conversation.update({
       where: { id: conversationId },
       data: { summary },
@@ -157,12 +163,12 @@ export class ConversationService {
 
   async getOrCreateActive(
     projectId: string,
-    ownerId: string,
+    userId: string,
   ): Promise<{ id: string; title: string | null; createdAt: Date }> {
-    await this.verifyProjectAccess(projectId, ownerId);
+    await this.verifyProjectAccess(projectId, userId);
 
     const existing = await this.prisma.conversation.findFirst({
-      where: { project_id: projectId, owner_id: ownerId },
+      where: { project_id: projectId },
       orderBy: { created_at: 'desc' },
       include: {
         _count: { select: { messages: true } },
@@ -177,25 +183,13 @@ export class ConversationService {
       };
     }
 
-    return this.create(projectId, ownerId);
+    return this.create(projectId, userId);
   }
 
   private async verifyProjectAccess(
     projectId: string,
-    ownerId: string,
+    userId: string,
   ): Promise<void> {
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-      select: { owner_id: true },
-    });
-
-    if (!project) {
-      throw new NotFoundException(`Projet introuvable: ${projectId}`);
-    }
-    if (project.owner_id !== ownerId) {
-      throw new ForbiddenException(
-        'Vous n\'êtes pas autorisé à accéder à ce projet',
-      );
-    }
+    await this.access.assertCanAccessProject(projectId, userId);
   }
 }

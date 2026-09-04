@@ -5,6 +5,7 @@ import { EmbeddingsService } from '../embeddings.service';
 import { ChromaService } from '../chroma.service';
 import { ChunkerService } from '../rag/chunker.service';
 import { TextExtractionService } from './text-extraction.service';
+import { EMBEDDING_DIMENSION, EMBEDDING_DISTANCE_FUNCTION } from '../rag/rag-config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -155,8 +156,8 @@ export class DocumentService {
           language: 'fr',
           document_key: documentKey,
           content_hash: c.contentHash,
-          dimension: 384,
-          distance_fn: 'cosine',
+          dimension: EMBEDDING_DIMENSION,
+          distance_fn: EMBEDDING_DISTANCE_FUNCTION,
         },
       }));
 

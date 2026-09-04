@@ -157,8 +157,16 @@ export class ChromaService implements OnModuleDestroy {
               const filtered = where?.project_id
                 ? docs.filter((d) => d.metadata.project_id === where.project_id)
                 : docs;
+              if (filtered.length === 0) {
+                return {
+                  ids: [[]],
+                  documents: [[]],
+                  metadatas: [[]],
+                  distances: [[]],
+                };
+              }
               const sorted = filtered
-                .map((d) => ({ ...d, index: d.id, distance: 0.2 }))
+                .map((d, i) => ({ ...d, index: d.id, distance: 0.3 + (i * 0.1) }))
                 .sort((a, b) => a.distance - b.distance)
                 .slice(0, nResults);
               return {
@@ -183,7 +191,7 @@ export class ChromaService implements OnModuleDestroy {
                 ids: all.map((d) => d.id),
                 metadatas: all.map((d) => d.metadata),
                 documents: include.includes('documents')
-                  ? all.map((d) => d.documents)
+                  ? all.map((d) => d.document)
                   : undefined,
               };
             },

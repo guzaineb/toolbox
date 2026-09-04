@@ -26,7 +26,12 @@ export default function VoiceRecorder({
     setError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const media = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : 'audio/wav'
+      const media = new MediaRecorder(stream, { mimeType })
       mediaRef.current = media
 
       const chunks: Blob[] = []

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MessageService } from './message.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 describe('MessageService', () => {
@@ -21,6 +22,10 @@ describe('MessageService', () => {
     },
   };
 
+  const accessMock = {
+    assertCanAccessProject: jest.fn(),
+  };
+
   beforeEach(() => {
     prismaMock.conversation.findUnique.mockReset();
     prismaMock.conversation.update.mockReset();
@@ -30,6 +35,7 @@ describe('MessageService', () => {
     prismaMock.message.count.mockReset();
     prismaMock.message.delete.mockReset();
     prismaMock.message.deleteMany.mockReset();
+    accessMock.assertCanAccessProject.mockReset();
   });
 
   beforeAll(async () => {
@@ -37,6 +43,7 @@ describe('MessageService', () => {
       providers: [
         MessageService,
         { provide: PrismaService, useValue: prismaMock },
+        { provide: ModuleAccessService, useValue: accessMock },
       ],
     }).compile();
 
@@ -46,14 +53,20 @@ describe('MessageService', () => {
   function mockConversationAccess(
     convId: string,
     projectId: string,
-    ownerId: string,
+    _ownerId: string,
   ) {
     prismaMock.conversation.findUnique.mockImplementation(
       async (args: { where: { id: string } }) => {
         if (args.where.id === convId) {
-          return { project_id: projectId, owner_id: ownerId };
+          return { project_id: projectId };
         }
         return null;
+      },
+    );
+    accessMock.assertCanAccessProject.mockImplementation(
+      async (pid: string) => {
+        if (pid === projectId) return;
+        throw new ForbiddenException('Accès refusé');
       },
     );
   }
@@ -114,7 +127,7 @@ describe('MessageService', () => {
 
       await expect(
         service.addMessage('conv-1', 'proj-b', 'user-1', 'user', 'Test'),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('les messages du projet A ne sont pas lisibles depuis le projet B', async () => {
@@ -122,11 +135,14 @@ describe('MessageService', () => {
 
       await expect(
         service.getMessages('conv-1', 'proj-b', 'user-1'),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
 
-    it('un utilisateur ne peut pas lire les messages d\'un autre utilisateur', async () => {
+    it('un utilisateur sans accès ne peut pas lire les messages', async () => {
       mockConversationAccess('conv-1', 'proj-a', 'user-1');
+      accessMock.assertCanAccessProject.mockRejectedValue(
+        new ForbiddenException('Accès refusé'),
+      );
 
       await expect(
         service.getMessages('conv-1', 'proj-a', 'user-2'),

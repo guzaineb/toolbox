@@ -27,6 +27,26 @@ type RequestUser = { user: { id: string } };
 
 const UPLOAD_TEMP_DIR = path.join(process.cwd(), 'uploads', 'temp');
 
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'text/plain',
+  'text/markdown',
+];
+
+function fileFilter(
+  _req: Express.Request,
+  file: Express.Multer.File,
+  cb: (error: Error | null, acceptFile: boolean) => void,
+) {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Type de fichier non supporté: ${file.mimetype}. Autorisés: PDF, DOCX, DOC, TXT, MD`), false);
+  }
+}
+
 @Controller('ai/documents')
 @UseGuards(JwtAuthGuard)
 export class DocumentController {
@@ -55,6 +75,7 @@ export class DocumentController {
           cb(null, `${unique}${ext}`);
         },
       }),
+      fileFilter,
       limits: {
         fileSize: 20 * 1024 * 1024,
       },

@@ -2,11 +2,15 @@
 
 import { cn } from '@/lib/utils'
 import { Bot, User, RefreshCw } from 'lucide-react'
+import DOMPurify from 'isomorphic-dompurify'
 import SourceReferences from './SourceReferences'
 import type { ChatSource } from '@/types/coach'
 
 function renderMarkdown(text: string): string {
-  return text
+  const html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/`(.*?)`/g, '<code class="bg-ink/[.06] px-1 py-0.5 rounded text-[11px]">$1</code>')
     .replace(/^### (.*$)/gm, '<h3 class="text-[12px] font-bold text-ink font-syne mt-2 mb-1">$1</h3>')
@@ -17,6 +21,11 @@ function renderMarkdown(text: string): string {
     .replace(/^\d+\. (.*$)/gm, '<li class="ml-3 list-decimal text-[12px] text-ink2 font-dm">$1</li>')
     .replace(/\n\n/g, '<br/><br/>')
     .replace(/\n/g, '<br/>')
+
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['strong', 'em', 'code', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'br', 'p', 'span'],
+    ALLOWED_ATTR: ['class'],
+  })
 }
 
 export default function ChatMessage({

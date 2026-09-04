@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConversationService } from './conversation.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ModuleAccessService } from '../../common/services/module-access.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 describe('ConversationService', () => {
@@ -20,6 +21,10 @@ describe('ConversationService', () => {
     message: { count: jest.fn() },
   };
 
+  const accessMock = {
+    assertCanAccessProject: jest.fn(),
+  };
+
   beforeEach(() => {
     prismaMock.project.findUnique.mockReset();
     prismaMock.conversation.create.mockReset();
@@ -30,6 +35,7 @@ describe('ConversationService', () => {
     prismaMock.conversation.update.mockReset();
     prismaMock.conversation.delete.mockReset();
     prismaMock.message.count.mockReset();
+    accessMock.assertCanAccessProject.mockReset();
   });
 
   beforeAll(async () => {
@@ -37,20 +43,25 @@ describe('ConversationService', () => {
       providers: [
         ConversationService,
         { provide: PrismaService, useValue: prismaMock },
+        { provide: ModuleAccessService, useValue: accessMock },
       ],
     }).compile();
 
     service = module.get<ConversationService>(ConversationService);
   });
 
-  function mockProjectAccess(projectId: string, ownerId: string) {
-    prismaMock.project.findUnique.mockImplementation(
-      async (args: { where: { id: string } }) => {
-        if (args.where.id === projectId) {
-          return { id: projectId, owner_id: ownerId };
-        }
-        return null;
+  function mockProjectAccess(projectId: string, _ownerId: string) {
+    accessMock.assertCanAccessProject.mockImplementation(
+      async (pid: string, _uid: string) => {
+        if (pid === projectId) return;
+        throw new ForbiddenException('Accès refusé');
       },
+    );
+  }
+
+  function mockProjectDenied() {
+    accessMock.assertCanAccessProject.mockRejectedValue(
+      new ForbiddenException('Accès refusé'),
     );
   }
 
@@ -121,12 +132,12 @@ describe('ConversationService', () => {
       expect(resultA.conversations).toHaveLength(0);
     });
 
-    it('un utilisateur ne peut pas accéder à la conversation d\'un autre utilisateur', async () => {
+    it('un utilisateur sans accès au projet ne peut pas lire une conversation', async () => {
       prismaMock.conversation.findUnique.mockResolvedValue({
         id: 'conv-1',
         project_id: 'proj-a',
-        owner_id: 'user-1',
       });
+      mockProjectDenied();
 
       await expect(
         service.getById('conv-1', 'proj-a', 'user-2'),
@@ -137,20 +148,19 @@ describe('ConversationService', () => {
       prismaMock.conversation.findUnique.mockResolvedValue({
         id: 'conv-1',
         project_id: 'proj-a',
-        owner_id: 'user-1',
       });
 
       await expect(
         service.getById('conv-1', 'proj-b', 'user-1'),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
 
-    it('un utilisateur ne peut pas supprimer la conversation d\'un autre', async () => {
+    it('un utilisateur sans accès ne peut pas supprimer la conversation', async () => {
       prismaMock.conversation.findUnique.mockResolvedValue({
         id: 'conv-1',
         project_id: 'proj-a',
-        owner_id: 'user-1',
       });
+      mockProjectDenied();
 
       await expect(
         service.delete('conv-1', 'proj-a', 'user-2'),
@@ -159,10 +169,7 @@ describe('ConversationService', () => {
 
   describe('getOrCreateActive', () => {
     it('crée une conversation si la dernière a des messages', async () => {
-      prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-a',
-        owner_id: 'user-1',
-      });
+      mockProjectAccess('proj-a', 'user-1');
       prismaMock.conversation.findFirst.mockResolvedValue({
         id: 'conv-existing',
         title: null,
@@ -253,7 +260,9 @@ describe('ConversationService', () => {
 
   describe('Inexistant', () => {
     it('lance une erreur si le projet n\'existe pas', async () => {
-      prismaMock.project.findUnique.mockResolvedValue(null);
+      accessMock.assertCanAccessProject.mockRejectedValue(
+        new NotFoundException('Projet introuvable'),
+      );
 
       await expect(
         service.create('proj-unknown', 'user-1'),
