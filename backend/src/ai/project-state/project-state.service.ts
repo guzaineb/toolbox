@@ -4,7 +4,7 @@ import { MaturityScoreService } from '../../maturity/maturity-score.service';
 import { ProjectAnalyzer } from './project-analyzer.service';
 import { ConsistencyChecker } from './consistency-checker.service';
 import { ProjectHealthService } from './project-health.service';
-import { ProjectState, Priority, MaturityLevel } from './project-state.types';
+import { ProjectState, Priority, MaturityLevel, PriorityModule } from './project-state.types';
 
 const WEIGHTS = {
   completeness: 0.30,
@@ -147,7 +147,12 @@ export class ProjectStateService {
       (s) => s.status !== 'COMPLETED',
     );
 
-    const currentPriority = priorities.length > 0 ? priorities[0] : null;
+    const enrichedPriorities = this.enrichPrioritiesWithRouting(
+      priorities,
+      incompleteSteps,
+    );
+
+    const currentPriority = enrichedPriorities.length > 0 ? enrichedPriorities[0] : null;
     const recommendedNextAction = this.buildRecommendedAction(
       currentPriority,
       incompleteSteps,
@@ -174,7 +179,7 @@ export class ProjectStateService {
           { label: 'Maturité', score: healthDiagnostic.maturityScore, maxScore: 100, weight: WEIGHTS.maturity },
         ],
       },
-      priorities,
+      priorities: enrichedPriorities,
       currentPriority,
       recommendedNextAction,
     };
@@ -325,6 +330,95 @@ export class ProjectStateService {
     }
 
     return 'Le projet est bien structuré — poursuivre l\'accompagnement';
+  }
+
+  private enrichPrioritiesWithRouting(
+    priorities: Priority[],
+    incompleteSteps: Array<{ stepKey: string; title: string }>,
+  ): Priority[] {
+    return priorities.map((p) => {
+      const module = this.mapAreaToModule(p.area);
+      let stepKey: string | undefined;
+
+      if (module === 'GBM' && incompleteSteps.length > 0) {
+        stepKey = incompleteSteps[0].stepKey;
+      }
+
+      return { ...p, module, stepKey };
+    });
+  }
+
+  private mapAreaToModule(area: string): PriorityModule {
+    const lower = area.toLowerCase();
+
+    if (
+      lower.includes('gbm') ||
+      lower.includes('étape') ||
+      lower.includes('avancement')
+    ) {
+      return 'GBM';
+    }
+    if (
+      lower.includes('business plan') ||
+      lower.includes('plan de gestion') ||
+      lower.includes('management') ||
+      lower.includes('marketing') ||
+      lower.includes('financ') ||
+      lower.includes('juridique') ||
+      lower.includes('kpi') ||
+      lower.includes('résumé') ||
+      lower.includes('executive')
+    ) {
+      return 'BUSINESS_PLAN';
+    }
+    if (
+      lower.includes('marché') ||
+      lower.includes('client') ||
+      lower.includes('segment') ||
+      lower.includes('positionnement')
+    ) {
+      return 'MARKET';
+    }
+    if (
+      lower.includes('financement') ||
+      lower.includes('funding') ||
+      lower.includes('subvention')
+    ) {
+      return 'FUNDING';
+    }
+    if (
+      lower.includes('impact') ||
+      lower.includes('environnement') ||
+      lower.includes('social') ||
+      lower.includes('kpi') && lower.includes('environnement')
+    ) {
+      return 'IMPACT';
+    }
+    if (
+      lower.includes('éco-conception') ||
+      lower.includes('eco-design') ||
+      lower.includes('durable')
+    ) {
+      return 'ECO_DESIGN';
+    }
+    if (
+      lower.includes('évaluation') ||
+      lower.includes('jury') ||
+      lower.includes('expert')
+    ) {
+      return 'EVALUATION';
+    }
+    if (
+      lower.includes('coaching') ||
+      lower.includes('accompagnement')
+    ) {
+      return 'COACHING';
+    }
+    if (lower.includes('données manquantes')) {
+      return 'GENERAL';
+    }
+
+    return 'GENERAL';
   }
 }
 

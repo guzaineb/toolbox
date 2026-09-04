@@ -29,11 +29,24 @@ export type HealthScore = {
   categories: CategoryScore[];
 };
 
+export type PriorityModule =
+  | 'GBM'
+  | 'BUSINESS_PLAN'
+  | 'MARKET'
+  | 'FUNDING'
+  | 'IMPACT'
+  | 'ECO_DESIGN'
+  | 'EVALUATION'
+  | 'COACHING'
+  | 'GENERAL';
+
 export type Priority = {
   level: PriorityLevel;
   area: string;
   description: string;
   impact: number;
+  module?: PriorityModule;
+  stepKey?: string;
 };
 
 export type Inconsistency = {

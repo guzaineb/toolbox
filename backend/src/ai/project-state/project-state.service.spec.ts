@@ -190,5 +190,22 @@ describe('ProjectStateService', () => {
       expect(state.inconsistencies.length).toBeGreaterThanOrEqual(1);
       expect(state.inconsistencies.some((i) => i.area === 'GBM')).toBe(true);
     });
+
+    it('priorités enrichies avec module de routage', async () => {
+      mockProject({
+        step_progresses: [{ step_key: 'gbm_1', status: 'COMPLETED' }],
+      });
+      maturityMock.compute.mockResolvedValue({
+        globalScore: 0,
+        dimensions: [],
+        computedAt: new Date().toISOString(),
+      });
+
+      const state = await service.getProjectState('proj-1');
+      const currentPriority = state.currentPriority;
+      expect(currentPriority).not.toBeNull();
+      expect(currentPriority!.module).toBeDefined();
+      expect(typeof currentPriority!.module).toBe('string');
+    });
   });
 });

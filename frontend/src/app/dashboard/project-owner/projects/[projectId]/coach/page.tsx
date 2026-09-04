@@ -4,7 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RefreshCw, MessageSquare, FileText, BarChart3, Lightbulb } from 'lucide-react'
 import { getProjectState } from '@/services/coach.service'
-import type { ProjectState } from '@/types/coach'
+import type { ProjectState, Priority } from '@/types/coach'
+import { resolveModuleRoute } from '@/lib/resolve-module-route'
 import {
   ProjectHealthCard,
   ProjectStatePanel,
@@ -46,21 +47,31 @@ export default function CoachPage() {
     fetchState()
   }, [fetchState])
 
-  const handleStartAction = useCallback((action: string) => {
-    setActiveTab('chat')
-    setTimeout(() => chatRef.current?.sendMessage(action), 100)
-  }, [])
+  const handleStartAction = useCallback(
+    (action: string, priority?: Priority | null) => {
+      if (priority?.module) {
+        const route = resolveModuleRoute(projectId, priority.module, priority.stepKey)
+        if (route) {
+          router.push(route)
+          return
+        }
+      }
+      setActiveTab('chat')
+      setTimeout(() => chatRef.current?.sendMessage(action), 100)
+    },
+    [router, projectId],
+  )
 
-  const handleWhy = useCallback(() => {
-    setActiveTab('chat')
-    setTimeout(
-      () =>
-        chatRef.current?.sendMessage(
-          'Pourquoi cette action est-elle recommandée ? Expliquez-moi le raisonnement.',
-        ),
-      100,
-    )
-  }, [])
+  const handleWhy = useCallback(
+    (priority?: Priority | null) => {
+      const question = priority
+        ? `Pourquoi cette action est-elle recommandée ? Expliquez-moi le raisonnement pour "${priority.description}" dans le module ${priority.area}.`
+        : 'Pourquoi cette action est-elle recommandée ? Expliquez-moi le raisonnement.'
+      setActiveTab('chat')
+      setTimeout(() => chatRef.current?.sendMessage(question), 100)
+    },
+    [],
+  )
 
   const handleDefer = useCallback(() => {
     // TODO: persist deferred action
@@ -68,7 +79,10 @@ export default function CoachPage() {
 
   const handleGoToModule = useCallback(
     (module: string) => {
-      router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=gbm_1`)
+      const route = resolveModuleRoute(projectId, module)
+      if (route) {
+        router.push(route)
+      }
     },
     [router, projectId],
   )
@@ -174,8 +188,8 @@ export default function CoachPage() {
             <NextBestActionCard
               action={state.recommendedNextAction}
               priority={state.currentPriority}
-              onStart={() => handleStartAction(state.recommendedNextAction)}
-              onWhy={handleWhy}
+              onStart={() => handleStartAction(state.recommendedNextAction, state.currentPriority)}
+              onWhy={() => handleWhy(state.currentPriority)}
               onDefer={handleDefer}
               onGoToModule={handleGoToModule}
             />

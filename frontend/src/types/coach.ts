@@ -4,6 +4,17 @@ export type MaturityLevel = 'NOT_STARTED' | 'INITIAL' | 'DEVELOPING' | 'MATURE' 
 export type PriorityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 export type InconsistencySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 
+export type PriorityModule =
+  | 'GBM'
+  | 'BUSINESS_PLAN'
+  | 'MARKET'
+  | 'FUNDING'
+  | 'IMPACT'
+  | 'ECO_DESIGN'
+  | 'EVALUATION'
+  | 'COACHING'
+  | 'GENERAL'
+
 export interface StepInfo {
   stepKey: string
   title: string
@@ -30,6 +41,8 @@ export interface Priority {
   area: string
   description: string
   impact: number
+  module?: PriorityModule
+  stepKey?: string
 }
 
 export interface Inconsistency {
