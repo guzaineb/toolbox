@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LlmService } from './llm.service';
 import { RagPipelineService } from './rag/rag-pipeline.service';
 import { ProjectContextBuilderService } from './analysis/project-context.service';
+import { ProjectStateService } from './project-state/project-state.service';
 import { ToolRegistry } from './tools/tool-registry';
 import { ConversationService } from './conversation/conversation.service';
 import { MessageService } from './conversation/message.service';
@@ -30,6 +31,38 @@ describe('ChatbotService (tool loop + memory)', () => {
 
   const contextBuilderMock = {
     build: jest.fn().mockResolvedValue({ contextText: 'Coaching context' }),
+  };
+
+  const projectStateMock = {
+    getProjectState: jest.fn().mockResolvedValue({
+      projectId: PROJECT_ID,
+      projectName: 'Test Project',
+      maturityLevel: 'DEVELOPING',
+      overallProgress: 45,
+      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
+      incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problèmes', phase: 1, status: 'NOT_STARTED', hasData: false }],
+      missingInformation: ['Décrire les problèmes', 'Identifier les besoins'],
+      strengths: ['Mission définie'],
+      weakAreas: ['GBM très peu avancé'],
+      inconsistencies: [
+        { area: 'GBM étape 1', description: 'Étape marquée complète mais donnée vide', severity: 'HIGH' },
+      ],
+      healthScore: {
+        overall: 52,
+        categories: [
+          { label: 'Complétude', score: 40, maxScore: 100, weight: 0.3 },
+          { label: 'Avancement', score: 45, maxScore: 100, weight: 0.25 },
+          { label: 'Cohérence', score: 60, maxScore: 100, weight: 0.25 },
+          { label: 'Maturité', score: 55, maxScore: 100, weight: 0.2 },
+        ],
+      },
+      priorities: [
+        { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+        { level: 'MEDIUM', area: 'Données manquantes', description: '2 informations essentielles manquantes', impact: 50, module: 'GENERAL' },
+      ],
+      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+      recommendedNextAction: 'Priorité haute : Compléter l\'étape 2 - Problèmes et besoins',
+    }),
   };
 
   const prismaMock = {
@@ -66,6 +99,7 @@ describe('ChatbotService (tool loop + memory)', () => {
     llmMock.chat.mockReset();
     ragMock.query.mockReset();
     contextBuilderMock.build.mockReset();
+    projectStateMock.getProjectState.mockReset();
     prismaMock.project.findUnique.mockReset();
     registryMock.getToolsForPrompt.mockReset();
     registryMock.execute.mockReset();
@@ -81,6 +115,36 @@ describe('ChatbotService (tool loop + memory)', () => {
     });
 
     contextBuilderMock.build.mockResolvedValue({ contextText: 'Coaching context' });
+
+    projectStateMock.getProjectState.mockResolvedValue({
+      projectId: PROJECT_ID,
+      projectName: 'Test Project',
+      maturityLevel: 'DEVELOPING',
+      overallProgress: 45,
+      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
+      incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problèmes', phase: 1, status: 'NOT_STARTED', hasData: false }],
+      missingInformation: ['Décrire les problèmes', 'Identifier les besoins'],
+      strengths: ['Mission définie'],
+      weakAreas: ['GBM très peu avancé'],
+      inconsistencies: [
+        { area: 'GBM étape 1', description: 'Étape marquée complète mais donnée vide', severity: 'HIGH' },
+      ],
+      healthScore: {
+        overall: 52,
+        categories: [
+          { label: 'Complétude', score: 40, maxScore: 100, weight: 0.3 },
+          { label: 'Avancement', score: 45, maxScore: 100, weight: 0.25 },
+          { label: 'Cohérence', score: 60, maxScore: 100, weight: 0.25 },
+          { label: 'Maturité', score: 55, maxScore: 100, weight: 0.2 },
+        ],
+      },
+      priorities: [
+        { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+        { level: 'MEDIUM', area: 'Données manquantes', description: '2 informations essentielles manquantes', impact: 50, module: 'GENERAL' },
+      ],
+      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+      recommendedNextAction: 'Priorité haute : Compléter l\'étape 2 - Problèmes et besoins',
+    });
 
     prismaMock.project.findUnique.mockResolvedValue({
       id: PROJECT_ID,
@@ -112,6 +176,7 @@ describe('ChatbotService (tool loop + memory)', () => {
         { provide: LlmService, useValue: llmMock },
         { provide: RagPipelineService, useValue: ragMock },
         { provide: ProjectContextBuilderService, useValue: contextBuilderMock },
+        { provide: ProjectStateService, useValue: projectStateMock },
         { provide: ToolRegistry, useValue: registryMock },
         { provide: ConversationService, useValue: conversationServiceMock },
         { provide: MessageService, useValue: messageServiceMock },
@@ -499,6 +564,124 @@ describe('ChatbotService (tool loop + memory)', () => {
       expect(systemMsg.content).toContain('suggérer des améliorations');
       expect(systemMsg.content).toContain('analyser la réponse');
       expect(systemMsg.content).toContain('prochaine étape');
+    });
+  });
+
+  describe('ask - deterministic analysis in system prompt', () => {
+    it('includes ANALYSE DÉTERMINISTE block when ProjectState is available', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('ANALYSE DÉTERMINISTE DU PROJET');
+      expect(systemMsg.content).toContain('--- FIN ANALYSE DÉTERMINISTE ---');
+    });
+
+    it('includes maturity level from deterministic engine', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Niveau de maturité : DEVELOPING');
+    });
+
+    it('includes health score from deterministic engine', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Score de santé : 52/100');
+    });
+
+    it('includes severity levels from deterministic engine (not invented by LLM)', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('[HIGH]');
+      expect(systemMsg.content).toContain('[MEDIUM]');
+      expect(systemMsg.content).toContain('GBM étape 1 : Étape marquée complète mais donnée vide');
+    });
+
+    it('includes priorities with impact scores from deterministic engine', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('impact 75/100');
+      expect(systemMsg.content).toContain('impact 50/100');
+      expect(systemMsg.content).toContain('Compléter l\'étape 2 - Problèmes et besoins');
+    });
+
+    it('includes current priority and recommended next action', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Priorité courante : [HIGH] GBM');
+      expect(systemMsg.content).toContain('Recommandation : Priorité haute : Compléter l\'étape 2');
+    });
+
+    it('includes strengths and weak areas from deterministic engine', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Forces : Mission définie');
+      expect(systemMsg.content).toContain('Points faibles : GBM très peu avancé');
+    });
+
+    it('includes incomplete steps and missing information', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('Étapes incomplètes');
+      expect(systemMsg.content).toContain('gbm_2');
+      expect(systemMsg.content).toContain('Informations manquantes (2)');
+    });
+
+    it('includes explanation rules enforcing structured response format', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('RÈGLES POUR LES EXPLICATIONS');
+      expect(systemMsg.content).toContain('Observation');
+      expect(systemMsg.content).toContain('Pourquoi c\'est important');
+      expect(systemMsg.content).toContain('Action recommandée');
+      expect(systemMsg.content).toContain('Comment faire');
+      expect(systemMsg.content).toContain('Étape suivante');
+    });
+
+    it('explicitly forbids LLM from inventing priorities', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('NE JAMAIS en inventer');
+    });
+
+    it('calls ProjectStateService.getProjectState', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      expect(projectStateMock.getProjectState).toHaveBeenCalledWith(PROJECT_ID);
+    });
+
+    it('gracefully falls back when ProjectStateService fails', async () => {
+      projectStateMock.getProjectState.mockRejectedValue(new Error('DB timeout'));
+
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('analyse déterministe du projet est temporairement indisponible');
+      expect(result).toBeDefined();
+    });
+
+    it('recommendations correspond to real project data (stepKey gbm_2)', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      const systemMsg = llmMock.chat.mock.calls[0][0][0];
+      expect(systemMsg.content).toContain('gbm_2');
+      expect(systemMsg.content).toContain('module GBM');
+    });
+
+    it('fetches ProjectState in parallel with RAG and contextBuilder', async () => {
+      await service.ask(PROJECT_ID, USER_ID, 'question');
+
+      expect(projectStateMock.getProjectState).toHaveBeenCalledTimes(1);
+      expect(ragMock.query).toHaveBeenCalledTimes(1);
+      expect(contextBuilderMock.build).toHaveBeenCalledTimes(1);
     });
   });
 });

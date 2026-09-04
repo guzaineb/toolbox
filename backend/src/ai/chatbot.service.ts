@@ -3,10 +3,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LlmService } from './llm.service';
 import { RagPipelineService } from './rag/rag-pipeline.service';
 import { ProjectContextBuilderService } from './analysis/project-context.service';
+import { ProjectStateService } from './project-state/project-state.service';
 import { RagDocument, RagStatus } from './interfaces/ai.types';
 import { ToolRegistry } from './tools/tool-registry';
 import { ConversationService } from './conversation/conversation.service';
 import { MessageService } from './conversation/message.service';
+import { ProjectState } from './project-state/project-state.types';
 
 const MAX_TOOL_ITERATIONS = 4;
 
@@ -43,6 +45,7 @@ export class ChatbotService {
     private readonly llm: LlmService,
     private readonly rag: RagPipelineService,
     private readonly contextBuilder: ProjectContextBuilderService,
+    private readonly projectStateService: ProjectStateService,
     private readonly toolRegistry: ToolRegistry,
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
@@ -84,7 +87,7 @@ export class ChatbotService {
       question,
     );
 
-    const [ragOutcome, project, coachingContext] = await Promise.all([
+    const [ragOutcome, project, coachingContext, projectState] = await Promise.all([
       this.rag.query(projectId, question, 5).catch((error) => {
         const message = error instanceof Error ? error.message : String(error);
         this.logger.warn(
@@ -109,6 +112,7 @@ export class ChatbotService {
         },
       }),
       this.contextBuilder.build(projectId).catch(() => null),
+      this.projectStateService.getProjectState(projectId).catch(() => null),
     ]);
 
     const contextParts: string[] = [];
@@ -182,6 +186,8 @@ L'utilisateur travaille ACTUELLEMENT sur ce module. Concentre ta réponse sur ce
 Pour les actions suggérées, propose des actions adaptées à ce module (expliquer, identifier les informations manquantes, détecter les incohérences, suggérer des améliorations, analyser la réponse, indiquer la prochaine étape).`
       : '';
 
+    const deterministicBlock = this.buildDeterministicAnalysisBlock(projectState);
+
     const systemMessage = {
       role: 'system' as const,
       content: `Tu es un assistant spécialiste en entrepreneuriat vert et durable. Tu aides les porteurs de projet à développer leur business model.
@@ -194,6 +200,7 @@ ${moduleContextBlock}
 Contexte du projet (documents RAG + données structurées + coaching) :
 ${contextBlock}
 ${ragNote}
+${deterministicBlock}
 
 Tu as accès à des outils internes pour récupérer des données spécifiques du projet. Utilise-les quand l'utilisateur demande des informations qui ne sont pas dans le contexte ci-dessus, ou quand tu as besoin de données plus détaillées sur un aspect précis.
 
@@ -204,7 +211,18 @@ RÈGLES CRITIQUES :
 - Sois précis, pédagogique et encourageant
 - Réponds en français
 - Limite ta réponse à 500 mots maximum
-- Si tu utilises le contexte ou un outil, cite-le`,
+- Si tu utilises le contexte ou un outil, cite-le
+
+RÈGLES POUR LES EXPLICATIONS (quand l'utilisateur demande conseil, analyse ou recommandation) :
+- Les priorités, sévérités et scores viennent de l'analyse déterministe ci-dessus. NE JAMAIS en inventer.
+- Quand tu expliques une recommandation, suis cette structure :
+  1. Observation : constat factuel issu de l'analyse
+  2. Pourquoi c'est important : conséquence concrète pour le projet
+  3. Action recommandée : quoi faire exactement
+  4. Comment faire : étapes pratiques
+  5. Étape suivante : quoi faire ensuite
+- Reste concis. Pas de généralités hors sujet.
+- Si l'analyse déterministe est indisponible, indique-le et réponds à partir du contexte disponible.`,
     };
 
     const messages: {
@@ -311,5 +329,67 @@ RÈGLES CRITIQUES :
       `Index project ${projectId}: +${result.added} ~${result.updated} -${result.removed} =${result.unchanged}`,
     );
     return { documentsIndexed: result.total };
+  }
+
+  private buildDeterministicAnalysisBlock(
+    state: ProjectState | null,
+  ): string {
+    if (!state) {
+      return '\n[NOTE] L\'analyse déterministe du projet est temporairement indisponible. Réponds à partir du contexte disponible.';
+    }
+
+    const parts: string[] = [
+      '\n--- ANALYSE DÉTERMINISTE DU PROJET ---',
+      `Niveau de maturité : ${state.maturityLevel}`,
+      `Progression globale : ${state.overallProgress}%`,
+      `Score de santé : ${state.healthScore.overall}/100`,
+    ];
+
+    if (state.strengths.length > 0) {
+      parts.push(`Forces : ${state.strengths.join(', ')}`);
+    }
+
+    if (state.weakAreas.length > 0) {
+      parts.push(`Points faibles : ${state.weakAreas.join(', ')}`);
+    }
+
+    if (state.inconsistencies.length > 0) {
+      const inconsistencyLines = state.inconsistencies.map(
+        (inc) => `  - [${inc.severity}] ${inc.area} : ${inc.description}`,
+      );
+      parts.push(`Incohérences détectées :\n${inconsistencyLines.join('\n')}`);
+    }
+
+    if (state.priorities.length > 0) {
+      const priorityLines = state.priorities.map(
+        (p) => `  - [${p.level}] ${p.area} (impact ${p.impact}/100) : ${p.description}${p.module ? ` → module ${p.module}` : ''}`,
+      );
+      parts.push(`Priorités :\n${priorityLines.join('\n')}`);
+    }
+
+    if (state.currentPriority) {
+      parts.push(
+        `Priorité courante : [${state.currentPriority.level}] ${state.currentPriority.area} — ${state.currentPriority.description}`,
+      );
+    }
+
+    parts.push(`Recommandation : ${state.recommendedNextAction}`);
+
+    if (state.incompleteSteps.length > 0) {
+      const nextSteps = state.incompleteSteps
+        .slice(0, 5)
+        .map((s) => `  - ${s.title} (${s.stepKey}) [${s.status}]`);
+      parts.push(`Étapes incomplètes :\n${nextSteps.join('\n')}`);
+    }
+
+    if (state.missingInformation.length > 0) {
+      parts.push(
+        `Informations manquantes (${state.missingInformation.length}) : ${state.missingInformation.slice(0, 5).join(', ')}${state.missingInformation.length > 5 ? '...' : ''}`,
+      );
+    }
+
+    parts.push('--- FIN ANALYSE DÉTERMINISTE ---');
+
+    return parts.join('\n');
   }
 }
