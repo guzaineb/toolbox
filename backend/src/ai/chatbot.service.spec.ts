@@ -278,6 +278,46 @@ describe('ChatbotService (tool loop + memory)', () => {
       expect(result.answer).toBeDefined();
     });
 
+    it('includes ragReason when RAG is unavailable', async () => {
+      ragMock.query.mockResolvedValue({
+        status: 'RAG_UNAVAILABLE',
+        documents: [],
+        distances: [],
+        sources: [],
+        reason: 'ChromaDB indisponible : injoignable',
+      });
+
+      const result = await service.ask(PROJECT_ID, USER_ID, 'question');
+      expect(result.ragStatus).toBe('RAG_UNAVAILABLE');
+      expect(result.ragReason).toBe('ChromaDB indisponible : injoignable');
+    });
+
+    it('returns ragReason undefined when RAG is available', async () => {
+      ragMock.query.mockResolvedValue({
+        status: 'RAG_AVAILABLE',
+        documents: [{ id: 'd1', content: 'text', metadata: {} }],
+        distances: [0.2],
+        sources: [{ id: 'd1', documentKey: 'k', module: 'm', section: 's', source: 'src', chunkIndex: 0, score: 0.8 }],
+      });
+
+      const result = await service.ask(PROJECT_ID, USER_ID, 'question');
+      expect(result.ragStatus).toBe('RAG_AVAILABLE');
+      expect(result.ragReason).toBeUndefined();
+    });
+
+    it('returns ragReason undefined when no relevant context', async () => {
+      ragMock.query.mockResolvedValue({
+        status: 'NO_RELEVANT_CONTEXT',
+        documents: [],
+        distances: [],
+        sources: [],
+      });
+
+      const result = await service.ask(PROJECT_ID, USER_ID, 'question');
+      expect(result.ragStatus).toBe('NO_RELEVANT_CONTEXT');
+      expect(result.ragReason).toBeUndefined();
+    });
+
     it('handles conversation service failure', async () => {
       conversationServiceMock.getOrCreateActive.mockRejectedValue(new Error('DB error'));
 

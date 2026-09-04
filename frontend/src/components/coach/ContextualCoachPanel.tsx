@@ -268,6 +268,18 @@ export default function ContextualCoachPanel({
                     ))}
                   </div>
                 )}
+
+                {result.ragStatus === 'NO_RELEVANT_CONTEXT' && (
+                  <div className="mt-2 pt-2 border-t border-ink/[.06] text-[9px] font-dm text-ink3">
+                    Aucun document pertinent trouvé pour cette question.
+                  </div>
+                )}
+
+                {result.ragStatus === 'RAG_UNAVAILABLE' && (
+                  <div className="mt-2 pt-2 border-t border-ink/[.06] text-[9px] font-dm text-amber-dark">
+                    Documents temporairement indisponibles.
+                  </div>
+                )}
               </div>
 
               {/* Retry */}

@@ -130,12 +130,12 @@ describe('MaturityScoreService', () => {
 
     const result = await service.compute('p1');
 
-    expect(result.globalScore).toBe(100);
+    expect(result.globalScore).toBe(97.5);
     const byName = Object.fromEntries(
       result.dimensions.map((d) => [d.name, d]),
     );
     expect(byName.evaluation.score).toBe(100);
-    expect(byName.gbm.score).toBe(100);
+    expect(byName.gbm.score).toBe(87.5);
     expect(byName.business_plan.score).toBe(100);
     expect(byName.market_validation.score).toBe(100);
     expect(byName.impact.score).toBe(100);

@@ -99,6 +99,7 @@ export interface ChatbotAskResult {
   sources: unknown[]
   sourcesUsed: ChatSource[]
   ragStatus: 'RAG_AVAILABLE' | 'RAG_UNAVAILABLE' | 'NO_RELEVANT_CONTEXT'
+  ragReason?: string
   contextUsed: boolean
   toolsUsed: string[]
   conversationId: string

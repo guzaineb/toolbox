@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { MessageSquare, ChevronDown, Plus, AlertTriangle } from 'lucide-react'
+import { MessageSquare, ChevronDown, Plus, AlertTriangle, CloudOff } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import DocumentUploader from './DocumentUploader'
@@ -46,6 +46,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showConversationList, setShowConversationList] = useState(false)
   const [ragHealth, setRagHealth] = useState<RagHealthResult | null>(null)
+  const [ragStatusMap, setRagStatusMap] = useState<Record<number, 'RAG_AVAILABLE' | 'RAG_UNAVAILABLE' | 'NO_RELEVANT_CONTEXT'>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const loadedRef = useRef(false)
 
@@ -194,9 +195,11 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         const assistantMsg: ChatMessageType = { role: 'assistant', content: result.answer }
         setMessages((prev) => {
           const next = [...prev, assistantMsg]
+          const msgIndex = next.length - 1
           if (result.sourcesUsed.length > 0) {
-            setSourcesMap((prev) => ({ ...prev, [next.length - 1]: result.sourcesUsed }))
+            setSourcesMap((prev) => ({ ...prev, [msgIndex]: result.sourcesUsed }))
           }
+          setRagStatusMap((prev) => ({ ...prev, [msgIndex]: result.ragStatus }))
           return next
         })
 
@@ -325,7 +328,12 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-light/30 border-b border-amber/15 text-[10px] font-dm text-amber-dark">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
           <span>
-            La recherche documentaire (RAG) est indisponible. Les réponses du coach se basent uniquement sur les données structurées du projet.
+            {!ragHealth.embeddings.available
+              ? `Embeddings indisponibles${ragHealth.embeddings.reason ? ` (${ragHealth.embeddings.reason})` : ''}.`
+              : !ragHealth.chroma.available
+                ? `ChromaDB indisponible${ragHealth.chroma.reason ? ` (${ragHealth.chroma.reason})` : ''}.`
+                : 'La recherche documentaire est indisponible.'}
+            {' '}Les réponses du coach se basent sur les données structurées du projet.
           </span>
         </div>
       )}
@@ -383,6 +391,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
               role={msg.role}
               content={msg.content}
               sources={sourcesMap[i]}
+              ragStatus={ragStatusMap[i]}
               onRetry={msg.role === 'assistant' && i === messages.length - 1 ? handleRetry : undefined}
             />
           ))

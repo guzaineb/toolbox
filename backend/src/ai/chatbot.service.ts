@@ -28,6 +28,7 @@ export interface ChatbotAskResult {
     page?: number;
   }[];
   ragStatus: RagStatus;
+  ragReason?: string;
   contextUsed: boolean;
   toolsUsed: string[];
   conversationId: string;
@@ -211,6 +212,7 @@ RÈGLES CRITIQUES :
       content: string;
       toolCallId?: string;
       name?: string;
+      toolCalls?: { id: string; type: 'function'; function: { name: string; arguments: string } }[];
     }[] = [systemMessage];
 
     for (const msg of effectiveHistory) {
@@ -230,6 +232,12 @@ RÈGLES CRITIQUES :
       });
 
       if (response.toolCalls && response.toolCalls.length > 0) {
+        messages.push({
+          role: 'assistant',
+          content: response.content || '',
+          toolCalls: response.toolCalls,
+        });
+
         for (const toolCall of response.toolCalls) {
           const toolName = toolCall.function.name;
           toolsUsed.push(toolName);
@@ -243,13 +251,6 @@ RÈGLES CRITIQUES :
             toolCall.function.arguments,
             userId,
           );
-
-          messages.push({
-            role: 'assistant',
-            content: response.content || '',
-            toolCallId: toolCall.id,
-            name: toolName,
-          });
 
           messages.push({
             role: 'tool',
@@ -296,6 +297,7 @@ RÈGLES CRITIQUES :
           page: s.page,
         })) ?? [],
       ragStatus: ragOutcome.status,
+      ragReason: ragOutcome.reason,
       contextUsed: hasContext || ragUsed,
       toolsUsed,
       conversationId: conversation.id,

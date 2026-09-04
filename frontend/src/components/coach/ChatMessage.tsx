@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Bot, User, RefreshCw } from 'lucide-react'
+import { Bot, User, RefreshCw, AlertTriangle, SearchX } from 'lucide-react'
 import DOMPurify from 'isomorphic-dompurify'
 import SourceReferences from './SourceReferences'
 import type { ChatSource } from '@/types/coach'
@@ -32,6 +32,7 @@ export default function ChatMessage({
   role,
   content,
   sources,
+  ragStatus,
   loading,
   onRetry,
   className,
@@ -39,6 +40,7 @@ export default function ChatMessage({
   role: 'user' | 'assistant'
   content: string
   sources?: ChatSource[]
+  ragStatus?: 'RAG_AVAILABLE' | 'RAG_UNAVAILABLE' | 'NO_RELEVANT_CONTEXT'
   loading?: boolean
   onRetry?: () => void
   className?: string
@@ -81,6 +83,20 @@ export default function ChatMessage({
             )}
             dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
           />
+        )}
+
+        {!isUser && !loading && ragStatus === 'RAG_UNAVAILABLE' && (
+          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-ink/[.06] text-[9px] font-dm text-amber-dark">
+            <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
+            <span>Documents temporairement indisponibles. Le coach utilise les données structurées du projet.</span>
+          </div>
+        )}
+
+        {!isUser && !loading && ragStatus === 'NO_RELEVANT_CONTEXT' && (
+          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-ink/[.06] text-[9px] font-dm text-ink3">
+            <SearchX className="w-2.5 h-2.5 shrink-0" />
+            <span>Aucun document pertinent trouvé pour cette question.</span>
+          </div>
         )}
 
         {!isUser && sources && sources.length > 0 && !loading && (

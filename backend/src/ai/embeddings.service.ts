@@ -78,7 +78,7 @@ export class EmbeddingsService {
   }
 
   private async generateLocal(texts: string[]): Promise<number[][]> {
-    if (!this.localInitialized) {
+    if (!this.localExtractor) {
       await this.initLocalEmbeddings();
     }
     if (!this.localExtractor) {
@@ -117,7 +117,7 @@ export class EmbeddingsService {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to initialize local embeddings: ${message}`);
       this.localExtractor = null;
-      this.localInitialized = true;
+      this.localInitialized = false;
     }
   }
 
@@ -141,7 +141,7 @@ export class EmbeddingsService {
 
     // Local : tente d'initialiser le modèle
     try {
-      if (!this.localInitialized) await this.initLocalEmbeddings();
+      if (!this.localExtractor) await this.initLocalEmbeddings();
       if (!this.localExtractor) {
         return {
           available: false,
