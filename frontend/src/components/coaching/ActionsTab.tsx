@@ -1,15 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { ListTodo, Paperclip, Plus, ShieldCheck, X } from 'lucide-react'
-import { Badge, Button, Card, CardHeader, ErrorAlert, Field, Input, Select, Textarea } from '@/components/shared/ui'
-import { ACTION_STATUS_COLORS, ACTION_STATUS_LABELS, PRIORITY_LABELS } from '@/types/coaching'
+import { ListTodo, Plus, X } from 'lucide-react'
+import { Button, Card, CardHeader, ErrorAlert, Field, Input, Select, Textarea } from '@/components/shared/ui'
 import type { CoachingAction } from '@/types/coaching'
-import { apiError, formatDate } from '@/lib/utils'
-import {
-  useActionEvidences, useCreateAction, useReviewEvidence, useUpdateAction,
-} from '@/hooks/useCoaching'
+import { apiError } from '@/lib/utils'
+import { useCreateAction } from '@/hooks/useCoaching'
 import type { GeneratedDocument } from '@/services/documents.service'
+import { ActionRow } from '@/components/coaching/ActionRow'
 
 /**
  * Onglet ACTIONS : actions issues de la session, création et revue des preuves
@@ -138,147 +136,11 @@ export function ActionsTab({
         )}
 
         {actions.map((a) => (
-          <CoachActionRow key={a.id} action={a} canManage={canManage} documentTitle={
+          <ActionRow key={a.id} mode="coach" action={a} canManage={canManage} documentTitle={
             a.related_document_key ? documents.find((d) => d.key === a.related_document_key)?.title : undefined
           } />
         ))}
       </div>
     </Card>
-  )
-}
-
-/** Ligne d'action côté coach : statut modifiable + revue des preuves soumises. */
-export function CoachActionRow({
-  action, canManage, documentTitle,
-}: {
-  action: CoachingAction
-  canManage: boolean
-  documentTitle?: string
-}) {
-  const [open, setOpen] = useState(false)
-  const { data: evidences } = useActionEvidences(action.id, open)
-  const [comment, setComment] = useState('')
-  const [reviewingId, setReviewingId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const reviewMutation = useReviewEvidence(action.project_id)
-  const updateActionMutation = useUpdateAction(action.project_id)
-
-  const responsibleName = action.responsibleUser?.profile
-    ? `${action.responsibleUser.profile.first_name} ${action.responsibleUser.profile.last_name}`
-    : action.responsibleUser?.email
-
-  const overdue =
-    !!action.deadline &&
-    new Date(action.deadline).getTime() < Date.now() &&
-    !['COMPLETED', 'CANCELLED', 'REJECTED'].includes(action.status)
-
-  const toggle = () => {
-    setOpen((next) => !next)
-  }
-
-  const review = async (evidenceId: string, status: 'APPROVED' | 'REJECTED') => {
-    setReviewingId(evidenceId)
-    setError(null)
-    try {
-      await reviewMutation.mutateAsync({
-        actionId: action.id,
-        evidenceId,
-        dto: { status, comment: comment || undefined },
-      })
-      setComment('')
-    } catch (err) {
-      setError(apiError(err, 'La revue de la preuve a échoué'))
-    } finally {
-      setReviewingId(null)
-    }
-  }
-
-  const setStatus = async (status: string) => {
-    setError(null)
-    try {
-      await updateActionMutation.mutateAsync({ actionId: action.id, dto: { status } })
-    } catch (err) {
-      setError(apiError(err, 'La mise à jour du statut a échoué'))
-    }
-  }
-
-  return (
-    <div className={`border rounded-[10px] p-3 space-y-2 ${overdue ? 'border-red-300 bg-red-50/[.4]' : 'border-border'}`}>
-      <div className="flex items-start gap-2 flex-wrap">
-        <span className="text-[12px] font-semibold text-ink flex-1 min-w-0">{action.title}</span>
-        <Badge variant={action.priority === 'HIGH' ? 'red' : action.priority === 'MEDIUM' ? 'blue' : 'gray'}>
-          {PRIORITY_LABELS[action.priority]}
-        </Badge>
-        <Badge variant={ACTION_STATUS_COLORS[action.status]}>{ACTION_STATUS_LABELS[action.status]}</Badge>
-        {overdue && <Badge variant="red">En retard</Badge>}
-        {canManage && (
-          <Select
-            className="w-[140px] !py-[4px] !text-[11px]"
-            value={action.status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            {['PENDING', 'IN_PROGRESS', 'SUBMITTED', 'COMPLETED', 'REJECTED'].map((s) => (
-              <option key={s} value={s}>{ACTION_STATUS_LABELS[s as keyof typeof ACTION_STATUS_LABELS]}</option>
-            ))}
-          </Select>
-        )}
-      </div>
-      <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px] text-ink3">
-        <span><span className="font-semibold text-ink2">Responsable :</span> {responsibleName ?? 'Non défini'}</span>
-        {action.deadline && <span><span className="font-semibold text-ink2">Échéance :</span> {formatDate(action.deadline, { dateStyle: 'medium' })}</span>}
-        {(documentTitle || action.related_document_key) && (
-          <span><span className="font-semibold text-ink2">Livrable :</span> {documentTitle ?? action.related_document_key}</span>
-        )}
-        {action.assignment?.expertUser && !responsibleName && (
-          <span><span className="font-semibold text-ink2">Expert :</span> {action.assignment.expertUser.email}</span>
-        )}
-      </div>
-      {action.description && <p className="text-[11px] text-ink2">{action.description}</p>}
-      <button onClick={toggle} className="flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors cursor-pointer">
-        <Paperclip size={11} /> Preuves ({evidences?.length ?? '…'})
-      </button>
-      {open && (
-        <div className="space-y-2 pt-1">
-          {error && <ErrorAlert message={error} />}
-          {(evidences ?? []).map((ev) => (
-            <div key={ev.id} className="bg-surface border border-border rounded-lg p-2.5 space-y-1.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="gray">{ev.type}</Badge>
-                {ev.title && <span className="text-[11px] font-semibold text-ink">{ev.title}</span>}
-                <Badge variant={ev.review_status === 'APPROVED' ? 'green' : ev.review_status === 'REJECTED' ? 'red' : 'amber'}>
-                  {ev.review_status === 'APPROVED' ? 'Validée' : ev.review_status === 'REJECTED' ? 'Refusée' : 'En attente'}
-                </Badge>
-              </div>
-              {ev.url && (
-                <a href={ev.url} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 underline break-all">
-                  {ev.url}
-                </a>
-              )}
-              {ev.content && <p className="text-[11px] text-ink2 whitespace-pre-wrap">{ev.content}</p>}
-              {ev.coach_comment && <p className="text-[11px] text-ink3 italic">Commentaire : {ev.coach_comment}</p>}
-              {ev.review_status === 'PENDING' && canManage && (
-                <div className="flex gap-2 items-center pt-1">
-                  <Input
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Commentaire (optionnel)"
-                    className="!py-[4px] !text-[11px] flex-1"
-                  />
-                  <Button size="sm" variant="primary" disabled={reviewingId !== null} onClick={() => review(ev.id, 'APPROVED')}>
-                    <ShieldCheck size={11} /> Accepter
-                  </Button>
-                  <Button size="sm" variant="outline" disabled={reviewingId !== null} onClick={() => review(ev.id, 'REJECTED')}>
-                    Refuser
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-          {evidences && evidences.length === 0 && (
-            <p className="text-[11px] text-ink3">Aucune preuve soumise pour cette action.</p>
-          )}
-        </div>
-      )}
-    </div>
   )
 }
