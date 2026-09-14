@@ -30,8 +30,11 @@ export default function OwnerCoachingSessionWorkspacePage() {
           Suivi coaching
         </Link>
         <span>/</span>
-        <Link href={`/dashboard/project-owner/projects/${projectId}/coachings`} className="hover:text-moss transition-colors">
-          Sessions
+        <Link
+          href={`/dashboard/project-owner/projects/${projectId}/coachings/sessions`}
+          className="hover:text-moss transition-colors"
+        >
+          Agenda des sessions
         </Link>
         <span>/</span>
         <span className="text-ink font-medium">Détail de la session</span>

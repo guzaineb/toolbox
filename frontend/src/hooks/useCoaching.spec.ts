@@ -9,6 +9,7 @@ import {
   coachingKeys,
   coachingInvalidations,
   useCoachingSession,
+  useMyCoachingSessions,
   useProjectCoachingOverview,
   useProjectSessions,
   useUpdateSession,
@@ -21,6 +22,7 @@ vi.mock('@/services/coaching.service', () => ({
     getProjectCoachingOverview: vi.fn(),
     getSession: vi.fn(),
     getProjectSessions: vi.fn(),
+    getMyCoachingSessions: vi.fn(),
     getProjectActions: vi.fn(),
     getProjectRecommendations: vi.fn(),
     getProjectAssignments: vi.fn(),
@@ -124,6 +126,8 @@ describe('coachingKeys', () => {
     expect(coachingKeys.overview('p-1')).toContain('p-1')
     expect(coachingKeys.sessions('p-1')).not.toEqual(coachingKeys.sessions('p-2'))
     expect(coachingKeys.recommendations('p-1')).not.toEqual(coachingKeys.recommendations('p-2'))
+    expect([...coachingKeys.expertSessions].slice(-2)).toEqual(['expert', 'sessions'])
+    expect(coachingKeys.expertSessions).not.toEqual(coachingKeys.sessions('p-1'))
   })
 
   it('nests session/action sub-resources under their parent key', () => {
@@ -144,9 +148,17 @@ describe('coachingInvalidations', () => {
     expect(coachingInvalidations('createSession', { projectId: 'p-1' })).toEqual([
       coachingKeys.sessions('p-1'),
       coachingKeys.overview('p-1'),
+      coachingKeys.expertSessions,
     ])
     expect(coachingInvalidations('updateSession', { projectId: 'p-1', sessionId: 's-1' })).toEqual([
       coachingKeys.session('s-1'),
+      coachingKeys.expertSessions,
+      coachingKeys.sessions('p-1'),
+      coachingKeys.overview('p-1'),
+    ])
+    expect(coachingInvalidations('startSession', { projectId: 'p-1', sessionId: 's-1' })).toEqual([
+      coachingKeys.session('s-1'),
+      coachingKeys.expertSessions,
       coachingKeys.sessions('p-1'),
       coachingKeys.overview('p-1'),
     ])
@@ -194,6 +206,17 @@ describe('useCoaching query hooks', () => {
     expect(coachingService.getProjectCoachingOverview).toHaveBeenCalledTimes(1)
     expect(coachingService.getProjectCoachingOverview).toHaveBeenCalledWith('p-1')
     expect(state.current?.data?.counts.sessions).toBe(1)
+  })
+
+  it('fetches only the coaching sessions assigned to the connected expert', async () => {
+    vi.mocked(coachingService.getMyCoachingSessions).mockResolvedValue([session('s-1')])
+    const client = makeClient()
+    const state = useHarness(() => useMyCoachingSessions(), client)
+
+    await waitFor(() => expect(state.current?.isSuccess).toBe(true))
+    expect(coachingService.getMyCoachingSessions).toHaveBeenCalledTimes(1)
+    expect(coachingService.getProjectSessions).not.toHaveBeenCalled()
+    expect(state.current?.data?.map((s) => s.id)).toEqual(['s-1'])
   })
 
   it('surfaces query errors instead of crashing', async () => {

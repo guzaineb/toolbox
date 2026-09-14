@@ -33,6 +33,7 @@ import {
   CheckCircle2,
   Radar,
   Sparkles,
+  CalendarClock,
 } from 'lucide-react';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useNotificationSocket } from '@/hooks/useNotificationSocket';
@@ -67,7 +68,7 @@ const MODULE_LABELS: Record<string, string> = {
   evaluations: 'Évaluation & décision',
 };
 
-const PROJECT_MODULES: { suffix: string; label: string; icon: LucideIcon }[] = [
+const PROJECT_MODULES: { suffix: string; label: string; icon: LucideIcon; match?: 'exact' | 'prefix' }[] = [
   { suffix: '', label: "Vue d'ensemble", icon: LayoutDashboard },
   { suffix: '/gbm', label: "Modèle d'Affaires Vert", icon: TreePine },
   { suffix: '/business-plan', label: "Plan d'Affaires", icon: BarChart3 },
@@ -77,7 +78,8 @@ const PROJECT_MODULES: { suffix: string; label: string; icon: LucideIcon }[] = [
   { suffix: '/eco-design', label: 'Éco-conception', icon: Leaf },
   { suffix: '/documents', label: 'Documents', icon: FileText },
   { suffix: '/coach', label: 'AI Project Coach', icon: Bot },
-  { suffix: '/coachings', label: 'Suivi coaching', icon: HeartHandshake },
+  { suffix: '/coachings', label: 'Suivi coaching', icon: HeartHandshake, match: 'exact' },
+  { suffix: '/coachings/sessions', label: 'Agenda des sessions', icon: CalendarClock },
   { suffix: '/evaluations', label: 'Évaluation & décision', icon: ClipboardCheck },
 ];
 
@@ -221,7 +223,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
           { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
           { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'prefix' },
+          { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
+          { href: '/dashboard/expert/coachings/sessions', label: 'Mes sessions', icon: CalendarClock, section: 'expert', match: 'prefix' },
         ]
       : isProjectOwner
         ? [
@@ -253,7 +256,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         label: mod.label,
         icon: mod.icon,
         section: 'project',
-        match: mod.suffix === '' ? 'exact' : 'prefix',
+        match: mod.match ?? (mod.suffix === '' ? 'exact' : 'prefix'),
       }))
     : [];
 

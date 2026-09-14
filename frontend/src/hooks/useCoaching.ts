@@ -28,6 +28,8 @@ export const coachingKeys = {
   overview: (projectId: string) => [...coachingKeys.all, 'projects', projectId, 'overview'] as const,
   assignments: (projectId: string) => [...coachingKeys.all, 'projects', projectId, 'assignments'] as const,
   sessions: (projectId: string) => [...coachingKeys.all, 'projects', projectId, 'sessions'] as const,
+  /** Sessions des sessions de coaching assignées à l'expert connecté (GET /experts/me/coaching/sessions). */
+  expertSessions: ['coaching', 'expert', 'sessions'] as const,
   session: (sessionId: string) => [...coachingKeys.all, 'sessions', sessionId] as const,
   sessionComments: (sessionId: string) => [...coachingKeys.session(sessionId), 'comments'] as const,
   actions: (projectId: string) => [...coachingKeys.all, 'projects', projectId, 'actions'] as const,
@@ -55,12 +57,15 @@ export function coachingInvalidations(operation: string, ids: CoachingInvalidati
 
   switch (operation) {
     case 'createSession':
-      return projectId ? [coachingKeys.sessions(projectId), coachingKeys.overview(projectId)] : []
+      return projectId
+        ? [coachingKeys.sessions(projectId), coachingKeys.overview(projectId), coachingKeys.expertSessions]
+        : []
     case 'updateSession':
     case 'startSession':
     case 'completeSession':
       return [
         ...(sessionId ? [coachingKeys.session(sessionId)] : []),
+        ...(sessionId ? [coachingKeys.expertSessions] : []),
         ...(projectId ? [coachingKeys.sessions(projectId), coachingKeys.overview(projectId)] : []),
       ]
     case 'createAction':
@@ -120,6 +125,13 @@ export function useProjectSessions(projectId: string) {
     queryKey: coachingKeys.sessions(projectId),
     queryFn: () => coachingService.getProjectSessions(projectId),
     enabled: !!projectId,
+  })
+}
+
+export function useMyCoachingSessions() {
+  return useQuery<CoachingSession[]>({
+    queryKey: coachingKeys.expertSessions,
+    queryFn: () => coachingService.getMyCoachingSessions(),
   })
 }
 
