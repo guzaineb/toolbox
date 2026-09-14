@@ -42,7 +42,10 @@ function ExpertCoachingProjectContent() {
   const [overview, setOverview] = useState<CoachingOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('overview')
+  const [tab, setTab] = useState<Tab>(() => {
+    const fromUrl = searchParams.get('tab')
+    return TABS.some((t) => t.id === fromUrl) ? (fromUrl as Tab) : 'overview'
+  })
 
   const fetchOverview = useCallback(async () => {
     if (!projectId) return
@@ -58,6 +61,11 @@ function ExpertCoachingProjectContent() {
   }, [projectId])
 
   useEffect(() => { void fetchOverview() }, [fetchOverview])
+
+  useEffect(() => {
+    const fromUrl = searchParams.get('tab')
+    if (fromUrl && TABS.some((t) => t.id === fromUrl)) setTab(fromUrl as Tab)
+  }, [searchParams])
 
   if (loading) {
     return (

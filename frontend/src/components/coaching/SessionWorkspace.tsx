@@ -28,21 +28,7 @@ import type { ProjectAssignment } from '@/types/coaching'
 import type { GeneratedDocument } from '@/services/documents.service'
 import type { GbmProgress } from '@/types/gbm'
 import { CoachingBriefPayload, SessionSummaryPayload } from '@/types/ai-analysis'
-import { getErrorMessage } from '@/lib/utils'
-
-function apiError(err: unknown, fallback: string): string {
-  return getErrorMessage(err) || fallback
-}
-
-function formatDateTime(value?: string): string {
-  if (!value) return '—'
-  return new Date(value).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })
-}
-
-function formatDate(value?: string): string {
-  if (!value) return '—'
-  return new Date(value).toLocaleDateString('fr-FR', { dateStyle: 'medium' })
-}
+import { apiError, formatDate, formatDateTime } from '@/lib/utils'
 
 function newBlockerId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -81,9 +67,15 @@ interface SessionDraft {
  */
 export function SessionWorkspace({
   projectId, sessionId,
+  basePath = `/dashboard/expert/coaching/${projectId}`,
+  backToCoachingHref = '/dashboard/expert/coachings',
 }: {
   projectId: string
   sessionId: string
+  /** Route socle du suivi coaching (liens précédente/suivante, planification). */
+  basePath?: string
+  /** Route de retour hors espace de session. */
+  backToCoachingHref?: string
 }) {
   const { user } = useAuth()
   const [session, setSession] = useState<CoachingSession | null>(null)
@@ -389,7 +381,7 @@ export function SessionWorkspace({
             </Badge>
           </div>
           <div className="text-[11px] text-ink3 mt-1">
-            {formatDateTime(session.scheduled_at)}
+            {formatDateTime(session.scheduled_at, { dateStyle: 'long', timeStyle: 'short' })}
             {session.duration_minutes ? ` · ${session.duration_minutes} min` : ''}
             {session.session_type ? ` · ${session.session_type}` : ''}
             {session.assignment?.expertUser?.profile &&
@@ -500,12 +492,12 @@ export function SessionWorkspace({
                   <div className="flex items-center gap-2 flex-wrap text-[12px] text-ink2">
                     <span>Session précédente :</span>
                     <Link
-                      href={`/dashboard/expert/coaching/${projectId}/sessions/${previousSession.id}`}
+                      href={`${basePath}/sessions/${previousSession.id}`}
                       className="font-semibold text-moss hover:underline"
                     >
-                      {previousSession.title || formatDate(previousSession.scheduled_at)}
+                      {previousSession.title || formatDate(previousSession.scheduled_at, { dateStyle: 'medium' })}
                     </Link>
-                    <span className="text-ink3">({formatDate(previousSession.scheduled_at)})</span>
+                    <span className="text-ink3">({formatDate(previousSession.scheduled_at, { dateStyle: 'medium' })})</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <StatMini num={`${progress?.percentage ?? 0}%`} label="Parcours GBM" />
@@ -563,11 +555,11 @@ export function SessionWorkspace({
                         aria-hidden
                       />
                       <Link
-                        href={`/dashboard/expert/coaching/${projectId}/sessions/${s.id}`}
+                        href={`${basePath}/sessions/${s.id}`}
                         className="flex items-center gap-2 flex-wrap group"
                       >
                         <span className={`text-[12px] group-hover:text-moss transition-colors ${s.id === sessionId ? 'font-bold text-ink' : 'text-ink2'}`}>
-                          {s.title || 'Session'} — {formatDate(s.scheduled_at)}
+                          {s.title || 'Session'} — {formatDate(s.scheduled_at, { dateStyle: 'medium' })}
                         </span>
                         <Badge variant={COACHING_SESSION_STATUS_COLORS[s.status]}>
                           {s.id === sessionId ? 'Cette session' : COACHING_SESSION_STATUS_LABELS[s.status]}
@@ -797,7 +789,7 @@ export function SessionWorkspace({
             </Card>
           </div>
 
-          <NextStepCard projectId={projectId} nextSession={nextSession} progress={progress} />
+          <NextStepCard basePath={basePath} canManage={!!canManage} nextSession={nextSession} progress={progress} />
         </div>
       )}
 
@@ -813,7 +805,7 @@ export function SessionWorkspace({
         onComplete={completeSession}
       />
 
-      <SessionBackNote />
+      <SessionBackNote href={backToCoachingHref} />
     </div>
   )
 }
@@ -1296,7 +1288,7 @@ export function CoachActionRow({
       </div>
       <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px] text-ink3">
         <span><span className="font-semibold text-ink2">Responsable :</span> {responsibleName ?? 'Non défini'}</span>
-        {action.deadline && <span><span className="font-semibold text-ink2">Échéance :</span> {formatDate(action.deadline)}</span>}
+        {action.deadline && <span><span className="font-semibold text-ink2">Échéance :</span> {formatDate(action.deadline, { dateStyle: 'medium' })}</span>}
         {(documentTitle || action.related_document_key) && (
           <span><span className="font-semibold text-ink2">Livrable :</span> {documentTitle ?? action.related_document_key}</span>
         )}
@@ -1359,9 +1351,10 @@ export function CoachActionRow({
 ========================================================= */
 
 function NextStepCard({
-  projectId, nextSession, progress,
+  basePath, canManage, nextSession, progress,
 }: {
-  projectId: string
+  basePath: string
+  canManage: boolean
   nextSession: CoachingSession | null
   progress: GbmProgress | null
 }) {
@@ -1375,7 +1368,7 @@ function NextStepCard({
               <div className="border border-border rounded-[10px] p-3 space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[12px] font-bold text-ink">
-                    Prochaine session : {formatDateTime(nextSession.scheduled_at)}
+                    Prochaine session : {formatDateTime(nextSession.scheduled_at, { dateStyle: 'long', timeStyle: 'short' })}
                   </span>
                   <Badge variant={COACHING_SESSION_STATUS_COLORS[nextSession.status]}>
                     {COACHING_SESSION_STATUS_LABELS[nextSession.status]}
@@ -1389,7 +1382,7 @@ function NextStepCard({
                   </p>
                 )}
                 <Link
-                  href={`/dashboard/expert/coaching/${projectId}/sessions/${nextSession.id}`}
+                  href={`${basePath}/sessions/${nextSession.id}`}
                   className="inline-flex items-center gap-1 text-[11px] font-semibold text-moss hover:underline"
                 >
                   Ouvrir la session <ChevronRight size={11} />
@@ -1402,8 +1395,8 @@ function NextStepCard({
               pour entretenir la boucle de coaching.
             </p>
           )}
-          {!nextSession && (
-            <Link href={`/dashboard/expert/coaching/${projectId}`} className="inline-flex">
+          {!nextSession && canManage && (
+            <Link href={basePath} className="inline-flex">
               <Button variant="outline" size="sm">
                 Planifier une session <ChevronRight size={12} />
               </Button>
@@ -1447,10 +1440,10 @@ function StatMini({ num, label, tone }: { num: string | number; label: string; t
   )
 }
 
-function SessionBackNote() {
+function SessionBackNote({ href }: { href: string }) {
   return (
-    <Link href="/dashboard/expert/coachings" className="inline-flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors">
-      <ArrowLeft size={12} /> Retour aux coachings
+    <Link href={href} className="inline-flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors">
+      <ArrowLeft size={12} /> Retour au suivi coaching
     </Link>
   )
 }

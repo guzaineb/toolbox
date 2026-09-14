@@ -9,6 +9,7 @@ import { cohortService } from '@/services/cohort.service'
 import { CoachingAction, ACTION_STATUS_LABELS } from '@/types/coaching'
 import {
   IMPROVEMENT_PLAN_STATUS_LABELS,
+  ImprovementObjective,
   ImprovementObjectiveStatus,
   ImprovementPlan,
   OBJECTIVE_STATUS_LABELS,
@@ -81,6 +82,7 @@ export function ImprovementPlanPanel({ projectId, canManage }: Props) {
     objectiveId: string,
     current: ImprovementObjectiveStatus,
   ) => {
+    if (!canManage) return
     try {
       const next =
         current === 'COMPLETED'
@@ -94,6 +96,40 @@ export function ImprovementPlanPanel({ projectId, canManage }: Props) {
       setError('La mise à jour de l’objectif a échoué')
     }
   }
+
+  const objectiveContent = (o: ImprovementObjective) => (
+    <>
+      {o.status === 'COMPLETED' ? (
+        <CheckCircle2 size={15} className="text-moss shrink-0 mt-0.5" />
+      ) : (
+        <Circle size={15} className="text-ink3 shrink-0 mt-0.5" />
+      )}
+      <span className="flex-1 min-w-0">
+        <span className={`block text-[12px] font-medium ${o.status === 'COMPLETED' ? 'text-ink3 line-through' : 'text-ink'}`}>
+          {o.title}
+        </span>
+        {o.description && <span className="block text-[11px] text-ink3 mt-0.5">{o.description}</span>}
+        <span className="block mt-1.5">
+          <Badge variant={o.priority === 'HIGH' ? 'red' : o.priority === 'MEDIUM' ? 'blue' : 'gray'}>
+            {o.priority}
+          </Badge>{' '}
+          <span className="text-[10px] text-ink3 ml-1">{OBJECTIVE_STATUS_LABELS[o.status]} · {o.progress}%</span>
+        </span>
+        {actions.filter((a) => a.objective_id === o.id).length > 0 && (
+          <span className="block mt-2 pt-2 border-t border-border space-y-1">
+            {actions.filter((a) => a.objective_id === o.id).map((a) => (
+              <span key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                <span className="text-ink3 truncate">{a.title}</span>
+                <Badge variant={a.status === 'COMPLETED' ? 'green' : a.status === 'REJECTED' || a.status === 'OVERDUE' ? 'red' : a.status === 'SUBMITTED' ? 'amber' : 'gray'}>
+                  {ACTION_STATUS_LABELS[a.status]}
+                </Badge>
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
+    </>
+  )
 
   return (
     <Card>
@@ -141,46 +177,27 @@ export function ImprovementPlanPanel({ projectId, canManage }: Props) {
               {(plan.objectives ?? []).length === 0 && (
                 <p className="text-[11px] text-ink3">Aucun objectif.</p>
               )}
-              {(plan.objectives ?? []).map((o) => (
-                <button
-                  key={o.id}
-                  onClick={() => toggleObjective(o.id, o.status)}
-                  disabled={plan.status !== 'ACTIVE'}
-                  className={`w-full text-left flex items-start gap-2.5 border border-border rounded-[10px] p-3 transition-colors ${
-                    plan.status === 'ACTIVE' ? 'hover:border-moss/40 cursor-pointer bg-surface' : 'bg-surface-2/40 opacity-80 cursor-default'
-                  }`}
-                >
-                  {o.status === 'COMPLETED' ? (
-                    <CheckCircle2 size={15} className="text-moss shrink-0 mt-0.5" />
-                  ) : (
-                    <Circle size={15} className="text-ink3 shrink-0 mt-0.5" />
-                  )}
-                  <span className="flex-1 min-w-0">
-                    <span className={`block text-[12px] font-medium ${o.status === 'COMPLETED' ? 'text-ink3 line-through' : 'text-ink'}`}>
-                      {o.title}
-                    </span>
-                    {o.description && <span className="block text-[11px] text-ink3 mt-0.5">{o.description}</span>}
-                    <span className="block mt-1.5">
-                      <Badge variant={o.priority === 'HIGH' ? 'red' : o.priority === 'MEDIUM' ? 'blue' : 'gray'}>
-                        {o.priority}
-                      </Badge>{' '}
-                      <span className="text-[10px] text-ink3 ml-1">{OBJECTIVE_STATUS_LABELS[o.status]} · {o.progress}%</span>
-                    </span>
-                    {actions.filter((a) => a.objective_id === o.id).length > 0 && (
-                      <span className="block mt-2 pt-2 border-t border-border space-y-1">
-                        {actions.filter((a) => a.objective_id === o.id).map((a) => (
-                          <span key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
-                            <span className="text-ink3 truncate">{a.title}</span>
-                            <Badge variant={a.status === 'COMPLETED' ? 'green' : a.status === 'REJECTED' || a.status === 'OVERDUE' ? 'red' : a.status === 'SUBMITTED' ? 'amber' : 'gray'}>
-                              {ACTION_STATUS_LABELS[a.status]}
-                            </Badge>
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              ))}
+              {(plan.objectives ?? []).map((o) =>
+                canManage ? (
+                  <button
+                    key={o.id}
+                    onClick={() => toggleObjective(o.id, o.status)}
+                    disabled={plan.status !== 'ACTIVE'}
+                    className={`w-full text-left flex items-start gap-2.5 border border-border rounded-[10px] p-3 transition-colors ${
+                      plan.status === 'ACTIVE' ? 'hover:border-moss/40 cursor-pointer bg-surface' : 'bg-surface-2/40 opacity-80 cursor-default'
+                    }`}
+                  >
+                    {objectiveContent(o)}
+                  </button>
+                ) : (
+                  <div
+                    key={o.id}
+                    className="w-full text-left flex items-start gap-2.5 border border-border rounded-[10px] p-3 bg-surface-2/40 opacity-80"
+                  >
+                    {objectiveContent(o)}
+                  </div>
+                ),
+              )}
             </div>
 
             <div className="px-[14px] pb-[14px]">

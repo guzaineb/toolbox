@@ -121,7 +121,7 @@ export default function ProjectCoachingPage() {
               Sessions de coaching
             </div>
             <div className="p-[18px]">
-              <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage={false} onRefresh={fetchOverview} />
+              <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage={false} onRefresh={fetchOverview} sessionHref={(id) => `/dashboard/project-owner/projects/${projectId}/coachings/sessions/${id}`} />
             </div>
           </Card>
 

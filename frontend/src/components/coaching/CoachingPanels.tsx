@@ -15,7 +15,7 @@ import {
   PRIORITY_LABELS, RECOMMENDATION_STATUS_LABELS,
   CoachingActionStatus,
 } from '@/types/coaching'
-import { getErrorMessage } from '@/lib/utils'
+import { apiError, formatDate, formatDateTime } from '@/lib/utils'
 import { aiAnalysisService } from '@/services/ai-analysis.service'
 import { ImprovementPlan } from '@/types/ai-analysis'
 
@@ -30,23 +30,6 @@ const SESSION_TYPE_OPTIONS = [
   { value: 'STRATEGIE', label: 'Stratégie' },
   { value: 'AUTRE', label: 'Autre' },
 ]
-
-function apiError(err: unknown, fallback: string): string {
-  return getErrorMessage(err) || fallback
-}
-
-function formatDate(value?: string): string {
-  if (!value) return '—'
-  return new Date(value).toLocaleDateString('fr-FR')
-}
-
-function formatDateTime(value?: string): string {
-  if (!value) return '—'
-  return new Date(value).toLocaleString('fr-FR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
-}
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MODALE : NOUVELLE SESSION
@@ -387,7 +370,7 @@ export function SessionsPanel({
                   <Badge variant={COACHING_SESSION_STATUS_COLORS[s.status]}>{COACHING_SESSION_STATUS_LABELS[s.status]}</Badge>
                 </div>
                 <div className="text-[11px] text-ink3 mt-1">
-                  {formatDateTime(s.scheduled_at)}
+                  {formatDateTime(s.scheduled_at, { dateStyle: 'short', timeStyle: 'short' })}
                   {s.duration_minutes ? ` Â· ${s.duration_minutes} min` : ''}
                   {s.assignment?.expertUser?.profile
                     ? ` Â· ${s.assignment.expertUser.profile.first_name} ${s.assignment.expertUser.profile.last_name}`
