@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { resolveModuleRoute } from './resolve-module-route'
 
 describe('resolveModuleRoute', () => {

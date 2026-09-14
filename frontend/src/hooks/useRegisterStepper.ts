@@ -81,7 +81,7 @@ export function useRegisterStepper() {
       const loginRes = await api.post("/auth/login", { email: step1.email, password: step1.password });
 
       if (loginRes.data?.access_token) {
-        localStorage.setItem("ps_access_token", loginRes.data.access_token);
+        localStorage.setItem("access_token", loginRes.data.access_token);
         router.push("/dashboard");
       }
     } catch (e: any) {

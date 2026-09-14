@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Users, Calendar, Search, ChevronRight, FileText } from 'lucide-react'
-import { TabNav, Badge, Button, Card, Input, Select, ErrorAlert } from '@/components/shared/ui'
+import { TabNav, Badge, Button, Card, Input, ErrorAlert } from '@/components/shared/ui'
 import { useAvailableCohorts, useMyCohorts, useApplyToCohort, useAcceptInvitation, useRejectInvitation, useWithdrawParticipation } from '@/hooks/useCohorts'
 import {
-  Cohort, CohortParticipation,
+  CohortParticipation,
   PARTICIPATION_STATUS_LABELS, PARTICIPATION_STATUS_COLORS,
   PARTICIPATION_ORIGIN_LABELS,
 } from '@/types/cohort'
-import api from '@/services/api'
+import { projectService } from '@/services/project.service'
 import { useQuery } from '@tanstack/react-query'
 
 const TABS = [
@@ -25,10 +25,7 @@ function AvailableCohorts() {
 
   const { data: projects } = useQuery({
     queryKey: ['my-projects'],
-    queryFn: async () => {
-      const res = await api.get('/projects')
-      return res.data as Array<{ id: string; name: string }>
-    },
+    queryFn: () => projectService.list(),
   })
 
   const [selectedProject, setSelectedProject] = useState<Record<string, string>>({})
@@ -81,7 +78,7 @@ function AvailableCohorts() {
 
       {applyMutation.error && (
         <div className="mb-4">
-          <ErrorAlert message={(applyMutation.error as any)?.response?.data?.message || 'Erreur lors de la candidature'} />
+          <ErrorAlert message={(applyMutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur lors de la candidature'} />
         </div>
       )}
 
@@ -150,7 +147,7 @@ function AvailableCohorts() {
                     </div>
                   ) : (
                     <div className="text-[10px] text-ink3 text-right">
-                      <p>Créez d'abord un projet</p>
+                      <p>Créez d&apos;abord un projet</p>
                       <Link href="/dashboard/project-owner/projects">
                         <span className="text-moss underline">Mes projets</span>
                       </Link>
@@ -184,7 +181,7 @@ function MyCohorts() {
           <FileText size={24} />
         </div>
         <p className="text-[15px] font-semibold text-ink mb-1">Aucune participation</p>
-        <p className="text-[12px] text-ink3 mb-6">Vous n'avez pas encore candidaté à une cohorte.</p>
+        <p className="text-[12px] text-ink3 mb-6">Vous n&apos;avez pas encore candidaté à une cohorte.</p>
       </Card>
     )
   }

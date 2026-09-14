@@ -99,6 +99,45 @@ export class ExpertScoringService {
     };
   }
 
+  buildMatchExplanation(match: ProjectMatch, expert: any): string {
+    const { skillsMatch, experienceMatch } = match.details;
+    const ratio =
+      skillsMatch.required > 0
+        ? skillsMatch.matched / skillsMatch.required
+        : 0;
+
+    let base: string;
+    if (ratio >= 0.75) {
+      base = 'Expertise fortement alignée avec les besoins du projet';
+    } else if (ratio >= 0.5) {
+      base = 'Expertise alignée avec les besoins du projet';
+    } else if (ratio >= 0.3) {
+      base = 'Expertise partiellement alignée avec les besoins du projet';
+    } else {
+      base = 'Expertise peu alignée avec les besoins du projet';
+    }
+
+    const parts: string[] = [];
+    if (skillsMatch.required > 0) {
+      parts.push(
+        `${skillsMatch.matched}/${skillsMatch.required} domaines d'expertise maîtrisés`,
+      );
+    } else {
+      parts.push('aucun domaine requis détecté');
+    }
+    const years = expert?.years_of_experience || 0;
+    if (years >= experienceMatch.required) {
+      parts.push(`${years} ans d'expérience (minimum ${experienceMatch.required} exigé)`);
+    } else {
+      parts.push(`expérience de ${years} ans (minimum ${experienceMatch.required} exigé)`);
+    }
+    if (match.details.availabilityBonus) {
+      parts.push('disponible immédiatement');
+    }
+
+    return `${base}. ${parts.join(' ; ')}.`;
+  }
+
   computeCoachScore(profile: any): number {
     const pedagogyScore = this.computePedagogyScore(profile.bio ?? undefined);
     const seniorityScore = this.computeSeniorityScore(
@@ -171,9 +210,11 @@ export class ExpertScoringService {
       expertises.map((e: any) => e.expertiseArea?.id),
     );
     const matched = requiredAreas.filter((id) => expertAreaIds.has(id)).length;
-    const score = (matched / requiredAreas.length) * this.WEIGHTS.MATCH_SKILLS;
+    const required = requiredAreas.length;
+    const score =
+      required === 0 ? 0 : (matched / required) * this.WEIGHTS.MATCH_SKILLS;
 
-    return { matched, required: requiredAreas.length, score };
+    return { matched, required, score };
   }
 
   private computeExperienceMatch(

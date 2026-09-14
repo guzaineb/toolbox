@@ -56,6 +56,12 @@ export class AssignmentsService {
       );
     }
 
+    await this.assertNoRoleConflict(
+      projectId,
+      dto.expertUserId,
+      dto.role,
+    );
+
     const assignment = await this.prisma.projectExpertAssignment.create({
       data: {
         project_id: projectId,
@@ -169,6 +175,15 @@ export class AssignmentsService {
       assignment.project_id,
     );
     await this.access.assertCanManageCohort(cohortId, userId);
+
+    if (dto.role && dto.role !== assignment.role) {
+      await this.assertNoRoleConflict(
+        assignment.project_id,
+        assignment.expert_user_id,
+        dto.role,
+        assignment.id,
+      );
+    }
 
     const updated = await this.prisma.projectExpertAssignment.update({
       where: { id },
@@ -316,6 +331,34 @@ export class AssignmentsService {
         cohort: participation?.cohort ?? null,
       };
     });
+  }
+
+  private async assertNoRoleConflict(
+    projectId: string,
+    expertUserId: string,
+    role: CohortExpertRole,
+    excludeId?: string,
+  ): Promise<void> {
+    const conflictRole =
+      role === CohortExpertRole.COACH
+        ? CohortExpertRole.JURY
+        : CohortExpertRole.COACH;
+
+    const conflict = await this.prisma.projectExpertAssignment.findFirst({
+      where: {
+        project_id: projectId,
+        expert_user_id: expertUserId,
+        role: conflictRole,
+        status: CohortExpertStatus.ACTIVE,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true },
+    });
+    if (conflict) {
+      throw new BadRequestException(
+        "Un expert ne peut pas être simultanément coach et jury du même projet afin d'éviter un conflit d'intérêts.",
+      );
+    }
   }
 
   private async assertCanViewProjectAssignments(

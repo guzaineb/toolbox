@@ -36,6 +36,7 @@ import { CoachingModule } from './coaching/coaching.module';
 import { FinalDecisionsModule } from './final-decisions/final-decisions.module';
 import { JuriesModule } from './juries/juries.module';
 import { MaturityModule } from './maturity/maturity.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { AiModule } from './ai/ai.module';
 
 @Module({
@@ -77,6 +78,7 @@ import { AiModule } from './ai/ai.module';
     FinalDecisionsModule,
     JuriesModule,
     MaturityModule,
+    DashboardModule,
     AiModule,
   ],
   controllers: [AppController],

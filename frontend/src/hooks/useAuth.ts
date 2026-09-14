@@ -40,9 +40,9 @@ export interface AuthUser {
 
 export const ROLE_ROUTES: Record<string, string> = {
   ADMIN:             '/dashboard',
-  EXPERT:            '/dashboard/expert',
-  PROJECT_OWNER:     '/dashboard/project-owner',
-  INCUBATOR_MEMBER:  '/dashboard/incubator',
+  EXPERT:            '/dashboard',
+  PROJECT_OWNER:     '/dashboard',
+  INCUBATOR_MEMBER:  '/dashboard',
 };
 
 const DEFAULT_ROUTE = '/dashboard';

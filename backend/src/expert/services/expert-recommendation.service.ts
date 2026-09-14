@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ExpertScoringService } from './expert-scoring.service';
+import { ProjectProfileBuilder } from './project-profile-builder.service';
 
 @Injectable()
 export class ExpertRecommendationService {
   constructor(
     private prisma: PrismaService,
     private scoringService: ExpertScoringService,
+    private profileBuilder: ProjectProfileBuilder,
   ) {}
 
   async recommendForProject(
@@ -14,17 +16,29 @@ export class ExpertRecommendationService {
     limit: number = 3,
     options?: { minScore?: number; excludeIds?: string[] },
   ) {
-    const project = await this.getProjectRequirements(projectId);
+    const requirements =
+      await this.profileBuilder.buildProjectRequirements(projectId);
     const experts = await this.getAvailableExperts(options?.excludeIds);
 
     const scored = await Promise.all(
       experts.map(async (expert) => {
         const expertises = expert.expertiseConnections || [];
-        const match = this.scoringService.matchWithProject(expert, expertises, {
-          requiredAreas: project.requiredAreas,
-          minYearsExperience: project.minYearsExperience,
-        });
-        return { expert, score: match.matchPercentage };
+        const match = this.scoringService.matchWithProject(
+          expert,
+          expertises,
+          {
+            requiredAreas: requirements.requiredAreas,
+            minYearsExperience: requirements.minYearsExperience,
+          },
+        );
+        return {
+          expert,
+          score: match.matchPercentage,
+          skillsMatch: match.details.skillsMatch,
+          experienceMatch: match.details.experienceMatch,
+          availability: expert.availability_status,
+          explanation: this.scoringService.buildMatchExplanation(match, expert),
+        };
       }),
     );
 
@@ -34,8 +48,7 @@ export class ExpertRecommendationService {
 
     return filtered
       .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((item) => item.expert);
+      .slice(0, limit);
   }
 
   async recommendCoachs(
@@ -43,20 +56,42 @@ export class ExpertRecommendationService {
     limit: number = 3,
     excludeIds: string[] = [],
   ) {
-    const cohort = await this.getCohortRequirements(cohortId);
+    const cohort = await this.prisma.cohort.findUnique({
+      where: { id: cohortId },
+      select: { name: true, program: true, description: true },
+    });
+    const requirements = await this.profileBuilder.deriveRequirementsFromText(
+      [cohort?.name, cohort?.program, cohort?.description].filter(
+        (v): v is string => !!v,
+      ),
+      undefined,
+    );
     const experts = await this.getAvailableExperts(excludeIds);
 
     const scored = await Promise.all(
       experts.map(async (expert) => {
-        const score = this.scoringService.computeCoachScore(expert);
-        return { expert, score };
+        const match = this.scoringService.matchWithProject(
+          expert,
+          expert.expertiseConnections || [],
+          {
+            requiredAreas: requirements.requiredAreas,
+            minYearsExperience: requirements.minYearsExperience,
+          },
+        );
+        return {
+          expert,
+          score: match.matchPercentage,
+          skillsMatch: match.details.skillsMatch,
+          experienceMatch: match.details.experienceMatch,
+          availability: expert.availability_status,
+          explanation: this.scoringService.buildMatchExplanation(match, expert),
+        };
       }),
     );
 
     return scored
       .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((item) => item.expert);
+      .slice(0, limit);
   }
 
   async getTopExperts(options: {
@@ -114,19 +149,5 @@ export class ExpertRecommendationService {
         expertiseConnections: { include: { expertiseArea: true } },
       },
     });
-  }
-
-  private async getProjectRequirements(projectId: string): Promise<any> {
-    return {
-      requiredAreas: ['area1', 'area2'],
-      minYearsExperience: 3,
-    };
-  }
-
-  private async getCohortRequirements(cohortId: string): Promise<any> {
-    return {
-      requiredAreas: ['mentoring', 'coaching'],
-      minYearsExperience: 5,
-    };
   }
 }

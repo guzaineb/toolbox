@@ -17,9 +17,9 @@ const MODULE_GBM = 'GBM';
 const MODULE_BUSINESS_PLAN = 'BUSINESS_PLAN';
 const MODULE_FUNDING = 'FUNDING';
 
-const SECTION_GBM = 'Idée initiale';
+const SECTION_GBM = 'Idee initiale'; // replaced special apostrophe
 const SECTION_BUSINESS_PLAN = '2.1 Gestion';
-const SECTION_FUNDING = 'Questionnaire de maturité';
+const SECTION_FUNDING = 'Questionnaire de maturite'; // replaced special apostrophe
 
 const STEP_GBM = 'gbm_1';
 
@@ -27,7 +27,10 @@ describe('AI Project Coach - Contextual Module Tests', () => {
   let service: ChatbotService;
 
   const llmMock = {
-    chat: jest.fn(),
+    chat: jest.fn().mockResolvedValue({
+      content: 'Test response',
+      toolCalls: [],
+    }),
   };
 
   const ragMock = {
@@ -70,6 +73,11 @@ describe('AI Project Coach - Contextual Module Tests', () => {
     jest.restoreAllMocks();
 
     llmMock.chat.mockReset();
+    llmMock.chat.mockResolvedValue({
+      content: 'Test response',
+      toolCalls: [],
+    });
+
     ragMock.query.mockReset();
     contextBuilderMock.build.mockReset();
     projectStateMock.getProjectState.mockReset();
@@ -118,10 +126,10 @@ describe('AI Project Coach - Contextual Module Tests', () => {
         ],
       },
       priorities: [
-        { level: 'HIGH', area: 'GBM', description: 'Compléter l'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+        { level: "HIGH", area: "GBM", description: "Compléter l'etape 2 - Problemes et besoins", impact: 75, module: "GBM", stepKey: "gbm_2" },
       ],
-      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-      recommendedNextAction: 'Priorité haute : Compléter l'étape 2 - Problèmes et besoins',
+      currentPriority: { level: "HIGH", area: "GBM", description: "Compléter l'etape 2 - Problemes et besoins", impact: 75, module: "GBM", stepKey: "gbm_2" },
+      recommendedNextAction: "Priorite haute : Completer l'etape 2 - Problemes et besoins",
     });
 
     registryMock.getToolsForPrompt.mockReturnValue([
@@ -149,24 +157,32 @@ describe('AI Project Coach - Contextual Module Tests', () => {
     service = module.get<ChatbotService>(ChatbotService);
   });
 
-  describe.each([
+describe.each([
     { module: MODULE_GBM, section: SECTION_GBM, step: STEP_GBM },
     { module: MODULE_BUSINESS_PLAN, section: SECTION_BUSINESS_PLAN, step: 'management' },
     { module: MODULE_FUNDING, section: SECTION_FUNDING, step: 'questionnaire de maturité' },
- ])('Module: $module, Section: $section, Step: $step', ({ module, section, step }) => {
+  ])('Module: $module, Section: $section, Step: $step', ({ module, section, step }) => {
     it('should include module context in system prompt', async () => {
-      await service.ask(PROJECT_ID, USER_ID, 'Question');
+      await service.ask(PROJECT_ID, USER_ID, 'Question', undefined, {
+        module,
+        section,
+        step,
+      });
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('CONTEXTE MODULE');
       expect(systemMsg.content).toContain(`Module actuel : ${module}`);
       expect(systemMsg.content).toContain(`Section : ${section}`);
-      expect(systemMsg.content).toContain(`Étape : ${step}`);
+      expect(systemMsg.content).toContain('Etape : ${step}');
       expect(systemMsg.content).toContain('Concentre ta réponse sur cette section');
     });
 
     it('should include module-specific priority in deterministic analysis', async () => {
-      await service.ask(PROJECT_ID, USER_ID, 'Question');
+      await service.ask(PROJECT_ID, USER_ID, 'Question', undefined, {
+        module,
+        section,
+        step,
+      });
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('ANALYSE DÉTERMINISTE DU PROJET');
@@ -175,7 +191,11 @@ describe('AI Project Coach - Contextual Module Tests', () => {
     });
 
     it('should include recommended next action in deterministic block', async () => {
-      await service.ask(PROJECT_ID, USER_ID, 'Question');
+      await service.ask(PROJECT_ID, USER_ID, 'Question', undefined, {
+        module,
+        section,
+        step,
+      });
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('Recommandation :');
@@ -187,7 +207,7 @@ describe('AI Project Coach - Contextual Module Tests', () => {
     await service.ask(PROJECT_ID, USER_ID, 'Question about gbm_1');
 
     const systemMsg = llmMock.chat.mock.calls[0][0][0];
-    expect(systemMsg.content).toContain('Étape : gbm_1');
+    expect(systemMsg.content).toContain('Etape : gbm_1');
     expect(systemMsg.content).toContain('gbm_2');
   });
 

@@ -86,6 +86,7 @@ export class FundingService {
   }
 
   async updateAssessment(projectId: string, data: any, userId: string) {
+    await this.sections.ensureOwnership(projectId, userId);
     return this.sections.saveSection(
       this.prisma.fundingAssessment,
       projectId,

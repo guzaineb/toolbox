@@ -3,59 +3,40 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, FolderKanban, ArrowRight, Loader2 } from 'lucide-react'
-import { Button, Card, CardHeader, Progress } from '@/components/shared/ui'
+import { Button, Card, ErrorAlert, Progress } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
-import api from '@/services/api'
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  is_gbm_reviewed?: boolean
-  gbm_reviewed_at?: string
-  created_at: string
-}
+import { projectService } from '@/services/project.service'
+import type { Project } from '@/services/project.service'
 
 export default function ProjectsPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [progresses, setProgresses] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const loadProjects = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
-      const { data } = await api.get('/projects')
-      const projectsList: any[] = Array.isArray(data) ? data : []
-
-      const typedProjects: Project[] = projectsList.map((p: any) => ({
-        id: p.id,
-        name: p.name || 'Projet',
-        description: p.description,
-        is_gbm_reviewed: p.is_gbm_reviewed,
-        gbm_reviewed_at: p.gbm_reviewed_at,
-        created_at: p.created_at,
-      }))
+      const typedProjects = await projectService.list()
 
       setProjects(typedProjects)
 
       const progMap: Record<string, number> = {}
-      await Promise.all(
+      await Promise.allSettled(
         typedProjects.map(async (p) => {
-          try {
-            const prog = await gbmService.getProgress(p.id)
-            progMap[p.id] = prog.percentage
-          } catch {
-            progMap[p.id] = 0
-          }
+          const prog = await gbmService.getProgress(p.id)
+          progMap[p.id] = prog.percentage ?? 0
         }),
       )
       setProgresses(progMap)
     } catch {
-      /* ignore */
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -66,13 +47,14 @@ export default function ProjectsPage() {
   const handleCreate = async () => {
     if (!newName.trim()) return
     setCreating(true)
+    setCreateError(null)
     try {
-      await api.post('/projects', { name: newName })
+      await projectService.create(newName)
       setNewName('')
       setShowCreate(false)
       await loadProjects()
     } catch {
-      /* ignore */
+      setCreateError('Impossible de créer le projet. Veuillez réessayer.')
     } finally {
       setCreating(false)
     }
@@ -98,6 +80,12 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
+      {loadError && (
+        <ErrorAlert message="Impossible de charger vos projets. Réessayez ou vérifiez votre connexion." />
+      )}
+
+      {createError && <ErrorAlert message={createError} />}
+
       {showCreate && (
         <Card className="p-4 border-2 border-moss/30">
           <div className="flex gap-3 items-end">
@@ -119,7 +107,7 @@ export default function ProjectsPage() {
         </Card>
       )}
 
-      {projects.length === 0 && !showCreate && (
+      {projects.length === 0 && !showCreate && !loadError && (
         <Card className="text-center py-14">
           <FolderKanban size={40} className="mx-auto text-ink3 mb-3" />
           <h2 className="text-base font-bold text-ink mb-1">Aucun projet</h2>

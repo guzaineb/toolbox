@@ -661,7 +661,7 @@ describe('ChatbotService (tool loop + memory)', () => {
     it('gracefully falls back when ProjectStateService fails', async () => {
       projectStateMock.getProjectState.mockRejectedValue(new Error('DB timeout'));
 
-      await service.ask(PROJECT_ID, USER_ID, 'question');
+      const result = await service.ask(PROJECT_ID, USER_ID, 'question');
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('analyse déterministe du projet est temporairement indisponible');

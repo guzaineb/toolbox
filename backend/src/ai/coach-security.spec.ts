@@ -18,7 +18,10 @@ describe('AI Project Coach Security - User Isolation', () => {
   let service: ChatbotService;
 
   const llmMock = {
-    chat: jest.fn(),
+    chat: jest.fn().mockResolvedValue({
+      content: 'Test response',
+      toolCalls: [],
+    }),
   };
 
   const ragMock = {

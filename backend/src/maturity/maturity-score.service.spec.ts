@@ -178,7 +178,7 @@ describe('MaturityScoreService', () => {
     );
 
     expect(byName.evaluation.score).toBe(60); // 12/20 → 60
-    expect(byName.gbm.score).toBeCloseTo((11 / 21) * 100, 0);
+    expect(byName.gbm.score).toBeCloseTo((11 / 24) * 100, 0);
     expect(byName.business_plan.score).toBe(25); // 1/4
     expect(byName.market_validation.score).toBeCloseTo(100 / 3, 0); // 1 signal sur 3
     expect(byName.impact.score).toBe(0);

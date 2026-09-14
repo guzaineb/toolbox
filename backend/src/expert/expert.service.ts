@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
-import { ExpertiseArea } from '@prisma/client';
+import { ExpertiseArea, CohortStatus } from '@prisma/client';
 import { ExpertScoringService } from './services/expert-scoring.service';
 import { ExpertRecommendationService } from './services/expert-recommendation.service';
+import { ProjectProfileBuilder } from './services/project-profile-builder.service';
 import { CreateExpertDto } from './dto/create-expert.dto';
 import { ExpertFiltersDto } from './dto/expert-filters.dto';
 import { UpdateExpertDto } from './dto/update-expert.dto';
@@ -26,6 +27,7 @@ export class ExpertService {
     private eventEmitter: EventEmitter2,
     private scoringService: ExpertScoringService,
     private recommendationService: ExpertRecommendationService,
+    private readonly profileBuilder: ProjectProfileBuilder,
     private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
@@ -404,16 +406,95 @@ export class ExpertService {
     return this.recommendationService.recommendForProject(projectId, limit);
   }
 
-  async recommendCoachsForCohort(
-    cohortId: string,
-    limit: number = 3,
-    excludeIds: string[] = [],
-  ) {
+async recommendCoachsForCohort(
+      cohortId: string,
+      limit: number = 3,
+      excludeIds: string[] = [],
+    ) {
     return this.recommendationService.recommendCoachs(
-      cohortId,
-      limit,
-      excludeIds,
-    );
+        cohortId,
+        limit,
+        excludeIds,
+      );
+    }
+
+  /**
+   * Projets candidats au coaching d'un expert : projets appartenant à une
+   * cohorte ouverte ou en cours, scorés vis-à-vis du profil de l'expert.
+   */
+  async findMatchedProjects(userId: string, limit: number = 10) {
+    const expert = await this.findByUserOrFail(userId);
+    const expertises = await this.getExpertiseWithDetails(userId);
+
+    const participations = await this.prisma.cohortParticipation.findMany({
+      where: {
+        cohort: {
+          status: { in: [CohortStatus.OPEN, CohortStatus.IN_PROGRESS] },
+        },
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            context_summary: true,
+            idea_sketch: true,
+            problems_needs: true,
+            funding_assessment: true,
+          },
+        },
+        cohort: { select: { id: true, name: true } },
+      },
+      orderBy: { created_at: 'desc' },
+      take: 100,
+    });
+
+    const seen = new Set<string>();
+    const results: any[] = [];
+
+    for (const participation of participations) {
+      if (seen.has(participation.project_id)) continue;
+      seen.add(participation.project_id);
+
+      const requirements =
+        await this.profileBuilder.deriveProjectRequirements(
+          participation.project,
+        );
+      const match = this.scoringService.matchWithProject(
+        expert,
+        expertises,
+        requirements,
+      );
+
+      results.push({
+        project: {
+          id: participation.project.id,
+          name: participation.project.name,
+          description: participation.project.description,
+        },
+        cohort: participation.cohort
+          ? {
+              id: participation.cohort.id,
+              name: participation.cohort.name,
+            }
+          : null,
+        requirements: {
+          requiredAreas: requirements.requiredAreas,
+          requiredAreaNames: requirements.requiredAreaNames,
+          minYearsExperience: requirements.minYearsExperience,
+        },
+        score: match.matchPercentage,
+        skillsMatch: match.details.skillsMatch,
+        experienceMatch: match.details.experienceMatch,
+        availability: expert.availability_status,
+        explanation: this.scoringService.buildMatchExplanation(match, expert),
+      });
+    }
+
+    return results
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
   }
   private getDefaultInclude(): any {
     return {

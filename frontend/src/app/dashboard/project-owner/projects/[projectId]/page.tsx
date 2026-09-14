@@ -7,6 +7,7 @@ import {
   Target, LineChart, Loader2, ChevronRight, Check, FileText,
   HeartHandshake, ClipboardCheck, Brain,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Card, CardHeader, Badge, Progress, Button } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
 import { businessPlanService } from '@/services/business-plan.service'
@@ -14,21 +15,14 @@ import { ecoDesignService } from '@/services/eco-design.service'
 import { marketService } from '@/services/market.service'
 import { impactService } from '@/services/impact.service'
 import { fundingService } from '@/services/funding.service'
-import api from '@/services/api'
+import { projectService } from '@/services/project.service'
+import type { Project } from '@/services/project.service'
 import { cn } from '@/lib/utils'
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  is_gbm_reviewed?: boolean
-  gbm_reviewed_at?: string
-}
 
 interface ModuleDef {
   key: string
   label: string
-  icon: any
+  icon: LucideIcon
   color: string
   bg: string
   followUp?: boolean
@@ -62,7 +56,7 @@ export default function ProjectDashboardPage() {
     setLoading(true)
     setLoadError(false)
     try {
-      const { data: p } = await api.get(`/projects/${projectId}`)
+      const p = await projectService.get(projectId)
       if (p) setProject(p)
 
       const [gbm, bp, eco, market, impact, funding] = await Promise.allSettled([
@@ -185,7 +179,7 @@ export default function ProjectDashboardPage() {
               </CardHeader>
               <div className="p-4 flex items-center gap-3">
                 {mod.followUp ? (
-                  <span className="text-xs text-ink3">Suivi par l'incubateur et les experts</span>
+                  <span className="text-xs text-ink3">Suivi par l&apos;incubateur et les experts</span>
                 ) : mod.key === 'documents' ? (
                   <span className="text-xs font-bold text-moss flex-shrink-0">—</span>
                 ) : (

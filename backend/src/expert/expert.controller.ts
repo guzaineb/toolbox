@@ -115,6 +115,17 @@ export class ExpertController {
     return this.service.computeExpertScore(req.user.id);
   }
 
+  @Get('me/projects/matched')
+  getMatchedProjects(
+    @Req() req: { user: { id: string } },
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.findMatchedProjects(
+      req.user.id,
+      limit ? parseInt(limit) : 10,
+    );
+  }
+
   @Post('me/match-project')
   matchWithProject(
     @Req() req: { user: { id: string } },

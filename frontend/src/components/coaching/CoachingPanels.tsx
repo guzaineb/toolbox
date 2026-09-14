@@ -98,7 +98,7 @@ export function AddSessionModal({
           </Field>
           <div className="flex gap-3 mt-6">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>
-            <Button variant="primary" className="flex-1" loading={loading} onClick={handleSubmit}>CrÃ©er</Button>
+            <Button variant="primary" className="flex-1" loading={loading} onClick={handleSubmit}>Créer</Button>
           </div>
         </div>
       </Card>
@@ -106,9 +106,9 @@ export function AddSessionModal({
   )
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    MODALE : TERMINER UNE SESSION
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 export function CompleteSessionModal({
   session, onClose, onSuccess,
 }: {
@@ -141,7 +141,7 @@ export function CompleteSessionModal({
         <div className="p-6">
           {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
           <Field label="Compte-rendu">
-            <Textarea value={report} onChange={(e) => setReport(e.target.value)} rows={5} placeholder="Points abordÃ©s, dÃ©cisions, prochaines Ã©tapes..." />
+            <Textarea value={report} onChange={(e) => setReport(e.target.value)} rows={5} placeholder="Points abordés, décisions, prochaines étapes..." />
           </Field>
           <div className="flex gap-3 mt-6">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>
@@ -153,9 +153,9 @@ export function CompleteSessionModal({
   )
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    MODALE : NOUVELLE ACTION
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 export function AddActionModal({
   projectId, onClose, onSuccess,
 }: {
@@ -192,7 +192,7 @@ export function AddActionModal({
       onSuccess()
       onClose()
     } catch (err) {
-      setError(apiError(err, "Erreur lors de la crÃ©ation de l'action"))
+      setError(apiError(err, "Erreur lors de la création de l'action"))
     } finally {
       setLoading(false)
     }
@@ -242,9 +242,9 @@ export function AddActionModal({
   )
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    MODALE : NOUVELLE RECOMMANDATION
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 export function AddRecommendationModal({
   projectId, onClose, onSuccess,
 }: {
@@ -264,7 +264,7 @@ export function AddRecommendationModal({
       onSuccess()
       onClose()
     } catch (err) {
-      setError(apiError(err, 'Erreur lors de la crÃ©ation de la recommandation'))
+      setError(apiError(err, 'Erreur lors de la création de la recommandation'))
     } finally {
       setLoading(false)
     }
@@ -290,7 +290,7 @@ export function AddRecommendationModal({
           </Field>
           <div className="flex gap-3 mt-6">
             <Button className="flex-1" onClick={onClose}>Annuler</Button>
-            <Button variant="primary" className="flex-1" loading={loading} onClick={handleSubmit}>CrÃ©er</Button>
+            <Button variant="primary" className="flex-1" loading={loading} onClick={handleSubmit}>Créer</Button>
           </div>
         </div>
       </Card>
@@ -298,9 +298,9 @@ export function AddRecommendationModal({
   )
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    PANNEAU : SESSIONS
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 export function SessionsPanel({
   projectId, sessions, canManage, onRefresh, sessionHref,
 }: {
@@ -431,9 +431,9 @@ export function SessionsPanel({
   )
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    PANNEAU : ACTIONS
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 export function ActionsPanel({
   projectId, actions, canManage, onRefresh, isOwner,
 }: {
@@ -475,7 +475,7 @@ export function ActionsPanel({
       {actions.length === 0 ? (
         <Card className="text-center py-8">
           <ListTodo size={24} className="mx-auto text-ink3 mb-2" />
-          <p className="text-[12px] text-ink3">Aucune action dÃ©finie</p>
+          <p className="text-[12px] text-ink3">Aucune action définie</p>
         </Card>
       ) : (
         actions.map((a) => (
@@ -679,9 +679,9 @@ function OwnerActionRow({
   )
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    PANNEAU : RECOMMANDATIONS
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 export function RecommendationsPanel({
   projectId, recommendations, canManage, onRefresh,
 }: {
@@ -738,7 +738,7 @@ export function RecommendationsPanel({
               </div>
               {canManage && r.status !== 'DONE' && (
                 <Button size="sm" variant="outline" onClick={() => updateStatus(r.id, 'DONE')}>
-                  Marquer rÃ©alisÃ©e
+                  Marquer Réalisée
                 </Button>
               )}
             </div>
