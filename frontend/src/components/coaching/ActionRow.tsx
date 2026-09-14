@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Lightbulb, Paperclip, Plus, ShieldCheck } from 'lucide-react'
+import { Lightbulb, MessageSquare, Paperclip, Plus, ShieldCheck } from 'lucide-react'
 import { Badge, Button, Card, ErrorAlert, Field, Input, Select, Textarea } from '@/components/shared/ui'
 import { ACTION_STATUS_COLORS, ACTION_STATUS_LABELS, PRIORITY_LABELS } from '@/types/coaching'
 import type { ActionEvidence, CoachingAction, CoachingActionStatus, EvidenceType } from '@/types/coaching'
@@ -9,6 +9,7 @@ import { apiError, formatDate } from '@/lib/utils'
 import {
   useActionEvidences, useAddEvidence, useReviewEvidence, useUpdateAction,
 } from '@/hooks/useCoaching'
+import { ActionComments } from './ActionComments'
 
 export type ActionRowMode = 'owner' | 'coach'
 
@@ -43,6 +44,7 @@ export function ActionRow({
   const isCoach = mode === 'coach'
 
   const [open, setOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const { data: evidences } = useActionEvidences(action.id, open)
   const updateActionMutation = useUpdateAction(action.project_id)
   const addEvidenceMutation = useAddEvidence(action.project_id)
@@ -182,12 +184,20 @@ export function ActionRow({
       </div>
       {action.description && <p className="text-[11px] text-ink2">{action.description}</p>}
       {error && <ErrorAlert message={error} />}
-      <button
-        onClick={() => setOpen((next) => !next)}
-        className="flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors cursor-pointer"
-      >
-        <Paperclip size={11} /> Preuves ({evidences?.length ?? '…'})
-      </button>
+      <div className="flex items-center gap-4 flex-wrap">
+        <button
+          onClick={() => setOpen((next) => !next)}
+          className="flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors cursor-pointer"
+        >
+          <Paperclip size={11} /> Preuves ({evidences?.length ?? '…'})
+        </button>
+        <button
+          onClick={() => setCommentsOpen((next) => !next)}
+          className="flex items-center gap-1 text-[11px] text-ink3 hover:text-moss transition-colors cursor-pointer"
+        >
+          <MessageSquare size={11} /> Commentaires
+        </button>
+      </div>
       {open && (
         <div className="space-y-2 pt-1">
           {isOwner && canSubmitEvidence && (
@@ -269,6 +279,7 @@ export function ActionRow({
           )}
         </div>
       )}
+      {commentsOpen && <ActionComments actionId={action.id} />}
     </Card>
   )
 }
