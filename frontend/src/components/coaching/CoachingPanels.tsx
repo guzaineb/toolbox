@@ -7,15 +7,19 @@ import {
   ExternalLink, Paperclip,
 } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ErrorAlert, Field, Input, Select, Textarea } from '@/components/shared/ui'
-import { coachingService } from '@/services/coaching.service'
 import {
-  CoachingSession, CoachingAction, CoachingRecommendation, ActionEvidence,
+  CoachingSession, CoachingAction, CoachingRecommendation,
   COACHING_SESSION_STATUS_LABELS, COACHING_SESSION_STATUS_COLORS,
   ACTION_STATUS_LABELS, ACTION_STATUS_COLORS,
   PRIORITY_LABELS, RECOMMENDATION_STATUS_LABELS,
   CoachingActionStatus,
 } from '@/types/coaching'
 import { apiError, formatDate, formatDateTime } from '@/lib/utils'
+import {
+  useCreateSession, useCompleteSession, useCreateAction, useCreateRecommendation,
+  useSessionComments, useAddSessionComment, useUpdateAction, useActionEvidences,
+  useAddEvidence, useUpdateRecommendation,
+} from '@/hooks/useCoaching'
 import { aiAnalysisService } from '@/services/ai-analysis.service'
 import { ImprovementPlan } from '@/types/ai-analysis'
 
@@ -35,9 +39,9 @@ const SESSION_TYPE_OPTIONS = [
    MODALE : NOUVELLE SESSION
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export function AddSessionModal({
-  projectId, onClose, onSuccess,
+  projectId, onClose,
 }: {
-  projectId: string; onClose: () => void; onSuccess: () => void
+  projectId: string; onClose: () => void
 }) {
   const [scheduledAt, setScheduledAt] = useState('')
   const [duration, setDuration] = useState('60')
@@ -46,20 +50,20 @@ export function AddSessionModal({
   const [objective, setObjective] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const createSession = useCreateSession(projectId)
 
   const handleSubmit = async () => {
     if (!scheduledAt) { setError('La date de la session est requise'); return }
     setError(null)
     setLoading(true)
     try {
-      await coachingService.createSession(projectId, {
+      await createSession.mutateAsync({
         title: title || undefined,
         sessionType: sessionType || undefined,
         objective: objective || undefined,
         scheduledAt: new Date(scheduledAt).toISOString(),
         durationMinutes: parseInt(duration, 10) || undefined,
       })
-      onSuccess()
       onClose()
     } catch (err) {
       setError(apiError(err, 'Erreur lors de la crÃ©ation de la session'))
@@ -110,20 +114,24 @@ export function AddSessionModal({
    MODALE : TERMINER UNE SESSION
  */
 export function CompleteSessionModal({
-  session, onClose, onSuccess,
+  session, projectId, onClose,
 }: {
-  session: CoachingSession; onClose: () => void; onSuccess: () => void
+  session: CoachingSession; projectId: string; onClose: () => void
 }) {
   const [report, setReport] = useState(session.report || '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const completeSession = useCompleteSession()
 
   const handleSubmit = async () => {
     setError(null)
     setLoading(true)
     try {
-      await coachingService.completeSession(session.id, report || undefined)
-      onSuccess()
+      await completeSession.mutateAsync({
+        projectId,
+        sessionId: session.id,
+        report: report || undefined,
+      })
       onClose()
     } catch (err) {
       setError(apiError(err, 'Erreur lors de la clÃ´ture de la session'))
@@ -157,9 +165,9 @@ export function CompleteSessionModal({
    MODALE : NOUVELLE ACTION
  */
 export function AddActionModal({
-  projectId, onClose, onSuccess,
+  projectId, onClose,
 }: {
-  projectId: string; onClose: () => void; onSuccess: () => void
+  projectId: string; onClose: () => void
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -169,6 +177,7 @@ export function AddActionModal({
   const [plans, setPlans] = useState<ImprovementPlan[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const createAction = useCreateAction(projectId)
 
   useEffect(() => {
     aiAnalysisService
@@ -182,14 +191,13 @@ export function AddActionModal({
     setError(null)
     setLoading(true)
     try {
-      await coachingService.createAction(projectId, {
+      await createAction.mutateAsync({
         title: title.trim(),
         description: description || undefined,
         priority,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
         objectiveId: objectiveId || undefined,
       })
-      onSuccess()
       onClose()
     } catch (err) {
       setError(apiError(err, "Erreur lors de la création de l'action"))
@@ -246,22 +254,22 @@ export function AddActionModal({
    MODALE : NOUVELLE RECOMMANDATION
  */
 export function AddRecommendationModal({
-  projectId, onClose, onSuccess,
+  projectId, onClose,
 }: {
-  projectId: string; onClose: () => void; onSuccess: () => void
+  projectId: string; onClose: () => void
 }) {
   const [content, setContent] = useState('')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const createRecommendation = useCreateRecommendation(projectId)
 
   const handleSubmit = async () => {
     if (!content.trim()) { setError('Le contenu de la recommandation est requis'); return }
     setError(null)
     setLoading(true)
     try {
-      await coachingService.createRecommendation(projectId, { content: content.trim(), priority })
-      onSuccess()
+      await createRecommendation.mutateAsync({ content: content.trim(), priority })
       onClose()
     } catch (err) {
       setError(apiError(err, 'Erreur lors de la création de la recommandation'))
@@ -302,39 +310,30 @@ export function AddRecommendationModal({
    PANNEAU : SESSIONS
  */
 export function SessionsPanel({
-  projectId, sessions, canManage, onRefresh, sessionHref,
+  projectId, sessions, canManage, sessionHref,
 }: {
-  projectId: string; sessions: CoachingSession[]; canManage: boolean; onRefresh: () => void
+  projectId: string; sessions: CoachingSession[]; canManage: boolean
   /** Si fourni, chaque session devient ouvrable dans son workspace (ex. coach). */
   sessionHref?: (sessionId: string) => string
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [completing, setCompleting] = useState<CoachingSession | null>(null)
   const [openComments, setOpenComments] = useState<string | null>(null)
-  const [comments, setComments] = useState<Record<string, Array<{ id: string; content: string; created_at: string; author?: { profile?: { first_name?: string; last_name?: string } } }>>>({})
   const [commentText, setCommentText] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const commentsQuery = useSessionComments(openComments ?? '', !!openComments)
+  const addCommentMutation = useAddSessionComment(openComments ?? '')
 
-  const loadComments = async (sessionId: string) => {
-    try {
-      const data = await coachingService.getSessionComments(sessionId)
-      setComments((prev) => ({ ...prev, [sessionId]: data }))
-    } catch { /* ignore */ }
+  const toggleComments = (sessionId: string) => {
+    setOpenComments((current) => (current === sessionId ? null : sessionId))
   }
 
-  const toggleComments = async (sessionId: string) => {
-    if (openComments === sessionId) { setOpenComments(null); return }
-    setOpenComments(sessionId)
-    await loadComments(sessionId)
-  }
-
-  const addComment = async (sessionId: string) => {
+  const addComment = async () => {
     if (!commentText.trim()) return
     setError(null)
     try {
-      await coachingService.addSessionComment(sessionId, { content: commentText.trim() })
+      await addCommentMutation.mutateAsync({ content: commentText.trim() })
       setCommentText('')
-      await loadComments(sessionId)
     } catch (err) {
       setError(apiError(err, 'Erreur lors de lâ€™ajout du commentaire'))
     }
@@ -342,8 +341,8 @@ export function SessionsPanel({
 
   return (
     <div className="space-y-[8px]">
-      {showCreate && <AddSessionModal projectId={projectId} onClose={() => setShowCreate(false)} onSuccess={onRefresh} />}
-      {completing && <CompleteSessionModal session={completing} onClose={() => setCompleting(null)} onSuccess={onRefresh} />}
+      {showCreate && <AddSessionModal projectId={projectId} onClose={() => setShowCreate(false)} />}
+      {completing && <CompleteSessionModal session={completing} projectId={projectId} onClose={() => setCompleting(null)} />}
       {error && <div className="mb-2"><ErrorAlert message={error} /></div>}
 
       <div className="flex items-center justify-between">
@@ -405,7 +404,7 @@ export function SessionsPanel({
             </div>
             {openComments === s.id && (
               <div className="mt-2 border-t border-border pt-2 space-y-2">
-                {(comments[s.id] || []).map((c) => (
+                {(commentsQuery.data ?? []).map((c) => (
                   <div key={c.id} className="text-[12px] text-ink2 bg-surface rounded-lg p-2">
                     <span className="font-semibold text-ink3">
                       {c.author?.profile ? `${c.author.profile.first_name} ${c.author.profile.last_name}` : '—'} · {formatDate(c.created_at)}
@@ -418,9 +417,9 @@ export function SessionsPanel({
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Ajouter un commentaire..."
-                    onKeyDown={(e) => { if (e.key === 'Enter') addComment(s.id) }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') addComment() }}
                   />
-                  <Button size="sm" onClick={() => addComment(s.id)}>Envoyer</Button>
+                  <Button size="sm" onClick={addComment}>Envoyer</Button>
                 </div>
               </div>
             )}
@@ -435,32 +434,32 @@ export function SessionsPanel({
    PANNEAU : ACTIONS
  */
 export function ActionsPanel({
-  projectId, actions, canManage, onRefresh, isOwner,
+  projectId, actions, canManage, isOwner,
 }: {
-  projectId: string; actions: CoachingAction[]; canManage: boolean; onRefresh: () => void
+  projectId: string; actions: CoachingAction[]; canManage: boolean
   /** Porteur du projet : peut suivre ses actions et soumettre des preuves. */
   isOwner?: boolean
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const updateAction = useUpdateAction(projectId)
 
   const updateStatus = async (id: string, status: string) => {
     setUpdating(true)
     setError(null)
     try {
-      await coachingService.updateAction(id, { status })
-      onRefresh()
+      await updateAction.mutateAsync({ actionId: id, dto: { status } })
     } catch (err) {
-      setError(apiError(err, 'Erreur lors de la mise Ã  jour'))
+      setError(apiError(err, 'Erreur lors de la mise Ã  jour'))
     } finally {
-      setUpdating(false)
+setUpdating(false)
     }
   }
 
   return (
     <div className="space-y-[8px]">
-      {showCreate && <AddActionModal projectId={projectId} onClose={() => setShowCreate(false)} onSuccess={onRefresh} />}
+      {showCreate && <AddActionModal projectId={projectId} onClose={() => setShowCreate(false)} />}
       {error && <div className="mb-2"><ErrorAlert message={error} /></div>}
 
       <div className="flex items-center justify-between">
@@ -486,7 +485,6 @@ export function ActionsPanel({
             isOwner={!!isOwner}
             updating={updating}
             onStatusChange={(status) => updateStatus(a.id, status)}
-            onChanged={onRefresh}
             onError={setError}
           />
         ))
@@ -501,18 +499,18 @@ export function ActionsPanel({
  * que le coach valide ou rejette ensuite.
  */
 function OwnerActionRow({
-  action, canManage, isOwner, updating, onStatusChange, onChanged, onError,
+  action, canManage, isOwner, updating, onStatusChange, onError,
 }: {
   action: CoachingAction
   canManage: boolean
   isOwner: boolean
   updating: boolean
   onStatusChange: (status: string) => void
-  onChanged: () => void
   onError: (message: string | null) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [evidences, setEvidences] = useState<ActionEvidence[] | null>(null)
+  const { data: evidences } = useActionEvidences(action.id, open)
+  const addEvidenceMutation = useAddEvidence(action.project_id)
   const [showForm, setShowForm] = useState(false)
   const [type, setType] = useState<'LINK' | 'TEXT' | 'DOCUMENT' | 'RESULT'>('LINK')
   const [evTitle, setEvTitle] = useState('')
@@ -524,34 +522,24 @@ function OwnerActionRow({
   const OWNER_STATUSES: CoachingActionStatus[] = ['PENDING', 'IN_PROGRESS', 'SUBMITTED']
   const evidenceAllowed = action.status !== 'COMPLETED' && action.status !== 'CANCELLED'
 
-  const loadEvidences = async () => {
-    try {
-      const list = await coachingService.getEvidences(action.id)
-      setEvidences(list)
-    } catch {
-      setEvidences([])
-    }
-  }
-
-  const toggle = async () => {
-    const next = !open
-    setOpen(next)
-    if (next && evidences === null) await loadEvidences()
+  const toggle = () => {
+    setOpen((next) => !next)
   }
 
   const submitEvidence = async () => {
     onError(null)
     setSubmitting(true)
     try {
-      await coachingService.addEvidence(action.id, {
-        type,
-        title: evTitle || undefined,
-        content: content || undefined,
-        url: url || undefined,
+      await addEvidenceMutation.mutateAsync({
+        actionId: action.id,
+        dto: {
+          type,
+          title: evTitle || undefined,
+          content: content || undefined,
+          url: url || undefined,
+        },
       })
       setEvTitle(''); setContent(''); setUrl(''); setShowForm(false)
-      await loadEvidences()
-      onChanged()
     } catch (err) {
       onError(apiError(err, "La soumission de la preuve a échoué"))
     } finally {
@@ -668,7 +656,7 @@ function OwnerActionRow({
                   {ev.coach_comment && <p className="text-[11px] text-ink3 italic">{ev.coach_comment}</p>}
                 </div>
               ))}
-              {evidences !== null && evidences.length === 0 && (
+              {evidences && evidences.length === 0 && (
                 <p className="text-[11px] text-ink3">Aucune preuve pour le moment.</p>
               )}
             </div>
@@ -683,26 +671,26 @@ function OwnerActionRow({
    PANNEAU : RECOMMANDATIONS
  */
 export function RecommendationsPanel({
-  projectId, recommendations, canManage, onRefresh,
+  projectId, recommendations, canManage,
 }: {
-  projectId: string; recommendations: CoachingRecommendation[]; canManage: boolean; onRefresh: () => void
+  projectId: string; recommendations: CoachingRecommendation[]; canManage: boolean
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const updateRecommendation = useUpdateRecommendation(projectId)
 
   const updateStatus = async (id: string, status: string) => {
     setError(null)
     try {
-      await coachingService.updateRecommendation(id, { status })
-      onRefresh()
+      await updateRecommendation.mutateAsync({ recommendationId: id, dto: { status } })
     } catch (err) {
-      setError(apiError(err, 'Erreur lors de la mise Ã  jour'))
+      setError(apiError(err, 'Erreur lors de la mise Ã  jour'))
     }
   }
 
   return (
     <div className="space-y-[8px]">
-      {showCreate && <AddRecommendationModal projectId={projectId} onClose={() => setShowCreate(false)} onSuccess={onRefresh} />}
+      {showCreate && <AddRecommendationModal projectId={projectId} onClose={() => setShowCreate(false)} />}
       {error && <div className="mb-2"><ErrorAlert message={error} /></div>}
 
       <div className="flex items-center justify-between">

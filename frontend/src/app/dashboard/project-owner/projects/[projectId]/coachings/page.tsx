@@ -1,36 +1,23 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, HeartHandshake, Bot, Target, CalendarClock } from 'lucide-react'
-import { Card } from '@/components/shared/ui'
-import { coachingService } from '@/services/coaching.service'
+import { Card, ErrorAlert } from '@/components/shared/ui'
 import { SessionsPanel, ActionsPanel, RecommendationsPanel } from '@/components/coaching/CoachingPanels'
 import { MaturityCard } from '@/components/coaching/MaturityCard'
 import { ImprovementPlanPanel } from '@/components/coaching/ImprovementPlanPanel'
 import { GbmChatbot } from '@/components/gbm/GbmChatbot'
-import { CoachingOverview, ASSIGNMENT_ROLE_LABELS } from '@/types/coaching'
+import { useProjectCoachingOverview } from '@/hooks/useCoaching'
+import { apiError } from '@/lib/utils'
 
 export default function ProjectCoachingPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.projectId as string
 
-  const [overview, setOverview] = useState<CoachingOverview | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: overview, isLoading, error } = useProjectCoachingOverview(projectId)
 
-  const fetchOverview = useCallback(() => {
-    if (!projectId) return
-    setLoading(true)
-    coachingService
-      .getProjectCoachingOverview(projectId)
-      .then(setOverview)
-      .finally(() => setLoading(false))
-  }, [projectId])
-
-  useEffect(() => { fetchOverview() }, [fetchOverview])
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-8 max-w-6xl mx-auto">
         <div className="animate-pulse space-y-4">
@@ -67,6 +54,8 @@ export default function ProjectCoachingPage() {
           )}
         </div>
       </div>
+
+      {error && <ErrorAlert message={apiError(error, 'Erreur de chargement du suivi coaching')} />}
 
       {overview && (
         <>
@@ -109,7 +98,7 @@ export default function ProjectCoachingPage() {
 
           <Card className="overflow-hidden">
             <div className="px-[18px] py-[13px] border-b border-border bg-surface-2 font-syne text-[13px] font-bold text-ink flex items-center gap-2">
-              <Target size={14} className="text-moss" /> Plan d'amélioration & objectifs
+              <Target size={14} className="text-moss" /> Plan d’amélioration & objectifs
             </div>
             <div className="p-[18px]">
               <ImprovementPlanPanel projectId={projectId} canManage={false} />
@@ -121,7 +110,7 @@ export default function ProjectCoachingPage() {
               Sessions de coaching
             </div>
             <div className="p-[18px]">
-              <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage={false} onRefresh={fetchOverview} sessionHref={(id) => `/dashboard/project-owner/projects/${projectId}/coachings/sessions/${id}`} />
+              <SessionsPanel projectId={projectId} sessions={overview.sessions} canManage={false} sessionHref={(id) => `/dashboard/project-owner/projects/${projectId}/coachings/sessions/${id}`} />
             </div>
           </Card>
 
@@ -130,7 +119,7 @@ export default function ProjectCoachingPage() {
               Mes actions — soumettez vos preuves de réalisation
             </div>
             <div className="p-[18px]">
-              <ActionsPanel projectId={projectId} actions={overview.actions} canManage={false} isOwner onRefresh={fetchOverview} />
+              <ActionsPanel projectId={projectId} actions={overview.actions} canManage={false} isOwner />
             </div>
           </Card>
 
@@ -139,7 +128,7 @@ export default function ProjectCoachingPage() {
               Recommandations du coach
             </div>
             <div className="p-[18px]">
-              <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage={false} onRefresh={fetchOverview} />
+              <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage={false} />
             </div>
           </Card>
         </>

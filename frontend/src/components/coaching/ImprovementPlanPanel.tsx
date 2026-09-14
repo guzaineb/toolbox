@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { ClipboardList, Sparkles, ShieldCheck, CheckCircle2, Circle } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ErrorAlert, LoadingState } from '@/components/shared/ui'
 import { aiAnalysisService } from '@/services/ai-analysis.service'
-import { coachingService } from '@/services/coaching.service'
 import { cohortService } from '@/services/cohort.service'
-import { CoachingAction, ACTION_STATUS_LABELS } from '@/types/coaching'
+import { ACTION_STATUS_LABELS } from '@/types/coaching'
+import { useProjectActions } from '@/hooks/useCoaching'
 import {
   IMPROVEMENT_PLAN_STATUS_LABELS,
   ImprovementObjective,
@@ -26,21 +26,17 @@ type Props = {
  */
 export function ImprovementPlanPanel({ projectId, canManage }: Props) {
   const [plans, setPlans] = useState<ImprovementPlan[]>([])
-  const [actions, setActions] = useState<CoachingAction[]>([])
+  const { data: projectActions } = useProjectActions(projectId)
+  const actions = projectActions ?? []
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
-    Promise.all([
-      aiAnalysisService.getProjectPlans(projectId),
-      coachingService.getProjectActions(projectId).catch(() => [] as CoachingAction[]),
-    ])
-      .then(([list, acts]) => {
-        setPlans(list)
-        setActions(acts)
-      })
+    aiAnalysisService
+      .getProjectPlans(projectId)
+      .then(setPlans)
       .catch((err: { response?: { data?: { message?: string } } }) =>
         setError(err?.response?.data?.message ?? 'Erreur de chargement'),
       )

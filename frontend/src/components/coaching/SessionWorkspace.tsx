@@ -11,24 +11,28 @@ import {
   Badge, Button, Card, CardHeader, ErrorAlert, Field, Input,
   Select, TabNav, Textarea,
 } from '@/components/shared/ui'
-import { coachingService } from '@/services/coaching.service'
 import { documentsService } from '@/services/documents.service'
 import { gbmService } from '@/services/gbm.service'
 import { MaturityCard } from '@/components/coaching/MaturityCard'
 import { DeliverablesPanel } from '@/components/coaching/DeliverablesPanel'
 import { useAuth } from '@/hooks/useAuth'
 import {
-  CoachingSession, CoachingAction, CoachingRecommendation, ActionEvidence,
+  CoachingSession, CoachingAction, CoachingRecommendation,
   COACHING_SESSION_STATUS_LABELS, COACHING_SESSION_STATUS_COLORS,
   ACTION_STATUS_LABELS, ACTION_STATUS_COLORS, PRIORITY_LABELS,
   OBJECTIVE_RESULT_LABELS, OBJECTIVE_RESULT_COLORS,
   SessionObjectiveResult, SessionBlocker,
 } from '@/types/coaching'
-import type { ProjectAssignment } from '@/types/coaching'
 import type { GeneratedDocument } from '@/services/documents.service'
 import type { GbmProgress } from '@/types/gbm'
 import { CoachingBriefPayload, SessionSummaryPayload } from '@/types/ai-analysis'
 import { apiError, formatDate, formatDateTime } from '@/lib/utils'
+import {
+  useCoachingSession, useProjectActions, useProjectRecommendations, useProjectSessions,
+  useProjectAssignments, useUpdateSession, useStartSession, useCompleteSession,
+  useCreateAction, useUpdateAction, useCreateRecommendation, useReviewEvidence,
+  useActionEvidences, useAiSessionBrief, useAiSessionSummary,
+} from '@/hooks/useCoaching'
 
 function newBlockerId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -78,15 +82,34 @@ export function SessionWorkspace({
   backToCoachingHref?: string
 }) {
   const { user } = useAuth()
-  const [session, setSession] = useState<CoachingSession | null>(null)
-  const [actions, setActions] = useState<CoachingAction[]>([])
-  const [recommendations, setRecommendations] = useState<CoachingRecommendation[]>([])
-  const [assignments, setAssignments] = useState<ProjectAssignment[]>([])
+  const { data: session, isLoading, error: sessionError } = useCoachingSession(sessionId)
+  const { data: projectActions } = useProjectActions(projectId)
+  const { data: projectRecommendations } = useProjectRecommendations(projectId)
+  const { data: projectSessions } = useProjectSessions(projectId)
+  const { data: projectAssignments } = useProjectAssignments(projectId)
   const [documents, setDocuments] = useState<GeneratedDocument[]>([])
-  const [allSessions, setAllSessions] = useState<CoachingSession[]>([])
   const [progress, setProgress] = useState<GbmProgress | null>(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const loading = isLoading
+
+  const updateSession = useUpdateSession()
+  const startSessionMutation = useStartSession()
+  const completeSessionMutation = useCompleteSession()
+  const briefMutation = useAiSessionBrief(sessionId)
+  const summaryMutation = useAiSessionSummary(sessionId)
+
+  const actions = useMemo(
+    () => (projectActions ?? []).filter((a) => a.session?.id === sessionId),
+    [projectActions, sessionId],
+  )
+  const recommendations = useMemo(
+    () => (projectRecommendations ?? []).filter((r) => r.session_id === sessionId),
+    [projectRecommendations, sessionId],
+  )
+  const allSessions = useMemo(() => projectSessions ?? [], [projectSessions])
+  const assignments = useMemo(() => projectAssignments ?? [], [projectAssignments])
+
+  const loadError = sessionError ? apiError(sessionError, 'Erreur de chargement de la session') : error
 
   const canManage =
     !!session && !!user && session.assignment?.expert_user_id === user.id
@@ -118,13 +141,6 @@ export function SessionWorkspace({
   const setField = <K extends keyof SessionDraft>(key: K, value: SessionDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }))
 
-  const loadActions = useCallback(() => {
-    coachingService
-      .getProjectActions(projectId)
-      .then((all) => setActions(all.filter((a) => a.session?.id === sessionId)))
-      .catch(() => undefined)
-  }, [projectId, sessionId])
-
   const sessionToDraft = useCallback((s: CoachingSession): SessionDraft => ({
     objective: s.objective ?? '',
     notes: s.notes ?? '',
@@ -138,43 +154,29 @@ export function SessionWorkspace({
     blockers: Array.isArray(s.blockers) ? s.blockers.map((b) => ({ ...b })) : [],
   }), [])
 
+  // Livrables + progression GBM restent chargés manuellement (hors périmètre coaching).
   useEffect(() => {
-    if (!sessionId) return
+    if (!projectId) return
     let cancelled = false
-    setLoading(true)
-    ;(async () => {
-      try {
-        const s = await coachingService.getSession(sessionId)
-        if (cancelled) return
-        setSession(s)
-        baselineRef.current = JSON.stringify(sessionToDraft(s))
-        setDraft(sessionToDraft(s))
-        const [all, recs, sess] = await Promise.all([
-          coachingService.getProjectActions(projectId),
-          coachingService.getProjectRecommendations(projectId).catch(() => []),
-          coachingService.getProjectSessions(projectId).catch(() => []),
-        ])
-        if (cancelled) return
-        setActions(all.filter((a) => a.session?.id === sessionId))
-        setRecommendations(recs.filter((r) => r.session_id === sessionId))
-        setAllSessions(sess)
-        const [docs, prog, asg] = await Promise.all([
-          documentsService.getDocumentsList(projectId).catch(() => []),
-          gbmService.getProgress(projectId).catch(() => null),
-          coachingService.getProjectAssignments(projectId).catch(() => []),
-        ])
-        if (cancelled) return
-        setDocuments(docs)
-        setProgress(prog)
-        setAssignments(asg)
-      } catch (err) {
-        if (!cancelled) setError(apiError(err, 'Erreur de chargement de la session'))
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
+    documentsService
+      .getDocumentsList(projectId)
+      .then((docs) => { if (!cancelled) setDocuments(docs) })
+      .catch(() => undefined)
+    gbmService
+      .getProgress(projectId)
+      .then((p) => { if (!cancelled) setProgress(p) })
+      .catch(() => undefined)
     return () => { cancelled = true }
-  }, [projectId, sessionId, sessionToDraft])
+  }, [projectId])
+
+  // Synchronise le brouillon éditable depuis la session (chargement + mises à jour après sauvegarde).
+  useEffect(() => {
+    if (!session) return
+    const serialized = JSON.stringify(sessionToDraft(session))
+    if (baselineRef.current === serialized) return
+    baselineRef.current = serialized
+    setDraft(sessionToDraft(session))
+  }, [session, sessionToDraft])
 
   /** Payload des champs réellement modifiés (envoyé au PATCH). */
   const buildPayload = (): Record<string, unknown> => {
@@ -205,10 +207,7 @@ export function SessionWorkspace({
     setSaving(true)
     setError(null)
     try {
-      const updated = await coachingService.updateSession(sessionId, payload)
-      setSession(updated)
-      baselineRef.current = JSON.stringify(sessionToDraft(updated))
-      setDraft(sessionToDraft(updated))
+      await updateSession.mutateAsync({ projectId, sessionId, dto: payload })
       setSavedFlash(true)
       setTimeout(() => setSavedFlash(false), 2500)
       return true
@@ -224,7 +223,7 @@ export function SessionWorkspace({
     setError(null)
     setBriefLoading(true)
     try {
-      const res = await coachingService.aiSessionBrief(sessionId)
+      const res = await briefMutation.mutateAsync()
       if (res.success && res.data) setBrief(res.data)
       else setError('Le brief IA est indisponible pour le moment (service IA ou données insuffisantes).')
     } catch (err) {
@@ -245,7 +244,7 @@ export function SessionWorkspace({
     setError(null)
     setSummaryLoading(true)
     try {
-      const res = await coachingService.aiSessionSummary(sessionId)
+      const res = await summaryMutation.mutateAsync()
       const data = res.data as SessionSummaryPayload | null
       if (res.success && data) {
         // Proposition affichée dans les champs éditables : rien n'est sauvegardé sans validation du coach
@@ -264,9 +263,7 @@ export function SessionWorkspace({
   const startSession = async () => {
     setError(null)
     try {
-      const updated = await coachingService.startSession(sessionId)
-      setSession(updated)
-      baselineRef.current = JSON.stringify(sessionToDraft(updated))
+      await startSessionMutation.mutateAsync({ projectId, sessionId })
     } catch (err) {
       setError(apiError(err, 'Le démarrage de la session a échoué'))
     }
@@ -277,9 +274,7 @@ export function SessionWorkspace({
     const ok = await save()
     if (!ok) return
     try {
-      const updated = await coachingService.completeSession(sessionId, draft.summary || undefined)
-      setSession(updated)
-      baselineRef.current = JSON.stringify(sessionToDraft(updated))
+      await completeSessionMutation.mutateAsync({ projectId, sessionId, report: draft.summary || undefined })
     } catch (err) {
       setError(apiError(err, 'La clôture de la session a échoué'))
     }
@@ -356,7 +351,7 @@ export function SessionWorkspace({
   }
 
   if (!session) {
-    return <ErrorAlert message={error ?? 'Session introuvable'} />
+    return <ErrorAlert message={loadError ?? 'Session introuvable'} />
   }
 
   const tabs = [
@@ -396,7 +391,7 @@ export function SessionWorkspace({
         </div>
       </div>
 
-      {error && <ErrorAlert message={error} />}
+      {loadError && <ErrorAlert message={loadError} />}
 
       {/* ===== NAVIGATION PARCOURS ===== */}
       <TabNav tabs={tabs} active={tab} onChange={setTab} />
@@ -659,7 +654,6 @@ export function SessionWorkspace({
               projectId={projectId}
               sessionId={sessionId}
               recommendations={recommendations}
-              onCreated={(rec) => setRecommendations((r) => [rec, ...r])}
               canManage={canManage}
             />
 
@@ -735,7 +729,6 @@ export function SessionWorkspace({
           canManage={canManage}
           showForm={showActionForm}
           onToggleForm={() => setShowActionForm((v) => !v)}
-          onChanged={loadActions}
           responsableOptions={responsableOptions}
           documents={documents}
         />
@@ -975,30 +968,29 @@ function BlockersCard({
 ========================================================= */
 
 function RecommendationsCard({
-  projectId, sessionId, recommendations, onCreated, canManage,
+  projectId, sessionId, recommendations, canManage,
 }: {
   projectId: string
   sessionId: string
   recommendations: CoachingRecommendation[]
-  onCreated: (rec: CoachingRecommendation) => void
   canManage: boolean
 }) {
   const [content, setContent] = useState('')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const createRecommendation = useCreateRecommendation(projectId)
 
   const create = async () => {
     if (!content.trim()) { setError('Le contenu de la recommandation est requis'); return }
     setError(null)
     setCreating(true)
     try {
-      const rec = await coachingService.createRecommendation(projectId, {
+      await createRecommendation.mutateAsync({
         content: content.trim(),
         priority,
         sessionId,
       })
-      onCreated(rec)
       setContent('')
     } catch (err) {
       setError(apiError(err, 'Erreur lors de la création de la recommandation'))
@@ -1069,7 +1061,7 @@ function RecommendationsCard({
 ========================================================= */
 
 function SessionActionsCard({
-  projectId, sessionId, actions, canManage, showForm, onToggleForm, onChanged,
+  projectId, sessionId, actions, canManage, showForm, onToggleForm,
   responsableOptions, documents,
 }: {
   projectId: string
@@ -1078,7 +1070,6 @@ function SessionActionsCard({
   canManage: boolean
   showForm: boolean
   onToggleForm: () => void
-  onChanged: () => void
   responsableOptions: Array<{ id: string; label: string }>
   documents: GeneratedDocument[]
 }) {
@@ -1090,13 +1081,14 @@ function SessionActionsCard({
   const [relatedDocumentKey, setRelatedDocumentKey] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const createAction = useCreateAction(projectId)
 
-  const createAction = async () => {
+  const createActionSubmit = async () => {
     if (!title.trim()) { setError("Le titre de l'action est requis"); return }
     setError(null)
     setCreating(true)
     try {
-      await coachingService.createAction(projectId, {
+      await createAction.mutateAsync({
         title: title.trim(),
         description: description || undefined,
         priority,
@@ -1107,7 +1099,6 @@ function SessionActionsCard({
       })
       setTitle(''); setDescription(''); setDeadline(''); setResponsibleUserId(''); setRelatedDocumentKey('')
       onToggleForm()
-      onChanged()
     } catch (err) {
       setError(apiError(err, "Erreur lors de la création de l'action"))
     } finally {
@@ -1178,7 +1169,7 @@ function SessionActionsCard({
               </Field>
             </div>
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={createAction} loading={creating}>
+              <Button variant="primary" size="sm" onClick={createActionSubmit} loading={creating}>
                 Créer l&apos;action
               </Button>
             </div>
@@ -1192,7 +1183,7 @@ function SessionActionsCard({
         )}
 
         {actions.map((a) => (
-          <CoachActionRow key={a.id} action={a} canManage={canManage} onChanged={onChanged} documentTitle={
+          <CoachActionRow key={a.id} action={a} canManage={canManage} documentTitle={
             a.related_document_key ? documents.find((d) => d.key === a.related_document_key)?.title : undefined
           } />
         ))}
@@ -1203,18 +1194,19 @@ function SessionActionsCard({
 
 /** Ligne d'action côté coach : statut modifiable + revue des preuves soumises. */
 export function CoachActionRow({
-  action, canManage, onChanged, documentTitle,
+  action, canManage, documentTitle,
 }: {
   action: CoachingAction
   canManage: boolean
-  onChanged: () => void
   documentTitle?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [evidences, setEvidences] = useState<ActionEvidence[] | null>(null)
+  const { data: evidences } = useActionEvidences(action.id, open)
   const [comment, setComment] = useState('')
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const reviewMutation = useReviewEvidence(action.project_id)
+  const updateActionMutation = useUpdateAction(action.project_id)
 
   const responsibleName = action.responsibleUser?.profile
     ? `${action.responsibleUser.profile.first_name} ${action.responsibleUser.profile.last_name}`
@@ -1225,29 +1217,20 @@ export function CoachActionRow({
     new Date(action.deadline).getTime() < Date.now() &&
     !['COMPLETED', 'CANCELLED', 'REJECTED'].includes(action.status)
 
-  const loadEvidences = async () => {
-    try {
-      const list = await coachingService.getEvidences(action.id)
-      setEvidences(list)
-    } catch {
-      setEvidences([])
-    }
-  }
-
-  const toggle = async () => {
-    const next = !open
-    setOpen(next)
-    if (next && evidences === null) await loadEvidences()
+  const toggle = () => {
+    setOpen((next) => !next)
   }
 
   const review = async (evidenceId: string, status: 'APPROVED' | 'REJECTED') => {
     setReviewingId(evidenceId)
     setError(null)
     try {
-      await coachingService.reviewEvidence(evidenceId, { status, comment: comment || undefined })
+      await reviewMutation.mutateAsync({
+        actionId: action.id,
+        evidenceId,
+        dto: { status, comment: comment || undefined },
+      })
       setComment('')
-      await loadEvidences()
-      onChanged()
     } catch (err) {
       setError(apiError(err, 'La revue de la preuve a échoué'))
     } finally {
@@ -1258,8 +1241,7 @@ export function CoachActionRow({
   const setStatus = async (status: string) => {
     setError(null)
     try {
-      await coachingService.updateAction(action.id, { status })
-      onChanged()
+      await updateActionMutation.mutateAsync({ actionId: action.id, dto: { status } })
     } catch (err) {
       setError(apiError(err, 'La mise à jour du statut a échoué'))
     }
@@ -1337,7 +1319,7 @@ export function CoachActionRow({
               )}
             </div>
           ))}
-          {evidences !== null && evidences.length === 0 && (
+          {evidences && evidences.length === 0 && (
             <p className="text-[11px] text-ink3">Aucune preuve soumise pour cette action.</p>
           )}
         </div>

@@ -5,9 +5,9 @@ import {
   BrainCircuit, ShieldAlert, TrendingUp, CheckCheck, Sparkles, AlertTriangle,
 } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ErrorAlert, LoadingState } from '@/components/shared/ui'
-import { coachingService } from '@/services/coaching.service'
 import { aiAnalysisService } from '@/services/ai-analysis.service'
 import { cohortService } from '@/services/cohort.service'
+import { useCreateRecommendationFromAi } from '@/hooks/useCoaching'
 import {
   AiAnalysis,
   AREA_LABELS,
@@ -19,7 +19,6 @@ import {
 
 type Props = {
   projectId: string
-  onRecommendationCreated?: () => void
 }
 
 /**
@@ -27,7 +26,7 @@ type Props = {
  * Toute suggestion reste une PROPOSITION — le coach valide explicitement
  * chaque recommandation avant qu'elle n'apparaisse dans le suivi officiel.
  */
-export function AiAnalysisPanel({ projectId, onRecommendationCreated }: Props) {
+export function AiAnalysisPanel({ projectId }: Props) {
   const [analyses, setAnalyses] = useState<AiAnalysis[]>([])
   const [evaluations, setEvaluations] = useState<Array<{ id: string; status?: string; score?: number | null }>>([])
   const [loading, setLoading] = useState(true)
@@ -36,6 +35,7 @@ export function AiAnalysisPanel({ projectId, onRecommendationCreated }: Props) {
   const [risk, setRisk] = useState<RiskAnalysisPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [validatedTitles, setValidatedTitles] = useState<string[]>([])
+  const createFromAi = useCreateRecommendationFromAi(projectId)
 
   const load = () => {
     setLoading(true)
@@ -96,14 +96,13 @@ export function AiAnalysisPanel({ projectId, onRecommendationCreated }: Props) {
   const validateAsRecommendation = async (rec: { title: string; priority: string }, area?: string) => {
     if (!latestCompleted) return
     try {
-      await coachingService.createRecommendationFromAi(projectId, {
+      await createFromAi.mutateAsync({
         title: rec.title,
         content: `Suggestion IA (${AREA_LABELS[area ?? 'general'] ?? area}) validée par le coach.`,
         priority: rec.priority as 'LOW' | 'MEDIUM' | 'HIGH',
         aiAnalysisId: latestCompleted.id,
       })
       setValidatedTitles((prev) => [...prev, rec.title])
-      onRecommendationCreated?.()
     } catch {
       setError('La validation de la recommandation a échoué')
     }
