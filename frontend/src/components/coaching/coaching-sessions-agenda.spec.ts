@@ -5,11 +5,16 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { SessionStatusBadge } from '@/components/coaching/SessionStatusBadge'
 import { SessionCalendarItem } from '@/components/coaching/SessionCalendarItem'
+import { NextSessionPanel, pickNextSession } from '@/components/coaching/NextSessionPanel'
+import { getSessionStatusAppearance, SESSION_STATUS_LEGEND } from '@/components/coaching/session-status-ui'
 import {
   CoachingSessionsAgenda,
   agendaDayLabel,
+  buildMonthGrid,
+  buildWeekDays,
   dayKey,
   groupByDay,
+  startOfWeek,
 } from '@/components/coaching/CoachingSessionsAgenda'
 import { COACHING_SESSION_STATUS_LABELS } from '@/types/coaching'
 import type { CoachingSession, CoachingSessionStatus } from '@/types/coaching'
@@ -273,5 +278,158 @@ describe('CoachingSessionsAgenda', () => {
     })
     expect(text(container, 'future')).toBe(false)
     expect(text(container, 'Aucune session entre')).toBe(true)
+  })
+
+  it('switches to the month view with weekday headers and today highlighted', () => {
+    const container = makeAgenda({
+      sessions: [session({ id: 'm-1', title: 'Revue GBM', scheduled_at: new Date(2026, 8, 15, 10).toISOString() })],
+    })
+    act(() => { button(container, 'Mois')!.click() })
+    expect(text(container, 'Lun')).toBe(true)
+    expect(text(container, 'Dim')).toBe(true)
+    expect(text(container, 'Revue GBM')).toBe(true)
+    expect(text(container, "Aujourd'hui")).toBe(true)
+    expect(container.querySelector('a[href="/detail/m-1"]')).not.toBeNull()
+  })
+
+  it('switches to the week view and shows the week range', () => {
+    const container = makeAgenda({
+      sessions: [session({ id: 'wk-1', scheduled_at: new Date(2026, 8, 15, 9).toISOString() })],
+    })
+    act(() => { button(container, 'Semaine')!.click() })
+    expect(text(container, 'Semaine du')).toBe(true)
+    expect(container.querySelector('a[href="/detail/wk-1"]')).not.toBeNull()
+  })
+
+  it('caps the events of a busy day and focuses it in the agenda from +X autres', () => {
+    const busy = Array.from({ length: 5 }, (_, i) =>
+      session({ id: `b-${i}`, scheduled_at: new Date(2026, 8, 15, 9 + i).toISOString() }),
+    )
+    const container = makeAgenda({ sessions: busy })
+    act(() => { button(container, 'Mois')!.click() })
+    expect(text(container, '+2 autres')).toBe(true)
+    act(() => { button(container, '+2 autres')!.click() })
+    expect(text(container, 'Tout afficher')).toBe(true)
+    for (let i = 0; i < 5; i += 1) {
+      expect(container.querySelector(`a[href="/detail/b-${i}"]`)).not.toBeNull()
+    }
+  })
+
+  it('renders the legend with every status label', () => {
+    const container = makeAgenda({ sessions: [session()] })
+    for (const label of Object.values(COACHING_SESSION_STATUS_LABELS)) {
+      expect(text(container, label)).toBe(true)
+    }
+  })
+
+  it('renders the next session panel with a real upcoming session', () => {
+    const container = makeAgenda({
+      sessions: [session({ id: 'n-1', title: 'Atelier GBM', scheduled_at: new Date(2026, 8, 20, 14).toISOString() })],
+    })
+    expect(text(container, 'Prochaine session')).toBe(true)
+    expect(text(container, 'Atelier GBM')).toBe(true)
+    expect(text(container, 'Voir la session')).toBe(true)
+  })
+
+  it('shows a friendly message when no upcoming live session exists', () => {
+    const container = makeAgenda({
+      sessions: [session({ status: 'COMPLETED', scheduled_at: new Date(2026, 8, 20, 9).toISOString() })],
+    })
+    expect(text(container, 'aucune session à venir')).toBe(true)
+  })
+
+  it('shows a skeleton while loading', () => {
+    const container = makeAgenda({ sessions: [], isLoading: true })
+    expect(text(container, 'Chargement des sessions de coaching…')).toBe(true)
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+  })
+})
+
+describe('calendar grid helpers', () => {
+  it('builds a 42-day month grid starting on Monday', () => {
+    const grid = buildMonthGrid(new Date(2026, 8, 15))
+    expect(grid).toHaveLength(42)
+    expect(grid[0].getDay()).toBe(1)
+    expect(dayKey(grid[0])).toBe(dayKey(new Date(2026, 7, 31)))
+  })
+
+  it('builds a monday-to-sunday week', () => {
+    const week = buildWeekDays(new Date(2026, 8, 15))
+    expect(week).toHaveLength(7)
+    expect(dayKey(week[0])).toBe(dayKey(new Date(2026, 8, 14)))
+    expect(dayKey(week[6])).toBe(dayKey(new Date(2026, 8, 20)))
+    expect(dayKey(startOfWeek(new Date(2026, 8, 15)))).toBe(dayKey(new Date(2026, 8, 14)))
+  })
+})
+
+describe('session status UI', () => {
+  it('maps every status to a distinct dot/bar/chip and the French label', () => {
+    const statuses = Object.keys(COACHING_SESSION_STATUS_LABELS) as CoachingSessionStatus[]
+    for (const status of statuses) {
+      const appearance = getSessionStatusAppearance(status)
+      expect(appearance.label).toBe(COACHING_SESSION_STATUS_LABELS[status])
+      expect(appearance.dot.length).toBeGreaterThan(0)
+      expect(appearance.bar.length).toBeGreaterThan(0)
+      expect(appearance.chip.length).toBeGreaterThan(0)
+    }
+    expect(new Set(SESSION_STATUS_LEGEND.map((entry) => entry.status))).toEqual(new Set(statuses))
+  })
+})
+
+describe('pickNextSession', () => {
+  it('returns the closest upcoming live session and ignores past or completed ones', () => {
+    const now = pickNextSession(
+      [
+        session({ id: 'past', scheduled_at: new Date(2026, 8, 1, 9).toISOString() }),
+        session({ id: 'done', status: 'COMPLETED', scheduled_at: new Date(2026, 8, 15, 8).toISOString() }),
+        session({ id: 'today', scheduled_at: new Date(2026, 8, 15, 10).toISOString() }),
+        session({ id: 'later', scheduled_at: new Date(2026, 8, 20, 9).toISOString() }),
+      ],
+      TODAY,
+    )
+    expect(now?.id).toBe('today')
+  })
+
+  it('returns null when nothing is upcoming', () => {
+    expect(
+      pickNextSession([session({ status: 'COMPLETED', scheduled_at: new Date(2026, 8, 15, 9).toISOString() })], TODAY),
+    ).toBeNull()
+  })
+})
+
+describe('NextSessionPanel', () => {
+  it('shows the coach in owner mode and the project in expert mode', () => {
+    const base = session({
+      assignment: {
+        id: 'asg-1',
+        expert_user_id: 'u-coach',
+        expertUser: {
+          id: 'u-coach',
+          email: 'coach@ex.io',
+          profile: { first_name: 'Marie', last_name: 'Durand' },
+        },
+        project: { id: 'p-1', name: 'Green Startup', owner_id: 'u-owner' },
+      },
+    })
+    const owner = mount(
+      createElement(NextSessionPanel, {
+        sessions: [base],
+        mode: 'owner',
+        getSessionHref: (s) => `/detail/${s.id}`,
+        today: TODAY,
+      }),
+    )
+    expect(text(owner, 'Marie Durand')).toBe(true)
+    expect(text(owner, 'Voir la session')).toBe(true)
+
+    const expert = mount(
+      createElement(NextSessionPanel, {
+        sessions: [base],
+        mode: 'expert',
+        getSessionHref: (s) => `/detail/${s.id}`,
+        today: TODAY,
+      }),
+    )
+    expect(text(expert, 'Green Startup')).toBe(true)
   })
 })

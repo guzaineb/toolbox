@@ -24,7 +24,7 @@ export function LoadingState({ label = 'Chargement…', className }: { label?: s
 // ─────────────────────────────────────────────
 // BADGE
 // ─────────────────────────────────────────────
-type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary'
+type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary' | 'violet' | 'orange'
 
 const badgeVariants: Record<BadgeVariant, string> = {
   green:     'bg-moss-light text-moss border border-moss/20',
@@ -32,6 +32,8 @@ const badgeVariants: Record<BadgeVariant, string> = {
   red:       'bg-red-light text-red border border-red/20',
   blue:      'bg-blue-light text-blue border border-blue/18',
   gray:      'bg-ink/[.07] text-ink2 border border-ink/[.15]',
+  violet:    'bg-violet-50 text-violet-700 border border-violet-200',
+  orange:    'bg-orange-50 text-orange-700 border border-orange-200',
   secondary: 'bg-gray-100 text-gray-700 border border-gray-200',
 }
 

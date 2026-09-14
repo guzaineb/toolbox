@@ -475,11 +475,11 @@ export const COACHING_SESSION_STATUS_LABELS: Record<CoachingSessionStatus, strin
 
 export const COACHING_SESSION_STATUS_COLORS: Record<CoachingSessionStatus, BadgeVariantKey> = {
   SCHEDULED: 'blue',
-  IN_PROGRESS: 'amber',
+  IN_PROGRESS: 'violet',
   COMPLETED: 'green',
-  CANCELLED: 'gray',
-  RESCHEDULED: 'amber',
-  MISSED: 'red',
+  CANCELLED: 'red',
+  RESCHEDULED: 'orange',
+  MISSED: 'gray',
 }
 
 export const ACTION_STATUS_LABELS: Record<CoachingActionStatus, string> = {
@@ -606,4 +606,4 @@ export const EVIDENCE_REVIEW_COLORS: Record<EvidenceReviewStatus, BadgeVariantKe
   REJECTED: 'red',
 }
 
-type BadgeVariantKey = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary'
+type BadgeVariantKey = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary' | 'violet' | 'orange'
