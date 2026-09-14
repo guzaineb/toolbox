@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarClock } from 'lucide-react'
 import { ErrorAlert } from '@/components/shared/ui'
-import { SessionWorkspace } from '@/components/coaching/SessionWorkspace'
+import { OwnerSessionDetail } from '@/components/coaching/OwnerSessionDetail'
 
 export default function OwnerCoachingSessionWorkspacePage() {
   const params = useParams()
@@ -34,7 +34,7 @@ export default function OwnerCoachingSessionWorkspacePage() {
           Sessions
         </Link>
         <span>/</span>
-        <span className="text-ink font-medium">Espace de session</span>
+        <span className="text-ink font-medium">Détail de la session</span>
       </nav>
 
       <div className="flex items-center gap-3">
@@ -42,17 +42,18 @@ export default function OwnerCoachingSessionWorkspacePage() {
           <CalendarClock size={16} className="text-moss" />
         </div>
         <div>
-          <h1 className="font-syne text-[20px] font-extrabold text-ink leading-tight">Espace de session</h1>
+          <h1 className="font-syne text-[20px] font-extrabold text-ink leading-tight">Détail de la session</h1>
           <p className="text-[11px] text-ink3">
-            Consultation de la session de coaching en lecture seule : notes, constats, décisions et actions.
+            Consultation de la session en lecture seule : notes, constats, décisions, recommandations et
+            actions. Le GBM reste accessible depuis son propre module : aucune modification n&apos;est
+            possible depuis cette page.
           </p>
         </div>
       </div>
 
-      <SessionWorkspace
+      <OwnerSessionDetail
         projectId={projectId}
         sessionId={sessionId}
-        basePath={`/dashboard/project-owner/projects/${projectId}/coachings`}
         backToCoachingHref={`/dashboard/project-owner/projects/${projectId}/coachings`}
       />
     </div>

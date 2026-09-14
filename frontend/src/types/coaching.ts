@@ -88,6 +88,10 @@ export interface CoachingSession {
     expertUser?: { id: string; email: string; profile?: { first_name: string; last_name: string } }
   }
   actions?: CoachingAction[]
+  /** Recommandations rattachées à la session (GET coaching/sessions/:id). */
+  recommendations?: CoachingRecommendation[]
+  /** Commentaires de session (GET coaching/sessions/:id). */
+  comments?: CoachingComment[]
 }
 
 export interface CoachingActionResponsible {
