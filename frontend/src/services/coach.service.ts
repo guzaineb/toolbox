@@ -1,6 +1,7 @@
 import api from './api'
 import type {
   ProjectState,
+  ChatMessage,
   ChatbotAskResult,
   UploadedDocumentsResult,
   Conversation,
@@ -8,6 +9,11 @@ import type {
   RagHealthResult,
   ModuleContext,
 } from '@/types/coach'
+
+export interface CoachAskOptions {
+  conversationHistory?: ChatMessage[]
+  moduleContext?: ModuleContext
+}
 
 // ── Project State ──
 
@@ -21,12 +27,15 @@ export async function getProjectState(projectId: string): Promise<ProjectState> 
 export async function askCoach(
   projectId: string,
   question: string,
-  moduleContext?: ModuleContext,
+  options?: CoachAskOptions,
 ): Promise<ChatbotAskResult> {
   const { data } = await api.post('/ai/chatbot/ask', {
     projectId,
     question,
-    ...moduleContext,
+    ...(options?.conversationHistory !== undefined
+      ? { conversationHistory: options.conversationHistory }
+      : {}),
+    ...options?.moduleContext,
   })
   return data.data
 }

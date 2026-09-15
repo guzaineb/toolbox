@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { MessageSquare, ChevronDown, Plus, AlertTriangle, CloudOff } from 'lucide-react'
+import { MessageSquare, ChevronDown, Plus, AlertTriangle } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import DocumentUploader from './DocumentUploader'

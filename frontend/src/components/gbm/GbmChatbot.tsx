@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Loader2, RefreshCw, Send, Sparkles, User } from 'lucide-react'
-import { chatbotService, type ChatMessage } from '@/services/chatbot.service'
+import { askCoach, indexProject } from '@/services/coach.service'
+import type { ChatMessage } from '@/types/coach'
 import { Button } from '@/components/shared/ui'
 import { cn } from '@/lib/utils'
 
@@ -65,8 +66,8 @@ export function GbmChatbot({ projectId }: GbmChatbotProps) {
     setLoading(true)
     setError('')
     try {
-      const result = await chatbotService.ask(projectId, question, history)
-      const answer = result?.data?.answer ?? 'Désolé, je n’ai pas pu formuler de réponse.'
+      const result = await askCoach(projectId, question, { conversationHistory: history })
+      const answer = result?.answer ?? 'Désolé, je n’ai pas pu formuler de réponse.'
       setMessages(prev => [...prev, { role: 'assistant', content: answer }])
     } catch {
       setMessages(prev => [
@@ -82,10 +83,10 @@ export function GbmChatbot({ projectId }: GbmChatbotProps) {
     setIndexing(true)
     setError('')
     try {
-      const result = await chatbotService.indexProject(projectId)
+      const result = await indexProject(projectId)
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: `Projet indexé : ${result?.data?.documentsIndexed ?? 0} document(s) analysé(s). Vous pouvez maintenant poser vos questions.` },
+        { role: 'assistant', content: `Projet indexé : ${result?.documentsIndexed ?? 0} document(s) analysé(s). Vous pouvez maintenant poser vos questions.` },
       ])
     } catch {
       setMessages(prev => [

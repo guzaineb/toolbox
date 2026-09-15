@@ -121,7 +121,7 @@ export default function ContextualCoachPanel({
       setExpanded(true)
 
       try {
-        const res = await askCoach(projectId, action.question, buildContext())
+        const res = await askCoach(projectId, action.question, { moduleContext: buildContext() })
         setResult(res)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Erreur inconnue'
@@ -141,7 +141,7 @@ export default function ContextualCoachPanel({
     setExpanded(true)
 
     try {
-      const res = await askCoach(projectId, customQuestion, buildContext())
+      const res = await askCoach(projectId, customQuestion, { moduleContext: buildContext() })
       setResult(res)
       setCustomQuestion('')
     } catch (err: unknown) {
