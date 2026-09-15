@@ -9,12 +9,13 @@ import {
   coachingKeys,
   coachingInvalidations,
   useCoachingSession,
+  useMyCoachingActions,
   useMyCoachingSessions,
   useProjectCoachingOverview,
   useProjectSessions,
   useUpdateSession,
 } from '@/hooks/useCoaching'
-import type { CoachingSession, CoachingOverview } from '@/types/coaching'
+import type { CoachingAction, CoachingSession, CoachingOverview } from '@/types/coaching'
 
 vi.mock('@/services/coaching.service', () => ({
   __esModule: true,
@@ -23,6 +24,7 @@ vi.mock('@/services/coaching.service', () => ({
     getSession: vi.fn(),
     getProjectSessions: vi.fn(),
     getMyCoachingSessions: vi.fn(),
+    getMyCoachingActions: vi.fn(),
     getProjectActions: vi.fn(),
     getProjectRecommendations: vi.fn(),
     getProjectAssignments: vi.fn(),
@@ -128,6 +130,9 @@ describe('coachingKeys', () => {
     expect(coachingKeys.recommendations('p-1')).not.toEqual(coachingKeys.recommendations('p-2'))
     expect([...coachingKeys.expertSessions].slice(-2)).toEqual(['expert', 'sessions'])
     expect(coachingKeys.expertSessions).not.toEqual(coachingKeys.sessions('p-1'))
+    expect([...coachingKeys.expertActions].slice(-2)).toEqual(['expert', 'actions'])
+    expect(coachingKeys.expertActions).not.toEqual(coachingKeys.expertSessions)
+    expect(coachingKeys.expertActions).not.toEqual(coachingKeys.actions('p-1'))
   })
 
   it('nests session/action sub-resources under their parent key', () => {
@@ -165,6 +170,7 @@ describe('coachingInvalidations', () => {
     expect(coachingInvalidations('updateAction', { projectId: 'p-1' })).toEqual([
       coachingKeys.actions('p-1'),
       coachingKeys.overview('p-1'),
+      coachingKeys.expertActions,
     ])
   })
 
@@ -173,6 +179,7 @@ describe('coachingInvalidations', () => {
       coachingKeys.actionEvidences('a-1'),
       coachingKeys.actions('p-1'),
       coachingKeys.overview('p-1'),
+      coachingKeys.expertActions,
     ])
     expect(coachingInvalidations('addSessionComment', { sessionId: 's-1' })).toEqual([
       coachingKeys.sessionComments('s-1'),
@@ -217,6 +224,28 @@ describe('useCoaching query hooks', () => {
     expect(coachingService.getMyCoachingSessions).toHaveBeenCalledTimes(1)
     expect(coachingService.getProjectSessions).not.toHaveBeenCalled()
     expect(state.current?.data?.map((s) => s.id)).toEqual(['s-1'])
+  })
+
+  it('fetches the actions of the projects the expert coaches', async () => {
+    const action: CoachingAction = {
+      id: 'a-1',
+      project_id: 'p-1',
+      title: 'Réaliser 10 interviews',
+      status: 'PENDING',
+      priority: 'MEDIUM',
+      created_by: 'u-exp',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z',
+      project: { id: 'p-1', name: 'Green Startup' },
+    }
+    vi.mocked(coachingService.getMyCoachingActions).mockResolvedValue([action])
+    const client = makeClient()
+    const state = useHarness(() => useMyCoachingActions(), client)
+
+    await waitFor(() => expect(state.current?.isSuccess).toBe(true))
+    expect(coachingService.getMyCoachingActions).toHaveBeenCalledTimes(1)
+    expect(coachingService.getProjectActions).not.toHaveBeenCalled()
+    expect(state.current?.data?.map((a) => a.id)).toEqual(['a-1'])
   })
 
   it('surfaces query errors instead of crashing', async () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueries, useQueryClient } from '@tanstack/react-query'
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import { coachingService } from '@/services/coaching.service'
 import {
@@ -30,6 +30,8 @@ export const coachingKeys = {
   sessions: (projectId: string) => [...coachingKeys.all, 'projects', projectId, 'sessions'] as const,
   /** Sessions des sessions de coaching assignées à l'expert connecté (GET /experts/me/coaching/sessions). */
   expertSessions: ['coaching', 'expert', 'sessions'] as const,
+  /** Actions des projets dont l'expert connecté est coach (GET /experts/me/coaching/actions). */
+  expertActions: ['coaching', 'expert', 'actions'] as const,
   session: (sessionId: string) => [...coachingKeys.all, 'sessions', sessionId] as const,
   sessionComments: (sessionId: string) => [...coachingKeys.session(sessionId), 'comments'] as const,
   actions: (projectId: string) => [...coachingKeys.all, 'projects', projectId, 'actions'] as const,
@@ -70,12 +72,16 @@ export function coachingInvalidations(operation: string, ids: CoachingInvalidati
       ]
     case 'createAction':
     case 'updateAction':
-      return projectId ? [coachingKeys.actions(projectId), coachingKeys.overview(projectId)] : []
+      return projectId
+        ? [coachingKeys.actions(projectId), coachingKeys.overview(projectId), coachingKeys.expertActions]
+        : []
     case 'addEvidence':
     case 'reviewEvidence':
       return [
         ...(actionId ? [coachingKeys.actionEvidences(actionId)] : []),
-        ...(projectId ? [coachingKeys.actions(projectId), coachingKeys.overview(projectId)] : []),
+        ...(projectId
+          ? [coachingKeys.actions(projectId), coachingKeys.overview(projectId), coachingKeys.expertActions]
+          : []),
       ]
     case 'createRecommendation':
     case 'createRecommendationFromAi':
@@ -133,6 +139,46 @@ export function useMyCoachingSessions() {
     queryKey: coachingKeys.expertSessions,
     queryFn: () => coachingService.getMyCoachingSessions(),
   })
+}
+
+export function useMyCoachingActions() {
+  return useQuery<CoachingAction[]>({
+    queryKey: coachingKeys.expertActions,
+    queryFn: () => coachingService.getMyCoachingActions(),
+  })
+}
+
+export interface PendingEvidenceEntry {
+  evidence: ActionEvidence
+  action: CoachingAction
+}
+
+/**
+ * Preuves en attente de validation pour les actions soumises (statut SUBMITTED)
+ * des projets coachés par l'expert connecté. Use « useQueries » pour s'adapter
+ * à un nombre de requêtes variable ; chaque preuve reste rattachée à son action
+ * pour que le tableau de bord puisse renvoyer vers le projet concerné.
+ */
+export function useMyCoachingEvidence(actions: CoachingAction[]) {
+  const submitted = actions.filter((a) => a.status === 'SUBMITTED')
+  const results = useQueries({
+    queries: submitted.map((a) => ({
+      queryKey: coachingKeys.actionEvidences(a.id),
+      queryFn: () => coachingService.getEvidences(a.id),
+      staleTime: 60_000,
+    })),
+  })
+
+  const pending: PendingEvidenceEntry[] = results.flatMap((result, index) => {
+    const evidences = (result.data ?? []).filter((e) => e.review_status === 'PENDING')
+    return evidences.map((evidence) => ({ evidence, action: submitted[index] }))
+  })
+
+  return {
+    pending,
+    isLoading: results.some((r) => r.isLoading),
+    isError: results.some((r) => r.isError),
+  }
 }
 
 export function useProjectActions(projectId: string) {

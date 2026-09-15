@@ -159,6 +159,7 @@ function buildBreadcrumb(pathname: string, projectName?: string): Crumb[] | null
       evaluations: 'Évaluations',
       coachings: 'Coachings',
       recommendations: 'Recommandations IA',
+      'mon-coaching': 'Mon coaching',
     };
     if (labels[parts[1]]) {
       return [home, { label: 'Expertise', href: `${base}/expert` }, { label: labels[parts[1]], href: `${base}/expert/${parts[1]}` }];
@@ -223,6 +224,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
           { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
           { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
+          { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
           { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
           { href: '/dashboard/expert/coachings/sessions', label: 'Mes sessions', icon: CalendarClock, section: 'expert', match: 'prefix' },
         ]
