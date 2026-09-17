@@ -55,12 +55,11 @@ function DashboardHeader({ firstName, role }: { firstName?: string; role: UserRo
     PROJECT_OWNER: 'Vue porteur de projet',
     EXPERT: 'Vue expert',
     INCUBATOR_MEMBER: 'Vue incubateur',
-    ADMIN: 'Panneau administrateur',
   }
   return (
     <div className="mb-6">
       <h1 className="font-syne text-[24px] font-bold text-ink mb-1">
-        {role === 'ADMIN' ? 'Administration' : `Bonjour, ${firstName || 'Utilisateur'} 👋`}
+        {`Bonjour, ${firstName || 'Utilisateur'} 👋`}
       </h1>
       <p className="text-[13px] text-ink2">{labels[role as UserRole] ?? 'Bienvenue sur ToolBox'}</p>
     </div>
@@ -732,36 +731,6 @@ function IncubatorDashboard({ role }: { role: UserRole }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// ADMIN fallback
-// ─────────────────────────────────────────────────────────────
-
-function AdminFallback() {
-  const links = [
-    { href: '/dashboard/admin/experts', title: 'Experts', subtitle: 'Gérez les experts et leurs expertises', icon: <Award className="w-4 h-4" /> },
-    { href: '/dashboard/admin/project-owners', title: 'Porteurs de projet', subtitle: 'Consultez les profils porteurs', icon: <Briefcase className="w-4 h-4" /> },
-    { href: '/dashboard/profile', title: 'Mon profil', subtitle: 'Consultez et modifiez vos informations', icon: <Users className="w-4 h-4" /> },
-    { href: '/dashboard/notifications', title: 'Notifications', subtitle: 'Consultez vos alertes et messages', icon: <Bell className="w-4 h-4" /> },
-  ]
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {links.map((l) => (
-        <Link key={l.href} href={l.href}>
-          <Card className="p-4 cursor-pointer hover:shadow-md transition-shadow flex items-center gap-3">
-            <div className="w-[30px] h-[30px] rounded-[7px] bg-moss-light text-moss flex items-center justify-center shrink-0">
-              {l.icon}
-            </div>
-            <div>
-              <div className="text-[13px] font-semibold text-ink mb-0.5">{l.title}</div>
-              <div className="text-[12px] text-ink2">{l.subtitle}</div>
-            </div>
-          </Card>
-        </Link>
-      ))}
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────
 // Root page: role dispatch
 // ─────────────────────────────────────────────────────────────
 
@@ -785,12 +754,7 @@ export default function DashboardPage() {
       {role === 'PROJECT_OWNER' && <OwnerDashboard role={role} />}
       {role === 'EXPERT' && <ExpertDashboard role={role} />}
       {role === 'INCUBATOR_MEMBER' && <IncubatorDashboard role={role} />}
-      {role === 'ADMIN' && (
-        <div className="space-y-8">
-          <AdminFallback />
-        </div>
-      )}
-      {role && role !== 'ADMIN' && (
+      {role && (
         <div className="mt-8">
           <QuickAccess role={role} />
         </div>

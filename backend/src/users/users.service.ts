@@ -96,23 +96,4 @@ export class UsersService {
     });
     return this.findById(userId);
   }
-
-  async getUsers(options: any = {}) {
-    const where = options.where || {};
-    const orderBy = options.order || undefined;
-    const skip = options.skip || undefined;
-    const take = options.take || undefined;
-
-    const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        include: { profile: true },
-        orderBy,
-        skip,
-        take,
-      }),
-      this.prisma.user.count({ where }),
-    ]);
-    return { data: users, total };
-  }
 }

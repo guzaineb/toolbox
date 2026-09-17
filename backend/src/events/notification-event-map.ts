@@ -191,12 +191,6 @@ export const NOTIFICATION_EVENT_MAP: Record<
     category: 'admin',
     requiresEmail: false,
   },
-  [NotificationEvent.NEW_INCUBATOR]: {
-    type: NotificationType.NEW_INCUBATOR,
-    priority: NotificationPriority.MEDIUM,
-    category: 'admin',
-    requiresEmail: false,
-  },
   [NotificationEvent.NEW_EXPERT]: {
     type: NotificationType.NEW_EXPERT,
     priority: NotificationPriority.LOW,
@@ -214,18 +208,6 @@ export const NOTIFICATION_EVENT_MAP: Record<
     priority: NotificationPriority.LOW,
     category: 'coaching',
     requiresEmail: false,
-  },
-  [NotificationEvent.USER_REPORTED]: {
-    type: NotificationType.USER_REPORTED,
-    priority: NotificationPriority.HIGH,
-    category: 'admin',
-    requiresEmail: true,
-  },
-  [NotificationEvent.CRITICAL_ERROR]: {
-    type: NotificationType.CRITICAL_ERROR,
-    priority: NotificationPriority.CRITICAL,
-    category: 'admin',
-    requiresEmail: true,
   },
   [NotificationEvent.DOCUMENT_PENDING]: {
     type: NotificationType.DOCUMENT_PENDING,

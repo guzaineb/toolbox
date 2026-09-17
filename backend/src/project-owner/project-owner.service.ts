@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectOwnerDto } from './dto/create-project-owner.dto';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -32,19 +28,6 @@ export class ProjectOwnerService {
     });
   }
 
-  async findById(profileId: string) {
-    const profile = await this.prisma.projectOwnerProfile.findUnique({
-      where: { id: profileId },
-      include: {
-        user: { include: { profile: true } },
-        skills: true,
-        experiences: true,
-      },
-    });
-    if (!profile) throw new NotFoundException('Profil porteur introuvable');
-    return profile;
-  }
-
   async upsert(userId: string, dto: CreateProjectOwnerDto) {
     const existing = await this.findByUser(userId);
     if (existing) {
@@ -55,36 +38,6 @@ export class ProjectOwnerService {
       return this.findByUser(userId);
     }
     return this.create(userId, dto);
-  }
-
-  // ─── Admin: list all ──────────────────────────────────────────────────────
-
-  async findAll(page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.prisma.projectOwnerProfile.findMany({
-        include: {
-          user: { include: { profile: true } },
-          skills: true,
-          experiences: true,
-        },
-        orderBy: { created_at: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.projectOwnerProfile.count(),
-    ]);
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
-  }
-
-  // Admin patch any profile by id
-  async adminPatch(profileId: string, dto: CreateProjectOwnerDto) {
-    const profile = await this.findById(profileId);
-    await this.prisma.projectOwnerProfile.update({
-      where: { id: profile.id },
-      data: dto as any,
-    });
-    return this.findById(profileId);
   }
 
   // ─── Skills ───────────────────────────────────────────────────────────────

@@ -10,7 +10,6 @@ import {
   Users,
   FolderKanban,
   GraduationCap,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -18,7 +17,6 @@ import {
   Bell,
   Calendar,
   Target,
-  Briefcase,
   ClipboardCheck,
   Presentation,
   LayoutDashboard,
@@ -85,7 +83,6 @@ const PROJECT_MODULES: { suffix: string; label: string; icon: LucideIcon; match?
 
 const SECTION_LABELS: Record<string, string> = {
   overview: 'Vue d\u2019ensemble',
-  admin: 'Administration',
   expert: 'Expertise',
   porteur: 'Mes projets',
   incubator: 'Incubateur',
@@ -134,14 +131,6 @@ function buildBreadcrumb(pathname: string, projectName?: string): Crumb[] | null
       return [home, { label: 'Cohortes', href: `${base}/project-owner/cohorts` }];
     }
     return [home, { label: 'Mon profil', href: `${base}/project-owner` }];
-  }
-
-  if (parts[0] === 'admin') {
-    const labels: Record<string, string> = { experts: 'Experts', 'project-owners': 'Porteurs de projet' };
-    if (labels[parts[1]]) {
-      return [home, { label: 'Administration', href: `${base}/admin` }, { label: labels[parts[1]], href: `${base}/admin/${parts[1]}` }];
-    }
-    return [home, { label: 'Administration', href: `${base}/admin` }];
   }
 
   if (parts[0] === 'incubator') {
@@ -202,7 +191,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (!user) return null;
 
   const userRole = user.role;
-  const isAdmin = userRole === 'ADMIN';
   const isExpert = userRole === 'EXPERT';
   const isIncubatorMember = userRole === 'INCUBATOR_MEMBER';
 
@@ -210,36 +198,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, section: 'overview', match: 'exact' },
   ];
 
-  const roleItems: NavLinkItem[] = isAdmin
+  const roleItems: NavLinkItem[] = isExpert
     ? [
-        { href: '/dashboard/admin', label: 'Administration', icon: Settings, section: 'admin', match: 'prefix' },
-        { href: '/dashboard/admin/experts', label: 'Experts', icon: GraduationCap, section: 'admin', match: 'prefix' },
-        { href: '/dashboard/admin/project-owners', label: 'Porteurs de projet', icon: Briefcase, section: 'admin', match: 'prefix' },
+        { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert', match: 'exact' },
+        { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert', match: 'prefix' },
+        { href: '/dashboard/expert/matching-projects', label: 'Projets correspondants', icon: Radar, section: 'expert', match: 'prefix' },
+        { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
+        { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
+        { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
+        { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
+        { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
+        { href: '/dashboard/expert/coachings/sessions', label: 'Mes sessions', icon: CalendarClock, section: 'expert', match: 'prefix' },
       ]
-    : isExpert
+    : isProjectOwner
       ? [
-          { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert', match: 'exact' },
-          { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/matching-projects', label: 'Projets correspondants', icon: Radar, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
-          { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
-          { href: '/dashboard/expert/coachings/sessions', label: 'Mes sessions', icon: CalendarClock, section: 'expert', match: 'prefix' },
+          { href: '/dashboard/project-owner/projects', label: 'Mes projets', icon: FolderKanban, section: 'porteur', match: 'prefix' },
+          { href: '/dashboard/project-owner/participations', label: 'Participations', icon: Calendar, section: 'porteur', match: 'prefix' },
+          { href: '/dashboard/project-owner/cohorts', label: 'Cohortes', icon: Users, section: 'porteur', match: 'prefix' },
         ]
-      : isProjectOwner
+      : isIncubatorMember
         ? [
-            { href: '/dashboard/project-owner/projects', label: 'Mes projets', icon: FolderKanban, section: 'porteur', match: 'prefix' },
-            { href: '/dashboard/project-owner/participations', label: 'Participations', icon: Calendar, section: 'porteur', match: 'prefix' },
-            { href: '/dashboard/project-owner/cohorts', label: 'Cohortes', icon: Users, section: 'porteur', match: 'prefix' },
+            { href: '/dashboard/incubator', label: 'Incubateurs', icon: Factory, section: 'incubator', match: 'prefix' },
+            { href: '/dashboard/incubator/create', label: 'Créer un incubateur', icon: Plus, section: 'incubator', match: 'prefix' },
           ]
-        : isIncubatorMember
-          ? [
-              { href: '/dashboard/incubator', label: 'Incubateurs', icon: Factory, section: 'incubator', match: 'prefix' },
-              { href: '/dashboard/incubator/create', label: 'Créer un incubateur', icon: Plus, section: 'incubator', match: 'prefix' },
-            ]
-          : [];
+        : [];
 
   const accountItems: NavLinkItem[] = [
     { href: '/dashboard/notifications', label: 'Notifications', icon: Bell, section: 'account', match: 'prefix' },
@@ -270,7 +252,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const initials = fullName ? `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() : '??';
 
   const roleLabels: Record<string, string> = {
-    ADMIN: 'Administrateur',
     EXPERT: 'Expert',
     PROJECT_OWNER: 'Porteur de projet',
     INCUBATOR_MEMBER: 'Membre incubateur',

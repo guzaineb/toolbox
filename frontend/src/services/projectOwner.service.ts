@@ -56,12 +56,6 @@ export class ProjectOwnerService {
   async deleteExperience(expId: string): Promise<void> {
     await api.delete(`/project-owner/experiences/${expId}`);
   }
-
-  // Admin
-  async getAllProjectOwners(page = 1, limit = 20): Promise<{ data: ProjectOwnerProfile[]; total: number; page: number; limit: number; totalPages: number }> {
-    const response = await api.get(`/project-owner/admin/all?page=${page}&limit=${limit}`);
-    return response.data;
-  }
 }
 
 export const projectOwnerService = ProjectOwnerService.getInstance();

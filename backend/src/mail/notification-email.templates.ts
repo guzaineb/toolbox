@@ -7,9 +7,8 @@ export interface NotificationTemplateConfig {
   subjectPrefix: string;
 }
 
-export const NOTIFICATION_EMAIL_TEMPLATES: Record<
-  NotificationType,
-  NotificationTemplateConfig
+export const NOTIFICATION_EMAIL_TEMPLATES: Partial<
+  Record<NotificationType, NotificationTemplateConfig>
 > = {
   // ─── INVITATIONS ──────────────────────────────────────
   [NotificationType.INVITATION_RECEIVED]: {
@@ -344,28 +343,10 @@ export const NOTIFICATION_EMAIL_TEMPLATES: Record<
     gradientTo: '#1d5a3a',
     subjectPrefix: 'Nouvel utilisateur',
   },
-  [NotificationType.NEW_INCUBATOR]: {
-    icon: '🏢',
-    gradientFrom: '#c9a84c',
-    gradientTo: '#b88a2a',
-    subjectPrefix: 'Nouvel incubateur',
-  },
   [NotificationType.NEW_EXPERT]: {
     icon: '👤',
     gradientFrom: '#2d7a52',
     gradientTo: '#1d5a3a',
     subjectPrefix: 'Nouvel expert',
-  },
-  [NotificationType.USER_REPORTED]: {
-    icon: '⚠️',
-    gradientFrom: '#c2410c',
-    gradientTo: '#9a3412',
-    subjectPrefix: 'Signalement',
-  },
-  [NotificationType.CRITICAL_ERROR]: {
-    icon: '🚨',
-    gradientFrom: '#dc2626',
-    gradientTo: '#991b1b',
-    subjectPrefix: 'Erreur critique',
   },
 };

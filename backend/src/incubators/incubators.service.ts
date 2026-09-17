@@ -51,26 +51,6 @@ export class IncubatorsService {
       },
     });
 
-    const admins = await this.prisma.user.findMany({
-      where: { role: 'ADMIN', is_active: true },
-      select: { id: true },
-    });
-    const adminIds = admins.map((a) => a.id);
-    if (adminIds.length > 0) {
-      const { title, message } = this.messageBuilder.newIncubator({
-        name: saved.name,
-      });
-      this.eventEmitter.emit(NotificationEvent.NEW_INCUBATOR, {
-        event: NotificationEvent.NEW_INCUBATOR,
-        recipients: adminIds.map((id) => ({ userId: id })),
-        title,
-        message,
-        senderId: userId,
-        resourceType: 'INCUBATOR',
-        resourceId: saved.id,
-      } as NotificationPayload);
-    }
-
     return saved;
   }
 

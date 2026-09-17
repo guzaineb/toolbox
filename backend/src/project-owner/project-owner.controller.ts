@@ -8,16 +8,16 @@ import {
   Patch,
   Delete,
   Param,
-  Query,
 } from '@nestjs/common';
 import { ProjectOwnerService } from './project-owner.service';
 import { CreateProjectOwnerDto } from './dto/create-project-owner.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateExperienceDto } from './dto/create-experience.dto';
 import { CreateSkillDto } from './dto/create-skill.dto';
 
 @Controller('project-owner')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectOwnerController {
   constructor(private service: ProjectOwnerService) {}
 
@@ -77,14 +77,5 @@ export class ProjectOwnerController {
     @Param('id') expId: string,
   ) {
     return this.service.deleteExperience(req.user.id, expId);
-  }
-  @Get('admin/all')
-  async adminFindAll(@Query('page') page = '1', @Query('limit') limit = '20') {
-    return this.service.findAll(+page, +limit);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') profileId: string) {
-    return this.service.findById(profileId);
   }
 }

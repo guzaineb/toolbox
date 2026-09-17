@@ -257,13 +257,6 @@ export class NotificationMessageBuilder {
 
   // ==================== INCUBATOR ====================
 
-  newIncubator(params: { name: string }): { title: string; message: string } {
-    return {
-      title: 'Nouvel incubateur',
-      message: `Un nouvel incubateur « ${params.name} » a été créé.`,
-    };
-  }
-
   incubatorStatusChanged(params: { name: string; status: string }): {
     title: string;
     message: string;

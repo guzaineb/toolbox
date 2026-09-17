@@ -155,7 +155,7 @@ describe('Recommandations projet (e2e)', () => {
 
     const admin = await makeUser(
       `admin-reco-${stamp}@e2e.test`,
-      UserRole.ADMIN,
+      UserRole.INCUBATOR_MEMBER,
       'Admin',
       'Reco',
     );

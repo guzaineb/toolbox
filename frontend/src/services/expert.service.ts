@@ -41,20 +41,6 @@ class ExpertService {
     return response.data;
   }
 
-  async getAllExperts(filters?: {
-    availability?: string;
-    expertiseArea?: string;
-    minYears?: number;
-  }): Promise<ExpertProfile[]> {
-    const params = new URLSearchParams();
-    if (filters?.availability) params.append('availability', filters.availability);
-    if (filters?.expertiseArea) params.append('expertiseArea', filters.expertiseArea);
-    if (filters?.minYears) params.append('minYears', filters.minYears.toString());
-    
-    const response = await api.get(`/experts?${params.toString()}`);
-    return response.data;
-  }
-
   async createProfile(data: CreateExpertDto): Promise<ExpertProfile> {
     const response = await api.post('/experts', data);
     return response.data;
@@ -141,16 +127,6 @@ class ExpertService {
   }
 
   // ==================== RECOMMANDATIONS ====================
-
-  async getTopExperts(limit: number = 10, sortBy: 'score' | 'experience' | 'availability' = 'score') {
-    const response = await api.get(`/experts/analytics/top-experts?limit=${limit}&sortBy=${sortBy}`);
-    return response.data;
-  }
-
-  async getExpertiseStatistics() {
-    const response = await api.get('/experts/analytics/expertise-stats');
-    return response.data;
-  }
 
   async recommendJury(projectId: string, limit: number = 3): Promise<ExpertRecommendation[]> {
     const response = await api.post('/experts/recommendations/jury', { projectId, limit });

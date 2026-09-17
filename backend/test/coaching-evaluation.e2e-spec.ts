@@ -166,7 +166,7 @@ describe('Coaching & Évaluation (e2e)', () => {
 
     const admin = await makeUser(
       `admin-${stamp}@e2e.test`,
-      UserRole.ADMIN,
+      UserRole.INCUBATOR_MEMBER,
       'Admin',
       'Test',
     );

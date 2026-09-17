@@ -11,7 +11,6 @@ import { ExpertScoringService } from './services/expert-scoring.service';
 import { ExpertRecommendationService } from './services/expert-recommendation.service';
 import { ProjectProfileBuilder } from './services/project-profile-builder.service';
 import { CreateExpertDto } from './dto/create-expert.dto';
-import { ExpertFiltersDto } from './dto/expert-filters.dto';
 import { UpdateExpertDto } from './dto/update-expert.dto';
 import { AddExpertiseDto } from './dto/add-expertise.dto';
 import { plainToClass } from 'class-transformer';
@@ -86,29 +85,6 @@ export class ExpertService {
     });
     if (!profile) throw new NotFoundException(`Expert #${id} introuvable.`);
     return profile;
-  }
-
-  async findAll(filters?: ExpertFiltersDto) {
-    const where: any = {};
-
-    if (filters?.availability) {
-      where.availability_status = filters.availability;
-    }
-
-    if (filters?.expertiseAreaId) {
-      where.expertiseConnections = {
-        some: { expertise_area_id: filters.expertiseAreaId },
-      };
-    }
-
-    if (filters?.minYears) {
-      where.years_of_experience = { gte: filters.minYears };
-    }
-
-    return this.prisma.expertProfile.findMany({
-      where,
-      include: this.getDefaultInclude(),
-    });
   }
 
   async upsert(userId: string, dto: UpdateExpertDto) {
@@ -375,48 +351,21 @@ export class ExpertService {
     });
   }
 
-  async getTopExperts(options: {
-    limit: number;
-    sortBy: 'score' | 'experience' | 'availability';
-  }) {
-    return this.recommendationService.getTopExperts(options);
-  }
-
-  async getExpertiseStatistics(): Promise<any> {
-    const stats = await this.prisma.expertProfileExpertiseArea.groupBy({
-      by: ['expertise_area_id'],
-      _count: { id: true },
-      _avg: { years_of_experience: true },
-    });
-
-    const areas = await this.prisma.expertiseArea.findMany();
-    const areaMap = new Map(areas.map((a) => [a.id, a]));
-
-    return stats
-      .map((s) => ({
-        name: areaMap.get(s.expertise_area_id)?.name || '',
-        category: areaMap.get(s.expertise_area_id)?.category || '',
-        count: s._count.id,
-        avgYears: s._avg.years_of_experience,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }
-
   async recommendJuryForProject(projectId: string, limit: number = 3) {
     return this.recommendationService.recommendForProject(projectId, limit);
   }
 
-async recommendCoachsForCohort(
-      cohortId: string,
-      limit: number = 3,
-      excludeIds: string[] = [],
-    ) {
+  async recommendCoachsForCohort(
+    cohortId: string,
+    limit: number = 3,
+    excludeIds: string[] = [],
+  ) {
     return this.recommendationService.recommendCoachs(
-        cohortId,
-        limit,
-        excludeIds,
-      );
-    }
+      cohortId,
+      limit,
+      excludeIds,
+    );
+  }
 
   /**
    * Projets candidats au coaching d'un expert : projets appartenant à une
@@ -457,10 +406,9 @@ async recommendCoachsForCohort(
       if (seen.has(participation.project_id)) continue;
       seen.add(participation.project_id);
 
-      const requirements =
-        await this.profileBuilder.deriveProjectRequirements(
-          participation.project,
-        );
+      const requirements = await this.profileBuilder.deriveProjectRequirements(
+        participation.project,
+      );
       const match = this.scoringService.matchWithProject(
         expert,
         expertises,
@@ -492,9 +440,7 @@ async recommendCoachsForCohort(
       });
     }
 
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return results.sort((a, b) => b.score - a.score).slice(0, limit);
   }
   private getDefaultInclude(): any {
     return {
@@ -581,28 +527,6 @@ async recommendCoachsForCohort(
         "Ce domaine d'expertise est déjà associé au profil.",
       );
     }
-  }
-
-  async searchByEmail(query: string) {
-    if (!query || query.trim().length === 0) return [];
-
-    return this.prisma.user.findMany({
-      where: {
-        role: 'EXPERT',
-        email: { contains: query.trim(), mode: 'insensitive' },
-        expertProfile: { isNot: null },
-      },
-      select: {
-        id: true,
-        email: true,
-        profile: { select: { first_name: true, last_name: true } },
-        expertProfile: {
-          select: { headline: true, availability_status: true },
-        },
-      },
-      take: 20,
-      orderBy: { email: 'asc' },
-    });
   }
 
   private async findExpertiseConnection(
