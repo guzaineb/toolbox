@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, Check, LineChart, Sparkles } from 'lucide-react'
 import { impactService } from '@/services/impact.service'
 import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
+import { KeyValueListEditor } from '@/components/shared/KeyValueListEditor'
 import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
 import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
@@ -96,8 +97,8 @@ export default function ImpactPage() {
       { key: 'periode_mesure', label: 'Période de mesure (MONTHLY/QUARTERLY/YEARLY)' },
     ],
     objectifs: [
-      { key: 'objectifs_impact', label: 'Objectifs chiffrés (JSON)' },
-      { key: 'resultats_actuels', label: 'Résultats actuels (JSON)' },
+      { key: 'objectifs_impact', label: 'Objectifs chiffrés' },
+      { key: 'resultats_actuels', label: 'Résultats actuels' },
     ],
     report:    [{ key: 'rapport_impact', label: 'Rapport d\'impact' }],
   }
@@ -148,9 +149,18 @@ export default function ImpactPage() {
                       value={(formData as any)[f.key] || ''}
                       onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value })) }}
                     />
+                  ) : f.key === 'objectifs_impact' || f.key === 'resultats_actuels' || f.key === 'kpis_environnementaux' || f.key === 'kpis_sociaux' || f.key === 'kpis_economiques' ? (
+                    <KeyValueListEditor
+                      value={(formData as any)[f.key]}
+                      keyPlaceholder={f.key === 'objectifs_impact' || f.key === 'resultats_actuels' ? 'Indicateur' : 'KPI'}
+                      valuePlaceholder="Valeur (nombre)"
+                      addLabel="Ajouter un élément"
+                      allowNumbers
+                      onChange={v => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: v })) }}
+                    />
                   ) : (
                     <textarea
-                      className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[120px] resize-y font-mono"
+                      className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[120px] resize-y"
                       value={
                         typeof (formData as any)[f.key] === 'object'
                           ? JSON.stringify((formData as any)[f.key], null, 2)

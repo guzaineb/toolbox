@@ -95,7 +95,7 @@ export default function DocumentUploader({
       >
         <input
           type="file"
-          accept=".pdf,.docx,.doc,.txt,.md"
+          accept=".pdf,.docx,.txt,.md"
           onChange={handleInputChange}
           className="hidden"
           id="coach-file-upload"

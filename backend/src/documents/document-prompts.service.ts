@@ -59,6 +59,29 @@ export class DocumentPromptsService {
     return val || 'Non renseigné';
   }
 
+  /** Rend un objet/tableau métier sous forme de lignes lisibles (jamais de JSON
+   * brut injecté dans les prompts des documents générés). */
+  private kv(val: any): string {
+    if (val === null || val === undefined) return 'Non renseigné';
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return 'Non renseigné';
+      return trimmed;
+    }
+    if (Array.isArray(val)) return val.map((v) => `- ${this.kv(v)}`).join('\n');
+    if (typeof val === 'object') {
+      return Object.entries(val)
+        .map(([k, v]) => {
+          const value = Array.isArray(v)
+            ? (v as unknown[]).join(', ')
+            : this.kv(v);
+          return `- ${k} : ${value}`;
+        })
+        .join('\n');
+    }
+    return String(val);
+  }
+
   getDocumentConfigs(): DocumentPromptConfig[] {
     return [
       {
@@ -372,7 +395,7 @@ Formate de manière professionnelle. 200-300 mots.`;
             return `Rédige un plan de KPIs pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un plan de KPIs structuré pour le projet "${p.name}".
 
-KPIs: ${typeof kpi.kpis === 'object' ? JSON.stringify(kpi.kpis) : this.fmt(kpi.kpis)}
+KPIs: ${this.kv(kpi.kpis)}
 OBJECTIFS DE MESURE: ${this.fmt(kpi.objectifs_mesure)}
 REVUES DE PERFORMANCE: ${this.fmt(kpi.revues_performance)}
 
@@ -439,7 +462,7 @@ Formate de manière professionnelle. 300-400 mots.`;
 
 SCORE DE MATURITÉ: ${fa.score_maturite || 'Non évalué'}
 PHASE DE MATURITÉ: ${fa.phase_maturite || 'Non définie'}
-OPPORTUNITÉS DE FINANCEMENT: ${typeof fa.opportunites_financement === 'object' ? JSON.stringify(fa.opportunites_financement) : this.fmt(fa.opportunites_financement)}
+OPPORTUNITÉS DE FINANCEMENT: ${this.kv(fa.opportunites_financement)}
 OPPORTUNITÉS PAR PAYS: ${this.fmt(fa.opportunites_pays)}
 STRATÉGIE DE LEVÉE DE FONDS: ${this.fmt(fa.strategie_levee_fonds)}
 
@@ -461,9 +484,9 @@ ALIGNEMENT DES OBJECTIFS: ${this.fmt(ma.alignement_objectifs)}
 POSITIONNEMENT: ${this.fmt(ma.positionnement)}
 IDENTITÉ VISUELLE: ${this.fmt(ma.identite_visuelle)}
 NARRATION: ${this.fmt(ma.narration)}
-MESSAGES CLÉS: ${typeof ma.messages_cles === 'object' ? JSON.stringify(ma.messages_cles) : this.fmt(ma.messages_cles)}
-CANAUX MARKETING: ${typeof ma.canaux_marketing === 'object' ? JSON.stringify(ma.canaux_marketing) : this.fmt(ma.canaux_marketing)}
-PARTENARIATS: ${typeof ma.partenariats_market === 'object' ? JSON.stringify(ma.partenariats_market) : this.fmt(ma.partenariats_market)}
+MESSAGES CLÉS: ${this.kv(ma.messages_cles)}
+CANAUX MARKETING: ${this.kv(ma.canaux_marketing)}
+PARTENARIATS: ${this.kv(ma.partenariats_market)}
 
 Formate de manière professionnelle. 300-400 mots.`;
         },
@@ -478,13 +501,13 @@ Formate de manière professionnelle. 300-400 mots.`;
             return `Rédige un rapport d'impact durable pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un rapport d'impact durable structuré pour le projet "${p.name}".
 
-KPIs ENVIRONNEMENTAUX: ${typeof im.kpis_environnementaux === 'object' ? JSON.stringify(im.kpis_environnementaux) : this.fmt(im.kpis_environnementaux)}
-KPIs SOCIAUX: ${typeof im.kpis_sociaux === 'object' ? JSON.stringify(im.kpis_sociaux) : this.fmt(im.kpis_sociaux)}
-KPIs ÉCONOMIQUES: ${typeof im.kpis_economiques === 'object' ? JSON.stringify(im.kpis_economiques) : this.fmt(im.kpis_economiques)}
+KPIs ENVIRONNEMENTAUX: ${this.kv(im.kpis_environnementaux)}
+KPIs SOCIAUX: ${this.kv(im.kpis_sociaux)}
+KPIs ÉCONOMIQUES: ${this.kv(im.kpis_economiques)}
 MÉTHODE DE MESURE: ${this.fmt(im.methode_mesure)}
 PÉRIODE: ${im.periode_mesure || 'Non définie'}
-OBJECTIFS D'IMPACT: ${typeof im.objectifs_impact === 'object' ? JSON.stringify(im.objectifs_impact) : this.fmt(im.objectifs_impact)}
-RÉSULTATS ACTUELS: ${typeof im.resultats_actuels === 'object' ? JSON.stringify(im.resultats_actuels) : this.fmt(im.resultats_actuels)}
+OBJECTIFS D'IMPACT: ${this.kv(im.objectifs_impact)}
+RÉSULTATS ACTUELS: ${this.kv(im.resultats_actuels)}
 RAPPORT: ${this.fmt(im.rapport_impact)}
 
 Formate de manière professionnelle. 300-400 mots.`;

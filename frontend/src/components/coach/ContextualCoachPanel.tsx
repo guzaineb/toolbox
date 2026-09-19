@@ -35,6 +35,18 @@ interface ActionDef {
   color: string
 }
 
+const ctxValue = (v: unknown): string => {
+  if (v === null || v === undefined) return ''
+  if (typeof v === 'string') return v
+  if (Array.isArray(v)) return v.map((i) => ctxValue(i)).join('\n- ')
+  if (typeof v === 'object') {
+    return Object.entries(v as Record<string, unknown>)
+      .map(([k, val]) => `${k}: ${ctxValue(val)}`)
+      .join('; ')
+  }
+  return String(v)
+}
+
 const MODULE_ACTIONS: ActionDef[] = [
   {
     id: 'explain',
@@ -108,7 +120,7 @@ export default function ContextualCoachPanel({
     }
     const contextStr = Object.entries(formData)
       .filter(([, v]) => v !== undefined && v !== null && v !== '')
-      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
+      .map(([k, v]) => `${k}: ${ctxValue(v)}`)
       .join('\n')
     return { module, section, step, context: contextStr || undefined }
   }, [module, section, step, formData])

@@ -1065,7 +1065,7 @@ export class ProjectContextService {
       );
     }
 
-    const objectifs = this.toJsonText({
+    const objectifs = this.toBullets({
       'Objectifs environnementaux': this.splitLines(
         objective?.environmental_objectives,
       ),
@@ -1827,6 +1827,18 @@ export class ProjectContextService {
       if (obj[key] && obj[key].length > 0) cleaned[key] = obj[key];
     }
     return JSON.stringify(cleaned, null, 2);
+  }
+
+  /** Rend un objet "clé → lignes" sous forme de texte lisible (puces),
+   * destiné aux champs texte libres — jamais de JSON brut. */
+  private toBullets(obj: Record<string, string[]>): string {
+    return Object.entries(obj)
+      .filter(([, lines]) => lines && lines.length > 0)
+      .map(
+        ([key, lines]) =>
+          `${key} :\n${lines.map((l) => `- ${l}`).join('\n')}`,
+      )
+      .join('\n\n');
   }
 
   private mapPeriod(text: string): string {

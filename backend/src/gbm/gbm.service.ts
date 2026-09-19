@@ -15,6 +15,7 @@ import { ModuleAccessService } from '../common/services/module-access.service';
 import { GBM_STEPS, getStepConfig, StepConfig } from './step-config';
 import { ALL_STEPS } from './step-registry';
 import { getOneToManyRule, isValidOneToManyItem } from './step-validation';
+import { extractJson } from '../ai/analysis/ai-json.util';
 
 /** Détail d'une étape GBM insuffisante pour la révision (D3). */
 export interface GbmStepIssue {
@@ -661,7 +662,7 @@ export class GbmService {
           step_key: stepKey,
           prompt: `Génération du résumé pour ${stepKey} avec les données complètes du projet`,
           response: summary,
-          model: 'gpt-4',
+          model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
         },
       });
     } catch (error) {
@@ -778,18 +779,65 @@ export class GbmService {
   }
 
   private tryParseJson(text: string): Record<string, any> | null {
-    if (!text) return null;
-    const trimmed = text.trim();
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    const candidate = match ? match[0] : trimmed;
-    try {
-      const parsed = JSON.parse(candidate);
-      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? parsed
-        : null;
-    } catch {
-      return null;
+    const parsed = extractJson(text);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, any>;
     }
+    return null;
+  }
+
+  /** Présente un texte IA non-JSON de façon lisible : si la sortie ressemble à
+   * du JSON tronqué (accollades non fermées), on réécrit les lignes
+   * "clé": "valeur" en "clé : valeur" pour éviter d'afficher du JSON brut. */
+  private cleanTextBlob(text: string): string {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      const inner = trimmed.replace(/^[{[][\s\S]*?/, '').replace(/[}\]]$/, '');
+      const lines = inner
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && l !== ',' && l !== '');
+      return lines
+        .map((l) =>
+          l.replace(
+            /^"([^"]+)"\s*:\s*"?(.*?)"?\s*,?$/,
+            '$1 : $2',
+          ),
+        )
+        .join('\n');
+    }
+    return trimmed;
+  }
+
+  /** Convertit une valeur issue du JSON IA en texte lisible (liste à puces pour les
+   * tableaux, lignes "clé : valeur" pour les objets, jamais de "{\"...\":\"...\"}"
+   * affiché à l'écran). */
+  private jsonValueToText(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean')
+      return String(value);
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => {
+          if (typeof item === 'string') return `- ${item}`;
+          if (item && typeof item === 'object') {
+            const lines = Object.entries(item as Record<string, unknown>)
+              .map(([k, v]) => `${k}: ${String(v ?? '')}`)
+              .join(', ');
+            return `- ${lines}`;
+          }
+          return `- ${String(item)}`;
+        })
+        .join('\n');
+    }
+    if (typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([k, v]) => `${k} : ${this.jsonValueToText(v)}`)
+        .join('\n');
+    }
+    return String(value);
   }
 
   private buildSummaryData(stepKey: string, summary: string): any {
@@ -807,13 +855,27 @@ export class GbmService {
         if (parsed) {
           const data: Record<string, any> = { ...base };
           for (const key of allowed) {
-            if (parsed[key] !== undefined) data[key] = String(parsed[key]);
+            if (parsed[key] !== undefined)
+              data[key] = this.jsonValueToText(parsed[key]);
           }
           if (Object.keys(data).length > 1) return data;
+          // Objet JSON valide mais aux clés non attendues : on répartit les
+          // valeurs restantes dans le premier champ plutôt que d'afficher du
+          // JSON brut.
+          const values = Object.values(parsed).filter(
+            (v) => v !== undefined && v !== null && v !== '',
+          );
+          if (values.length > 0) {
+            data[allowed[0]] = values
+              .map((v) => this.jsonValueToText(v))
+              .filter((v) => v !== '')
+              .join('\n\n');
+            return data;
+          }
         }
         return stepKey === 'gbm_15'
-          ? { ...base, activities_summary: summary }
-          : { ...base, cost_summary: summary };
+          ? { ...base, activities_summary: this.cleanTextBlob(summary) }
+          : { ...base, cost_summary: this.cleanTextBlob(summary) };
       }
       case 'gbm_21': {
         const allowed = ['strengths', 'weaknesses', 'opportunities', 'threats'];
@@ -821,11 +883,24 @@ export class GbmService {
         if (parsed) {
           const data: Record<string, any> = {};
           for (const key of allowed) {
-            if (parsed[key] !== undefined) data[key] = String(parsed[key]);
+            if (parsed[key] !== undefined)
+              data[key] = this.jsonValueToText(parsed[key]);
           }
           if (Object.keys(data).length > 0) return data;
+          const values = Object.values(parsed).filter(
+            (v) => v !== undefined && v !== null && v !== '',
+          );
+          if (values.length >= 2) {
+            data.strengths = this.jsonValueToText(values[0]);
+            data.opportunities = this.jsonValueToText(values[1]);
+            if (values[2] !== undefined)
+              data.weaknesses = this.jsonValueToText(values[2]);
+            if (values[3] !== undefined)
+              data.threats = this.jsonValueToText(values[3]);
+            return data;
+          }
         }
-        return { strengths: summary };
+        return { strengths: this.cleanTextBlob(summary) };
       }
       default:
         return {};

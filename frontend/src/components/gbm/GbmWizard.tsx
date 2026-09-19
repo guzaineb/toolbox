@@ -13,6 +13,7 @@ import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
 import { GbmNavbar } from './GbmNavbar'
 import { StepForm } from './StepForm'
 import { OneToManyManager, type OneToManyManagerHandle } from './OneToManyManager'
+import { SwotForm } from './SwotForm'
 import { GuidePanel } from './GuidePanel'
 import { GbmChatbot } from './GbmChatbot'
 import { ContextualCoachPanel } from '@/components/coach'
@@ -356,6 +357,8 @@ export function GbmWizard({ projectId, onRegisterLeave }: { projectId: string; o
                   onChanged={async () => { await refreshProgress(); await refreshCurrentStep() }}
                   onPendingChange={setPendingItems}
                 />
+              ) : currentStep === 'gbm_21' ? (
+                <SwotForm data={formData} onChange={handleFieldChange} />
               ) : (
                 <StepForm fields={stepMeta.fields} data={formData} onChange={handleFieldChange} />
               )}

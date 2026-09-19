@@ -137,6 +137,14 @@ export class GbmController {
     );
   }
 
+  @Get('bmc')
+  async getBmc(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+  ) {
+    return this.bmcPdfService.getData(params.projectId, req.user.id);
+  }
+
   @Get('bmc-pdf')
   async downloadBmcPdf(
     @Req() req: { user: { id: string } },

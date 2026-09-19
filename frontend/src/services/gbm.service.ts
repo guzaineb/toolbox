@@ -49,6 +49,11 @@ export const gbmService = {
     return data
   },
 
+  async getBmcData(projectId: string) {
+    const { data } = await api.get(`${base(projectId)}/bmc`)
+    return data
+  },
+
   async downloadBmcPdf(projectId: string): Promise<Blob> {
     const { data } = await api.get(`${base(projectId)}/bmc-pdf`, {
       responseType: 'blob',

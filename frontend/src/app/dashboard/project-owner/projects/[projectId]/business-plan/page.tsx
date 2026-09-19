@@ -7,6 +7,7 @@ import { businessPlanService } from '@/services/business-plan.service'
 import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav, Badge } from '@/components/shared/ui'
 import type { BusinessPlanGatingStatus } from '@/types/business-plan'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
+import { KeyValueListEditor } from '@/components/shared/KeyValueListEditor'
 import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
 import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
@@ -232,13 +233,14 @@ export default function BusinessPlanPage() {
               {fields.map(f => (
                 <div key={f.key}>
                   <label className="block text-xs font-semibold text-ink2 mb-1">{f.label}</label>
-                  {f.type === 'json' ? (
-                    <textarea
-                      className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y font-mono"
-                      value={jsonText(formData[f.key])}
-                      onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value })) }}
-                      rows={6}
-                      placeholder={f.placeholder}
+                  {f.type === 'kpi' ? (
+                    <KeyValueListEditor
+                      value={formData[f.key]}
+                      keyPlaceholder="Indicateur"
+                      valuePlaceholder="Valeur cible"
+                      addLabel="Ajouter un KPI"
+                      emptyHint="Aucun KPI défini pour le moment."
+                      onChange={v => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: v })) }}
                     />
                   ) : f.type === 'textarea' ? (
                     <textarea
@@ -296,15 +298,6 @@ export default function BusinessPlanPage() {
   )
 }
 
-function jsonText(value: unknown): string {
-  if (value === undefined || value === null) return ''
-  if (typeof value === 'string') return value
-  if (typeof value === 'object') {
-    try { return JSON.stringify(value, null, 2) } catch { return '' }
-  }
-  return String(value)
-}
-
 function getSectionFields(section: string) {
   const map: Record<string, { key: string; label: string; type: string; placeholder?: string }[]> = {
     management: [
@@ -337,7 +330,7 @@ function getSectionFields(section: string) {
       { key: 'assurances', label: 'Assurances', type: 'textarea' },
     ],
     kpis: [
-      { key: 'kpis', label: 'Indicateurs de performance (KPIs)', type: 'json', placeholder: '{\n  "KPI 1": "Valeur cible"\n}' },
+      { key: 'kpis', label: 'Indicateurs de performance (KPIs)', type: 'kpi' },
       { key: 'objectifs_mesure', label: 'Objectifs de mesure', type: 'textarea' },
       { key: 'revues_performance', label: 'Revues de performance', type: 'textarea' },
     ],

@@ -80,7 +80,7 @@ export class ImpactService {
         step_key: 'impact_report',
         prompt: 'Generate impact report',
         response: rapport,
-        model: 'gpt-4',
+        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
       },
     });
 

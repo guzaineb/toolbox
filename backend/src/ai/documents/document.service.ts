@@ -62,7 +62,16 @@ export class DocumentService {
     const filename = `${docId}${ext}`;
     const filepath = path.join(UPLOAD_DIR, filename);
 
-    fs.copyFileSync(file.path, filepath);
+    try {
+      fs.copyFileSync(file.path, filepath);
+    } finally {
+      // Nettoie le fichier temporaire écrit par Multer dans uploads/temp.
+      try {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      } catch {
+        // Le nettoyage du fichier temp est best-effort.
+      }
+    }
 
     const document = await this.prisma.uploadedDocument.create({
       data: {
@@ -79,13 +88,26 @@ export class DocumentService {
 
     this.logger.log(`Document uploaded: ${document.id} (${file.originalname}) for project ${projectId}`);
 
+    // Indexation automatique : extraction du texte, chunking, embeddings, ChromaDB.
+    // L'utilisateur n'a pas à appeler un endpoint d'indexation séparé.
+    try {
+      await this.indexDocument(docId, projectId, ownerId);
+    } catch {
+      // L'indexation est non bloquante : le document reste en statut FAILED/PENDING
+      // et pourra être réindexé via POST /ai/documents/reindex.
+    }
+
+    const indexed = await this.prisma.uploadedDocument.findUnique({
+      where: { id: docId },
+    });
+
     return {
-      id: document.id,
+      id: docId,
       filename: document.filename,
       originalName: document.original_name,
       mimeType: document.mime_type,
       size: document.size,
-      status: document.status,
+      status: indexed?.status ?? document.status,
       createdAt: document.created_at,
     };
   }

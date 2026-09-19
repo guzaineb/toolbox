@@ -30,6 +30,12 @@ export class BmcPdfService {
     return this.buildPdf(project, data);
   }
 
+  /** Données agrégées du GBM pour la vue BMC à l'écran (mêmes données que le PDF). */
+  async getData(projectId: string, userId: string) {
+    await this.access.assertCanAccessProject(projectId, userId);
+    return this.gatherData(projectId);
+  }
+
   private async gatherData(projectId: string) {
     const prisma = this.prisma as any;
 

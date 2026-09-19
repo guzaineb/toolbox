@@ -5,7 +5,6 @@ import { MessageSquare, ChevronDown, Plus, AlertTriangle } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import DocumentUploader from './DocumentUploader'
-import VoiceRecorder from './VoiceRecorder'
 import {
   askCoach,
   indexProject,
@@ -40,7 +39,6 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showUpload, setShowUpload] = useState(false)
-  const [showVoice, setShowVoice] = useState(false)
   const [documents, setDocuments] = useState<UploadedDocument[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
@@ -420,19 +418,11 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         </div>
       )}
 
-      {/* Voice panel */}
-      {showVoice && (
-        <div className="px-4 py-2 border-t border-ink/[.08]">
-          <VoiceRecorder projectId={projectId} onTranscript={handleSend} />
-        </div>
-      )}
-
       {/* Input */}
       <div className="px-4 py-2.5 border-t border-ink/[.08]">
         <ChatInput
           onSend={handleSend}
           onUploadClick={() => setShowUpload(!showUpload)}
-          onMicClick={() => setShowVoice(!showVoice)}
           loading={loading}
         />
       </div>

@@ -12,6 +12,10 @@ export class LlmService {
   private readonly defaultModel =
     process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
+  getModelName(): string {
+    return process.env.GROQ_MODEL || this.defaultModel;
+  }
+
   async generate(prompt: string, options?: LlmOptions): Promise<LlmResponse> {
     const messages: LlmMessage[] = [
       {

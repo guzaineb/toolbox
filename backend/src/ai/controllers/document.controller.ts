@@ -30,7 +30,6 @@ const UPLOAD_TEMP_DIR = path.join(process.cwd(), 'uploads', 'temp');
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/msword',
   'text/plain',
   'text/markdown',
 ];
@@ -43,7 +42,7 @@ function fileFilter(
   if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`Type de fichier non supporté: ${file.mimetype}. Autorisés: PDF, DOCX, DOC, TXT, MD`), false);
+    cb(new Error(`Type de fichier non supporté: ${file.mimetype}. Autorisés: PDF, DOCX, TXT, MD`), false);
   }
 }
 
