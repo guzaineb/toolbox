@@ -62,9 +62,9 @@ export default function AdminExpertsPage() {
           className="px-4 py-2 border border-gray-200 rounded-lg"
         >
           <option value="all">Tous les statuts</option>
-          <option value="available">Disponibles</option>
-          <option value="busy">Occupés</option>
-          <option value="unavailable">Indisponibles</option>
+          <option value="AVAILABLE">Disponibles</option>
+          <option value="BUSY">Occupés</option>
+          <option value="UNAVAILABLE">Indisponibles</option>
         </select>
       </div>
 
@@ -117,7 +117,7 @@ export default function AdminExpertsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Link href={`/admin/experts/${expert.id}`}>
+                    <Link href={`/dashboard/expert/profile/${expert.id}`}>
                       <button className="p-2 text-gray-600 hover:text-gray-900">
                         <Eye className="w-4 h-4" />
                       </button>

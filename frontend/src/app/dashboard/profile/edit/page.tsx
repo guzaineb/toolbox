@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import {
   Button, Card, CardHeader, ErrorAlert, Field, Input, Select, Textarea, TabNav, Avatar, Sep,
 } from '@/components/shared/ui'
-import { ProfileForm } from '@/types/profil'
+import { ProfileForm } from '@/types/profile'
 
 export default function ProfileEditPage() {
   const { user } = useAuth()
@@ -25,7 +25,7 @@ export default function ProfileEditPage() {
     address: '',
     bio: '',
     linkedin: '',
-    preferred_language: 'fr',
+    preferred_language: 'FR',
   })
 
   const [saving, setSaving] = useState(false)
@@ -45,7 +45,7 @@ export default function ProfileEditPage() {
         address: p.address ?? '',
         bio: p.bio ?? '',
         linkedin: p.linkedin ?? '',
-        preferred_language: p.preferred_language ?? 'fr',
+        preferred_language: p.preferred_language ?? 'FR',
       })
     }
   }, [user])
@@ -162,9 +162,9 @@ export default function ProfileEditPage() {
 
           <Field label="Langue préférée">
             <Select value={form.preferred_language} onChange={e => setForm(f => ({ ...f, preferred_language: e.target.value }))}>
-              <option value="fr">Français</option>
-              <option value="ar">Arabe</option>
-              <option value="en">Anglais</option>
+              <option value="FR">Français</option>
+              <option value="AR">Arabe</option>
+              <option value="EN">Anglais</option>
             </Select>
           </Field>
         </div>

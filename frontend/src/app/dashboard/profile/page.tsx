@@ -35,10 +35,10 @@ export default function ProfilePage() {
   const linkedinUrl = profile?.linkedin
 
   const roleMap: Record<string, { label: string; variant: 'green' | 'blue' | 'amber' | 'gray' }> = {
-    admin:            { label: 'Administrateur',    variant: 'amber' },
-    expert:           { label: 'Expert',            variant: 'blue'  },
-    project_owner:    { label: 'Porteur de projet', variant: 'green' },
-    incubator_membre: { label: 'Membre incubateur', variant: 'gray'  },
+    ADMIN:            { label: 'Administrateur',    variant: 'amber' },
+    EXPERT:           { label: 'Expert',            variant: 'blue'  },
+    PROJECT_OWNER:    { label: 'Porteur de projet', variant: 'green' },
+    INCUBATOR_MEMBER: { label: 'Membre incubateur', variant: 'gray'  },
   }
   const roleInfo = user.role ? roleMap[user.role] : null
 
@@ -160,8 +160,8 @@ export default function ProfilePage() {
             <div className="px-[18px] py-3 flex items-center gap-2">
               <span className="text-[12px] text-ink3">Langue préférée :</span>
               <Badge variant="green">
-                {profile.preferred_language === 'fr' ? '🇫🇷 Français'
-                  : profile.preferred_language === 'ar' ? '🇸🇦 Arabe'
+                {profile.preferred_language === 'FR' ? '🇫🇷 Français'
+                  : profile.preferred_language === 'AR' ? '🇸🇦 Arabe'
                   : '🇬🇧 Anglais'}
               </Badge>
             </div>

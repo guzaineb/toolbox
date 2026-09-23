@@ -33,7 +33,7 @@ export function ExpertScoreCard({ score, compact = false }: ExpertScoreCardProps
     { icon: Briefcase, label: 'Expérience', value: `${score.details.experience.years} ans`, score: score.details.experience.score },
     { icon: Layers, label: 'Expertises', value: `${score.details.diversity.count} domaines`, score: score.details.diversity.score },
     { icon: TrendingUp, label: 'Niveau moyen', value: score.details.levels.average.toFixed(1), score: score.details.levels.score },
-    { icon: Clock, label: 'Disponibilité', value: score.details.availability.status === 'available' ? 'Disponible' : score.details.availability.status === 'busy' ? 'Occupé' : 'Indisponible', score: score.details.availability.score },
+    { icon: Clock, label: 'Disponibilité', value: score.details.availability.status === 'AVAILABLE' ? 'Disponible' : score.details.availability.status === 'BUSY' ? 'Occupé' : 'Indisponible', score: score.details.availability.score },
   ];
 
   return (

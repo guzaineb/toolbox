@@ -33,7 +33,7 @@ export function IncubatorOnboarding({ incubatorId }: { incubatorId: string }) {
         const hasRequiredDocs = documents.data.some(
           (d: any) =>
             ['registre_commerce', 'document_legal'].includes(d.document_type) &&
-            d.verification_status === 'approved'
+            d.verification_status === 'APPROVED'
         )
         const hasTeam = members.data.length >= 2
 

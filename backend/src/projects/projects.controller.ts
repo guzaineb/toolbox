@@ -1,52 +1,37 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req, Patch, Delete, Query } from '@nestjs/common';
-import { ProjectsService } from './projects.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto, UpdateProjectStatusDto } from './dto/update-project.dto';
+import {
+  Controller, Get, Post, Param, Body, Query, Req, UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ProjectsService } from './projects.service';
 
 @Controller('projects')
+@UseGuards(JwtAuthGuard)
 export class ProjectsController {
-  constructor(private projectsService: ProjectsService) {}
+  constructor(private readonly projectsService: ProjectsService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Req() req: { user: { id: string } }, @Body() dto: CreateProjectDto) {
-    return this.projectsService.create(req.user.id, dto);
+  async create(
+    @Req() req: { user: { id: string } },
+    @Body() data: { name: string; description?: string },
+  ) {
+    return this.projectsService.create(req.user.id, data);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Req() req: { user: { id: string; role?: string } }) {
-    return this.projectsService.findAll(req.user.id, req.user.role);
+  async findAll(@Req() req: { user: { id: string } }) {
+    return this.projectsService.findByOwner(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
-    return this.projectsService.findOne(id, req.user.id);
+  @Get('search')
+  async search(@Query('q') query: string) {
+    return this.projectsService.search(query);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id')
-  update(@Param('id') id: string, @Req() req: { user: { id: string } }, @Body() dto: UpdateProjectDto) {
-    return this.projectsService.update(id, req.user.id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Req() req: { user: { id: string } }, @Body() dto: UpdateProjectStatusDto) {
-    return this.projectsService.updateStatus(id, req.user.id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  remove(@Param('id') id: string, @Req() req: { user: { id: string } }) {
-    return this.projectsService.remove(id, req.user.id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/progress')
-  getProgress(@Param('id') id: string, @Req() req: { user: { id: string } }) {
-    return this.projectsService.getProgress(id, req.user.id);
+  @Get(':projectId')
+  async findOne(
+    @Req() req: { user: { id: string } },
+    @Param('projectId') projectId: string,
+  ) {
+    return this.projectsService.findOwnedOrThrow(projectId, req.user.id);
   }
 }

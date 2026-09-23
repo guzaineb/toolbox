@@ -120,13 +120,6 @@ class ExpertService {
     return response.data;
   }
 
-  async matchWithMultipleProjects(
-    projects: Array<{ requiredAreas: string[]; minYearsExperience: number }>
-  ): Promise<Array<{ project: any; matchPercentage: number; details: any }>> {
-    const response = await api.post('/experts/me/match-projects-batch', { projects });
-    return response.data;
-  }
-
   // ==================== RECOMMANDATIONS ====================
 
   async getTopExperts(limit: number = 10, sortBy: 'score' | 'experience' | 'availability' = 'score') {

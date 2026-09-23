@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProjectDocument } from './project-document.entity';
-import { Project } from '../projects/project.entity';
-import { DocumentsService } from './documents.service';
 import { DocumentsController } from './documents.controller';
+import { DocumentsService } from './documents.service';
+import { DocumentPromptsService } from './document-prompts.service';
+import { DocumentPdfService } from './document-pdf.service';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProjectDocument, Project])],
+  imports: [AiModule],
   controllers: [DocumentsController],
-  providers: [DocumentsService],
+  providers: [DocumentsService, DocumentPromptsService, DocumentPdfService],
   exports: [DocumentsService],
 })
 export class DocumentsModule {}

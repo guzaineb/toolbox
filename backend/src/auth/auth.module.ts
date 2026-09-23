@@ -6,14 +6,11 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../users/user.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailService } from 'src/mail/mail.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
     MailerModule,
     UsersModule,
     PassportModule,

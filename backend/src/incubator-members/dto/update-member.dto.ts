@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsBoolean, IsIn } from 'class-validator';
 
 export class UpdateMemberDto {
   @IsOptional()
-  @IsIn(['admin', 'program_manager', 'cohort_manager', 'review_manager', 'member', 'viewer'])
+  @IsIn(['ADMIN', 'PROGRAM_MANAGER', 'COHORT_MANAGER', 'REVIEW_MANAGER', 'MEMBER', 'VIEWER'])
   role?: string;
 
   @IsOptional()
@@ -18,7 +18,7 @@ export class UpdateMemberDto {
   bio?: string;
 
   @IsOptional()
-  @IsIn(['active', 'inactive'])
+  @IsIn(['ACTIVE', 'PENDING', 'SUSPENDED'])
   status?: string;
 
   @IsOptional()

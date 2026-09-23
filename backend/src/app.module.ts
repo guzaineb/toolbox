@@ -9,48 +9,48 @@ import { UsersModule } from './users/users.module';
 import { ExpertModule } from './expert/expert.module';
 import { ProjectOwnerModule } from './project-owner/project-owner.module';
 import { ProfilesModule } from './profiles/profiles.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MailService } from './mail/mail.service';
+import { ConfigModule } from '@nestjs/config';
+import { EventsModule } from './events/events.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
 import { ProjectsModule } from './projects/projects.module';
-import { JourneyModule } from './journey/journey.module';
+import { GbmModule } from './gbm/gbm.module';
+import { BusinessPlanModule } from './business-plan/business-plan.module';
+import { EcoDesignModule } from './eco-design/eco-design.module';
+import { FundingModule } from './funding/funding.module';
+import { MarketModule } from './market/market.module';
+import { ImpactModule } from './impact/impact.module';
+import { SwotModule } from './swot/swot.module';
 import { DocumentsModule } from './documents/documents.module';
-import { ReviewsModule } from './reviews/reviews.module';
-import { ProgressModule } from './progress/progress.module';
-import { AiAssistantModule } from './ai-assistant/ai-assistant.module';
+import { CohortsModule } from './cohorts/cohorts.module';
+import { CohortParticipationsModule } from './cohort-participations/cohort-participations.module';
+import { CohortExpertsModule } from './cohort-experts/cohort-experts.module';
+import { EvaluationsModule } from './evaluations/evaluations.module';
+import { CoachingsModule } from './coachings/coachings.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { VersionsModule } from './versions/versions.module';
-import { BmcModule } from './bmc/bmc.module';
-import { SharesModule } from './shares/shares.module';
-import { ExportsModule } from './exports/exports.module';
-import { SectorsModule } from './sectors/sectors.module';
-import { DevelopmentPhasesModule } from './development-phases/development-phases.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST'),
-        port: +config.get('DB_PORT'),
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
-      }),
-      inject: [ConfigService],
-    }),
+    PrismaModule,
+    CommonModule,
     IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule,
-    AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule,
-    UploadsModule, ProjectsModule, JourneyModule, DocumentsModule,
-    ReviewsModule, ProgressModule, AiAssistantModule, NotificationsModule,
-    VersionsModule, BmcModule, SharesModule, ExportsModule,
-    SectorsModule, DevelopmentPhasesModule,
+    AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule,
+    ExpertModule, UploadsModule,
+    ProjectsModule,
+    GbmModule, BusinessPlanModule, EcoDesignModule,
+    FundingModule, MarketModule, ImpactModule,
+    SwotModule, DocumentsModule,
+    CohortsModule,
+    CohortParticipationsModule,
+    CohortExpertsModule,
+    EvaluationsModule,
+    CoachingsModule,
+    NotificationsModule,
+    EventsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailService],
+  providers: [AppService],
 })
 export class AppModule { }

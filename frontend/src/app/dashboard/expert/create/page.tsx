@@ -31,7 +31,7 @@ export default function ExpertCreatePage() {
     position: '',
     years_of_experience: '',
     linkedin_url: '',
-    availability_status: 'available' as AvailabilityStatus,
+    availability_status: 'AVAILABLE' as AvailabilityStatus,
   });
   const [selectedExpertises, setSelectedExpertises] = useState<SelectedExpertise[]>([]);
   const [localError, setLocalError] = useState('');
@@ -266,7 +266,7 @@ export default function ExpertCreatePage() {
                 Disponibilité *
               </label>
               <div className="grid grid-cols-3 gap-3">
-                {(['available', 'busy', 'unavailable'] as const).map((status) => (
+                {(['AVAILABLE', 'BUSY', 'UNAVAILABLE'] as const).map((status) => (
                   <button
                     key={status}
                     type="button"

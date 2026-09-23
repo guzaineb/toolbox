@@ -1,45 +1,64 @@
-import { Controller, Post, Get, Param, UseGuards, Req, Delete, UseInterceptors, UploadedFile, Body, Patch } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { DocumentsService } from './documents.service';
+import { Controller, Get, Post, Param, Req, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DocumentsService } from './documents.service';
+import { DocumentPdfService } from './document-pdf.service';
 
 @Controller('projects/:projectId/documents')
+@UseGuards(JwtAuthGuard)
 export class DocumentsController {
-  constructor(private documentsService: DocumentsService) {}
+  constructor(
+    private readonly docsService: DocumentsService,
+    private readonly pdfService: DocumentPdfService,
+  ) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  upload(
-    @Param('projectId') projectId: string,
-    @Req() req: { user: { id: string } },
-    @UploadedFile() file: Express.Multer.File,
-    @Body('document_type') documentType: string,
-    @Body('step_id') stepId?: string,
-  ) {
-    if (!file) throw new Error('Fichier requis');
-    return this.documentsService.upload(projectId, req.user.id, documentType, file, stepId);
-  }
-
-  @UseGuards(JwtAuthGuard)
   @Get()
-  findByProject(@Param('projectId') projectId: string) {
-    return this.documentsService.findByProject(projectId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id/verify')
-  verify(
-    @Param('id') id: string,
-    @Body('status') status: 'approved' | 'rejected',
-    @Body('reason') reason?: string,
+  getDocumentsList(
+    @Req() req: { user: { id: string } },
+    @Param('projectId') projectId: string,
   ) {
-    return this.documentsService.verify(id, status, reason);
+    return this.docsService.getDocumentsList(projectId, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.documentsService.remove(id);
+  @Get(':documentKey')
+  getDocument(
+    @Req() req: { user: { id: string } },
+    @Param('projectId') projectId: string,
+    @Param('documentKey') documentKey: string,
+  ) {
+    return this.docsService.getDocument(projectId, documentKey, req.user.id);
+  }
+
+  @Post(':documentKey/generate')
+  generateDocument(
+    @Req() req: { user: { id: string } },
+    @Param('projectId') projectId: string,
+    @Param('documentKey') documentKey: string,
+  ) {
+    return this.docsService.generateDocument(projectId, documentKey, req.user.id);
+  }
+
+  @Post('generate-all')
+  generateAllDocuments(
+    @Req() req: { user: { id: string } },
+    @Param('projectId') projectId: string,
+  ) {
+    return this.docsService.generateAllDocuments(projectId, req.user.id);
+  }
+
+  @Get(':documentKey/pdf')
+  async downloadPdf(
+    @Req() req: { user: { id: string } },
+    @Param('projectId') projectId: string,
+    @Param('documentKey') documentKey: string,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.pdfService.generate(projectId, documentKey, req.user.id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${documentKey}-${projectId}.pdf"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
   }
 }

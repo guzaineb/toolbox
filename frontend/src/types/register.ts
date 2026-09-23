@@ -19,7 +19,7 @@ export interface Step2Data {
 }
 
 export interface Step3Data {
- role: "project_owner" | "expert" | "incubator_member" | null;
+ role: "PROJECT_OWNER" | "EXPERT" | "INCUBATOR_MEMBER" | null;
   expertHeadline?: string;
   expertBio?: string;
   expertExperienceYears?: number;

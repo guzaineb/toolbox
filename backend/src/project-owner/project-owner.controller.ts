@@ -7,8 +7,8 @@ import {
 import { ProjectOwnerService } from './project-owner.service';
 import { CreateProjectOwnerDto } from './dto/create-project-owner.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateExperienceDto } from './dto/create.experience.dto';
-import { CreateSkillDto } from './dto/ceate-skill.dto';
+import { CreateExperienceDto } from './dto/create-experience.dto';
+import { CreateSkillDto } from './dto/create-skill.dto';
 
 @Controller('project-owner')
 @UseGuards(JwtAuthGuard)
@@ -62,5 +62,9 @@ export class ProjectOwnerController {
     return this.service.findAll(+page, +limit);
   }
 
+  @Get(':id')
+  findOne(@Param('id') profileId: string) {
+    return this.service.findById(profileId);
+  }
 
 }

@@ -73,7 +73,7 @@ export function useRegisterStepper() {
     try {
       const fullPayload = {
         ...step1,
-        profile: { ...step2, preferred_language: lang },
+        profile: { ...step2, preferred_language: lang.toUpperCase() },
         role_data: step3
       };
 

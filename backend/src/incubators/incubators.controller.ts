@@ -26,6 +26,15 @@ export class IncubatorsController {
     return this.incubatorsService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/dashboard')
+  getDashboard(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.incubatorsService.getDashboard(id, req.user.id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.incubatorsService.findOne(id);

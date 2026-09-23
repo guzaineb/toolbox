@@ -56,7 +56,7 @@ export default function LoginPage() {
             { num: '12k', label: 'Projets' },
           ]}
           testimonial={{
-            text: 'ProjectStruct  a transformé notre façon de gérer les cohortes et les relations avec les experts.',
+            text: 'ToolBox a transformé notre façon de gérer les cohortes et les relations avec les experts.',
             initials: 'SA',
             name: 'Sara Amrani · DG, InnoHub Casablanca',
           }}
@@ -66,7 +66,7 @@ export default function LoginPage() {
         <RightPanel>
           {/* Logo */}
           <div className="font-syne text-xl sm:text-2xl font-bold text-ink mb-6 sm:mb-8 text-center">
-            project<span className="text-moss">Struc Struct</span>
+            Tool<span className="text-moss">Box</span>
           </div>
 
           {/* Heading */}
