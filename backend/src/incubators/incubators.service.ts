@@ -1,4 +1,4 @@
-import {Injectable,ForbiddenException,NotFoundException,BadRequestException,} from '@nestjs/common';
+import {Injectable,NotFoundException,BadRequestException,} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIncubatorDto } from './dto/create-incubator.dto';
 import { UpdateIncubatorDto } from './dto/update-incubator.dto';
@@ -7,6 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { ModuleAccessService } from '../common/services/module-access.service';
 
 @Injectable()
 export class IncubatorsService {
@@ -14,6 +15,7 @@ export class IncubatorsService {
     private prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
+    private readonly access: ModuleAccessService,
   ) {}
 
   async create(userId: string, dto: CreateIncubatorDto) {
@@ -93,7 +95,7 @@ export class IncubatorsService {
   }
 
   async update( id: string, dto: UpdateIncubatorDto, userId: string,) {
-    await this.assertAdmin(id, userId);
+    await this.access.assertIncubatorAdmin(userId, id);
 
     if (dto.slug) {
       const existing = await this.prisma.incubator.findUnique({ where: { slug: dto.slug } });
@@ -107,13 +109,13 @@ export class IncubatorsService {
   }
 
   async remove(id: string, userId: string): Promise<{ message: string }> {
-    await this.assertAdmin(id, userId);
+    await this.access.assertIncubatorAdmin(userId, id);
     await this.prisma.incubator.delete({ where: { id } });
     return { message: 'Incubateur supprimé' };
   }
 
   async updateStatus(id: string, dto: UpdateStatusDto, userId: string,) {
-    await this.assertAdmin(id, userId);
+    await this.access.assertIncubatorAdmin(userId, id);
     const incubator = await this.prisma.incubator.findUnique({ where: { id }, select: { name: true } });
     const updated = await this.prisma.incubator.update({
       where: { id },
@@ -149,7 +151,7 @@ export class IncubatorsService {
   }
 
   async updateVerification(id: string, dto: UpdateVerificationDto, userId: string,) {
-    await this.assertAdmin(id, userId);
+    await this.access.assertIncubatorAdmin(userId, id);
     return this.prisma.incubator.update({
       where: { id },
       data: { verification_status: dto.verification_status },
@@ -157,11 +159,11 @@ export class IncubatorsService {
   }
 
   async getDashboard(incubatorId: string, userId: string) {
-    await this.assertCanAccessDashboard(incubatorId, userId);
+    await this.access.assertCanManageCohorts(userId, incubatorId);
 
     const now = new Date();
 
-    const [cohorts, allParticipations, cohortExperts, evaluations, coachings] =
+    const [cohorts, allParticipations, cohortExperts, evaluations, coachingSessions] =
       await Promise.all([
         this.prisma.cohort.findMany({
           where: { incubator_id: incubatorId },
@@ -195,11 +197,13 @@ export class IncubatorsService {
           },
           select: { id: true },
         }),
-        this.prisma.coaching.findMany({
+        this.prisma.coachingSession.findMany({
           where: {
-            project: {
-              cohort_participations: {
-                some: { cohort: { incubator_id: incubatorId } },
+            assignment: {
+              project: {
+                cohort_participations: {
+                  some: { cohort: { incubator_id: incubatorId } },
+                },
               },
             },
           },
@@ -289,35 +293,8 @@ export class IncubatorsService {
       averageDecisionDelay,
       activeProjects: activeProjectIds.size,
       evaluations: evaluations.length,
-      coachings: coachings.length,
+      coachingSessions: coachingSessions.length,
     };
   }
 
-  private async assertAdmin(incubatorId: string, userId: string): Promise<void> {
-    const member = await this.prisma.incubatorMember.findFirst({
-      where: { incubator_id: incubatorId, user_id: userId, role: 'ADMIN' },
-    });
-    if (!member) {
-      throw new ForbiddenException("Vous n'êtes pas administrateur de cet incubateur");
-    }
-  }
-
-  private async assertCanAccessDashboard(
-    incubatorId: string,
-    userId: string,
-  ): Promise<void> {
-    const member = await this.prisma.incubatorMember.findUnique({
-      where: {
-        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
-      },
-    });
-    if (!member) {
-      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
-    }
-    if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
-      throw new ForbiddenException(
-        'Permissions insuffisantes pour accéder au dashboard',
-      );
-    }
-  }
 }

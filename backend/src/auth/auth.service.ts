@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException,} from '@nestjs/common';
+﻿import { Injectable, BadRequestException, UnauthorizedException,} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcrypt';
@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';

@@ -263,13 +263,6 @@ export class NotificationMessageBuilder {
     };
   }
 
-  coachingFeedback(params: { projectName: string }): { title: string; message: string } {
-    return {
-      title: 'Nouveau feedback de coaching',
-      message: `Vous avez reçu un nouveau feedback de coaching pour le projet « ${params.projectName} ».`,
-    };
-  }
-
   // ==================== PROJECT ====================
 
   projectCreated(params: { projectName: string }): { title: string; message: string } {
@@ -329,6 +322,222 @@ export class NotificationMessageBuilder {
     return {
       title: 'GBM validé',
       message: 'Félicitations ! Votre Green Business Model a été validé.',
+    };
+  }
+
+  // ==================== COACHING & ÉVALUATION (module) ====================
+
+  coachingSessionScheduled(params: {
+    projectName: string;
+    sessionTitle?: string;
+    scheduledAt: Date;
+  }): { title: string; message: string } {
+    return {
+      title: 'Session de coaching planifiée',
+      message: `Une session de coaching pour le projet « ${params.projectName} »${params.sessionTitle ? ` (« ${params.sessionTitle} »)` : ''} est planifiée le ${params.scheduledAt.toLocaleString('fr-FR')}.`,
+    };
+  }
+
+  coachingSessionUpdated(params: {
+    projectName: string;
+    scheduledAt: Date;
+  }): { title: string; message: string } {
+    return {
+      title: 'Session de coaching modifiée',
+      message: `La session de coaching du projet « ${params.projectName} » a été reprogrammée au ${params.scheduledAt.toLocaleString('fr-FR')}.`,
+    };
+  }
+
+  coachingSessionCancelled(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Session de coaching annulée',
+      message: `La session de coaching du projet « ${params.projectName} » a été annulée.`,
+    };
+  }
+
+  coachingSessionCompleted(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Session de coaching terminée',
+      message: `La session de coaching du projet « ${params.projectName} » a été clôturée. Le compte-rendu est disponible.`,
+    };
+  }
+
+  coachingReportSubmitted(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Compte-rendu de coaching',
+      message: `Le compte-rendu de coaching du projet « ${params.projectName} » a été soumis.`,
+    };
+  }
+
+  coachingActionAssigned(params: {
+    projectName: string;
+    actionTitle: string;
+  }): { title: string; message: string } {
+    return {
+      title: 'Nouvelle action de coaching',
+      message: `Une action « ${params.actionTitle} » a été ajoutée pour le projet « ${params.projectName} ».`,
+    };
+  }
+
+  coachingActionUpdated(params: {
+    projectName: string;
+    actionTitle: string;
+  }): { title: string; message: string } {
+    return {
+      title: 'Action de coaching mise à jour',
+      message: `L'action « ${params.actionTitle} » du projet « ${params.projectName} » a été mise à jour.`,
+    };
+  }
+
+  coachingActionCompleted(params: { actionTitle: string }): { title: string; message: string } {
+    return {
+      title: 'Action de coaching terminée',
+      message: `L'action « ${params.actionTitle} » a été marquée comme terminée.`,
+    };
+  }
+
+  coachingActionDeadlineSoon(params: { actionTitle: string; deadline: Date }): { title: string; message: string } {
+    return {
+      title: 'Échéance proche',
+      message: `L'action « ${params.actionTitle} » arrive à échéance le ${params.deadline.toLocaleDateString('fr-FR')}.`,
+    };
+  }
+
+  coachingActionOverdue(params: { actionTitle: string }): { title: string; message: string } {
+    return {
+      title: 'Action en retard',
+      message: `L'action « ${params.actionTitle} » est en retard.`,
+    };
+  }
+
+  coachingRecommendationAdded(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Recommandation de coaching',
+      message: `Une nouvelle recommandation a été ajoutée pour le projet « ${params.projectName} ».`,
+    };
+  }
+
+  coachingCommentAdded(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Commentaire de coaching',
+      message: `Un commentaire a été ajouté sur le coaching du projet « ${params.projectName} ».`,
+    };
+  }
+
+  coachingActionSubmitted(params: { projectName: string; actionTitle: string }): { title: string; message: string } {
+    return {
+      title: 'Preuve d’action soumise',
+      message: `Le porteur a soumis une preuve pour l'action « ${params.actionTitle} » du projet « ${params.projectName} ». Votre validation est attendue.`,
+    };
+  }
+
+  coachingEvidenceReviewed(params: { projectName: string; actionTitle: string; approved: boolean }): { title: string; message: string } {
+    return {
+      title: params.approved ? 'Preuve validée' : 'Preuve à compléter',
+      message: params.approved
+        ? `Votre preuve pour l'action « ${params.actionTitle} » (projet « ${params.projectName} ») a été validée par le coach.`
+        : `La preuve soumise pour l'action « ${params.actionTitle} » (projet « ${params.projectName} ») n'a pas été retenue. Consultez le commentaire du coach.`,
+    };
+  }
+
+  aiAnalysisReady(params: { projectName: string; analysisType?: string }): { title: string; message: string } {
+    return {
+      title: 'Analyse IA disponible',
+      message: `Une nouvelle analyse IA est disponible pour le projet « ${params.projectName} »${params.analysisType ? ` (${params.analysisType})` : ''}.`,
+    };
+  }
+
+  reEvaluationAvailable(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Ré-évaluation disponible',
+      message: `Une grille de ré-évaluation est prête pour le projet « ${params.projectName} ». Vous pouvez renseigner la nouvelle évaluation.`,
+    };
+  }
+
+  coachAssigned(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Coach affecté',
+      message: `Vous avez été affecté comme coach du projet « ${params.projectName} ».`,
+    };
+  }
+
+  coachRemoved(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Coach retiré',
+      message: `Vous n'êtes plus coach du projet « ${params.projectName} ».`,
+    };
+  }
+
+  evaluationAvailable(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Évaluation disponible',
+      message: `Une évaluation est disponible pour le projet « ${params.projectName} ».`,
+    };
+  }
+
+  evaluationSubmitted(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Évaluation soumise',
+      message: `Une évaluation a été soumise pour le projet « ${params.projectName} ».`,
+    };
+  }
+
+  evaluationAllCompleted(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Toutes les évaluations reçues',
+      message: `Toutes les évaluations ont été soumises pour le projet « ${params.projectName} ».`,
+    };
+  }
+
+  evaluationDeadlineSoon(params: { projectName: string; deadline: Date }): { title: string; message: string } {
+    return {
+      title: "Échéance d'évaluation",
+      message: `L'évaluation du projet « ${params.projectName} » doit être rendue avant le ${params.deadline.toLocaleDateString('fr-FR')}.`,
+    };
+  }
+
+  evaluationTemplateCreated(params: { templateName: string; cohortName: string }): { title: string; message: string } {
+    return {
+      title: "Grille d'évaluation créée",
+      message: `La grille « ${params.templateName} » a été créée pour la cohorte « ${params.cohortName} ».`,
+    };
+  }
+
+  finalDecisionMade(params: {
+    projectName: string;
+    decision: string;
+  }): { title: string; message: string } {
+    return {
+      title: 'Décision finale',
+      message: `Une décision finale (« ${params.decision} ») a été rendue pour le projet « ${params.projectName} ».`,
+    };
+  }
+
+  finalDecisionUpdated(params: { projectName: string; decision: string }): { title: string; message: string } {
+    return {
+      title: 'Décision finale mise à jour',
+      message: `La décision finale du projet « ${params.projectName} » est désormais « ${params.decision} ».`,
+    };
+  }
+
+  finalDecisionConditionsAdded(params: { projectName: string; count: number }): { title: string; message: string } {
+    return {
+      title: 'Conditions de la décision',
+      message: `${params.count} condition(s) ont été ajoutées à la décision du projet « ${params.projectName} ».`,
+    };
+  }
+
+  conditionValidated(params: { conditionDescription: string }): { title: string; message: string } {
+    return {
+      title: 'Condition validée',
+      message: `La condition « ${params.conditionDescription} » a été validée.`,
+    };
+  }
+
+  reevaluationRequested(params: { projectName: string }): { title: string; message: string } {
+    return {
+      title: 'Réévaluation demandée',
+      message: `Une réévaluation a été demandée pour le projet « ${params.projectName} ».`,
     };
   }
 }

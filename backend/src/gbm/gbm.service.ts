@@ -9,6 +9,7 @@ import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
 import { SectionStepService } from '../common/services/section-step.service';
+import { ModuleAccessService } from '../common/services/module-access.service';
 import { GBM_STEPS, getStepConfig, StepConfig } from './step-config';
 import { ALL_STEPS } from './step-registry';
 
@@ -17,6 +18,7 @@ export class GbmService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sections: SectionStepService,
+    private readonly access: ModuleAccessService,
     private readonly ai: AiService,
     private readonly eventEmitter: EventEmitter2,
     private readonly messageBuilder: NotificationMessageBuilder,
@@ -29,7 +31,7 @@ export class GbmService {
   }
 
   async getStepData(projectId: string, stepKey: string, userId: string) {
-    await this.sections.ensureOwnership(projectId, userId);
+    await this.access.assertCanAccessProject(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
 
@@ -104,7 +106,7 @@ export class GbmService {
   }
 
   async listStepItems(projectId: string, stepKey: string, userId: string) {
-    await this.sections.ensureOwnership(projectId, userId);
+    await this.access.assertCanAccessProject(projectId, userId);
     const config = getStepConfig(stepKey);
     if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
 
@@ -220,7 +222,7 @@ export class GbmService {
   }
 
   async getProgress(projectId: string, userId: string) {
-    await this.sections.ensureOwnership(projectId, userId);
+    await this.access.assertCanAccessProject(projectId, userId);
 
     const steps = await this.prisma.stepProgress.findMany({
       where: { project_id: projectId },
@@ -504,8 +506,18 @@ export class GbmService {
           ? { ...base, activities_summary: summary }
           : { ...base, cost_summary: summary };
       }
-      case 'gbm_21':
+      case 'gbm_21': {
+        const allowed = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+        const parsed = this.tryParseJson(summary);
+        if (parsed) {
+          const data: Record<string, any> = {};
+          for (const key of allowed) {
+            if (parsed[key] !== undefined) data[key] = String(parsed[key]);
+          }
+          if (Object.keys(data).length > 0) return data;
+        }
         return { strengths: summary };
+      }
       default:
         return {};
     }

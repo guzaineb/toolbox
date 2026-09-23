@@ -1,8 +1,10 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LlmService } from '../llm.service';
 import { GenerateDto, ChatDto } from '../dto/deepseek.dto';
 
 @Controller('ai/llm')
+@UseGuards(JwtAuthGuard)
 export class LlmController {
   constructor(private readonly llm: LlmService) {}
 

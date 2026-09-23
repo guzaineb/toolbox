@@ -69,17 +69,26 @@ export class CohortParticipationsController {
   }
 
   @Get('cohorts/:cohortId/participations')
-  findByCohort(@Param('cohortId') cohortId: string) {
-    return this.participationsService.findByCohort(cohortId);
+  findByCohort(
+    @Param('cohortId') cohortId: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.participationsService.findByCohort(cohortId, req.user.id);
   }
 
   @Get('projects/:projectId/participations')
-  findByProject(@Param('projectId') projectId: string) {
-    return this.participationsService.findByProject(projectId);
+  findByProject(
+    @Param('projectId') projectId: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.participationsService.findByProject(projectId, req.user.id);
   }
 
   @Get('participations/:id')
-  findOne(@Param('id') id: string) {
-    return this.participationsService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.participationsService.findOne(id, req.user.id);
   }
 }

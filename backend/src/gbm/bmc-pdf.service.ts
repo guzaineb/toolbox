@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ModuleAccessService } from '../common/services/module-access.service';
 import PDFDocument from 'pdfkit';
 
 interface BmcBlock {
@@ -13,12 +14,15 @@ interface BmcBlock {
 export class BmcPdfService {
   private readonly logger = new Logger(BmcPdfService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: ModuleAccessService,
+  ) {}
 
   async generate(projectId: string, userId: string): Promise<Buffer> {
+    await this.access.assertCanAccessProject(projectId, userId);
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Projet introuvable');
-    if (project.owner_id !== userId) throw new ForbiddenException('Accès refusé');
 
     const data = await this.gatherData(projectId);
     return this.buildPdf(project, data);

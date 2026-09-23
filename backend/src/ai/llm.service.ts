@@ -4,7 +4,12 @@ import { LlmMessage, LlmOptions, LlmResponse } from './interfaces/ai.types';
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
-  private readonly defaultModel = 'llama-3.3-70b-versatile';
+  /**
+   * Modèle par défaut surchargé par GROQ_MODEL (.env).
+   * NB : Groq décommissionne régulièrement ses modèles — en cas d'erreur
+   * "model_not_found" (404), vérifier le catalogue via GET /openai/v1/models.
+   */
+  private readonly defaultModel = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
   async generate(prompt: string, options?: LlmOptions): Promise<LlmResponse> {
     const messages: LlmMessage[] = [

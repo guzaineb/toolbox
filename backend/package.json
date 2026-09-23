@@ -24,6 +24,7 @@
     "seed:all": "npm run seed"
   },
   "dependencies": {
+    "@chroma-core/default-embed": "^0.1.9",
     "@nestjs-modules/mailer": "^2.3.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
@@ -96,6 +97,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^uuid$": "<rootDir>/../test/uuid-stub.cjs"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

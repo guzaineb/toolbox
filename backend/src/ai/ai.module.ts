@@ -10,6 +10,15 @@ import { LlmController } from './controllers/deepseek.controller';
 import { SummaryController } from './controllers/summary.controller';
 import { ReformulationController } from './controllers/reformulation.controller';
 import { ChatbotController } from './controllers/chatbot.controller';
+import { ProjectContextBuilderService } from './analysis/project-context.service';
+import { EvaluationAiService } from './analysis/evaluation-ai.service';
+import { CoachingAiService } from './analysis/coaching-ai.service';
+import { ImprovementPlannerService } from './analysis/improvement-planner.service';
+import { RiskAnalysisService } from './analysis/risk-analysis.service';
+import { JuryAiService } from './analysis/jury-ai.service';
+import { ProgressAnalysisService } from './analysis/progress-analysis.service';
+import { AiAnalysisController } from './analysis/ai-analysis.controller';
+import { ImprovementPlanController } from './analysis/improvement-plan.controller';
 
 @Module({
   providers: [
@@ -20,12 +29,21 @@ import { ChatbotController } from './controllers/chatbot.controller';
     SummaryService,
     ReformulationService,
     ChatbotService,
+    ProjectContextBuilderService,
+    EvaluationAiService,
+    CoachingAiService,
+    ImprovementPlannerService,
+    RiskAnalysisService,
+    JuryAiService,
+    ProgressAnalysisService,
   ],
   controllers: [
     LlmController,
     SummaryController,
     ReformulationController,
     ChatbotController,
+    AiAnalysisController,
+    ImprovementPlanController,
   ],
   exports: [
     AiService,
@@ -35,6 +53,13 @@ import { ChatbotController } from './controllers/chatbot.controller';
     SummaryService,
     ReformulationService,
     ChatbotService,
+    ProjectContextBuilderService,
+    EvaluationAiService,
+    CoachingAiService,
+    ImprovementPlannerService,
+    RiskAnalysisService,
+    JuryAiService,
+    ProgressAnalysisService,
   ],
 })
 export class AiModule {}

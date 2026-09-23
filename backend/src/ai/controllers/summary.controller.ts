@@ -1,8 +1,10 @@
-import { Controller, Post, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Param, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { SummaryService } from '../summary.service';
 import { ProjectIdParam } from '../dto/summary.dto';
 
 @Controller('ai/summary')
+@UseGuards(JwtAuthGuard)
 export class SummaryController {
   constructor(private readonly summary: SummaryService) {}
 

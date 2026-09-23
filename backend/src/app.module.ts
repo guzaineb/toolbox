@@ -27,8 +27,13 @@ import { CohortsModule } from './cohorts/cohorts.module';
 import { CohortParticipationsModule } from './cohort-participations/cohort-participations.module';
 import { CohortExpertsModule } from './cohort-experts/cohort-experts.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
-import { CoachingsModule } from './coachings/coachings.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AuditModule } from './audit/audit.module';
+import { AssignmentsModule } from './assignments/assignments.module';
+import { CoachingModule } from './coaching/coaching.module';
+import { FinalDecisionsModule } from './final-decisions/final-decisions.module';
+import { JuriesModule } from './juries/juries.module';
+import { MaturityModule } from './maturity/maturity.module';
 
 @Module({
   imports: [
@@ -46,9 +51,14 @@ import { NotificationsModule } from './notifications/notifications.module';
     CohortParticipationsModule,
     CohortExpertsModule,
     EvaluationsModule,
-    CoachingsModule,
     NotificationsModule,
     EventsModule,
+    AuditModule,
+    AssignmentsModule,
+    CoachingModule,
+    FinalDecisionsModule,
+    JuriesModule,
+    MaturityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

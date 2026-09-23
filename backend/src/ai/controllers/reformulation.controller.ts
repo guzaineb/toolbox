@@ -1,8 +1,10 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ReformulationService } from '../reformulation.service';
 import { ReformulateStepDto, ReformulateTextDto } from '../dto/reformulation.dto';
 
 @Controller('ai/reformulation')
+@UseGuards(JwtAuthGuard)
 export class ReformulationController {
   constructor(private readonly reformulation: ReformulationService) {}
 

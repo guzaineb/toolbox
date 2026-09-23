@@ -243,14 +243,14 @@ describe('NotificationsService', () => {
       (prisma.notification.count as jest.Mock).mockResolvedValue(0);
 
       await service.findAllByUser('user-1', {
-        type: NotificationType.NEW_COACHING,
+        type: NotificationType.COACHING_SESSION_SCHEDULED,
       });
 
       expect(prisma.notification.findMany).toHaveBeenCalledWith({
         where: {
           user_id: 'user-1',
           is_archived: false,
-          type: NotificationType.NEW_COACHING,
+          type: NotificationType.COACHING_SESSION_SCHEDULED,
         },
         orderBy: { created_at: 'desc' },
         skip: 0,

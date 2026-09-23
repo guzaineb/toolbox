@@ -104,4 +104,12 @@ export class CohortsController {
   getProgress(@Param('id') id: string) {
     return this.cohortsService.getProgress(id);
   }
+
+  @Get('cohorts/:id/coaching-projects')
+  findCoachingProjects(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.cohortsService.findCoachingProjects(id, req.user.id);
+  }
 }

@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { AcceptInviteDto, InviteMemberDto } from './dto/invite-member.dto';
 import * as crypto from 'crypto';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';

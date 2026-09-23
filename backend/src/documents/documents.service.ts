@@ -7,6 +7,7 @@ import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
 import { SectionStepService } from '../common/services/section-step.service';
+import { ModuleAccessService } from '../common/services/module-access.service';
 
 export const DOCUMENT_DEFINITIONS = [
   { key: 'idea_sketch', title: "Fiche d'idée", icon: 'Lightbulb' },
@@ -39,6 +40,7 @@ export class DocumentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sections: SectionStepService,
+    private readonly access: ModuleAccessService,
     private readonly llm: LlmService,
     private readonly prompts: DocumentPromptsService,
     private readonly eventEmitter: EventEmitter2,
@@ -46,7 +48,7 @@ export class DocumentsService {
   ) {}
 
   async getDocumentsList(projectId: string, userId: string) {
-    await this.sections.ensureOwnership(projectId, userId);
+    await this.access.assertCanAccessProject(projectId, userId);
 
     const docs = await (this.prisma as any).generatedDocument.findMany({
       where: { project_id: projectId },
@@ -70,7 +72,7 @@ export class DocumentsService {
   }
 
   async getDocument(projectId: string, documentKey: string, userId: string) {
-    await this.sections.ensureOwnership(projectId, userId);
+    await this.access.assertCanAccessProject(projectId, userId);
 
     const def = DOCUMENT_DEFINITIONS.find(d => d.key === documentKey);
     if (!def) throw new NotFoundException(`Document inconnu: ${documentKey}`);
