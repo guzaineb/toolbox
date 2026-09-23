@@ -36,15 +36,25 @@ export class ProjectContextBuilderService {
         problems_needs: true,
         mission_vision: true,
         value_proposition: true,
-        customer_segment: { select: { segment_name: true, description: true, pains: true } },
-        test_discovery: { select: { hypothesis: true, results: true, validated: true } },
+        customer_segment: {
+          select: { segment_name: true, description: true, pains: true },
+        },
+        test_discovery: {
+          select: { hypothesis: true, results: true, validated: true },
+        },
         cost_structure: true,
         revenue_stream: true,
         management_plan: { select: { ressources_humaines: true } },
-        marketing_plan: { select: { analyse_marche: true, concurrents: true, offre_prix: true } },
+        marketing_plan: {
+          select: { analyse_marche: true, concurrents: true, offre_prix: true },
+        },
         financial_plan: { select: { capital: true, seuil_rentabilite: true } },
         impact_measure: {
-          select: { kpis_environnementaux: true, kpis_sociaux: true, resultats_actuels: true },
+          select: {
+            kpis_environnementaux: true,
+            kpis_sociaux: true,
+            resultats_actuels: true,
+          },
         },
         market_access: { select: { positionnement: true, narration: true } },
         swot_analysis: true,
@@ -59,7 +69,10 @@ export class ProjectContextBuilderService {
 
     const parts: string[] = [];
     parts.push(
-      section('PROJET', `Nom : ${project.name}\nDescription : ${trim(project.description)}`),
+      section(
+        'PROJET',
+        `Nom : ${project.name}\nDescription : ${trim(project.description)}`,
+      ),
     );
     parts.push(
       section(
@@ -81,7 +94,10 @@ export class ProjectContextBuilderService {
       ),
     );
 
-    if (project.value_proposition?.value_added || project.customer_segment.length > 0) {
+    if (
+      project.value_proposition?.value_added ||
+      project.customer_segment.length > 0
+    ) {
       const segments = project.customer_segment
         .slice(0, 5)
         .map((s) => `- ${trim(s.segment_name)} : ${trim(s.description, 150)}`)
@@ -174,7 +190,10 @@ export class ProjectContextBuilderService {
       const evalLines: string[] = [];
       for (const evaluation of [...evaluations].reverse()) {
         const computation = evaluation.template
-          ? computeWeightedScore(evaluation.template.criteria, evaluation.scores)
+          ? computeWeightedScore(
+              evaluation.template.criteria,
+              evaluation.scores,
+            )
           : null;
         evalLines.push(
           `Évaluation v${evaluation.version} (${evaluation.submitted_at?.toISOString().slice(0, 10) ?? 'n/d'}) : ${
@@ -183,13 +202,20 @@ export class ProjectContextBuilderService {
         );
         if (evaluation.template) {
           for (const criterion of evaluation.template.criteria) {
-            const score = evaluation.scores.find((s) => s.criterion_id === criterion.id);
+            const score = evaluation.scores.find(
+              (s) => s.criterion_id === criterion.id,
+            );
             if (score) {
-              evalLines.push(`  - ${criterion.name} : ${score.score}/${criterion.max_score}`);
+              evalLines.push(
+                `  - ${criterion.name} : ${score.score}/${criterion.max_score}`,
+              );
             }
           }
         }
-        if (evaluation.comment) evalLines.push(`  Commentaire jury : ${trim(evaluation.comment, 400)}`);
+        if (evaluation.comment)
+          evalLines.push(
+            `  Commentaire jury : ${trim(evaluation.comment, 400)}`,
+          );
       }
       parts.push(section('ÉVALUATIONS', evalLines.join('\n')));
     }
@@ -197,7 +223,10 @@ export class ProjectContextBuilderService {
     // Coaching : recommandations ouvertes + actions récentes
     const [openRecommendations, recentActions] = await Promise.all([
       this.prisma.coachingRecommendation.findMany({
-        where: { project_id: projectId, status: { in: ['OPEN', 'IN_PROGRESS'] } },
+        where: {
+          project_id: projectId,
+          status: { in: ['OPEN', 'IN_PROGRESS'] },
+        },
         select: { title: true, content: true, priority: true, source: true },
         orderBy: { created_at: 'desc' },
         take: 6,
@@ -214,7 +243,10 @@ export class ProjectContextBuilderService {
         section(
           'RECOMMANDATIONS OUVERTES',
           openRecommendations
-            .map((r) => `- [${r.priority}${r.source === 'AI' ? '/IA' : ''}] ${trim(r.title ?? r.content, 180)}`)
+            .map(
+              (r) =>
+                `- [${r.priority}${r.source === 'AI' ? '/IA' : ''}] ${trim(r.title ?? r.content, 180)}`,
+            )
             .join('\n'),
         ),
       );
@@ -224,7 +256,10 @@ export class ProjectContextBuilderService {
         section(
           'ACTIONS DE COACHING',
           recentActions
-            .map((a) => `- ${trim(a.title, 120)} (${a.status}${a.deadline ? `, échéance ${a.deadline.toISOString().slice(0, 10)}` : ''})`)
+            .map(
+              (a) =>
+                `- ${trim(a.title, 120)} (${a.status}${a.deadline ? `, échéance ${a.deadline.toISOString().slice(0, 10)}` : ''})`,
+            )
             .join('\n'),
         ),
       );
@@ -233,7 +268,13 @@ export class ProjectContextBuilderService {
     // Sessions de coaching passées
     const sessions = await this.prisma.coachingSession.findMany({
       where: { assignment: { project_id: projectId }, status: 'COMPLETED' },
-      select: { title: true, objective: true, summary: true, notes: true, completed_at: true },
+      select: {
+        title: true,
+        objective: true,
+        summary: true,
+        notes: true,
+        completed_at: true,
+      },
       orderBy: { scheduled_at: 'desc' },
       take: 3,
     });
@@ -266,14 +307,17 @@ export class ProjectContextBuilderService {
           [
             `Statut : ${plan.status} | Progression : ${plan.progress}%`,
             ...plan.objectives.map(
-              (o) => `- [${o.status}] ${o.title} (priorité ${o.priority}, progression ${o.progress}%)`,
+              (o) =>
+                `- [${o.status}] ${o.title} (priorité ${o.priority}, progression ${o.progress}%)`,
             ),
           ].join('\n'),
         ),
       );
     }
 
-    const completedSteps = project.step_progresses.filter((p) => p.status === 'COMPLETED').length;
+    const completedSteps = project.step_progresses.filter(
+      (p) => p.status === 'COMPLETED',
+    ).length;
 
     return {
       projectId,

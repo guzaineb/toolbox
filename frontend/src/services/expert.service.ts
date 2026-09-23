@@ -8,7 +8,8 @@ import {
   ExpertiseArea,
   ExpertScore,
   ProjectMatch,
-  ExpertiseConnection,
+  ExpertRecommendation,
+  MatchedProject,
 } from '@/types/expert';
 
 class ExpertService {
@@ -27,28 +28,16 @@ class ExpertService {
     try {
       const response = await api.get('/experts/me');
       return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) return null;
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status
+      if (status === 404) return null;
       throw error;
     }
   }
 
   async getExpertById(id: string): Promise<ExpertProfile> {
     const response = await api.get(`/experts/${id}`);
-    return response.data;
-  }
-
-  async getAllExperts(filters?: {
-    availability?: string;
-    expertiseArea?: string;
-    minYears?: number;
-  }): Promise<ExpertProfile[]> {
-    const params = new URLSearchParams();
-    if (filters?.availability) params.append('availability', filters.availability);
-    if (filters?.expertiseArea) params.append('expertiseArea', filters.expertiseArea);
-    if (filters?.minYears) params.append('minYears', filters.minYears.toString());
-    
-    const response = await api.get(`/experts?${params.toString()}`);
     return response.data;
   }
 
@@ -120,24 +109,31 @@ class ExpertService {
     return response.data;
   }
 
+  async getMatchedProjects(limit: number = 10): Promise<MatchedProject[]> {
+    const response = await api.get(`/experts/me/projects/matched?limit=${limit}`);
+    return response.data;
+  }
+
+  async assignToProject(
+    projectId: string,
+    expertUserId: string,
+    role: 'COACH' | 'JURY',
+  ): Promise<{ id: string }> {
+    const response = await api.post(`/projects/${projectId}/assignments`, {
+      expertUserId,
+      role,
+    });
+    return response.data;
+  }
+
   // ==================== RECOMMANDATIONS ====================
 
-  async getTopExperts(limit: number = 10, sortBy: 'score' | 'experience' | 'availability' = 'score') {
-    const response = await api.get(`/experts/analytics/top-experts?limit=${limit}&sortBy=${sortBy}`);
-    return response.data;
-  }
-
-  async getExpertiseStatistics() {
-    const response = await api.get('/experts/analytics/expertise-stats');
-    return response.data;
-  }
-
-  async recommendJury(projectId: string, limit: number = 3) {
+  async recommendJury(projectId: string, limit: number = 3): Promise<ExpertRecommendation[]> {
     const response = await api.post('/experts/recommendations/jury', { projectId, limit });
     return response.data;
   }
 
-  async recommendCoachs(cohortId: string, limit: number = 3, excludeIds: string[] = []) {
+  async recommendCoachs(cohortId: string, limit: number = 3, excludeIds: string[] = []): Promise<ExpertRecommendation[]> {
     const response = await api.post('/experts/recommendations/coachs', { cohortId, limit, excludeIds });
     return response.data;
   }

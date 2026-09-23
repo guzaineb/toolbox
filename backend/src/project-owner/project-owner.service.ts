@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectOwnerDto } from './dto/create-project-owner.dto';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -6,9 +6,7 @@ import { CreateExperienceDto } from './dto/create-experience.dto';
 
 @Injectable()
 export class ProjectOwnerService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateProjectOwnerDto) {
     return this.prisma.projectOwnerProfile.create({
@@ -22,17 +20,12 @@ export class ProjectOwnerService {
   async findByUser(userId: string) {
     return this.prisma.projectOwnerProfile.findUnique({
       where: { user_id: userId },
-      include: { user: { include: { profile: true } }, skills: true, experiences: true },
+      include: {
+        user: { include: { profile: true } },
+        skills: true,
+        experiences: true,
+      },
     });
-  }
-
-  async findById(profileId: string) {
-    const profile = await this.prisma.projectOwnerProfile.findUnique({
-      where: { id: profileId },
-      include: { user: { include: { profile: true } }, skills: true, experiences: true },
-    });
-    if (!profile) throw new NotFoundException('Profil porteur introuvable');
-    return profile;
   }
 
   async upsert(userId: string, dto: CreateProjectOwnerDto) {
@@ -47,37 +40,12 @@ export class ProjectOwnerService {
     return this.create(userId, dto);
   }
 
-  // ─── Admin: list all ──────────────────────────────────────────────────────
-
-  async findAll(page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.prisma.projectOwnerProfile.findMany({
-        include: { user: { include: { profile: true } }, skills: true, experiences: true },
-        orderBy: { created_at: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.projectOwnerProfile.count(),
-    ]);
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
-  }
-
-  // Admin patch any profile by id
-  async adminPatch(profileId: string, dto: CreateProjectOwnerDto) {
-    const profile = await this.findById(profileId);
-    await this.prisma.projectOwnerProfile.update({
-      where: { id: profile.id },
-      data: dto as any,
-    });
-    return this.findById(profileId);
-  }
-
   // ─── Skills ───────────────────────────────────────────────────────────────
 
   async addSkill(userId: string, dto: CreateSkillDto) {
     const profile = await this.findByUser(userId);
-    if (!profile) throw new NotFoundException('Créez d\'abord votre profil porteur');
+    if (!profile)
+      throw new NotFoundException("Créez d'abord votre profil porteur");
     return this.prisma.projectOwnerSkill.create({
       data: {
         skill_name: dto.skill_name,
@@ -110,7 +78,8 @@ export class ProjectOwnerService {
 
   async addExperience(userId: string, dto: CreateExperienceDto) {
     const profile = await this.findByUser(userId);
-    if (!profile) throw new NotFoundException('Créez d\'abord votre profil porteur');
+    if (!profile)
+      throw new NotFoundException("Créez d'abord votre profil porteur");
     return this.prisma.projectOwnerExperience.create({
       data: {
         title: dto.title,

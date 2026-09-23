@@ -32,15 +32,27 @@ describe('ImprovementPlannerService', () => {
       const draft = service.buildDraft({
         summary: 'Résumé de synthèse',
         weaknesses: [
-          { area: 'finance', severity: 'HIGH', description: 'Prévisionnel absent' },
-          { area: 'team', severity: 'LOW', description: 'Compétence à renforcer' },
+          {
+            area: 'finance',
+            severity: 'HIGH',
+            description: 'Prévisionnel absent',
+          },
+          {
+            area: 'team',
+            severity: 'LOW',
+            description: 'Compétence à renforcer',
+          },
         ],
         risks: [
           { area: 'market', severity: 'HIGH', description: 'Marché saturé' },
           { area: 'legal', severity: 'MEDIUM', description: 'Risque moyen' },
         ],
         recommendations: [
-          { title: 'Objectif finance', priority: 'HIGH', reason: 'priorité n°1' },
+          {
+            title: 'Objectif finance',
+            priority: 'HIGH',
+            reason: 'priorité n°1',
+          },
           { title: 'Objectif market', priority: 'MEDIUM', reason: '' },
         ],
       });
@@ -58,7 +70,9 @@ describe('ImprovementPlannerService', () => {
         targetScore: null,
       });
       expect(draft.objectives[1].priority).toBe('MEDIUM');
-      const riskObjectives = draft.objectives.filter((o) => o.title.startsWith('Réduire le risque'));
+      const riskObjectives = draft.objectives.filter((o) =>
+        o.title.startsWith('Réduire le risque'),
+      );
       expect(riskObjectives).toEqual([]);
       for (const o of riskObjectives) {
         expect(o.priority).toBe('HIGH');
@@ -90,7 +104,13 @@ describe('ImprovementPlannerService', () => {
         summary: 's',
         weaknesses: [{ area: 'finance', severity: 'HIGH', description: 'w' }],
         risks: [],
-        recommendations: [{ title: 'Renforcer la FINANCE rapidement', priority: 'HIGH', reason: '' }],
+        recommendations: [
+          {
+            title: 'Renforcer la FINANCE rapidement',
+            priority: 'HIGH',
+            reason: '',
+          },
+        ],
       });
 
       expect(draft.objectives).toHaveLength(1);
@@ -108,7 +128,12 @@ describe('ImprovementPlannerService', () => {
     });
 
     it('should return planId null when no COMPLETED analysis is persisted', async () => {
-      evaluationAiMock.analyzeEvaluation.mockResolvedValue({ summary: 'ok', weaknesses: [], risks: [], recommendations: [] });
+      evaluationAiMock.analyzeEvaluation.mockResolvedValue({
+        summary: 'ok',
+        weaknesses: [],
+        risks: [],
+        recommendations: [],
+      });
       prismaMock.aiAnalysis.findFirst.mockResolvedValue(null);
 
       const result = await service.generateFromEvaluation('p1', 'e1', 'u1');
@@ -118,9 +143,21 @@ describe('ImprovementPlannerService', () => {
     it('should create a DRAFT plan with pending objectives linked to the analysis', async () => {
       evaluationAiMock.analyzeEvaluation.mockResolvedValue({
         summary: 'Synthèse',
-        weaknesses: [{ area: 'finance', severity: 'HIGH', description: 'Prévisionnel manquant' }],
+        weaknesses: [
+          {
+            area: 'finance',
+            severity: 'HIGH',
+            description: 'Prévisionnel manquant',
+          },
+        ],
         risks: [],
-        recommendations: [{ title: 'Faire le prévisionnel', priority: 'HIGH', reason: 'bloquant' }],
+        recommendations: [
+          {
+            title: 'Faire le prévisionnel',
+            priority: 'HIGH',
+            reason: 'bloquant',
+          },
+        ],
       });
       prismaMock.aiAnalysis.findFirst.mockResolvedValue({ id: 'analysis-1' });
       prismaMock.improvementPlan.create.mockResolvedValue({ id: 'plan-1' });
@@ -137,7 +174,10 @@ describe('ImprovementPlannerService', () => {
             created_by: 'u1',
             objectives: {
               create: expect.arrayContaining([
-                expect.objectContaining({ status: 'PENDING', priority: 'HIGH' }),
+                expect.objectContaining({
+                  status: 'PENDING',
+                  priority: 'HIGH',
+                }),
               ]),
             },
           }),

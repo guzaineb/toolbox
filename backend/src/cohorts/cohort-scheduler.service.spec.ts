@@ -25,7 +25,9 @@ describe('CohortSchedulerService', () => {
 
   describe('handleAutoClose', () => {
     it('should call closeCohortsAutomatically', async () => {
-      (cohortsService.closeCohortsAutomatically as jest.Mock).mockResolvedValue([]);
+      (cohortsService.closeCohortsAutomatically as jest.Mock).mockResolvedValue(
+        [],
+      );
 
       await scheduler.handleAutoClose();
 
@@ -33,7 +35,9 @@ describe('CohortSchedulerService', () => {
     });
 
     it('should not fail when no cohorts are closed', async () => {
-      (cohortsService.closeCohortsAutomatically as jest.Mock).mockResolvedValue([]);
+      (cohortsService.closeCohortsAutomatically as jest.Mock).mockResolvedValue(
+        [],
+      );
 
       await scheduler.handleAutoClose();
 

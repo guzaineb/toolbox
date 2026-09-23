@@ -4,7 +4,11 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { CohortExpertRole, CohortExpertStatus, ResourceType } from '@prisma/client';
+import {
+  CohortExpertRole,
+  CohortExpertStatus,
+  ResourceType,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModuleAccessService } from '../common/services/module-access.service';
 import { AuditService } from '../audit/audit.service';
@@ -29,7 +33,8 @@ export class EvaluationAssignmentsService {
           where: { id: dto.templateId },
         })
       : null;
-    if (dto.templateId && !template) throw new NotFoundException('Grille introuvable');
+    if (dto.templateId && !template)
+      throw new NotFoundException('Grille introuvable');
     if (template && template.cohort_id !== cohortId) {
       throw new BadRequestException(
         'La grille indiquée ne concerne pas cette cohorte',
@@ -42,7 +47,8 @@ export class EvaluationAssignmentsService {
     }
 
     const deadline = dto.deadline ? new Date(dto.deadline) : undefined;
-    const created: { id: string; project_id: string; jury_user_id: string }[] = [];
+    const created: { id: string; project_id: string; jury_user_id: string }[] =
+      [];
 
     for (const item of dto.assignments) {
       await this.access.assertProjectInCohort(item.projectId, cohortId);
@@ -137,7 +143,9 @@ export class EvaluationAssignmentsService {
       ? await this.prisma.evaluation.findMany({
           where: {
             project_id: { in: projectIds },
-            jury_user_id: { in: [...new Set(assignments.map((a) => a.jury_user_id))] },
+            jury_user_id: {
+              in: [...new Set(assignments.map((a) => a.jury_user_id))],
+            },
           },
           select: {
             project_id: true,
@@ -152,7 +160,11 @@ export class EvaluationAssignmentsService {
     return assignments.map((a) => {
       // Dernière version par (projet, jury) : après une demande de
       // ré-évaluation, un brouillon v+1 signifie « pas encore soumis ».
-      const latest = this.latestEvaluationFor(evaluations, a.project_id, a.jury_user_id);
+      const latest = this.latestEvaluationFor(
+        evaluations,
+        a.project_id,
+        a.jury_user_id,
+      );
       return {
         ...a,
         submitted: latest?.status === 'SUBMITTED',
@@ -165,7 +177,9 @@ export class EvaluationAssignmentsService {
     T extends { project_id: string; jury_user_id?: string; version: number },
   >(evaluations: T[], projectId: string, juryUserId: string): T | undefined {
     return evaluations
-      .filter((e) => e.project_id === projectId && e.jury_user_id === juryUserId)
+      .filter(
+        (e) => e.project_id === projectId && e.jury_user_id === juryUserId,
+      )
       .sort((x, y) => y.version - x.version)[0];
   }
 
@@ -194,11 +208,16 @@ export class EvaluationAssignmentsService {
       assignment.project.owner_id === userId;
 
     if (!canView) {
-      const incubatorId = await this.access.getCohortIncubatorId(assignment.cohort_id);
+      const incubatorId = await this.access.getCohortIncubatorId(
+        assignment.cohort_id,
+      );
       const member = incubatorId
         ? await this.prisma.incubatorMember.findUnique({
             where: {
-              user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+              user_id_incubator_id: {
+                user_id: userId,
+                incubator_id: incubatorId,
+              },
             },
             select: { id: true },
           })
@@ -282,4 +301,3 @@ export class EvaluationAssignmentsService {
       .sort((a, b) => Number(a.todo) - Number(b.todo));
   }
 }
-

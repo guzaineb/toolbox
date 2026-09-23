@@ -1,4 +1,10 @@
-import { IsString, IsUUID, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ConversationMessageDto {
@@ -21,6 +27,22 @@ export class ChatbotAskDto {
   @ValidateNested({ each: true })
   @Type(() => ConversationMessageDto)
   conversationHistory?: ConversationMessageDto[];
+
+  @IsOptional()
+  @IsString()
+  module?: string;
+
+  @IsOptional()
+  @IsString()
+  section?: string;
+
+  @IsOptional()
+  @IsString()
+  step?: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
 }
 
 export class ChatbotIndexDto {

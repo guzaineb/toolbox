@@ -1,4 +1,12 @@
-import { IsUUID, IsOptional, IsString, IsNumber, Min, Max, IsIn } from 'class-validator';
+import {
+  IsUUID,
+  IsOptional,
+  IsString,
+  IsNumber,
+  Min,
+  Max,
+  IsIn,
+} from 'class-validator';
 
 export class AddExpertiseDto {
   @IsUUID('4')

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LlmService } from '../ai/llm.service';
 import { StepStatus } from '@prisma/client';
@@ -63,9 +68,17 @@ export class SwotService {
 
     const prompt = this.buildSwotPrompt(project);
 
-    const response = await this.llm.generate(prompt, { temperature: 0.5, maxTokens: 2000 });
+    const response = await this.llm.generate(prompt, {
+      temperature: 0.5,
+      maxTokens: 2000,
+    });
 
-    let parsed: { strengths?: string; weaknesses?: string; opportunities?: string; threats?: string } = {};
+    let parsed: {
+      strengths?: string;
+      weaknesses?: string;
+      opportunities?: string;
+      threats?: string;
+    } = {};
     try {
       parsed = JSON.parse(response.content);
     } catch {
@@ -100,26 +113,26 @@ export class SwotService {
       data: {
         project_id: projectId,
         step_key: 'gbm_21',
-        prompt: 'Génération de l\'analyse SWOT à partir de toutes les étapes du GBM',
+        prompt:
+          "Génération de l'analyse SWOT à partir de toutes les étapes du GBM",
         response: response.content,
         model: response.model || 'llama-3.3-70b-versatile',
       },
     });
 
-    const { title, message } = this.messageBuilder.aiResponseReady({ label: 'Analyse SWOT' });
-    this.eventEmitter.emit(
-      NotificationEvent.AI_RESPONSE_READY,
-      {
-        event: NotificationEvent.AI_RESPONSE_READY,
-        recipients: [{ userId }],
-        title,
-        message,
-        link: `/project-owner/projects/${projectId}/swot`,
-        senderId: userId,
-        resourceType: 'PROJECT',
-        resourceId: projectId,
-      } as NotificationPayload,
-    );
+    const { title, message } = this.messageBuilder.aiResponseReady({
+      label: 'Analyse SWOT',
+    });
+    this.eventEmitter.emit(NotificationEvent.AI_RESPONSE_READY, {
+      event: NotificationEvent.AI_RESPONSE_READY,
+      recipients: [{ userId }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/swot`,
+      senderId: userId,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
 
     return saved;
   }

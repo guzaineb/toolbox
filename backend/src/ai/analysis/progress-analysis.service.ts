@@ -40,7 +40,10 @@ export class ProgressAnalysisService {
     private readonly llm: LlmService,
   ) {}
 
-  async compareEvaluations(evaluationBeforeId: string, evaluationAfterId: string): Promise<ProgressComparison> {
+  async compareEvaluations(
+    evaluationBeforeId: string,
+    evaluationAfterId: string,
+  ): Promise<ProgressComparison> {
     const [before, after] = await Promise.all([
       this.prisma.evaluation.findUnique({
         where: { id: evaluationBeforeId },
@@ -67,12 +70,22 @@ export class ProgressAnalysisService {
 
     if (after?.template) {
       for (const criterion of after.template.criteria) {
-        const afterScore = after.scores.find((s) => s.criterion_id === criterion.id)?.score ?? null;
+        const afterScore =
+          after.scores.find((s) => s.criterion_id === criterion.id)?.score ??
+          null;
         const beforeScore =
-          (before?.template?.criteria && before.scores.find((s) => s.criterion_id === criterion.id)?.score) ?? null;
+          (before?.template?.criteria &&
+            before.scores.find((s) => s.criterion_id === criterion.id)
+              ?.score) ??
+          null;
         const beforePct =
-          beforeScore !== null && before ? Math.round((beforeScore / Math.max(1, criterion.max_score)) * 100) : null;
-        const afterPct = afterScore !== null ? Math.round((afterScore / Math.max(1, criterion.max_score)) * 100) : null;
+          beforeScore !== null && before
+            ? Math.round((beforeScore / Math.max(1, criterion.max_score)) * 100)
+            : null;
+        const afterPct =
+          afterScore !== null
+            ? Math.round((afterScore / Math.max(1, criterion.max_score)) * 100)
+            : null;
         dimensions.push({
           name: criterion.name,
           before: beforePct,
@@ -86,19 +99,24 @@ export class ProgressAnalysisService {
     }
 
     const projectId = after?.project_id ?? before?.project_id ?? '';
-    const [actionsTotal, actionsCompleted, sessionsCompleted] = await Promise.all([
-      this.prisma.coachingAction.count({ where: { project_id: projectId } }),
-      this.prisma.coachingAction.count({ where: { project_id: projectId, status: 'COMPLETED' } }),
-      this.prisma.coachingSession.count({
-        where: { assignment: { project_id: projectId }, status: 'COMPLETED' },
-      }),
-    ]);
+    const [actionsTotal, actionsCompleted, sessionsCompleted] =
+      await Promise.all([
+        this.prisma.coachingAction.count({ where: { project_id: projectId } }),
+        this.prisma.coachingAction.count({
+          where: { project_id: projectId, status: 'COMPLETED' },
+        }),
+        this.prisma.coachingSession.count({
+          where: { assignment: { project_id: projectId }, status: 'COMPLETED' },
+        }),
+      ]);
 
     return {
       overallBefore: round2(overallBefore),
       overallAfter: round2(overallAfter),
       overallDelta:
-        overallBefore !== null && overallAfter !== null ? round2(overallAfter - overallBefore) : null,
+        overallBefore !== null && overallAfter !== null
+          ? round2(overallAfter - overallBefore)
+          : null,
       dimensions,
       actionsCompleted,
       actionsTotal,
@@ -106,15 +124,27 @@ export class ProgressAnalysisService {
     };
   }
 
-  async analyze(projectId: string, fromEvaluationId: string, toEvaluationId: string): Promise<ProgressAnalysisPayload | null> {
-    const comparison = await this.compareEvaluations(fromEvaluationId, toEvaluationId);
+  async analyze(
+    projectId: string,
+    fromEvaluationId: string,
+    toEvaluationId: string,
+  ): Promise<ProgressAnalysisPayload | null> {
+    const comparison = await this.compareEvaluations(
+      fromEvaluationId,
+      toEvaluationId,
+    );
 
     const dataBlock = JSON.stringify(
       {
         scoreAvant: comparison.overallBefore,
         scoreApres: comparison.overallAfter,
         progressionGlobale: comparison.overallDelta,
-        dimensions: comparison.dimensions.map((d) => ({ critere: d.name, avant: d.before, apres: d.after, delta: d.delta })),
+        dimensions: comparison.dimensions.map((d) => ({
+          critere: d.name,
+          avant: d.before,
+          apres: d.after,
+          delta: d.delta,
+        })),
         coaching: {
           actionsCompletes: `${comparison.actionsCompleted}/${comparison.actionsTotal}`,
           sessionsRealisees: comparison.sessionsCompleted,
@@ -138,19 +168,30 @@ Produis UNIQUEMENT un JSON strict :
 }
 Les chiffres sont fournis : ne les recalcule pas et ne les contredis pas.`;
 
-    const result = await parseWithRetry<Pick<ProgressAnalysisPayload, 'narrative' | 'improvements' | 'persistentWeaknesses' | 'newRisks' | 'nextPriorities'>>(
+    const result = await parseWithRetry<
+      Pick<
+        ProgressAnalysisPayload,
+        | 'narrative'
+        | 'improvements'
+        | 'persistentWeaknesses'
+        | 'newRisks'
+        | 'nextPriorities'
+      >
+    >(
       () =>
-        this.llm.chat(
-          [
-            {
-              role: 'system',
-              content:
-                "Tu expliques des progressions de projets entrepreneuriaux à partir de données chiffrées fournies. Réponds UNIQUEMENT en JSON.",
-            },
-            { role: 'user', content: prompt },
-          ],
-          { temperature: 0.4, maxTokens: 1500 },
-        ).then((r) => r.content),
+        this.llm
+          .chat(
+            [
+              {
+                role: 'system',
+                content:
+                  'Tu expliques des progressions de projets entrepreneuriaux à partir de données chiffrées fournies. Réponds UNIQUEMENT en JSON.',
+              },
+              { role: 'user', content: prompt },
+            ],
+            { temperature: 0.4, maxTokens: 1500 },
+          )
+          .then((r) => r.content),
       (parsed) => {
         if (!parsed || typeof parsed !== 'object') return null;
         const obj = parsed as Record<string, unknown>;
@@ -159,7 +200,10 @@ Les chiffres sont fournis : ne les recalcule pas et ne les contredis pas.`;
         return {
           narrative,
           improvements: asStringArray(obj.improvements).slice(0, 6),
-          persistentWeaknesses: asStringArray(obj.persistentWeaknesses).slice(0, 6),
+          persistentWeaknesses: asStringArray(obj.persistentWeaknesses).slice(
+            0,
+            6,
+          ),
           newRisks: asStringArray(obj.newRisks).slice(0, 6),
           nextPriorities: asStringArray(obj.nextPriorities).slice(0, 6),
         };

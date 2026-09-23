@@ -4,6 +4,7 @@ import { ExpertService } from './expert.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExpertScoringService } from './services/expert-scoring.service';
 import { ExpertRecommendationService } from './services/expert-recommendation.service';
+import { ProjectProfileBuilder } from './services/project-profile-builder.service';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
 
 describe('ExpertService', () => {
@@ -17,6 +18,7 @@ describe('ExpertService', () => {
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: ExpertScoringService, useValue: {} },
         { provide: ExpertRecommendationService, useValue: {} },
+        { provide: ProjectProfileBuilder, useValue: {} },
         { provide: NotificationMessageBuilder, useValue: {} },
       ],
     }).compile();

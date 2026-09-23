@@ -19,7 +19,7 @@ export class CriterionUpdateDto {
   id?: string;
 
   @IsString()
-  @IsNotEmpty({ message: "Le nom du critère est requis" })
+  @IsNotEmpty({ message: 'Le nom du critère est requis' })
   name: string;
 
   @IsOptional()
@@ -51,7 +51,7 @@ export class UpdateTemplateDto {
 
   @IsOptional()
   @IsEnum(EvaluationStage, {
-    message: "Étape invalide (INTERMEDIATE ou FINAL)",
+    message: 'Étape invalide (INTERMEDIATE ou FINAL)',
   })
   stage?: EvaluationStage;
 

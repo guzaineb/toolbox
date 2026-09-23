@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Param, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SwotService } from './swot.service';
 import { ProjectIdParam, UpdateSwotDto } from './dto/swot.dto';
@@ -30,6 +39,10 @@ export class SwotController {
     @Param() params: ProjectIdParam,
     @Body() data: UpdateSwotDto,
   ) {
-    return this.swotService.updateSwotAnalysis(params.projectId, data, req.user.id);
+    return this.swotService.updateSwotAnalysis(
+      params.projectId,
+      data,
+      req.user.id,
+    );
   }
 }

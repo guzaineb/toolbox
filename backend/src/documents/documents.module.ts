@@ -4,9 +4,10 @@ import { DocumentsService } from './documents.service';
 import { DocumentPromptsService } from './document-prompts.service';
 import { DocumentPdfService } from './document-pdf.service';
 import { AiModule } from '../ai/ai.module';
+import { GbmModule } from '../gbm/gbm.module';
 
 @Module({
-  imports: [AiModule],
+  imports: [AiModule, GbmModule],
   controllers: [DocumentsController],
   providers: [DocumentsService, DocumentPromptsService, DocumentPdfService],
   exports: [DocumentsService],

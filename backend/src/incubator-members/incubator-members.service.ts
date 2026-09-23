@@ -1,4 +1,9 @@
-﻿import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+﻿import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
@@ -34,14 +39,24 @@ export class IncubatorMembersService {
     }
 
     const existing = await this.prisma.incubatorMember.findUnique({
-      where: { user_id_incubator_id: { user_id: targetUserId, incubator_id: incubatorId } },
+      where: {
+        user_id_incubator_id: {
+          user_id: targetUserId,
+          incubator_id: incubatorId,
+        },
+      },
     });
-    if (existing) throw new BadRequestException('Cet utilisateur est déjà membre');
+    if (existing)
+      throw new BadRequestException('Cet utilisateur est déjà membre');
 
-    const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId } });
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id: incubatorId },
+    });
     if (!incubator) throw new BadRequestException('Incubateur introuvable');
 
     const result = await this.prisma.incubatorMember.create({
@@ -55,20 +70,19 @@ export class IncubatorMembersService {
       },
     });
 
-    const { title, message } = this.messageBuilder.memberJoined({ incubatorName: incubator.name });
-    this.eventEmitter.emit(
-      NotificationEvent.MEMBER_JOINED,
-      {
-        event: NotificationEvent.MEMBER_JOINED,
-        recipients: [{ userId: targetUserId }],
-        title,
-        message,
-        link: `/incubator/${incubatorId}`,
-        senderId: currentUserId,
-        resourceType: 'INCUBATOR',
-        resourceId: incubatorId,
-      } as NotificationPayload,
-    );
+    const { title, message } = this.messageBuilder.memberJoined({
+      incubatorName: incubator.name,
+    });
+    this.eventEmitter.emit(NotificationEvent.MEMBER_JOINED, {
+      event: NotificationEvent.MEMBER_JOINED,
+      recipients: [{ userId: targetUserId }],
+      title,
+      message,
+      link: `/incubator/${incubatorId}`,
+      senderId: currentUserId,
+      resourceType: 'INCUBATOR',
+      resourceId: incubatorId,
+    } as NotificationPayload);
 
     return result;
   }
@@ -80,15 +94,15 @@ export class IncubatorMembersService {
     });
   }
 
-  async getMyMembership(
-    incubatorId: string,
-    userId: string,
-  ) {
+  async getMyMembership(incubatorId: string, userId: string) {
     const member = await this.prisma.incubatorMember.findUnique({
-      where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
+      where: {
+        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+      },
       include: { user: { include: { profile: true } }, incubator: true },
     });
-    if (!member) throw new NotFoundException('Vous n\'êtes pas membre de cet incubateur');
+    if (!member)
+      throw new NotFoundException("Vous n'êtes pas membre de cet incubateur");
     return member;
   }
 
@@ -103,14 +117,17 @@ export class IncubatorMembersService {
     const member = await this.prisma.incubatorMember.findUnique({
       where: { id: memberId },
     });
-    if (!member || member.incubator_id !== incubatorId) throw new NotFoundException('Membre introuvable');
+    if (!member || member.incubator_id !== incubatorId)
+      throw new NotFoundException('Membre introuvable');
 
     if (dto.role && dto.role !== 'ADMIN' && member.role === 'ADMIN') {
       const adminCount = await this.prisma.incubatorMember.count({
         where: { incubator_id: incubatorId, role: 'ADMIN' },
       });
       if (adminCount <= 1) {
-        throw new BadRequestException("Il doit rester au moins un administrateur");
+        throw new BadRequestException(
+          'Il doit rester au moins un administrateur',
+        );
       }
     }
 
@@ -119,62 +136,75 @@ export class IncubatorMembersService {
       data: dto as any,
     });
 
-    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
-    const { title, message } = this.messageBuilder.memberUpdated({ incubatorName: incubator?.name ?? 'Incubateur' });
-    this.eventEmitter.emit(
-      NotificationEvent.MEMBER_UPDATED,
-      {
-        event: NotificationEvent.MEMBER_UPDATED,
-        recipients: [{ userId: member.user_id }],
-        title,
-        message,
-        link: `/incubator/${incubatorId}`,
-        senderId: currentUserId,
-        resourceType: 'INCUBATOR',
-        resourceId: incubatorId,
-      } as NotificationPayload,
-    );
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id: incubatorId },
+      select: { name: true },
+    });
+    const { title, message } = this.messageBuilder.memberUpdated({
+      incubatorName: incubator?.name ?? 'Incubateur',
+    });
+    this.eventEmitter.emit(NotificationEvent.MEMBER_UPDATED, {
+      event: NotificationEvent.MEMBER_UPDATED,
+      recipients: [{ userId: member.user_id }],
+      title,
+      message,
+      link: `/incubator/${incubatorId}`,
+      senderId: currentUserId,
+      resourceType: 'INCUBATOR',
+      resourceId: incubatorId,
+    } as NotificationPayload);
 
     return result;
   }
 
-  async removeMember(memberId: string, incubatorId: string, currentUserId: string): Promise<{ message: string }> {
+  async removeMember(
+    memberId: string,
+    incubatorId: string,
+    currentUserId: string,
+  ): Promise<{ message: string }> {
     await this.assertCanManageMembers(incubatorId, currentUserId);
     const member = await this.prisma.incubatorMember.findUnique({
       where: { id: memberId },
     });
-    if (!member || member.incubator_id !== incubatorId) throw new NotFoundException('Membre introuvable');
+    if (!member || member.incubator_id !== incubatorId)
+      throw new NotFoundException('Membre introuvable');
 
     if (member.role === 'ADMIN') {
       const adminCount = await this.prisma.incubatorMember.count({
         where: { incubator_id: incubatorId, role: 'ADMIN' },
       });
       if (adminCount <= 1) {
-        throw new BadRequestException("Impossible de supprimer le seul administrateur");
+        throw new BadRequestException(
+          'Impossible de supprimer le seul administrateur',
+        );
       }
     }
 
     if (member.user_id === currentUserId) {
-      throw new BadRequestException("Vous ne pouvez pas vous retirer vous-même");
+      throw new BadRequestException(
+        'Vous ne pouvez pas vous retirer vous-même',
+      );
     }
 
-    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id: incubatorId },
+      select: { name: true },
+    });
     await this.prisma.incubatorMember.delete({ where: { id: memberId } });
 
-    const { title, message } = this.messageBuilder.memberRemoved({ incubatorName: incubator?.name ?? 'Incubateur' });
-    this.eventEmitter.emit(
-      NotificationEvent.MEMBER_LEFT,
-      {
-        event: NotificationEvent.MEMBER_LEFT,
-        recipients: [{ userId: member.user_id }],
-        title,
-        message,
-        link: `/incubator/${incubatorId}`,
-        senderId: currentUserId,
-        resourceType: 'INCUBATOR',
-        resourceId: incubatorId,
-      } as NotificationPayload,
-    );
+    const { title, message } = this.messageBuilder.memberRemoved({
+      incubatorName: incubator?.name ?? 'Incubateur',
+    });
+    this.eventEmitter.emit(NotificationEvent.MEMBER_LEFT, {
+      event: NotificationEvent.MEMBER_LEFT,
+      recipients: [{ userId: member.user_id }],
+      title,
+      message,
+      link: `/incubator/${incubatorId}`,
+      senderId: currentUserId,
+      resourceType: 'INCUBATOR',
+      resourceId: incubatorId,
+    } as NotificationPayload);
 
     return { message: 'Membre supprimé' };
   }
@@ -185,16 +215,23 @@ export class IncubatorMembersService {
     currentUserId: string,
   ): Promise<{ message: string; token?: string }> {
     await this.assertCanManageMembers(incubatorId, currentUserId);
-    
-    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId } });
+
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id: incubatorId },
+    });
     if (!incubator) throw new NotFoundException('Incubateur introuvable');
 
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (user) {
       const existing = await this.prisma.incubatorMember.findUnique({
-        where: { user_id_incubator_id: { user_id: user.id, incubator_id: incubatorId } },
+        where: {
+          user_id_incubator_id: { user_id: user.id, incubator_id: incubatorId },
+        },
       });
-      if (existing) throw new BadRequestException('Cet utilisateur est déjà membre');
+      if (existing)
+        throw new BadRequestException('Cet utilisateur est déjà membre');
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -211,7 +248,12 @@ export class IncubatorMembersService {
       },
     });
 
-    await this.emailService.sendInvitation(dto.email, incubator.name, token, incubatorId);
+    await this.emailService.sendInvitation(
+      dto.email,
+      incubator.name,
+      token,
+      incubatorId,
+    );
 
     return {
       message: `Invitation envoyée à ${dto.email}`,
@@ -224,24 +266,32 @@ export class IncubatorMembersService {
       where: { token: dto.token },
       include: { incubator: true },
     });
-    
+
     if (!invitation) throw new BadRequestException('Token invalide');
     if (invitation.expires_at < new Date()) {
-      await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
+      await this.prisma.incubatorInvitation.delete({
+        where: { id: invitation.id },
+      });
       throw new BadRequestException("L'invitation a expiré");
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
-    
+
     if (user.email !== invitation.email) {
-      throw new ForbiddenException("Cette invitation ne vous est pas destinée");
+      throw new ForbiddenException('Cette invitation ne vous est pas destinée');
     }
 
     const existing = await this.prisma.incubatorMember.findUnique({
-      where: { user_id_incubator_id: { user_id: userId, incubator_id: invitation.incubator_id } },
+      where: {
+        user_id_incubator_id: {
+          user_id: userId,
+          incubator_id: invitation.incubator_id,
+        },
+      },
     });
-    if (existing) throw new BadRequestException('Vous êtes déjà membre de cet incubateur');
+    if (existing)
+      throw new BadRequestException('Vous êtes déjà membre de cet incubateur');
 
     const saved = await this.prisma.incubatorMember.create({
       data: {
@@ -253,7 +303,9 @@ export class IncubatorMembersService {
       },
     });
 
-    await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
+    await this.prisma.incubatorInvitation.delete({
+      where: { id: invitation.id },
+    });
 
     return saved;
   }
@@ -263,30 +315,42 @@ export class IncubatorMembersService {
     userId: string,
   ): Promise<void> {
     const member = await this.prisma.incubatorMember.findUnique({
-      where: { user_id_incubator_id: { user_id: userId, incubator_id: incubatorId } },
+      where: {
+        user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
+      },
     });
-    if (!member) throw new ForbiddenException('Vous n\'êtes pas membre de cet incubateur');
+    if (!member)
+      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     if (member.role !== 'ADMIN' && !member.can_manage_members) {
-      throw new ForbiddenException('Permissions insuffisantes pour gérer les membres');
+      throw new ForbiddenException(
+        'Permissions insuffisantes pour gérer les membres',
+      );
     }
   }
-  async declineInvitation(token: string, userId: string): Promise<{ message: string }> {
-  const invitation = await this.prisma.incubatorInvitation.findUnique({
-    where: { token },
-    include: { incubator: true },
-  });
-  if (!invitation) throw new BadRequestException('Token invalide');
-  if (invitation.expires_at < new Date()) {
-    await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
-    throw new BadRequestException('Invitation déjà expirée');
-  }
+  async declineInvitation(
+    token: string,
+    userId: string,
+  ): Promise<{ message: string }> {
+    const invitation = await this.prisma.incubatorInvitation.findUnique({
+      where: { token },
+      include: { incubator: true },
+    });
+    if (!invitation) throw new BadRequestException('Token invalide');
+    if (invitation.expires_at < new Date()) {
+      await this.prisma.incubatorInvitation.delete({
+        where: { id: invitation.id },
+      });
+      throw new BadRequestException('Invitation déjà expirée');
+    }
 
-  const user = await this.prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new NotFoundException('Utilisateur introuvable');
-  if (user.email !== invitation.email) {
-    throw new ForbiddenException('Cette invitation ne vous est pas destinée');
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.email !== invitation.email) {
+      throw new ForbiddenException('Cette invitation ne vous est pas destinée');
+    }
+    await this.prisma.incubatorInvitation.delete({
+      where: { id: invitation.id },
+    });
+    return { message: 'Invitation refusée avec succès' };
   }
-  await this.prisma.incubatorInvitation.delete({ where: { id: invitation.id } });
-  return { message: 'Invitation refusée avec succès' };
-}
 }

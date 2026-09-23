@@ -119,6 +119,53 @@ export interface ProjectMatch {
   };
 }
 
+export interface ExpertRecommendation {
+  expert: ExpertProfile;
+  score: number;
+  skillsMatch: {
+    matched: number;
+    required: number;
+    score: number;
+  };
+  experienceMatch: {
+    years: number;
+    required: number;
+    score: number;
+  };
+  availability: AvailabilityStatus;
+  explanation: string;
+}
+
+export interface MatchedProject {
+  project: {
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+  cohort: {
+    id: string;
+    name: string;
+  } | null;
+  requirements: {
+    requiredAreas: string[];
+    requiredAreaNames: string[];
+    minYearsExperience: number;
+  };
+  score: number;
+  skillsMatch: {
+    matched: number;
+    required: number;
+    score: number;
+  };
+  experienceMatch: {
+    years: number;
+    required: number;
+    score: number;
+  };
+  availability: AvailabilityStatus;
+  explanation: string;
+}
+
 /* =========================================================
    DTOs
 ========================================================= */

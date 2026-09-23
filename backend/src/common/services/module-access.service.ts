@@ -36,7 +36,10 @@ export class ModuleAccessService {
     await this.assertCanManageIncubator(cohort.incubator_id, userId);
   }
 
-  async assertCanManageIncubator(incubatorId: string, userId: string): Promise<void> {
+  async assertCanManageIncubator(
+    incubatorId: string,
+    userId: string,
+  ): Promise<void> {
     const member = await this.prisma.incubatorMember.findUnique({
       where: {
         user_id_incubator_id: { user_id: userId, incubator_id: incubatorId },
@@ -77,9 +80,7 @@ export class ModuleAccessService {
     });
     if (!project) throw new NotFoundException('Projet introuvable');
     if (project.owner_id !== userId) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas le porteur de ce projet",
-      );
+      throw new ForbiddenException("Vous n'êtes pas le porteur de ce projet");
     }
   }
 
@@ -134,7 +135,10 @@ export class ModuleAccessService {
    * Coach de cohorte actif pour ce projet : expert marqué COACH (ACTIVE) sur
    * au moins une cohorte dans laquelle le projet est accepté.
    */
-  async isCohortCoachOfProject(projectId: string, userId: string): Promise<boolean> {
+  async isCohortCoachOfProject(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
     const participations = await this.getAcceptedCohortsForProject(projectId);
     return this.isCohortCoachOnCohorts(
       participations.map((p) => p.cohort_id),
@@ -152,7 +156,10 @@ export class ModuleAccessService {
     return participation.cohort_id;
   }
 
-  async assertProjectInCohort(projectId: string, cohortId: string): Promise<void> {
+  async assertProjectInCohort(
+    projectId: string,
+    cohortId: string,
+  ): Promise<void> {
     const participation = await this.prisma.cohortParticipation.findFirst({
       where: {
         project_id: projectId,
@@ -191,7 +198,10 @@ export class ModuleAccessService {
    * Accès en lecture au projet : porteur, coach/jury affecté, coach de la
    * cohorte du projet, ou membre de l'incubateur d'une des cohortes.
    */
-  async assertCanAccessProject(projectId: string, userId: string): Promise<void> {
+  async assertCanAccessProject(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true, owner_id: true },
@@ -220,19 +230,27 @@ export class ModuleAccessService {
       if (await this.isIncubatorMember(userId, incubatorId)) return;
     }
 
-    throw new ForbiddenException("Accès refusé à ce projet");
+    throw new ForbiddenException('Accès refusé à ce projet');
   }
 
   /**
    * Gestion du coaching / plan d'amélioration : coach affecté au projet,
    * coach actif d'une cohorte du projet, ou gestionnaire de l'incubateur.
    */
-  async assertCanManageProjectCoaching(projectId: string, userId: string): Promise<void> {
-    if (await this.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH)) return;
+  async assertCanManageProjectCoaching(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
+    if (
+      await this.hasActiveAssignment(projectId, userId, CohortExpertRole.COACH)
+    )
+      return;
 
     const participations = await this.getAcceptedCohortsForProject(projectId);
     if (participations.length === 0) {
-      throw new BadRequestException("Ce projet n'est pas accepté dans une cohorte");
+      throw new BadRequestException(
+        "Ce projet n'est pas accepté dans une cohorte",
+      );
     }
 
     if (
@@ -248,7 +266,8 @@ export class ModuleAccessService {
       const incubatorId = participation.cohort.incubator_id;
       if (!incubatorId) continue;
       const member = await this.isIncubatorMember(userId, incubatorId);
-      if (member && (member.role === 'ADMIN' || member.can_manage_cohorts)) return;
+      if (member && (member.role === 'ADMIN' || member.can_manage_cohorts))
+        return;
     }
     throw new ForbiddenException(
       "Vous n'êtes pas autorisé à gérer le coaching de ce projet",
@@ -270,7 +289,10 @@ export class ModuleAccessService {
 
   // Accès évaluation : membre du jury (CohortExpert JURY) d'au moins une cohorte
   // acceptée du projet, OU affecté via EvaluationAssignment sur le projet.
-  async canEvaluateProject(projectId: string, userId: string): Promise<boolean> {
+  async canEvaluateProject(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
     const [byEvaluationAssignment, participations] = await Promise.all([
       this.prisma.evaluationAssignment.findFirst({
         where: {
@@ -299,7 +321,10 @@ export class ModuleAccessService {
     return !!byCohortExpert;
   }
 
-  async assertCanEvaluateProject(projectId: string, userId: string): Promise<void> {
+  async assertCanEvaluateProject(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
     const ok = await this.canEvaluateProject(projectId, userId);
     if (!ok) {
       throw new ForbiddenException(
@@ -321,19 +346,16 @@ export class ModuleAccessService {
     resourceId?: string;
   }) {
     if (params.recipients.length === 0) return;
-    this.eventEmitter.emit(
-      params.event,
-      {
-        event: params.event,
-        recipients: params.recipients,
-        title: params.title,
-        message: params.message,
-        link: params.link,
-        senderId: params.senderId,
-        resourceType: params.resourceType,
-        resourceId: params.resourceId,
-      } as NotificationPayload,
-    );
+    this.eventEmitter.emit(params.event, {
+      event: params.event,
+      recipients: params.recipients,
+      title: params.title,
+      message: params.message,
+      link: params.link,
+      senderId: params.senderId,
+      resourceType: params.resourceType,
+      resourceId: params.resourceId,
+    } as NotificationPayload);
   }
 
   // ==================== MEMBRES INCUBATEUR ====================
@@ -357,9 +379,7 @@ export class ModuleAccessService {
   ): Promise<void> {
     const member = await this.isIncubatorMember(userId, incubatorId);
     if (!member) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas membre de cet incubateur",
-      );
+      throw new ForbiddenException("Vous n'êtes pas membre de cet incubateur");
     }
     if (member.role !== 'ADMIN' && !member.can_manage_cohorts) {
       throw new ForbiddenException('Permissions insuffisantes');
@@ -373,7 +393,7 @@ export class ModuleAccessService {
     const member = await this.isIncubatorMember(userId, incubatorId);
     if (!member || member.role !== 'ADMIN') {
       throw new ForbiddenException(
-        "Seul un administrateur peut effectuer cette action",
+        'Seul un administrateur peut effectuer cette action',
       );
     }
   }

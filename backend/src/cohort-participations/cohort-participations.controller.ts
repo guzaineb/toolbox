@@ -28,7 +28,11 @@ export class CohortParticipationsController {
     @Body() dto: ApplyDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.participationsService.apply(cohortId, dto.projectId, req.user.id);
+    return this.participationsService.apply(
+      cohortId,
+      dto.projectId,
+      req.user.id,
+    );
   }
 
   @Post('cohorts/:cohortId/invite')
@@ -38,33 +42,28 @@ export class CohortParticipationsController {
     @Body() dto: InviteDto,
     @Req() req: { user: { id: string } },
   ) {
-    return this.participationsService.invite(cohortId, dto.projectId, req.user.id);
+    return this.participationsService.invite(
+      cohortId,
+      dto.projectId,
+      req.user.id,
+    );
   }
 
   @Post('participations/:id/accept')
   @HttpCode(HttpStatus.OK)
-  accept(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  accept(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.participationsService.accept(id, req.user.id);
   }
 
   @Post('participations/:id/reject')
   @HttpCode(HttpStatus.OK)
-  reject(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  reject(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.participationsService.reject(id, req.user.id);
   }
 
   @Post('participations/:id/withdraw')
   @HttpCode(HttpStatus.OK)
-  withdraw(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  withdraw(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.participationsService.withdraw(id, req.user.id);
   }
 
@@ -85,10 +84,7 @@ export class CohortParticipationsController {
   }
 
   @Get('participations/:id')
-  findOne(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.participationsService.findOne(id, req.user.id);
   }
 }

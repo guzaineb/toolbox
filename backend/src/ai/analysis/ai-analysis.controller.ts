@@ -49,7 +49,11 @@ export class AiAnalysisController {
     @Req() req: RequestUser,
   ) {
     await this.access.assertCanAccessProject(projectId, req.user.id);
-    const payload = await this.evaluationAi.analyzeEvaluation(projectId, evaluationId, req.user.id);
+    const payload = await this.evaluationAi.analyzeEvaluation(
+      projectId,
+      evaluationId,
+      req.user.id,
+    );
     return { success: !!payload, data: payload };
   }
 
@@ -62,13 +66,20 @@ export class AiAnalysisController {
     @Req() req: RequestUser,
   ) {
     await this.access.assertCanManageProjectCoaching(projectId, req.user.id);
-    return this.planner.generateFromEvaluation(projectId, dto.evaluationId, req.user.id);
+    return this.planner.generateFromEvaluation(
+      projectId,
+      dto.evaluationId,
+      req.user.id,
+    );
   }
 
   // ==================== ANALYSE DE RISQUES ====================
 
   @Post('risks/analyze')
-  async analyzeRisks(@Param('projectId') projectId: string, @Req() req: RequestUser) {
+  async analyzeRisks(
+    @Param('projectId') projectId: string,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanAccessProject(projectId, req.user.id);
     const payload = await this.riskAnalysis.analyze(projectId, req.user.id);
     return { success: !!payload, data: payload };
@@ -77,7 +88,10 @@ export class AiAnalysisController {
   // ==================== BRIEFING JURY (sans aucune note) ====================
 
   @Post('jury-briefing')
-  async juryBriefing(@Param('projectId') projectId: string, @Req() req: RequestUser) {
+  async juryBriefing(
+    @Param('projectId') projectId: string,
+    @Req() req: RequestUser,
+  ) {
     await this.access.assertCanEvaluateProject(projectId, req.user.id);
     const payload = await this.juryAi.buildBriefing(projectId);
     return { success: !!payload, data: payload };
@@ -143,7 +157,8 @@ export class AiAnalysisController {
   ) {
     await this.access.assertCanAccessProject(projectId, req.user.id);
     const analysis = await this.prisma.aiAnalysis.findUnique({ where: { id } });
-    if (!analysis || analysis.project_id !== projectId) throw new NotFoundException();
+    if (!analysis || analysis.project_id !== projectId)
+      throw new NotFoundException();
     return analysis;
   }
 }

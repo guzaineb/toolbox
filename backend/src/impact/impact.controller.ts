@@ -1,4 +1,13 @@
-import { Controller, Get, Patch, Post, Param, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ImpactService } from './impact.service';
 import { ProjectIdParam } from './dto/impact.dto';
@@ -14,17 +23,27 @@ export class ImpactController {
   }
 
   @Patch()
-  update(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam, @Body() data: any) {
+  update(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+    @Body() data: any,
+  ) {
     return this.impact.update(params.projectId, data, req.user.id);
   }
 
   @Post('report/generate')
-  generateReport(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+  generateReport(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+  ) {
     return this.impact.generateReport(params.projectId, req.user.id);
   }
 
   @Get('progress')
-  getProgress(@Req() req: { user: { id: string } }, @Param() params: ProjectIdParam) {
+  getProgress(
+    @Req() req: { user: { id: string } },
+    @Param() params: ProjectIdParam,
+  ) {
     return this.impact.getProgress(params.projectId, req.user.id);
   }
 }

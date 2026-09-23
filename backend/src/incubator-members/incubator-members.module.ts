@@ -5,7 +5,7 @@ import { MailService } from '../mail/mail.service';
 
 @Module({
   controllers: [IncubatorMembersController],
-  providers: [IncubatorMembersService,MailService],
+  providers: [IncubatorMembersService, MailService],
   exports: [IncubatorMembersService],
 })
 export class IncubatorMembersModule {}

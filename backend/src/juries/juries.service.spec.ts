@@ -13,7 +13,12 @@ describe('JuriesService', () => {
     user: { findUnique: jest.Mock };
     cohortExpert: { findFirst: jest.Mock };
     projectExpertAssignment: { findFirst: jest.Mock };
-    jurySession: { create: jest.Mock; findUnique: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    jurySession: {
+      create: jest.Mock;
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      update: jest.Mock;
+    };
     incubatorMember: { findUnique: jest.Mock };
     project: { findUnique: jest.Mock };
   };
@@ -71,7 +76,11 @@ describe('JuriesService', () => {
     access.assertCanManageCohort.mockResolvedValue(undefined);
 
     await expect(
-      service.update('session-1', { status: JurySessionStatus.OPEN }, 'admin-1'),
+      service.update(
+        'session-1',
+        { status: JurySessionStatus.OPEN },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
 
     expect(prisma.jurySession.update).not.toHaveBeenCalled();
@@ -80,12 +89,19 @@ describe('JuriesService', () => {
   it('should reject creating a session with a member who is not an active jury', async () => {
     access.assertProjectExists.mockResolvedValue(undefined);
     access.assertCanManageCohort.mockResolvedValue(undefined);
-    prisma.user.findUnique.mockResolvedValue({ id: 'expert-1', role: 'EXPERT' });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'expert-1',
+      role: 'EXPERT',
+    });
     prisma.cohortExpert.findFirst.mockResolvedValue(null);
     prisma.projectExpertAssignment.findFirst.mockResolvedValue(null);
 
     await expect(
-      service.create('project-1', { title: 'Délibération', memberUserIds: ['expert-1'] }, 'admin-1'),
+      service.create(
+        'project-1',
+        { title: 'Délibération', memberUserIds: ['expert-1'] },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
 
     expect(prisma.jurySession.create).not.toHaveBeenCalled();

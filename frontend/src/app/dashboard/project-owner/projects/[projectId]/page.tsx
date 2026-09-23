@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, TreePine, BarChart3, Leaf, DollarSign,
   Target, LineChart, Loader2, ChevronRight, Check, FileText,
-  HeartHandshake, ClipboardCheck,
+  HeartHandshake, ClipboardCheck, Brain,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Card, CardHeader, Badge, Progress, Button } from '@/components/shared/ui'
 import { gbmService } from '@/services/gbm.service'
 import { businessPlanService } from '@/services/business-plan.service'
@@ -14,21 +15,14 @@ import { ecoDesignService } from '@/services/eco-design.service'
 import { marketService } from '@/services/market.service'
 import { impactService } from '@/services/impact.service'
 import { fundingService } from '@/services/funding.service'
-import api from '@/services/api'
+import { projectService } from '@/services/project.service'
+import type { Project } from '@/services/project.service'
 import { cn } from '@/lib/utils'
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  is_gbm_reviewed?: boolean
-  gbm_reviewed_at?: string
-}
 
 interface ModuleDef {
   key: string
   label: string
-  icon: any
+  icon: LucideIcon
   color: string
   bg: string
   followUp?: boolean
@@ -42,6 +36,7 @@ const MODULES: ModuleDef[] = [
   { key: 'market',       label: 'Accès au Marché',            icon: Target,     color: 'text-purple-600',bg: 'bg-purple-50' },
   { key: 'impact',       label: 'Mesure de l\'Impact',        icon: LineChart,  color: 'text-orange-600',bg: 'bg-orange-50' },
   { key: 'documents',    label: 'Documents',                   icon: FileText,   color: 'text-teal-600',  bg: 'bg-teal-50' },
+  { key: 'coach',        label: 'AI Project Coach',            icon: Brain,      color: 'text-moss',      bg: 'bg-moss-light' },
   { key: 'coachings',    label: 'Suivi coaching',              icon: HeartHandshake, color: 'text-moss', bg: 'bg-moss-light', followUp: true },
   { key: 'evaluations',  label: 'Évaluation & décision',       icon: ClipboardCheck, color: 'text-blue-600', bg: 'bg-blue-50', followUp: true },
 ]
@@ -55,38 +50,45 @@ export default function ProjectDashboardPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [progress, setProgress] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data: p } = await api.get(`/projects/${projectId}`)
-        if (p) setProject(p)
+  const load = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+    try {
+      const p = await projectService.get(projectId)
+      if (p) setProject(p)
 
-        const [gbm, bp, eco, market, impact, funding] = await Promise.allSettled([
-          gbmService.getProgress(projectId),
-          businessPlanService.getProgress(projectId),
-          ecoDesignService.getProgress(projectId),
-          marketService.getProgress(projectId),
-          impactService.getProgress(projectId),
-          fundingService.getAssessment(projectId),
-        ])
+      const [gbm, bp, eco, market, impact, funding] = await Promise.allSettled([
+        gbmService.getProgress(projectId),
+        businessPlanService.getProgress(projectId),
+        ecoDesignService.getProgress(projectId),
+        marketService.getProgress(projectId),
+        impactService.getProgress(projectId),
+        fundingService.getAssessment(projectId),
+      ])
 
-        const prog: Record<string, number> = {}
-        if (gbm.status === 'fulfilled') prog.gbm = gbm.value.percentage ?? 0
-        if (bp.status === 'fulfilled') prog['business-plan'] = bp.value.percentage ?? 0
-        if (eco.status === 'fulfilled') prog['eco-design'] = eco.value.percentage ?? 0
-        if (market.status === 'fulfilled') prog.market = market.value.percentage ?? 0
-        if (impact.status === 'fulfilled') prog.impact = impact.value.percentage ?? 0
-        if (funding.status === 'fulfilled') {
-          const score = funding.value.score_maturite ?? 0
-          prog.funding = score > 0 ? Math.round((score / 12) * 100) : 0
-        }
-        setProgress(prog)
-      } catch { /* ignore */ }
-      finally { setLoading(false) }
+      const prog: Record<string, number> = {}
+      if (gbm.status === 'fulfilled') prog.gbm = gbm.value.percentage ?? 0
+      if (bp.status === 'fulfilled') prog['business-plan'] = bp.value.percentage ?? 0
+      if (eco.status === 'fulfilled') prog['eco-design'] = eco.value.percentage ?? 0
+      if (market.status === 'fulfilled') prog.market = market.value.percentage ?? 0
+      if (impact.status === 'fulfilled') prog.impact = impact.value.percentage ?? 0
+      if (funding.status === 'fulfilled') {
+        const score = funding.value.score_maturite ?? 0
+        prog.funding = score > 0 ? Math.round((score / 12) * 100) : 0
+      }
+      setProgress(prog)
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } } | undefined)?.response?.status
+      setProject(null)
+      if (status !== 404) setLoadError(true)
+    } finally {
+      setLoading(false)
     }
-    load()
   }, [projectId])
+
+  useEffect(() => { load() }, [load])
 
   const overall = Math.round(
     PROGRESS_MODULE_KEYS.reduce((sum, key) => sum + (progress[key] || 0), 0) /
@@ -104,10 +106,22 @@ export default function ProjectDashboardPage() {
   if (!project) {
     return (
       <div className="text-center py-14">
-        <p className="text-sm text-ink3">Projet introuvable</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.back()}>
-          <ArrowLeft size={14} /> Retour
-        </Button>
+        <p className="text-sm text-ink">
+          {loadError ? 'Impossible de charger le projet' : 'Projet introuvable'}
+        </p>
+        <p className="text-xs text-ink3 mt-1">
+          {loadError ? 'Une erreur est survenue. Vérifiez votre connexion puis réessayez.' : 'Ce projet n’existe pas ou vous n’y avez pas accès.'}
+        </p>
+        <div className="flex items-center justify-center gap-2 mt-4">
+          {loadError && (
+            <Button variant="primary" size="sm" onClick={load}>
+              Réessayer
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/project-owner/projects')}>
+            <ArrowLeft size={14} /> Retour
+          </Button>
+        </div>
       </div>
     )
   }
@@ -143,7 +157,7 @@ export default function ProjectDashboardPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         {MODULES.map(mod => {
           const Icon = mod.icon
-          const isLocked = !['gbm', 'documents'].includes(mod.key) && !mod.followUp && !project.is_gbm_reviewed
+          const isLocked = !['gbm', 'documents', 'coach'].includes(mod.key) && !mod.followUp && !project.is_gbm_reviewed
           return (
             <Card
               key={mod.key}
@@ -165,7 +179,7 @@ export default function ProjectDashboardPage() {
               </CardHeader>
               <div className="p-4 flex items-center gap-3">
                 {mod.followUp ? (
-                  <span className="text-xs text-ink3">Suivi par l'incubateur et les experts</span>
+                  <span className="text-xs text-ink3">Suivi par l&apos;incubateur et les experts</span>
                 ) : mod.key === 'documents' ? (
                   <span className="text-xs font-bold text-moss flex-shrink-0">—</span>
                 ) : (
@@ -206,7 +220,7 @@ export default function ProjectDashboardPage() {
                 size="sm"
                 variant="amber"
                 className="mt-3"
-                onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm`)}
+                onClick={() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=gbm_21`)}
               >
                 Aller à la révision GBM
               </Button>

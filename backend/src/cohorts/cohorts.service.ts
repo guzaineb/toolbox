@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CohortStatus, CohortExpertStatus, ParticipationStatus } from '@prisma/client';
+import {
+  CohortStatus,
+  CohortExpertStatus,
+  ParticipationStatus,
+} from '@prisma/client';
 import { CreateCohortDto } from './dto/create-cohort.dto';
 import { UpdateCohortDto } from './dto/update-cohort.dto';
 import { NotificationEvent } from '../events/notification-event.enum';
@@ -51,30 +55,30 @@ export class CohortsService {
       },
     });
 
-    const incubator = await this.prisma.incubator.findUnique({ where: { id: incubatorId }, select: { name: true } });
+    const incubator = await this.prisma.incubator.findUnique({
+      where: { id: incubatorId },
+      select: { name: true },
+    });
     const members = await this.prisma.incubatorMember.findMany({
       where: { incubator_id: incubatorId, status: 'ACTIVE' },
       select: { user_id: true },
     });
-    const memberIds = members.map(m => m.user_id);
+    const memberIds = members.map((m) => m.user_id);
     if (memberIds.length > 0) {
       const { title, message } = this.messageBuilder.cohortCreated({
         cohortName: cohort.name,
         incubatorName: incubator?.name ?? 'Incubateur',
       });
-      this.eventEmitter.emit(
-        NotificationEvent.COHORT_CREATED,
-        {
-          event: NotificationEvent.COHORT_CREATED,
-          recipients: memberIds.map(id => ({ userId: id })),
-          title,
-          message,
-          link: `/incubator/${incubatorId}/cohorts/${cohort.id}`,
-          senderId: userId,
-          resourceType: 'COHORT',
-          resourceId: cohort.id,
-        } as NotificationPayload,
-      );
+      this.eventEmitter.emit(NotificationEvent.COHORT_CREATED, {
+        event: NotificationEvent.COHORT_CREATED,
+        recipients: memberIds.map((id) => ({ userId: id })),
+        title,
+        message,
+        link: `/incubator/${incubatorId}/cohorts/${cohort.id}`,
+        senderId: userId,
+        resourceType: 'COHORT',
+        resourceId: cohort.id,
+      } as NotificationPayload);
     }
 
     return cohort;
@@ -133,7 +137,9 @@ export class CohortsService {
         await this.prisma.cohortExpert.findMany({
           where: {
             expert_user_id: userId,
-            status: { in: [CohortExpertStatus.PENDING, CohortExpertStatus.ACTIVE] },
+            status: {
+              in: [CohortExpertStatus.PENDING, CohortExpertStatus.ACTIVE],
+            },
           },
           select: { cohort_id: true },
         })
@@ -154,7 +160,9 @@ export class CohortsService {
           await this.prisma.cohortParticipation.findMany({
             where: {
               project_id: { in: myProjectIds },
-              status: { in: [ParticipationStatus.PENDING, ParticipationStatus.ACCEPTED] },
+              status: {
+                in: [ParticipationStatus.PENDING, ParticipationStatus.ACCEPTED],
+              },
             },
             select: { cohort_id: true },
           })
@@ -208,7 +216,14 @@ export class CohortsService {
     if (user.role === 'PROJECT_OWNER') {
       const myProjects = await this.prisma.project.findMany({
         where: { owner_id: userId },
-        select: { id: true, name: true, description: true, owner_id: true, created_at: true, updated_at: true },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          owner_id: true,
+          created_at: true,
+          updated_at: true,
+        },
       });
       const myProjectIds = myProjects.map((p) => p.id);
 
@@ -243,7 +258,12 @@ export class CohortsService {
         participations: {
           include: {
             project: {
-              select: { id: true, name: true, description: true, owner_id: true },
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                owner_id: true,
+              },
             },
           },
         },
@@ -264,7 +284,8 @@ export class CohortsService {
   async update(id: string, dto: UpdateCohortDto, userId: string) {
     const cohort = await this.prisma.cohort.findUnique({ where: { id } });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
-    if (!cohort.incubator_id) throw new BadRequestException('Cohorte sans incubateur');
+    if (!cohort.incubator_id)
+      throw new BadRequestException('Cohorte sans incubateur');
 
     await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
@@ -296,7 +317,8 @@ export class CohortsService {
   async changeStatus(id: string, targetStatus: CohortStatus, userId: string) {
     const cohort = await this.prisma.cohort.findUnique({ where: { id } });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
-    if (!cohort.incubator_id) throw new BadRequestException('Cohorte sans incubateur');
+    if (!cohort.incubator_id)
+      throw new BadRequestException('Cohorte sans incubateur');
 
     await this.access.assertCanManageCohorts(userId, cohort.incubator_id);
 
@@ -323,32 +345,36 @@ export class CohortsService {
     const cohort = await this.changeStatus(id, CohortStatus.OPEN, userId);
 
     const incubatorName = cohort.incubator_id
-      ? (await this.prisma.incubator.findUnique({ where: { id: cohort.incubator_id }, select: { name: true } }))?.name
+      ? (
+          await this.prisma.incubator.findUnique({
+            where: { id: cohort.incubator_id },
+            select: { name: true },
+          })
+        )?.name
       : undefined;
 
-    const members = cohort.incubator_id ? await this.prisma.incubatorMember.findMany({
-      where: { incubator_id: cohort.incubator_id, status: 'ACTIVE' },
-      select: { user_id: true },
-    }) : [];
-    const memberIds = members.map(m => m.user_id);
+    const members = cohort.incubator_id
+      ? await this.prisma.incubatorMember.findMany({
+          where: { incubator_id: cohort.incubator_id, status: 'ACTIVE' },
+          select: { user_id: true },
+        })
+      : [];
+    const memberIds = members.map((m) => m.user_id);
     if (memberIds.length > 0) {
       const { title, message } = this.messageBuilder.applicationOpen({
         cohortName: cohort.name,
         incubatorName: incubatorName ?? 'Incubateur',
       });
-      this.eventEmitter.emit(
-        NotificationEvent.APPLICATION_OPEN,
-        {
-          event: NotificationEvent.APPLICATION_OPEN,
-          recipients: memberIds.map(id => ({ userId: id })),
-          title,
-          message,
-          link: `/incubator/${cohort.incubator_id}/cohorts/${cohort.id}`,
-          senderId: userId,
-          resourceType: 'COHORT',
-          resourceId: cohort.id,
-        } as NotificationPayload,
-      );
+      this.eventEmitter.emit(NotificationEvent.APPLICATION_OPEN, {
+        event: NotificationEvent.APPLICATION_OPEN,
+        recipients: memberIds.map((id) => ({ userId: id })),
+        title,
+        message,
+        link: `/incubator/${cohort.incubator_id}/cohorts/${cohort.id}`,
+        senderId: userId,
+        resourceType: 'COHORT',
+        resourceId: cohort.id,
+      } as NotificationPayload);
     }
 
     return cohort;
@@ -457,52 +483,80 @@ export class CohortsService {
 
     const sessionsByProject = new Map<string, number>();
     const recommendationsByProject = new Map<string, number>();
-    const actionsByProject = new Map<string, { pending: number; total: number }>();
+    const actionsByProject = new Map<
+      string,
+      { pending: number; total: number }
+    >();
     const progressionByProject = new Map<string, number>();
     const documentsByProject = new Map<string, number>();
-    let allSessions: Array<{ assignment: { project_id: string } | null; status: string; scheduled_at: Date }> = [];
+    let allSessions: Array<{
+      assignment: { project_id: string } | null;
+      status: string;
+      scheduled_at: Date;
+    }> = [];
 
     if (projectIds.length > 0) {
       const gbmStepKeys = new Set(GBM_STEPS.map((s) => s.stepKey));
-      const [sessions, recommendations, actions, stepProgress, documents] = await Promise.all([
-        this.prisma.coachingSession.findMany({
-          where: { assignment: { project_id: { in: projectIds }, expert_user_id: userId } },
-          select: { assignment: { select: { project_id: true } }, status: true, scheduled_at: true },
-          orderBy: { scheduled_at: 'desc' },
-        }),
-        this.prisma.coachingRecommendation.findMany({
-          where: { project_id: { in: projectIds }, author_id: userId },
-          select: { project_id: true },
-        }),
-        this.prisma.coachingAction.findMany({
-          where: { project_id: { in: projectIds } },
-          select: { project_id: true, status: true },
-        }),
-        this.prisma.stepProgress.findMany({
-          where: { project_id: { in: projectIds } },
-          select: { project_id: true, step_key: true, status: true },
-        }),
-        this.prisma.generatedDocument.findMany({
-          where: { project_id: { in: projectIds }, status: { not: 'NOT_GENERATED' } },
-          select: { project_id: true },
-        }),
-      ]);
+      const [sessions, recommendations, actions, stepProgress, documents] =
+        await Promise.all([
+          this.prisma.coachingSession.findMany({
+            where: {
+              assignment: {
+                project_id: { in: projectIds },
+                expert_user_id: userId,
+              },
+            },
+            select: {
+              assignment: { select: { project_id: true } },
+              status: true,
+              scheduled_at: true,
+            },
+            orderBy: { scheduled_at: 'desc' },
+          }),
+          this.prisma.coachingRecommendation.findMany({
+            where: { project_id: { in: projectIds }, author_id: userId },
+            select: { project_id: true },
+          }),
+          this.prisma.coachingAction.findMany({
+            where: { project_id: { in: projectIds } },
+            select: { project_id: true, status: true },
+          }),
+          this.prisma.stepProgress.findMany({
+            where: { project_id: { in: projectIds } },
+            select: { project_id: true, step_key: true, status: true },
+          }),
+          this.prisma.generatedDocument.findMany({
+            where: {
+              project_id: { in: projectIds },
+              status: { not: 'NOT_GENERATED' },
+            },
+            select: { project_id: true },
+          }),
+        ]);
 
       allSessions = sessions;
 
       for (const s of sessions) {
         const pid = s.assignment?.project_id;
-        if (pid) sessionsByProject.set(pid, (sessionsByProject.get(pid) || 0) + 1);
+        if (pid)
+          sessionsByProject.set(pid, (sessionsByProject.get(pid) || 0) + 1);
       }
       for (const r of recommendations) {
         if (r.project_id) {
-          recommendationsByProject.set(r.project_id, (recommendationsByProject.get(r.project_id) || 0) + 1);
+          recommendationsByProject.set(
+            r.project_id,
+            (recommendationsByProject.get(r.project_id) || 0) + 1,
+          );
         }
       }
       for (const a of actions) {
-        const current = actionsByProject.get(a.project_id) || { pending: 0, total: 0 };
+        const current = actionsByProject.get(a.project_id) || {
+          pending: 0,
+          total: 0,
+        };
         current.total++;
-        if (['PENDING', 'IN_PROGRESS', 'SUBMITTED'].includes(a.status)) current.pending++;
+        if (['PENDING', 'IN_PROGRESS', 'SUBMITTED'].includes(a.status))
+          current.pending++;
         actionsByProject.set(a.project_id, current);
       }
 
@@ -510,7 +564,10 @@ export class CohortsService {
       for (const sp of stepProgress) {
         if (!gbmStepKeys.has(sp.step_key)) continue;
         if (sp.status === 'COMPLETED') {
-          completedByProject.set(sp.project_id, (completedByProject.get(sp.project_id) || 0) + 1);
+          completedByProject.set(
+            sp.project_id,
+            (completedByProject.get(sp.project_id) || 0) + 1,
+          );
         }
       }
       const gbmTotal = GBM_STEPS.length || 1;
@@ -522,14 +579,18 @@ export class CohortsService {
       }
 
       for (const d of documents) {
-        documentsByProject.set(d.project_id, (documentsByProject.get(d.project_id) || 0) + 1);
+        documentsByProject.set(
+          d.project_id,
+          (documentsByProject.get(d.project_id) || 0) + 1,
+        );
       }
     }
 
     return participations.map((p) => {
       const assignment = assignmentsByProject.get(p.project_id);
       const lastSession = allSessions.find(
-        (s) => s.assignment?.project_id === p.project_id && s.status === 'COMPLETED',
+        (s) =>
+          s.assignment?.project_id === p.project_id && s.status === 'COMPLETED',
       );
 
       let nextSession: { scheduled_at: Date } | null = null;
@@ -548,14 +609,19 @@ export class CohortsService {
       return {
         project: p.project,
         assignment: assignment
-          ? { id: assignment.id, role: assignment.role, status: assignment.status }
+          ? {
+              id: assignment.id,
+              role: assignment.role,
+              status: assignment.status,
+            }
           : null,
         cohort_participation: { status: p.status, applied_at: p.applied_at },
         stats: {
           sessions_count: sessionsByProject.get(p.project_id) || 0,
           last_session_at: lastSession?.scheduled_at ?? null,
           next_session_at: nextSession?.scheduled_at ?? null,
-          recommendations_count: recommendationsByProject.get(p.project_id) || 0,
+          recommendations_count:
+            recommendationsByProject.get(p.project_id) || 0,
           actions_pending: actionsByProject.get(p.project_id)?.pending || 0,
           actions_total: actionsByProject.get(p.project_id)?.total || 0,
           gbm_progression: progressionByProject.get(p.project_id) ?? 0,
@@ -583,5 +649,4 @@ export class CohortsService {
         : 0,
     };
   }
-
 }

@@ -59,13 +59,38 @@ export class DocumentPromptsService {
     return val || 'Non renseigné';
   }
 
+  /** Rend un objet/tableau métier sous forme de lignes lisibles (jamais de JSON
+   * brut injecté dans les prompts des documents générés). */
+  private kv(val: any): string {
+    if (val === null || val === undefined) return 'Non renseigné';
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return 'Non renseigné';
+      return trimmed;
+    }
+    if (Array.isArray(val)) return val.map((v) => `- ${this.kv(v)}`).join('\n');
+    if (typeof val === 'object') {
+      return Object.entries(val)
+        .map(([k, v]) => {
+          const value = Array.isArray(v)
+            ? (v as unknown[]).join(', ')
+            : this.kv(v);
+          return `- ${k} : ${value}`;
+        })
+        .join('\n');
+    }
+    return String(val);
+  }
+
   getDocumentConfigs(): DocumentPromptConfig[] {
     return [
       {
         key: 'idea_sketch',
         title: "Fiche d'idée",
         sourceModels: ['idea_sketch'],
-        buildPrompt: (p) => `Rédige une fiche d'idée d'entreprise structurée et professionnelle pour le projet "${p.name}".
+        buildPrompt: (
+          p,
+        ) => `Rédige une fiche d'idée d'entreprise structurée et professionnelle pour le projet "${p.name}".
 
 IDÉE INITIALE: ${this.fmt(p.idea_sketch?.idea_initial)}
 PRODUIT/SERVICE: ${this.fmt(p.idea_sketch?.product_service)}
@@ -78,7 +103,9 @@ Formate le document avec des sections claires : Description du projet, Produit/S
         key: 'problems_needs',
         title: 'Analyse des problèmes et besoins',
         sourceModels: ['problems_needs'],
-        buildPrompt: (p) => `Rédige une analyse structurée des problèmes et besoins pour le projet "${p.name}".
+        buildPrompt: (
+          p,
+        ) => `Rédige une analyse structurée des problèmes et besoins pour le projet "${p.name}".
 
 DÉFIS ENVIRONNEMENTAUX: ${this.fmt(p.problems_needs?.environmental_challenges)}
 DÉFIS SOCIAUX: ${this.fmt(p.problems_needs?.social_challenges)}
@@ -91,7 +118,9 @@ Document structuré avec sections : Contexte environnemental, Enjeux sociaux, Be
         key: 'pestel',
         title: 'Rapport PESTEL',
         sourceModels: ['pestel'],
-        buildPrompt: (p) => `Rédige un rapport PESTEL complet pour le projet "${p.name}".
+        buildPrompt: (
+          p,
+        ) => `Rédige un rapport PESTEL complet pour le projet "${p.name}".
 
 Politique: ${this.fmt(p.pestel?.political_what)} — ${this.fmt(p.pestel?.political_how)}
 Économique: ${this.fmt(p.pestel?.economic_what)} — ${this.fmt(p.pestel?.economic_how)}
@@ -108,7 +137,8 @@ Pour chaque facteur, présente l'analyse et les implications pour le projet. 300
         sourceModels: ['swot_analysis'],
         buildPrompt: (p) => {
           const swot = p.swot_analysis;
-          if (!swot) return `Présente l'analyse SWOT du projet "${p.name}" en te basant sur les données disponibles. Structure : Forces, Faiblesses, Opportunités, Menaces.`;
+          if (!swot)
+            return `Présente l'analyse SWOT du projet "${p.name}" en te basant sur les données disponibles. Structure : Forces, Faiblesses, Opportunités, Menaces.`;
           return `Présente l'analyse SWOT du projet "${p.name}".
 
 FORCES: ${this.fmt(swot.strengths)}
@@ -123,7 +153,9 @@ Mets en forme ce document de manière professionnelle avec des sections claires.
         key: 'mission_vision',
         title: 'Mission, Vision et Valeurs',
         sourceModels: ['mission_vision'],
-        buildPrompt: (p) => `Rédige un document structuré Mission, Vision et Valeurs pour le projet "${p.name}".
+        buildPrompt: (
+          p,
+        ) => `Rédige un document structuré Mission, Vision et Valeurs pour le projet "${p.name}".
 
 MISSION: ${this.fmt(p.mission_vision?.mission)}
 VISION: ${this.fmt(p.mission_vision?.vision)}
@@ -136,8 +168,20 @@ Formate de manière professionnelle. 150-250 mots.`,
         title: 'Cartographie des parties prenantes',
         sourceModels: ['stakeholder', 'stakeholder_map'],
         buildPrompt: (p) => {
-          const stakeholders = p.stakeholder?.map((s: any) => `- ${s.name} (${s.role}): Intérêt=${this.fmt(s.interest)}, Influence=${this.fmt(s.influence)}, Stratégie=${this.fmt(s.engagement_strategy)}`).join('\n') || 'Aucune partie prenante définie';
-          const maps = p.stakeholder_map?.map((m: any) => `- ${m.stakeholder_name}: Donne=${this.fmt(m.contribution)}, Reçoit=${this.fmt(m.reward)}`).join('\n') || '';
+          const stakeholders =
+            p.stakeholder
+              ?.map(
+                (s: any) =>
+                  `- ${s.name} (${s.role}): Intérêt=${this.fmt(s.interest)}, Influence=${this.fmt(s.influence)}, Stratégie=${this.fmt(s.engagement_strategy)}`,
+              )
+              .join('\n') || 'Aucune partie prenante définie';
+          const maps =
+            p.stakeholder_map
+              ?.map(
+                (m: any) =>
+                  `- ${m.stakeholder_name}: Donne=${this.fmt(m.contribution)}, Reçoit=${this.fmt(m.reward)}`,
+              )
+              .join('\n') || '';
           return `Rédige une cartographie des parties prenantes pour le projet "${p.name}".
 
 PARTIES PRENANTES:
@@ -153,7 +197,13 @@ Formate de manière professionnelle avec un tableau ou une liste structurée. 20
         title: 'Analyse des segments clients',
         sourceModels: ['customer_segment'],
         buildPrompt: (p) => {
-          const segments = p.customer_segment?.map((c: any) => `- Segment "${c.segment_name}": ${this.fmt(c.description)} | Douleurs: ${this.fmt(c.pains)} | Gains: ${this.fmt(c.gains)} | Besoins: ${this.fmt(c.functions)}`).join('\n\n') || 'Aucun segment défini';
+          const segments =
+            p.customer_segment
+              ?.map(
+                (c: any) =>
+                  `- Segment "${c.segment_name}": ${this.fmt(c.description)} | Douleurs: ${this.fmt(c.pains)} | Gains: ${this.fmt(c.gains)} | Besoins: ${this.fmt(c.functions)}`,
+              )
+              .join('\n\n') || 'Aucun segment défini';
           return `Rédige une analyse détaillée des segments clients pour le projet "${p.name}".
 
 SEGMENTS:
@@ -188,7 +238,13 @@ Formate de manière professionnelle. 200-300 mots.`;
         title: 'Rapport des tests terrain',
         sourceModels: ['test_discovery'],
         buildPrompt: (p) => {
-          const tests = p.test_discovery?.map((t: any) => `- Hypothèse: ${this.fmt(t.hypothesis)}\n  Méthode: ${this.fmt(t.test_method)}\n  Résultats: ${this.fmt(t.results)}\n  Apprentissages: ${this.fmt(t.learnings)}\n  Validé: ${t.validated ? 'Oui' : 'Non'}`).join('\n\n') || 'Aucun test effectué';
+          const tests =
+            p.test_discovery
+              ?.map(
+                (t: any) =>
+                  `- Hypothèse: ${this.fmt(t.hypothesis)}\n  Méthode: ${this.fmt(t.test_method)}\n  Résultats: ${this.fmt(t.results)}\n  Apprentissages: ${this.fmt(t.learnings)}\n  Validé: ${t.validated ? 'Oui' : 'Non'}`,
+              )
+              .join('\n\n') || 'Aucun test effectué';
           return `Rédige un rapport des tests terrain pour le projet "${p.name}".
 
 TESTS EFFECTUÉS:
@@ -202,7 +258,13 @@ Synthétise les apprentissages clés et recommandations. 200-300 mots.`;
         title: 'Cartographie du parcours client',
         sourceModels: ['customer_journey', 'customer_relations_channel'],
         buildPrompt: (p) => {
-          const journey = p.customer_journey?.map((j: any) => `- Étape "${j.stage_name}": Contact=${this.fmt(j.touchpoints)}, Émotion=${this.fmt(j.customer_emotions)}, Amélioration=${this.fmt(j.improvement_ideas)}`).join('\n') || 'Aucun parcours défini';
+          const journey =
+            p.customer_journey
+              ?.map(
+                (j: any) =>
+                  `- Étape "${j.stage_name}": Contact=${this.fmt(j.touchpoints)}, Émotion=${this.fmt(j.customer_emotions)}, Amélioration=${this.fmt(j.improvement_ideas)}`,
+              )
+              .join('\n') || 'Aucun parcours défini';
           const crc = p.customer_relations_channel;
           return `Rédige une cartographie du parcours client pour le projet "${p.name}".
 
@@ -219,8 +281,18 @@ Formate de manière professionnelle. 200-300 mots.`;
       {
         key: 'gbm_canvas',
         title: 'Green Business Model Canvas final',
-        sourceModels: ['idea_sketch', 'value_proposition', 'customer_segment', 'cost_structure', 'revenue_stream', 'key_activities_resource', 'stakeholder'],
-        buildPrompt: (p) => `Rédige un Green Business Model Canvas synthétique pour le projet "${p.name}".
+        sourceModels: [
+          'idea_sketch',
+          'value_proposition',
+          'customer_segment',
+          'cost_structure',
+          'revenue_stream',
+          'key_activities_resource',
+          'stakeholder',
+        ],
+        buildPrompt: (
+          p,
+        ) => `Rédige un Green Business Model Canvas synthétique pour le projet "${p.name}".
 
 SEGMENTS CLIENTS: ${p.customer_segment?.map((c: any) => c.segment_name).join(', ') || this.fmt(p.idea_sketch?.customers)}
 PROPOSITION DE VALEUR: ${this.fmt(p.value_proposition?.value_added)}
@@ -241,7 +313,8 @@ Présente le canevas complet avec les 9 blocs. 300-400 mots.`,
         sourceModels: ['management_plan'],
         buildPrompt: (p) => {
           const mp = p.management_plan;
-          if (!mp) return `Rédige un plan de gestion pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!mp)
+            return `Rédige un plan de gestion pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un plan de gestion structuré pour le projet "${p.name}".
 
 PROBLÈMES DE GESTION: ${this.fmt(mp.problemes_gestion)}
@@ -259,7 +332,8 @@ Formate de manière professionnelle. 300-400 mots.`;
         sourceModels: ['marketing_plan'],
         buildPrompt: (p) => {
           const mp = p.marketing_plan;
-          if (!mp) return `Rédige un plan marketing pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!mp)
+            return `Rédige un plan marketing pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un plan marketing structuré pour le projet "${p.name}".
 
 CLIENTS & VALEUR: ${this.fmt(mp.clients_valeur)}
@@ -279,7 +353,8 @@ Formate de manière professionnelle. 300-400 mots.`;
         sourceModels: ['financial_plan'],
         buildPrompt: (p) => {
           const fp = p.financial_plan;
-          if (!fp) return `Rédige un plan financier pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!fp)
+            return `Rédige un plan financier pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un plan financier structuré pour le projet "${p.name}".
 
 POINT DE DÉPART: ${this.fmt(fp.point_depart)}
@@ -298,7 +373,8 @@ Formate de manière professionnelle. 300-400 mots.`;
         sourceModels: ['legal_plan'],
         buildPrompt: (p) => {
           const lp = p.legal_plan;
-          if (!lp) return `Rédige un plan juridique pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!lp)
+            return `Rédige un plan juridique pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un plan juridique structuré pour le projet "${p.name}".
 
 STATUT JURIDIQUE: ${this.fmt(lp.statut_juridique)}
@@ -315,10 +391,11 @@ Formate de manière professionnelle. 200-300 mots.`;
         sourceModels: ['kpi'],
         buildPrompt: (p) => {
           const kpi = p.kpi;
-          if (!kpi) return `Rédige un plan de KPIs pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!kpi)
+            return `Rédige un plan de KPIs pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un plan de KPIs structuré pour le projet "${p.name}".
 
-KPIs: ${typeof kpi.kpis === 'object' ? JSON.stringify(kpi.kpis) : this.fmt(kpi.kpis)}
+KPIs: ${this.kv(kpi.kpis)}
 OBJECTIFS DE MESURE: ${this.fmt(kpi.objectifs_mesure)}
 REVUES DE PERFORMANCE: ${this.fmt(kpi.revues_performance)}
 
@@ -328,10 +405,17 @@ Formate de manière professionnelle. 200-300 mots.`;
       {
         key: 'executive_summary',
         title: 'Résumé exécutif',
-        sourceModels: ['executive_summary', 'context_summary', 'mission_vision', 'cost_revenue_summary', 'impact_measure'],
+        sourceModels: [
+          'executive_summary',
+          'context_summary',
+          'mission_vision',
+          'cost_revenue_summary',
+          'impact_measure',
+        ],
         buildPrompt: (p) => {
           const es = p.executive_summary;
-          if (es?.resume_executif) return `Mets en forme le résumé exécutif du projet "${p.name}" :\n\n${es.resume_executif}\n\nFormate de manière professionnelle pour des investisseurs.`;
+          if (es?.resume_executif)
+            return `Mets en forme le résumé exécutif du projet "${p.name}" :\n\n${es.resume_executif}\n\nFormate de manière professionnelle pour des investisseurs.`;
           return `Rédige un résumé exécutif (executive summary) pour investisseurs pour le projet "${p.name}".
 
 CONTEXTE: ${this.fmt(p.context_summary?.summary_text)}
@@ -351,7 +435,8 @@ Rédige un executive summary professionnel de 400-500 mots pour des investisseur
         buildPrompt: (p) => {
           const ed = p.eco_design;
           const edr = p.eco_design_result;
-          if (!ed && !edr) return `Rédige un rapport d'éco-conception pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!ed && !edr)
+            return `Rédige un rapport d'éco-conception pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un rapport d'éco-conception détaillé pour le projet "${p.name}".
 
 ÉQUIPE ÉCO-CONCEPTION: ${this.fmt(ed?.equipe_eco)}
@@ -371,12 +456,13 @@ Formate de manière professionnelle. 300-400 mots.`;
         sourceModels: ['funding_assessment'],
         buildPrompt: (p) => {
           const fa = p.funding_assessment;
-          if (!fa) return `Rédige un dossier de financement pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!fa)
+            return `Rédige un dossier de financement pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un dossier de financement structuré pour le projet "${p.name}".
 
 SCORE DE MATURITÉ: ${fa.score_maturite || 'Non évalué'}
 PHASE DE MATURITÉ: ${fa.phase_maturite || 'Non définie'}
-OPPORTUNITÉS DE FINANCEMENT: ${typeof fa.opportunites_financement === 'object' ? JSON.stringify(fa.opportunites_financement) : this.fmt(fa.opportunites_financement)}
+OPPORTUNITÉS DE FINANCEMENT: ${this.kv(fa.opportunites_financement)}
 OPPORTUNITÉS PAR PAYS: ${this.fmt(fa.opportunites_pays)}
 STRATÉGIE DE LEVÉE DE FONDS: ${this.fmt(fa.strategie_levee_fonds)}
 
@@ -389,7 +475,8 @@ Formate de manière professionnelle. 300-400 mots.`;
         sourceModels: ['market_access'],
         buildPrompt: (p) => {
           const ma = p.market_access;
-          if (!ma) return `Rédige une stratégie d'accès au marché pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!ma)
+            return `Rédige une stratégie d'accès au marché pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige une stratégie d'accès au marché structurée pour le projet "${p.name}".
 
 ESSENCE DE LA MARQUE: ${this.fmt(ma.essence_marque)}
@@ -397,9 +484,9 @@ ALIGNEMENT DES OBJECTIFS: ${this.fmt(ma.alignement_objectifs)}
 POSITIONNEMENT: ${this.fmt(ma.positionnement)}
 IDENTITÉ VISUELLE: ${this.fmt(ma.identite_visuelle)}
 NARRATION: ${this.fmt(ma.narration)}
-MESSAGES CLÉS: ${typeof ma.messages_cles === 'object' ? JSON.stringify(ma.messages_cles) : this.fmt(ma.messages_cles)}
-CANAUX MARKETING: ${typeof ma.canaux_marketing === 'object' ? JSON.stringify(ma.canaux_marketing) : this.fmt(ma.canaux_marketing)}
-PARTENARIATS: ${typeof ma.partenariats_market === 'object' ? JSON.stringify(ma.partenariats_market) : this.fmt(ma.partenariats_market)}
+MESSAGES CLÉS: ${this.kv(ma.messages_cles)}
+CANAUX MARKETING: ${this.kv(ma.canaux_marketing)}
+PARTENARIATS: ${this.kv(ma.partenariats_market)}
 
 Formate de manière professionnelle. 300-400 mots.`;
         },
@@ -410,16 +497,17 @@ Formate de manière professionnelle. 300-400 mots.`;
         sourceModels: ['impact_measure'],
         buildPrompt: (p) => {
           const im = p.impact_measure;
-          if (!im) return `Rédige un rapport d'impact durable pour le projet "${p.name}" en te basant sur les données disponibles.`;
+          if (!im)
+            return `Rédige un rapport d'impact durable pour le projet "${p.name}" en te basant sur les données disponibles.`;
           return `Rédige un rapport d'impact durable structuré pour le projet "${p.name}".
 
-KPIs ENVIRONNEMENTAUX: ${typeof im.kpis_environnementaux === 'object' ? JSON.stringify(im.kpis_environnementaux) : this.fmt(im.kpis_environnementaux)}
-KPIs SOCIAUX: ${typeof im.kpis_sociaux === 'object' ? JSON.stringify(im.kpis_sociaux) : this.fmt(im.kpis_sociaux)}
-KPIs ÉCONOMIQUES: ${typeof im.kpis_economiques === 'object' ? JSON.stringify(im.kpis_economiques) : this.fmt(im.kpis_economiques)}
+KPIs ENVIRONNEMENTAUX: ${this.kv(im.kpis_environnementaux)}
+KPIs SOCIAUX: ${this.kv(im.kpis_sociaux)}
+KPIs ÉCONOMIQUES: ${this.kv(im.kpis_economiques)}
 MÉTHODE DE MESURE: ${this.fmt(im.methode_mesure)}
 PÉRIODE: ${im.periode_mesure || 'Non définie'}
-OBJECTIFS D'IMPACT: ${typeof im.objectifs_impact === 'object' ? JSON.stringify(im.objectifs_impact) : this.fmt(im.objectifs_impact)}
-RÉSULTATS ACTUELS: ${typeof im.resultats_actuels === 'object' ? JSON.stringify(im.resultats_actuels) : this.fmt(im.resultats_actuels)}
+OBJECTIFS D'IMPACT: ${this.kv(im.objectifs_impact)}
+RÉSULTATS ACTUELS: ${this.kv(im.resultats_actuels)}
 RAPPORT: ${this.fmt(im.rapport_impact)}
 
 Formate de manière professionnelle. 300-400 mots.`;
@@ -429,6 +517,6 @@ Formate de manière professionnelle. 300-400 mots.`;
   }
 
   getDocumentConfig(key: string): DocumentPromptConfig | undefined {
-    return this.getDocumentConfigs().find(c => c.key === key);
+    return this.getDocumentConfigs().find((c) => c.key === key);
   }
 }

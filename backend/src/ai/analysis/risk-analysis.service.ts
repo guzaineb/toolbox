@@ -18,7 +18,14 @@ export interface RiskAnalysisPayload {
   risks: RiskItem[];
 }
 
-const CATEGORIES = ['market', 'financial', 'execution', 'team', 'impact', 'innovation'];
+const CATEGORIES = [
+  'market',
+  'financial',
+  'execution',
+  'team',
+  'impact',
+  'innovation',
+];
 const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH'];
 
 @Injectable()
@@ -31,7 +38,10 @@ export class RiskAnalysisService {
     private readonly contextBuilder: ProjectContextBuilderService,
   ) {}
 
-  async analyze(projectId: string, userId: string): Promise<RiskAnalysisPayload | null> {
+  async analyze(
+    projectId: string,
+    userId: string,
+  ): Promise<RiskAnalysisPayload | null> {
     const context = await this.contextBuilder.build(projectId);
     if (!context.contextText) return null;
 
@@ -57,17 +67,19 @@ Contraintes : 2 à 6 risques ; ne jamais inventer une information absente — ut
 
     const result = await parseWithRetry<RiskAnalysisPayload>(
       () =>
-        this.llm.chat(
-          [
-            {
-              role: 'system',
-              content:
-                "Tu es un analyste de risques de projets entrepreneuriaux. Tu ne t'appuies que sur les données fournies et réponds UNIQUEMENT en JSON.",
-            },
-            { role: 'user', content: prompt },
-          ],
-          { temperature: 0.3, maxTokens: 1800 },
-        ).then((r) => r.content),
+        this.llm
+          .chat(
+            [
+              {
+                role: 'system',
+                content:
+                  "Tu es un analyste de risques de projets entrepreneuriaux. Tu ne t'appuies que sur les données fournies et réponds UNIQUEMENT en JSON.",
+              },
+              { role: 'user', content: prompt },
+            ],
+            { temperature: 0.3, maxTokens: 1800 },
+          )
+          .then((r) => r.content),
       (parsed) => this.validate(parsed),
     );
 
@@ -107,7 +119,8 @@ Contraintes : 2 à 6 risques ; ne jamais inventer une information absente — ut
           severity: SEVERITIES.includes(severity) ? severity : 'MEDIUM',
           description: description.slice(0, 600),
           evidence: asString(r.evidence),
-          recommendedAction: asString(r.recommendedAction)?.slice(0, 400) ?? null,
+          recommendedAction:
+            asString(r.recommendedAction)?.slice(0, 400) ?? null,
         };
       })
       .filter((r): r is RiskItem => r !== null)

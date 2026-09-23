@@ -8,18 +8,40 @@ import { ProjectContextBuilderService } from './project-context.service';
 
 const VALID_PAYLOAD = {
   summary: 'Projet cohérent avec un marché identifié.',
-  strengths: [{ area: 'impact', description: 'KPIs carbone définis', confidence: 0.8 }],
-  weaknesses: [
-    { area: 'finance', severity: 'HIGH', description: 'Aucun prévisionnel', evidence: 'bp vide' },
-    { area: 'zone_inconnue', severity: 'EXTRÊME', description: 'Sévérité invalide', evidence: null },
+  strengths: [
+    { area: 'impact', description: 'KPIs carbone définis', confidence: 0.8 },
   ],
-  risks: [{ area: 'market', severity: 'MEDIUM', description: 'Concurrence forte' }],
+  weaknesses: [
+    {
+      area: 'finance',
+      severity: 'HIGH',
+      description: 'Aucun prévisionnel',
+      evidence: 'bp vide',
+    },
+    {
+      area: 'zone_inconnue',
+      severity: 'EXTRÊME',
+      description: 'Sévérité invalide',
+      evidence: null,
+    },
+  ],
+  risks: [
+    { area: 'market', severity: 'MEDIUM', description: 'Concurrence forte' },
+  ],
   opportunities: [{ area: 'innovation', description: 'Subside vert régional' }],
   recommendations: [
-    { title: 'Rédiger le prévisionnel 12 mois', priority: 'HIGH', reason: 'bloquant pour le financement' },
+    {
+      title: 'Rédiger le prévisionnel 12 mois',
+      priority: 'HIGH',
+      reason: 'bloquant pour le financement',
+    },
     { title: 'Sans raison', priority: 'URGENT' },
   ],
-  suggestedQuestions: ['Quel prix de vente ?', '', 'Qui sont les concurrents ?'],
+  suggestedQuestions: [
+    'Quel prix de vente ?',
+    '',
+    'Qui sont les concurrents ?',
+  ],
 };
 
 describe('EvaluationAiService', () => {
@@ -44,7 +66,10 @@ describe('EvaluationAiService', () => {
     }).compile();
     service = module.get<EvaluationAiService>(EvaluationAiService);
 
-    contextMock.build.mockResolvedValue({ projectName: 'ÉcoPot', contextText: 'Données du projet' });
+    contextMock.build.mockResolvedValue({
+      projectName: 'ÉcoPot',
+      contextText: 'Données du projet',
+    });
     embeddingsMock.generate.mockResolvedValue([null]);
   });
 
@@ -63,17 +88,24 @@ describe('EvaluationAiService', () => {
     // priorité inconnue → MEDIUM
     expect(result!.recommendations[1].priority).toBe('MEDIUM');
     // chaînes vides filtrées
-    expect(result!.suggestedQuestions).toEqual(['Quel prix de vente ?', 'Qui sont les concurrents ?']);
+    expect(result!.suggestedQuestions).toEqual([
+      'Quel prix de vente ?',
+      'Qui sont les concurrents ?',
+    ]);
   });
 
   it('should reject a payload without summary', () => {
-    expect(service.validatePayload({ ...VALID_PAYLOAD, summary: '   ' })).toBeNull();
+    expect(
+      service.validatePayload({ ...VALID_PAYLOAD, summary: '   ' }),
+    ).toBeNull();
     expect(service.validatePayload(null)).toBeNull();
     expect(service.validatePayload('texte')).toBeNull();
   });
 
   it('should complete the analysis when the LLM returns valid JSON (even fenced)', async () => {
-    llmMock.chat.mockResolvedValue({ content: '```json\n' + JSON.stringify(VALID_PAYLOAD) + '\n```' });
+    llmMock.chat.mockResolvedValue({
+      content: '```json\n' + JSON.stringify(VALID_PAYLOAD) + '\n```',
+    });
     prismaMock.aiAnalysis.create.mockResolvedValue({ id: 'ai1' });
     prismaMock.aiAnalysis.update.mockResolvedValue({});
 
@@ -83,7 +115,11 @@ describe('EvaluationAiService', () => {
     expect(payload!.strengths).toHaveLength(1);
     expect(prismaMock.aiAnalysis.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ type: 'EVALUATION_ANALYSIS', status: 'PENDING', project_id: 'p1' }),
+        data: expect.objectContaining({
+          type: 'EVALUATION_ANALYSIS',
+          status: 'PENDING',
+          project_id: 'p1',
+        }),
       }),
     );
     expect(prismaMock.aiAnalysis.update).toHaveBeenCalledWith(
@@ -95,7 +131,9 @@ describe('EvaluationAiService', () => {
   });
 
   it('should mark the analysis FAILED and return null on invalid LLM output after retries', async () => {
-    llmMock.chat.mockResolvedValue({ content: "Je ne peux pas répondre à ça." });
+    llmMock.chat.mockResolvedValue({
+      content: 'Je ne peux pas répondre à ça.',
+    });
     prismaMock.aiAnalysis.create.mockResolvedValue({ id: 'ai2' });
     prismaMock.aiAnalysis.update.mockResolvedValue({});
 

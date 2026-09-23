@@ -16,7 +16,9 @@ import { Server, Socket } from 'socket.io';
     credentials: true,
   },
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -26,7 +28,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth?.token ?? client.handshake.query?.token;
+      const token =
+        client.handshake.auth?.token ?? client.handshake.query?.token;
       if (!token) {
         client.disconnect();
         return;
@@ -77,6 +80,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   isUserConnected(userId: string): boolean {
-    return this.userSockets.has(userId) && this.userSockets.get(userId)!.size > 0;
+    return (
+      this.userSockets.has(userId) && this.userSockets.get(userId)!.size > 0
+    );
   }
 }

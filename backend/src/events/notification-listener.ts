@@ -18,7 +18,10 @@ export class NotificationListener {
     try {
       const config = NOTIFICATION_EVENT_MAP[payload.event];
       if (!config) {
-        console.log('[NotificationListener] No config found for event:', payload.event);
+        console.log(
+          '[NotificationListener] No config found for event:',
+          payload.event,
+        );
         return;
       }
 
@@ -27,7 +30,10 @@ export class NotificationListener {
         console.log('[NotificationListener] No recipients, skipping');
         return;
       }
-      console.log('[NotificationListener] Creating notifications for users:', userIds);
+      console.log(
+        '[NotificationListener] Creating notifications for users:',
+        userIds,
+      );
 
       const notifications = await Promise.all(
         userIds.map((userId) =>
@@ -44,18 +50,33 @@ export class NotificationListener {
           ),
         ),
       );
-      console.log('[NotificationListener] Notifications created in DB:', notifications.length);
+      console.log(
+        '[NotificationListener] Notifications created in DB:',
+        notifications.length,
+      );
       for (let i = 0; i < userIds.length; i++) {
         const userId = userIds[i];
         const notification = notifications[i];
         this.notificationsGateway.sendNotification(userId, notification);
-        console.log('[NotificationListener] WebSocket notification sent to:', userId);
-        const { count } = await this.notificationsService.getUnreadCount(userId);
+        console.log(
+          '[NotificationListener] WebSocket notification sent to:',
+          userId,
+        );
+        const { count } =
+          await this.notificationsService.getUnreadCount(userId);
         this.notificationsGateway.sendUnreadUpdate(userId, count);
-        console.log('[NotificationListener] Unread count updated for', userId, ':', count);
+        console.log(
+          '[NotificationListener] Unread count updated for',
+          userId,
+          ':',
+          count,
+        );
       }
     } catch (error) {
-      console.error('[NotificationListener] Error handling notification:', error);
+      console.error(
+        '[NotificationListener] Error handling notification:',
+        error,
+      );
     }
   }
 }

@@ -2,15 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, Check, Sparkles, FileText } from 'lucide-react'
+import { ArrowLeft, Loader2, Check, Sparkles, FileText, Lock, BadgeCheck } from 'lucide-react'
 import { businessPlanService } from '@/services/business-plan.service'
-import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav } from '@/components/shared/ui'
+import { Button, Card, CardHeader, Progress, ErrorAlert, SuccessAlert, TabNav, Badge } from '@/components/shared/ui'
+import type { BusinessPlanGatingStatus } from '@/types/business-plan'
 import { AiSummaryBadge } from '@/components/shared/AiSummaryBadge'
+import { KeyValueListEditor } from '@/components/shared/KeyValueListEditor'
 import { applyPrefill, type ProvenanceInfo } from '@/hooks/useProjectPrefill'
 import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const SECTIONS = [
   { id: 'management', label: '2.1 Gestion' },
@@ -25,6 +29,8 @@ const PREFILL_MODULES: Record<string, string> = {
   management: 'management',
   marketing: 'marketing',
   financial: 'financial',
+  legal: 'legal',
+  kpis: 'kpis',
 }
 
 export default function BusinessPlanPage() {
@@ -33,6 +39,7 @@ export default function BusinessPlanPage() {
   const projectId = params.projectId as string
   const [section, setSection] = useState('management')
   const [formData, setFormData] = useState<Record<string, any>>({})
+  const [dirty, setDirty] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -41,6 +48,9 @@ export default function BusinessPlanPage() {
   const [genLoading, setGenLoading] = useState(false)
   const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [gating, setGating] = useState<BusinessPlanGatingStatus | null>(null)
+  const [finalizing, setFinalizing] = useState(false)
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -67,6 +77,12 @@ export default function BusinessPlanPage() {
       }
       const p = await businessPlanService.getProgress(projectId)
       setProgress(p)
+      setDirty(false)
+      try {
+        setGating(await businessPlanService.getGatingStatus(projectId))
+      } catch {
+        setGating(null)
+      }
     } catch {
       setError('Erreur de chargement')
     } finally {
@@ -86,6 +102,10 @@ export default function BusinessPlanPage() {
       case 'summary':    return businessPlanService.getExecutiveSummary(projectId)
       default: return {}
     }
+  }
+
+  const handleSectionChange = (next: string) => {
+    guardLeave(() => setSection(next))
   }
 
   const handleSave = async () => {
@@ -120,6 +140,7 @@ export default function BusinessPlanPage() {
         case 'summary':    await businessPlanService.updateExecutiveSummary(projectId, formData); break
       }
       setSaved(true)
+      setDirty(false)
       setTimeout(() => setSaved(false), 2000)
       const p = await businessPlanService.getProgress(projectId)
       setProgress(p)
@@ -135,10 +156,33 @@ export default function BusinessPlanPage() {
     try {
       const result = await businessPlanService.generateExecutiveSummary(projectId)
       setFormData({ resume_executif: result.resume_executif })
+      setDirty(false)
     } catch {
       setError('Erreur de génération IA')
     } finally {
       setGenLoading(false)
+    }
+  }
+
+  const handleFinalize = async () => {
+    const ok = window.confirm(
+      'Finaliser le Plan d’Affaires ? Le GBM doit être complet. Vous pourrez toujours le modifier ensuite.',
+    )
+    if (!ok) return
+    setFinalizing(true)
+    setError('')
+    try {
+      await businessPlanService.finalize(projectId)
+      const fresh = await businessPlanService.getGatingStatus(projectId)
+      setGating(fresh)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } }
+      const msg = err?.response?.data?.message
+      setError(typeof msg === 'string' ? msg : 'Erreur lors de la finalisation du Plan d’Affaires.')
+    } finally {
+      setFinalizing(false)
     }
   }
 
@@ -147,7 +191,7 @@ export default function BusinessPlanPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => guardLeave(() => router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <div>
@@ -162,7 +206,11 @@ export default function BusinessPlanPage() {
         )}
       </div>
 
-      <TabNav tabs={SECTIONS} active={section} onChange={setSection} />
+      <TabNav tabs={SECTIONS} active={section} onChange={handleSectionChange} />
+
+      {gating && (
+        <GbmGatingCard gating={gating} onFinalize={handleFinalize} finalizing={finalizing} router={router} projectId={projectId} guardLeave={guardLeave} />
+      )}
 
       <Card className="p-0 overflow-hidden">
         <CardHeader
@@ -185,19 +233,20 @@ export default function BusinessPlanPage() {
               {fields.map(f => (
                 <div key={f.key}>
                   <label className="block text-xs font-semibold text-ink2 mb-1">{f.label}</label>
-                  {f.type === 'json' ? (
-                    <textarea
-                      className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y font-mono"
-                      value={jsonText(formData[f.key])}
-                      onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
-                      rows={6}
-                      placeholder={f.placeholder}
+                  {f.type === 'kpi' ? (
+                    <KeyValueListEditor
+                      value={formData[f.key]}
+                      keyPlaceholder="Indicateur"
+                      valuePlaceholder="Valeur cible"
+                      addLabel="Ajouter un KPI"
+                      emptyHint="Aucun KPI défini pour le moment."
+                      onChange={v => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: v })) }}
                     />
                   ) : f.type === 'textarea' ? (
                     <textarea
                       className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y"
                       value={formData[f.key] || ''}
-                      onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
+                      onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value })) }}
                       rows={4}
                     />
                   ) : f.type === 'number' ? (
@@ -205,14 +254,14 @@ export default function BusinessPlanPage() {
                       type="number"
                       className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss"
                       value={formData[f.key] || ''}
-                      onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.valueAsNumber || 0 }))}
+                      onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: e.target.valueAsNumber || 0 })) }}
                     />
                   ) : (
                     <input
                       type="text"
                       className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss"
                       value={formData[f.key] || ''}
-                      onChange={e => setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
+                      onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f.key]: e.target.value })) }}
                     />
                   )}
                   <DataProvenance provenance={provenance[f.key]} />
@@ -236,17 +285,17 @@ export default function BusinessPlanPage() {
           </Button>
         </div>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="BUSINESS_PLAN"
+        section={SECTIONS.find(s => s.id === section)?.label}
+        formData={formData}
+      />
+
+      {modal}
     </div>
   )
-}
-
-function jsonText(value: unknown): string {
-  if (value === undefined || value === null) return ''
-  if (typeof value === 'string') return value
-  if (typeof value === 'object') {
-    try { return JSON.stringify(value, null, 2) } catch { return '' }
-  }
-  return String(value)
 }
 
 function getSectionFields(section: string) {
@@ -281,7 +330,7 @@ function getSectionFields(section: string) {
       { key: 'assurances', label: 'Assurances', type: 'textarea' },
     ],
     kpis: [
-      { key: 'kpis', label: 'Indicateurs de performance (KPIs)', type: 'json', placeholder: '{\n  "KPI 1": "Valeur cible"\n}' },
+      { key: 'kpis', label: 'Indicateurs de performance (KPIs)', type: 'kpi' },
       { key: 'objectifs_mesure', label: 'Objectifs de mesure', type: 'textarea' },
       { key: 'revues_performance', label: 'Revues de performance', type: 'textarea' },
     ],
@@ -290,4 +339,90 @@ function getSectionFields(section: string) {
     ],
   }
   return map[section] || []
+}
+
+function GbmGatingCard({
+  gating,
+  onFinalize,
+  finalizing,
+  projectId,
+  router,
+  guardLeave,
+}: {
+  gating: BusinessPlanGatingStatus
+  onFinalize: () => void
+  finalizing: boolean
+  projectId: string
+  router: ReturnType<typeof useRouter>
+  guardLeave: (action: () => void) => void
+}) {
+  if (gating.status === 'FINAL') {
+    const date = gating.finalizedAt
+      ? new Date(gating.finalizedAt).toLocaleDateString('fr-FR')
+      : ''
+    return (
+      <Card className="p-4 border border-moss/25 bg-moss/[.06]">
+        <div className="flex items-center gap-3">
+          <BadgeCheck size={18} className="text-moss shrink-0" />
+          <div className="flex items-center gap-2 flex-1">
+            <Badge variant="green">Plan d&apos;Affaires finalisé</Badge>
+            {date && <span className="text-xs text-ink3">le {date}</span>}
+          </div>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="p-4 border border-amber/30 bg-amber-light/20">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <Lock size={18} className="text-amber-dark shrink-0 mt-0.5" />
+          <div>
+            {gating.isGbmReady ? (
+              <>
+                <p className="text-sm font-bold text-ink">Vous êtes en mode brouillon</p>
+                <p className="text-xs text-ink2 mt-1">
+                  Votre GBM est complet. Vous pouvez finaliser votre Plan d&apos;Affaires.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold text-ink">Plan d&apos;Affaires en brouillon</p>
+                <p className="text-xs text-ink2 mt-1">
+                  Finalisation bloquée : le Modèle d&apos;Affaires Vert (GBM) est incomplet.
+                  Complétez les étapes ci-dessous puis validez la révision GBM pour finaliser votre Plan d&apos;Affaires.
+                </p>
+                <ul className="mt-3 space-y-1.5">
+                  {gating.missingSteps.map(step => (
+                    <li key={step.stepKey} className="flex items-center gap-2">
+                      <span className="text-xs text-amber-dark">•</span>
+                      <button
+                        onClick={() => guardLeave(() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm?step=${step.stepKey}`))}
+                        className="text-xs text-moss underline underline-offset-2 hover:text-moss-mid"
+                      >
+                        {step.title}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+        {gating.isGbmReady ? (
+          <Button variant="amber" onClick={onFinalize} loading={finalizing}>
+            <BadgeCheck size={14} /> Finaliser le Plan d&apos;Affaires
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => guardLeave(() => router.push(`/dashboard/project-owner/projects/${projectId}/gbm`))}
+          >
+            Remplir le GBM
+          </Button>
+        )}
+      </div>
+    </Card>
+  )
 }

@@ -10,36 +10,10 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 1. ADMIN
+  // 1. EXPERT
   // ───────────────────────────────────────────────────────────────────────────
-  let user = await prisma.user.findUnique({ where: { email: 'admin@toolbox.com' } });
-  if (!user) {
-    const profile = await prisma.userProfile.create({
-      data: {
-        first_name: 'Admin',
-        last_name: 'ToolBox',
-        bio: 'Administrateur de la plateforme ToolBox',
-        preferred_language: 'FR',
-      },
-    });
-    user = await prisma.user.create({
-      data: {
-        email: 'admin@toolbox.com',
-        password_hash: passwordHash,
-        role: 'ADMIN',
-        is_verified: true,
-        is_active: true,
-        profile_id: profile.id,
-      },
-    });
-    console.log('  ✅ Admin: admin@toolbox.com');
-  } else {
-    console.log('  ⏩ admin@toolbox.com existe déjà');
-  }
+  let user: { id: string } | null = null;
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // 2. EXPERT
-  // ───────────────────────────────────────────────────────────────────────────
   user = await prisma.user.findUnique({ where: { email: 'expert@toolbox.com' } });
   if (!user) {
     const profile = await prisma.userProfile.create({
@@ -125,7 +99,7 @@ async function main() {
   console.log('  ✅ expertise areas créées');
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 3. PROJECT OWNER
+  // 2. PROJECT OWNER
   // ───────────────────────────────────────────────────────────────────────────
   user = await prisma.user.findUnique({ where: { email: 'porteur@toolbox.com' } });
   if (!user) {
@@ -197,7 +171,7 @@ async function main() {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 4. INCUBATOR MEMBER
+  // 3. INCUBATOR MEMBER
   // ───────────────────────────────────────────────────────────────────────────
   user = await prisma.user.findUnique({ where: { email: 'incubateur@toolbox.com' } });
   if (!user) {
@@ -229,8 +203,7 @@ async function main() {
   // Incubator
   let incubator = await prisma.incubator.findUnique({ where: { slug: 'green-incubator' } });
   if (!incubator) {
-    const adminUser = await prisma.user.findUnique({ where: { email: 'admin@toolbox.com' } });
-    const creatorId = adminUser?.id || '00000000-0000-0000-0000-000000000000';
+    const creatorId = user?.id || '00000000-0000-0000-0000-000000000000';
     incubator = await prisma.incubator.create({
       data: {
         name: 'Green Incubator',
@@ -279,7 +252,6 @@ async function main() {
   console.log('   ┌─────────────────────┬──────────────────────────────┬───────────────┐');
   console.log('   │ Rôle                │ Email                        │ Mot de passe  │');
   console.log('   ├─────────────────────┼──────────────────────────────┼───────────────┤');
-  console.log('   │ Admin               │ admin@exemple.com            │ Admin123!     │');
   console.log('   │ Expert              │ expert@exemple.com           │ Expert1234!   │');
   console.log('   │ Porteur de projet   │ porteur@exemple.com          │ Porteur123!   │');
   console.log('   │ Incubateur          │ incubateur@exemple.com       │ Incubateur123!   │');

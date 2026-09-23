@@ -15,7 +15,13 @@ describe('IncubatorDocumentsService', () => {
         { provide: PrismaService, useValue: {} },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: NotificationMessageBuilder, useValue: { build: jest.fn() } },
-        { provide: ModuleAccessService, useValue: { assertCanManageCohorts: jest.fn(), assertIncubatorAdmin: jest.fn() } },
+        {
+          provide: ModuleAccessService,
+          useValue: {
+            assertCanManageCohorts: jest.fn(),
+            assertIncubatorAdmin: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

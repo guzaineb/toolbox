@@ -1,0 +1,11 @@
+* [33m81be410[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mtemp-coaching[m[33m)[m feat: integrate coaching/evaluation
+* [33m2c68563[m feat: integrate coaching/evaluation
+* [33m001bd11[m[33m ([m[1;32mbackup/dev-before-merges-20260923-2228[m[33m, [m[1;32mbackup/dev-before-merges-20260923-2213[m[33m)[m feat: integrate coaching/evaluation
+* [33m58231d5[m[33m ([m[1;31morigin/backup/dev-before-ia-integration-20260923[m[33m, [m[1;32mtemp-ia[m[33m, [m[1;32mbackup/dev-before-merges-20260923-2209[m[33m, [m[1;32mbackup/dev-before-ia-integration-20260923[m[33m)[m feat: integrate feature/ia
+*   [33mf9458b2[m[33m ([m[1;31morigin/feature/projects-module[m[33m, [m[1;32mfeature/projects-module[m[33m, [m[1;32mbackup/dev-before-merges-ia[m[33m)[m Merge branch 'feature/projects-module' of https://github.com/guzaineb/toolbox into feature/projects-module
+[32m|[m[33m\[m  
+[32m|[m * [33m01a40f7[m[33m ([m[1;32mfeature/projects-module-local[m[33m)[m feat: integrate projects module into dev
+* [33m|[m [33m7ac7f09[m  update project frontend
+* [33m|[m [33m09a3256[m fix(db): update project relationship mapping
+* [33m|[m [33m8b683fc[m feat: ajouter  les étapes de plan d'affaire vert , éco-conception
+* [33m|[m [33mf0a0959[m feat: fixation les étapes de creation d'un projet

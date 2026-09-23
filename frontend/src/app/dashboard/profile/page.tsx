@@ -35,7 +35,6 @@ export default function ProfilePage() {
   const linkedinUrl = profile?.linkedin
 
   const roleMap: Record<string, { label: string; variant: 'green' | 'blue' | 'amber' | 'gray' }> = {
-    ADMIN:            { label: 'Administrateur',    variant: 'amber' },
     EXPERT:           { label: 'Expert',            variant: 'blue'  },
     PROJECT_OWNER:    { label: 'Porteur de projet', variant: 'green' },
     INCUBATOR_MEMBER: { label: 'Membre incubateur', variant: 'gray'  },
