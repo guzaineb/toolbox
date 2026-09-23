@@ -1,4 +1,11 @@
-import { extractJson, parseWithRetry, asString, asNumber, asStringArray, clampScore } from './ai-json.util';
+import {
+  extractJson,
+  parseWithRetry,
+  asString,
+  asNumber,
+  asStringArray,
+  clampScore,
+} from './ai-json.util';
 
 describe('ai-json.util', () => {
   describe('extractJson', () => {
@@ -7,11 +14,15 @@ describe('ai-json.util', () => {
     });
 
     it('should parse JSON inside a markdown fence', () => {
-      expect(extractJson('Voici le résultat :\n```json\n{"a": 2}\n```\nMerci')).toEqual({ a: 2 });
+      expect(
+        extractJson('Voici le résultat :\n```json\n{"a": 2}\n```\nMerci'),
+      ).toEqual({ a: 2 });
     });
 
     it('should extract the first JSON object surrounded by prose', () => {
-      expect(extractJson('Analyse : {"summary":"ok"} — fin.')).toEqual({ summary: 'ok' });
+      expect(extractJson('Analyse : {"summary":"ok"} — fin.')).toEqual({
+        summary: 'ok',
+      });
     });
 
     it('should return null for empty or non-JSON input', () => {
@@ -23,7 +34,9 @@ describe('ai-json.util', () => {
 
   describe('parseWithRetry', () => {
     const validate = (v: unknown) =>
-      typeof v === 'object' && v !== null && 'ok' in v ? (v as { ok: boolean }) : null;
+      typeof v === 'object' && v !== null && 'ok' in v
+        ? (v as { ok: boolean })
+        : null;
 
     it('should return validated data on the first attempt', async () => {
       const runLlm = jest.fn().mockResolvedValue('```json\n{"ok":true}\n```');
@@ -36,12 +49,14 @@ describe('ai-json.util', () => {
     it('should retry once with a repair instruction when the first answer is invalid', async () => {
       const runLlm = jest
         .fn()
-        .mockResolvedValueOnce("pas du json du tout")
+        .mockResolvedValueOnce('pas du json du tout')
         .mockResolvedValueOnce('{"ok":false}');
       const result = await parseWithRetry(runLlm, validate);
       expect(result.data).toEqual({ ok: false });
       expect(result.attempts).toBe(2);
-      expect(runLlm).toHaveBeenLastCalledWith(expect.stringContaining('JSON valide'));
+      expect(runLlm).toHaveBeenLastCalledWith(
+        expect.stringContaining('JSON valide'),
+      );
     });
 
     it('should never throw and stop immediately when the LLM call fails', async () => {
@@ -53,7 +68,10 @@ describe('ai-json.util', () => {
     });
 
     it('should stop early when the LLM throws on the second attempt', async () => {
-      const runLlm = jest.fn().mockResolvedValueOnce('nope').mockRejectedValue(new Error('boom'));
+      const runLlm = jest
+        .fn()
+        .mockResolvedValueOnce('nope')
+        .mockRejectedValue(new Error('boom'));
       const result = await parseWithRetry<{ ok: boolean }>(runLlm, validate);
       expect(result.data).toBeNull();
       expect(result.attempts).toBe(2);

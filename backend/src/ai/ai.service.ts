@@ -25,9 +25,12 @@ export class AiService {
     const prompt = this.buildPrompt(stepKey, context);
 
     try {
+      // Les résumés structurés (3-4 sections) ont besoin de plus de place que
+      // 1000 tokens pour ne pas être tronqués en plein milieu du JSON.
+      const needsHeadroom = ['gbm_15', 'gbm_18', 'gbm_21'].includes(stepKey);
       const response = await this.llm.generate(prompt, {
         temperature: 0.7,
-        maxTokens: 1000,
+        maxTokens: needsHeadroom ? 2500 : 1000,
       });
 
       const project = await this.prisma.project.findUnique({
@@ -183,12 +186,74 @@ STRUCTURE DES REVENUS :
 Retourne UNIQUEMENT un objet JSON valide avec les clés : cost_summary, revenue_summary, financial_health.`;
       }
 
+      case 'gbm_21': {
+        const fmt = (v: any) => v || 'Non renseigné';
+        const fmtList = (arr: any, label: (i: any) => string) =>
+          Array.isArray(arr) && arr.length > 0
+            ? arr.map(label).join('\n')
+            : 'Non renseigné';
+        const stakeholders = Array.isArray(context.stakeholder)
+          ? context.stakeholder.map((s: any) => s.name).join(', ')
+          : 'Non renseigné';
+        const segments = Array.isArray(context.customer_segment)
+          ? context.customer_segment.map((c: any) => c.segment_name).join(', ')
+          : 'Non renseigné';
+        const kar = context.key_activities_resource || {};
+
+        return `Génère une analyse SWOT complète du projet vert.
+
+DONNÉES RÉELLES DU PROJET (utiliser telles quelles, ne rien inventer) :
+
+IDÉE : ${fmt(context.idea_sketch?.idea_initial)}
+PRODUIT/SERVICE : ${fmt(context.idea_sketch?.product_service)}
+DÉFIS ENVRONNEMENTAUX : ${fmt(context.problems_needs?.environmental_challenges)}
+BESOINS CLIENTS : ${fmt(context.problems_needs?.customer_needs)}
+CONTEXTE PESTEL — Économique : ${fmt(context.pestel?.economic_what)}
+CONTEXTE PESTEL — Environnemental : ${fmt(context.pestel?.environmental_what)}
+MISSION : ${fmt(context.mission_vision?.mission)}
+VISION : ${fmt(context.mission_vision?.vision)}
+OBJECTIFS ENVIRONNEMENTAUX : ${fmt(context.objective?.environmental_objectives)}
+OBJECTIFS SOCIAUX : ${fmt(context.objective?.social_objectives)}
+
+SEGMENTS DE CLIENTÈLE : ${segments}
+PROPOSITION DE VALEUR : ${fmt(context.value_proposition?.value_added)}
+VALEUR ENVIRONNEMENTALE : ${fmt(context.value_proposition?.environmental_value)}
+
+PARTIES PRENANTES : ${stakeholders}
+ACTIVITÉS CLÉS : ${fmt(kar.key_activities)}
+RESSOURCES CLÉS : ${fmt(kar.key_resources)}
+ÉCOCONCEPTION — RÉSULTATS : ${fmt(context.eco_design_result?.eco_results)}
+
+Résultats des tests : ${Array.isArray(context.test_discovery) && context.test_discovery.length > 0
+  ? context.test_discovery.map((t: any) => `${t.hypothesis || ''} — ${t.results || ''}`).join('\n')
+  : 'Non renseigné'}
+
+COÛTS FIXES : ${fmt(context.cost_structure?.fixed_costs)}
+COÛTS VARIABLES : ${fmt(context.cost_structure?.variable_costs)}
+SOURCES DE REVENUS : ${fmt(context.revenue_stream?.revenue_sources)}
+
+Rédige une SWOT réaliste et fondée UNIQUEMENT sur ces données (300-400 mots au total).
+Retourne UNIQUEMENT un objet JSON valide (sans texte avant/après) avec exactement les clés :
+strengths, weaknesses, opportunities, threats.
+Chaque valeur est un texte concis en puces, sans clés imbriquées.`;
+      }
+
       case 'bp_2.6': {
         const fmt = (v: any) => v || 'Non renseigné';
         const fmtList = (arr: any, label: (i: any) => string) =>
           Array.isArray(arr) && arr.length > 0
             ? arr.map(label).join('\n')
             : 'Non renseigné';
+        const fmtDeep = (v: any): string => {
+          if (v === null || v === undefined) return 'Non renseigné';
+          if (typeof v === 'string') return v || 'Non renseigné';
+          if (Array.isArray(v)) return v.map((i) => `- ${fmtDeep(i)}`).join('\n');
+          if (typeof v === 'object')
+            return Object.entries(v)
+              .map(([k, val]) => `- ${k} : ${fmtDeep(val)}`)
+              .join('\n');
+          return String(v);
+        };
         const vp = context.value_proposition || {};
         const segments = context.customer_segment || [];
         const stakeholders = context.stakeholder || [];
@@ -254,7 +319,7 @@ Seuil de rentabilité : ${fmt(fin.seuil_rentabilite)}
 Gestion : ${fmt(mgmt.ressources_humaines)} — ${fmt(mgmt.production_fournisseurs)}
 Marketing : ${fmt(mkt.clients_valeur)} — ${fmt(mkt.branding_positionnement)}
 Juridique : ${fmt(legal.statut_juridique)} — ${fmt(legal.immatriculation)}
-KPIs : ${fmt(kpi.kpis)}
+KPIs : ${fmtDeep(kpi.kpis)}
 
 === SWOT (généré par IA à partir des données) ===
 Forces : ${fmt(swot.strengths)}
@@ -275,6 +340,16 @@ Le résumé doit refléter UNIQUEMENT les données fournies ci-dessus. Si une do
         const fmt = (v: any) => v || 'Non renseigné';
         const obj = context.objectifs_impact || {};
         const res = context.resultats_actuels || {};
+        const fmtDeep = (v: any): string => {
+          if (v === null || v === undefined) return 'Non renseigné';
+          if (typeof v === 'string') return v || 'Non renseigné';
+          if (Array.isArray(v)) return v.map((i) => `- ${fmtDeep(i)}`).join('\n');
+          if (typeof v === 'object')
+            return Object.entries(v)
+              .map(([k, val]) => `- ${k} : ${fmtDeep(val)}`)
+              .join('\n');
+          return String(v);
+        };
         return `Tu es un expert en évaluation d'impact. Rédige un rapport d'impact narratif pour le projet « ${context.name || 'projet'} » à partir des données réelles suivantes.
 
 OBJECTIFS D'IMPACT : ${fmt(context.objective?.environmental_objectives)} / ${fmt(context.objective?.social_objectives)}
@@ -282,8 +357,10 @@ KPIs ENVIRONNEMENTAUX (GBM) : ${fmt(context.indicator?.environmental_kpis)}
 KPIs SOCIAUX (GBM) : ${fmt(context.indicator?.social_kpis)}
 KPIs ÉCONOMIQUES (GBM) : ${fmt(context.indicator?.economic_kpis)}
 RÉSULTATS ÉCOCONCEPTION : ${fmt(context.eco_design_result?.eco_results)}
-OBJECTIFS CHIFFRÉS : ${JSON.stringify(obj)}
-RÉSULTATS ACTUELS : ${JSON.stringify(res)}
+OBJECTIFS CHIFFRÉS :
+${fmtDeep(obj)}
+RÉSULTATS ACTUELS :
+${fmtDeep(res)}
 
 Rédige un rapport structuré (500-700 mots) avec 4 sections :
 1) Impact environnemental

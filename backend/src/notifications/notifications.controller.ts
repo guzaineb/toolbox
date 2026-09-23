@@ -52,10 +52,7 @@ export class NotificationsController {
   // ==================== DÉTAIL ====================
 
   @Get(':id')
-  findOne(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.notificationsService.findById(id, req.user.id);
   }
 
@@ -63,10 +60,7 @@ export class NotificationsController {
 
   @Patch(':id/read')
   @HttpCode(HttpStatus.OK)
-  markAsRead(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  markAsRead(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.notificationsService.markAsRead(id, req.user.id);
   }
 
@@ -82,10 +76,7 @@ export class NotificationsController {
 
   @Patch(':id/archive')
   @HttpCode(HttpStatus.OK)
-  archive(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  archive(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.notificationsService.archive(id, req.user.id);
   }
 
@@ -93,10 +84,7 @@ export class NotificationsController {
 
   @Patch(':id/restore')
   @HttpCode(HttpStatus.OK)
-  restore(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  restore(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.notificationsService.restore(id, req.user.id);
   }
 
@@ -104,10 +92,7 @@ export class NotificationsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  delete(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  delete(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.notificationsService.delete(id, req.user.id);
   }
 

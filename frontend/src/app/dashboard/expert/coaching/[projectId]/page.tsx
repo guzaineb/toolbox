@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState, useCallback } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -9,15 +9,14 @@ import {
   FolderCheck,
 } from 'lucide-react'
 import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
-import { coachingService } from '@/services/coaching.service'
-import { getErrorMessage } from '@/lib/utils'
+import { apiError } from '@/lib/utils'
+import { useProjectCoachingOverview } from '@/hooks/useCoaching'
 import { SessionsPanel, ActionsPanel, RecommendationsPanel } from '@/components/coaching/CoachingPanels'
 import { MaturityCard } from '@/components/coaching/MaturityCard'
 import { AiAnalysisPanel } from '@/components/coaching/AiAnalysisPanel'
 import { ImprovementPlanPanel } from '@/components/coaching/ImprovementPlanPanel'
 import { ProgressPanel } from '@/components/coaching/ProgressPanel'
 import { DeliverablesPanel } from '@/components/coaching/DeliverablesPanel'
-import { CoachingOverview } from '@/types/coaching'
 
 type Tab = 'overview' | 'deliverables' | 'ai' | 'plan' | 'sessions' | 'actions' | 'recommendations' | 'progress'
 
@@ -39,25 +38,18 @@ function ExpertCoachingProjectContent() {
   const projectId = params.projectId as string
   const cohortId = searchParams.get('cohortId')
 
-  const [overview, setOverview] = useState<CoachingOverview | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('overview')
+  const { data: overview, isLoading, error } = useProjectCoachingOverview(projectId)
+  const loading = isLoading
+  const [tab, setTab] = useState<Tab>(() => {
+    const fromUrl = searchParams.get('tab')
+    return TABS.some((t) => t.id === fromUrl) ? (fromUrl as Tab) : 'overview'
+  })
 
-  const fetchOverview = useCallback(async () => {
-    if (!projectId) return
-    try {
-      const data = await coachingService.getProjectCoachingOverview(projectId)
-      setOverview(data)
-      setError(null)
-    } catch (err) {
-      setError(getErrorMessage(err))
-    } finally {
-      setLoading(false)
-    }
-  }, [projectId])
-
-  useEffect(() => { void fetchOverview() }, [fetchOverview])
+  useEffect(() => {
+    const fromUrl = searchParams.get('tab')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (fromUrl && TABS.some((t) => t.id === fromUrl)) setTab(fromUrl as Tab)
+  }, [searchParams])
 
   if (loading) {
     return (
@@ -85,7 +77,7 @@ function ExpertCoachingProjectContent() {
           <ArrowLeft size={12} /> Retour
         </button>
         <Card className="text-center py-12">
-          <p className="text-[13px] text-ink2">{error}</p>
+          <p className="text-[13px] text-ink2">{apiError(error, 'Erreur de chargement du coaching')}</p>
           <Button className="mt-4" variant="outline" onClick={() => cohortId ? router.push(`/dashboard/expert/cohorts/${cohortId}`) : router.push('/dashboard/expert/coachings')}>
             <ArrowLeft size={14} /> Retour
           </Button>
@@ -180,7 +172,7 @@ function ExpertCoachingProjectContent() {
             ))}
           </div>
 
-          {error && <ErrorAlert message={error} />}
+          {error && <ErrorAlert message={apiError(error, 'Erreur de chargement du coaching')} />}
 
           {tab === 'overview' && (
             <div className="space-y-4">
@@ -195,7 +187,6 @@ function ExpertCoachingProjectContent() {
                       projectId={projectId}
                       sessions={overview.sessions.filter((s) => s.status !== 'COMPLETED').slice(0, 3)}
                       canManage
-                      onRefresh={fetchOverview}
                       sessionHref={(id) => `/dashboard/expert/coaching/${projectId}/sessions/${id}`}
                     />
                   </div>
@@ -206,7 +197,7 @@ function ExpertCoachingProjectContent() {
                   Actions récentes
                 </div>
                 <div className="p-[18px]">
-                  <ActionsPanel projectId={projectId} actions={overview.actions.slice(0, 5)} canManage onRefresh={fetchOverview} />
+                  <ActionsPanel projectId={projectId} actions={overview.actions.slice(0, 5)} canManage />
                 </div>
               </Card>
               <Card className="overflow-hidden">
@@ -214,7 +205,7 @@ function ExpertCoachingProjectContent() {
                   Recommandations récentes
                 </div>
                 <div className="p-[18px]">
-                  <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations.slice(0, 5)} canManage onRefresh={fetchOverview} />
+                  <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations.slice(0, 5)} canManage />
                 </div>
               </Card>
             </div>
@@ -225,7 +216,7 @@ function ExpertCoachingProjectContent() {
           )}
 
           {tab === 'ai' && (
-            <AiAnalysisPanel projectId={projectId} onRecommendationCreated={fetchOverview} />
+            <AiAnalysisPanel projectId={projectId} />
           )}
 
           {tab === 'plan' && (
@@ -242,7 +233,6 @@ function ExpertCoachingProjectContent() {
                   projectId={projectId}
                   sessions={overview.sessions}
                   canManage
-                  onRefresh={fetchOverview}
                   sessionHref={(id) => `/dashboard/expert/coaching/${projectId}/sessions/${id}`}
                 />
               </div>
@@ -255,7 +245,7 @@ function ExpertCoachingProjectContent() {
                 Actions
               </div>
               <div className="p-[18px]">
-                <ActionsPanel projectId={projectId} actions={overview.actions} canManage onRefresh={fetchOverview} />
+                <ActionsPanel projectId={projectId} actions={overview.actions} canManage />
               </div>
             </Card>
           )}
@@ -266,7 +256,7 @@ function ExpertCoachingProjectContent() {
                 Recommandations
               </div>
               <div className="p-[18px]">
-                <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage onRefresh={fetchOverview} />
+                <RecommendationsPanel projectId={projectId} recommendations={overview.recommendations} canManage />
               </div>
             </Card>
           )}

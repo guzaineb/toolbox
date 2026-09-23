@@ -39,7 +39,9 @@ export class ValuePropositionDto {
   @IsOptional() @IsString() value_added?: string;
   @IsOptional() @IsString() innovation_value?: string;
 }
-export class UpdateValuePropositionDto extends PartialType(ValuePropositionDto) {}
+export class UpdateValuePropositionDto extends PartialType(
+  ValuePropositionDto,
+) {}
 
 // ─── Étape 10 — Test découverte ───
 export class TestDiscoveryDto {
@@ -58,7 +60,9 @@ export class ValuePropositionPivotDto {
   @IsOptional() @IsString() pivot_decision?: string;
   @IsOptional() @IsString() new_value_proposition?: string;
 }
-export class UpdateValuePropositionPivotDto extends PartialType(ValuePropositionPivotDto) {}
+export class UpdateValuePropositionPivotDto extends PartialType(
+  ValuePropositionPivotDto,
+) {}
 
 // ─── Étape 12a — Relations clients et canaux ───
 export class CustomerRelationsChannelDto {
@@ -66,7 +70,9 @@ export class CustomerRelationsChannelDto {
   @IsOptional() @IsString() channels?: string;
   @IsOptional() @IsString() distribution_strategy?: string;
 }
-export class UpdateCustomerRelationsChannelDto extends PartialType(CustomerRelationsChannelDto) {}
+export class UpdateCustomerRelationsChannelDto extends PartialType(
+  CustomerRelationsChannelDto,
+) {}
 
 // ─── Étape 12b — Parcours client ───
 export class CustomerJourneyDto {
@@ -83,7 +89,9 @@ export class KeyActivitiesResourceDto {
   @IsOptional() @IsString() key_resources?: string;
   @IsOptional() @IsString() strategic_partners?: string;
 }
-export class UpdateKeyActivitiesResourceDto extends PartialType(KeyActivitiesResourceDto) {}
+export class UpdateKeyActivitiesResourceDto extends PartialType(
+  KeyActivitiesResourceDto,
+) {}
 
 // ─── Étape 14a — Écoconception ───
 export class EcoDesignDto {

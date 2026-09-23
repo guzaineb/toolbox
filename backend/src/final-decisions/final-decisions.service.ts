@@ -35,12 +35,19 @@ export class FinalDecisionsService {
     private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
-  async makeDecision(projectId: string, dto: CreateDecisionDto, userId: string) {
+  async makeDecision(
+    projectId: string,
+    dto: CreateDecisionDto,
+    userId: string,
+  ) {
     await this.access.assertProjectExists(projectId);
     const cohortId = await this.access.assertProjectAcceptedInCohort(projectId);
     await this.access.assertCanManageCohort(cohortId, userId);
 
-    if (dto.decision === FinalDecisionType.CONDITIONAL && (!dto.conditions || dto.conditions.length === 0)) {
+    if (
+      dto.decision === FinalDecisionType.CONDITIONAL &&
+      (!dto.conditions || dto.conditions.length === 0)
+    ) {
       throw new BadRequestException(
         'Une décision avec conditions requiert au moins une condition',
       );
@@ -58,14 +65,20 @@ export class FinalDecisionsService {
     });
 
     let decision;
-    if (existing && existing.conditions.length === 0 && existing.decision === dto.decision) {
+    if (
+      existing &&
+      existing.conditions.length === 0 &&
+      existing.decision === dto.decision
+    ) {
       decision = await this.prisma.finalDecision.update({
         where: { id: existing.id },
         data: {
           decision: dto.decision,
           final_score: dto.final_score,
           justification: dto.justification,
-          new_end_date: dto.new_end_date ? new Date(dto.new_end_date) : undefined,
+          new_end_date: dto.new_end_date
+            ? new Date(dto.new_end_date)
+            : undefined,
         },
         include: {
           conditions: true,
@@ -87,7 +100,9 @@ export class FinalDecisionsService {
           decision: dto.decision,
           final_score: dto.final_score,
           justification: dto.justification,
-          new_end_date: dto.new_end_date ? new Date(dto.new_end_date) : undefined,
+          new_end_date: dto.new_end_date
+            ? new Date(dto.new_end_date)
+            : undefined,
           decided_by: userId,
           conditions: dto.conditions?.length
             ? {
@@ -129,9 +144,10 @@ export class FinalDecisionsService {
     });
 
     if (dto.decision === FinalDecisionType.REEVALUATION_REQUIRED) {
-      const { title: rTitle, message: rMessage } = this.messageBuilder.reevaluationRequested({
-        projectName: decision.project.name,
-      });
+      const { title: rTitle, message: rMessage } =
+        this.messageBuilder.reevaluationRequested({
+          projectName: decision.project.name,
+        });
       this.access.notify({
         event: NotificationEvent.REEVALUATION_REQUESTED,
         recipients: [{ userId: decision.project.owner_id }],
@@ -248,7 +264,9 @@ export class FinalDecisionsService {
   async addConditions(id: string, dto: AddConditionsDto, userId: string) {
     const decision = await this.prisma.finalDecision.findUnique({
       where: { id },
-      include: { project: { select: { id: true, name: true, owner_id: true } } },
+      include: {
+        project: { select: { id: true, name: true, owner_id: true } },
+      },
     });
     if (!decision) throw new NotFoundException('Décision introuvable');
     await this.access.assertCanManageCohort(decision.cohort_id, userId);
@@ -274,10 +292,12 @@ export class FinalDecisionsService {
       metadata: { count: conditions.length },
     });
 
-    const { title, message } = this.messageBuilder.finalDecisionConditionsAdded({
-      projectName: decision.project.name,
-      count: conditions.length,
-    });
+    const { title, message } = this.messageBuilder.finalDecisionConditionsAdded(
+      {
+        projectName: decision.project.name,
+        count: conditions.length,
+      },
+    );
     this.access.notify({
       event: NotificationEvent.FINAL_DECISION_CONDITIONS_ADDED,
       recipients: [{ userId: decision.project.owner_id }],
@@ -292,13 +312,20 @@ export class FinalDecisionsService {
     return conditions;
   }
 
-  async updateCondition(id: string, dto: { description?: string; deadline?: string }, userId: string) {
+  async updateCondition(
+    id: string,
+    dto: { description?: string; deadline?: string },
+    userId: string,
+  ) {
     const condition = await this.prisma.finalDecisionCondition.findUnique({
       where: { id },
       include: { decision: true },
     });
     if (!condition) throw new NotFoundException('Condition introuvable');
-    await this.access.assertCanManageCohort(condition.decision.cohort_id, userId);
+    await this.access.assertCanManageCohort(
+      condition.decision.cohort_id,
+      userId,
+    );
 
     return this.prisma.finalDecisionCondition.update({
       where: { id },
@@ -313,11 +340,18 @@ export class FinalDecisionsService {
     const condition = await this.prisma.finalDecisionCondition.findUnique({
       where: { id },
       include: {
-        decision: { include: { project: { select: { id: true, name: true, owner_id: true } } } },
+        decision: {
+          include: {
+            project: { select: { id: true, name: true, owner_id: true } },
+          },
+        },
       },
     });
     if (!condition) throw new NotFoundException('Condition introuvable');
-    await this.access.assertCanManageCohort(condition.decision.cohort_id, userId);
+    await this.access.assertCanManageCohort(
+      condition.decision.cohort_id,
+      userId,
+    );
 
     const validated = await this.prisma.finalDecisionCondition.update({
       where: { id },
@@ -360,7 +394,8 @@ export class FinalDecisionsService {
     });
     if (project && project.owner_id === userId) return;
 
-    const participation = await this.access.getAcceptedCohortForProject(projectId);
+    const participation =
+      await this.access.getAcceptedCohortForProject(projectId);
     if (participation?.cohort.incubator_id) {
       const member = await this.prisma.incubatorMember.findUnique({
         where: {

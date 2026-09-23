@@ -25,7 +25,10 @@ export function extractJson(raw: string): unknown | null {
 
     const start = findFirst(candidate, ['{', '[']);
     if (start === -1) continue;
-    const end = Math.max(candidate.lastIndexOf('}'), candidate.lastIndexOf(']'));
+    const end = Math.max(
+      candidate.lastIndexOf('}'),
+      candidate.lastIndexOf(']'),
+    );
     if (end <= start) continue;
     try {
       return JSON.parse(candidate.slice(start, end + 1));
@@ -70,14 +73,16 @@ export async function parseWithRetry<T>(
       }
     }
     repair =
-      'Ta réponse précédente n\'était pas un JSON valide ou incomplet. ' +
-      'Réponds UNIQUEMENT avec l\'objet JSON demandé, sans texte avant ni après.';
+      "Ta réponse précédente n'était pas un JSON valide ou incomplet. " +
+      "Réponds UNIQUEMENT avec l'objet JSON demandé, sans texte avant ni après.";
   }
   return { data: null, raw: '', attempts: maxAttempts };
 }
 
 export function asString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export function asNumber(value: unknown): number | null {
@@ -86,10 +91,16 @@ export function asNumber(value: unknown): number | null {
 
 export function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  return value.filter(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0,
+  );
 }
 
-export function clampScore(value: unknown, min: number, max: number): number | null {
+export function clampScore(
+  value: unknown,
+  min: number,
+  max: number,
+): number | null {
   const n = asNumber(value);
   if (n === null) return null;
   return Math.max(min, Math.min(max, n));

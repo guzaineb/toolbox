@@ -10,6 +10,8 @@ import { DataProvenance } from '@/components/shared/DataProvenance'
 import { MissingInfoCard } from '@/components/shared/MissingInfoCard'
 import type { ChecklistItem } from '@/types/project-context'
 import { projectContextService } from '@/services/project-context.service'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { ContextualCoachPanel } from '@/components/coach'
 
 const PHASES = [
   { id: 'preparer',    label: 'Préparer la valise', fields: ['equipe_eco','projet_eco','contexte_eco','vision_durable'] },
@@ -32,6 +34,8 @@ export default function EcoDesignPage() {
   const [progress, setProgress] = useState<any>(null)
   const [provenance, setProvenance] = useState<Record<string, ProvenanceInfo>>({})
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [dirty, setDirty] = useState(false)
+  const { guardLeave, modal } = useUnsavedChanges(dirty)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -62,6 +66,7 @@ export default function EcoDesignPage() {
     try {
       await ecoDesignService.update(projectId, formData)
       setSaved(true)
+      setDirty(false)
       setTimeout(() => setSaved(false), 2000)
       const p = await ecoDesignService.getProgress(projectId)
       setProgress(p)
@@ -74,7 +79,7 @@ export default function EcoDesignPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 hover:bg-moss-light rounded-lg">
+        <button onClick={() => guardLeave(() => router.back())} className="p-1 hover:bg-moss-light rounded-lg">
           <ArrowLeft size={18} className="text-ink3" />
         </button>
         <div>
@@ -93,7 +98,7 @@ export default function EcoDesignPage() {
         {PHASES.map(p => (
           <button
             key={p.id}
-            onClick={() => setPhase(p.id)}
+            onClick={() => guardLeave(() => setPhase(p.id))}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
               phase === p.id ? 'border-moss bg-moss-light text-moss' : 'border-border text-ink3 hover:border-moss/30'
             }`}
@@ -120,7 +125,7 @@ export default function EcoDesignPage() {
                   <textarea
                     className="w-full text-sm px-3 py-2.5 border border-border rounded-lg bg-surface text-ink outline-none focus:border-moss min-h-[80px] resize-y"
                     value={typeof formData[f] === 'object' ? JSON.stringify(formData[f], null, 2) : (formData[f] || '')}
-                    onChange={e => setFormData((prev: any) => ({ ...prev, [f]: e.target.value }))}
+                    onChange={e => { setDirty(true); setFormData((prev: any) => ({ ...prev, [f]: e.target.value })) }}
                     rows={4}
                   />
                   <DataProvenance provenance={provenance[f]} />
@@ -136,6 +141,15 @@ export default function EcoDesignPage() {
           {saved ? <><Check size={14} /> Sauvegardé</> : 'Sauvegarder'}
         </Button>
       </div>
+
+      <ContextualCoachPanel
+        projectId={projectId}
+        module="ECO_DESIGN"
+        section={PHASES.find(p => p.id === phase)?.label}
+        formData={formData}
+      />
+
+      {modal}
     </div>
   )
 }

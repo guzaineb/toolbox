@@ -1,9 +1,4 @@
-import {
-  IsArray,
-  IsEnum,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { JurySessionStatus } from '@prisma/client';
 
 export class UpdateJurySessionDto {

@@ -1,17 +1,16 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Users, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { ChevronRight, Users, CheckCircle } from 'lucide-react'
 import { cohortService } from '@/services/cohort.service'
 import { Badge, Button, Card, CardHeader, ErrorAlert, SuccessAlert, Field, Select } from '@/components/shared/ui'
 import { Cohort, COHORT_STATUS_LABELS, COHORT_STATUS_COLORS } from '@/types/cohort'
-import api from '@/services/api'
+import { projectService } from '@/services/project.service'
 
 export default function PorteurCohortDetailPage() {
   const { cohortId } = useParams<{ cohortId: string }>()
-  const router = useRouter()
   const [cohort, setCohort] = useState<Cohort | null>(null)
   const [loading, setLoading] = useState(true)
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([])
@@ -32,7 +31,7 @@ export default function PorteurCohortDetailPage() {
   useEffect(() => { fetchCohort() }, [fetchCohort])
 
   useEffect(() => {
-    api.get('/projects').then((res) => setProjects(res.data))
+    projectService.list().then((projects) => setProjects(projects.map(p => ({ id: p.id, name: p.name }))))
   }, [])
 
   const handleApply = async () => {
@@ -44,8 +43,9 @@ export default function PorteurCohortDetailPage() {
       setSuccess('Votre candidature a été soumise avec succès !')
       setSelectedProject('')
       fetchCohort()
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Erreur lors de la candidature')
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(message ?? 'Erreur lors de la candidature')
     } finally {
       setApplying(false)
     }

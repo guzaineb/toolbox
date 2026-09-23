@@ -25,7 +25,7 @@ export function ProgressPanel({ projectId }: { projectId: string }) {
         .filter((e) => e.status === 'SUBMITTED')
         .sort((a, b) => new Date(b.submitted_at ?? b.created_at).getTime() - new Date(a.submitted_at ?? a.created_at).getTime())
       if (submitted.length < 2) {
-        throw new Error('Il faut au moins deux évaluations soumiss pour mesurer une progression.')
+        throw new Error('Il faut au moins deux évaluations soumises pour mesurer une progression.')
       }
       const result = await aiAnalysisService.analyzeProgress(
         projectId,

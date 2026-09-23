@@ -12,11 +12,14 @@ export function formatDate(value?: string | Date | null, options: Intl.DateTimeF
   return date.toLocaleDateString('fr-FR', options);
 }
 
-export function formatDateTime(value?: string | Date | null): string {
+export function formatDateTime(
+  value?: string | Date | null,
+  options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' },
+): string {
   if (!value) return '—';
   const date = typeof value === 'string' ? new Date(value) : value;
   if (isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleString('fr-FR', options);
 }
 
 export function getErrorMessage(err: unknown): string {
@@ -28,6 +31,10 @@ export function getErrorMessage(err: unknown): string {
   }
   if (err instanceof Error) return err.message;
   return 'Une erreur est survenue';
+}
+
+export function apiError(err: unknown, fallback: string): string {
+  return getErrorMessage(err) || fallback;
 }
 
 export function getInitials(name?: string | null): string {

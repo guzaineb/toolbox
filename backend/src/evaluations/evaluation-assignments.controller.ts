@@ -16,7 +16,9 @@ import { AssignEvaluatorsDto } from './dto/assign-evaluators.dto';
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class EvaluationAssignmentsController {
-  constructor(private readonly assignmentsService: EvaluationAssignmentsService) {}
+  constructor(
+    private readonly assignmentsService: EvaluationAssignmentsService,
+  ) {}
 
   @Post('cohorts/:cohortId/evaluations/assign')
   @HttpCode(HttpStatus.CREATED)

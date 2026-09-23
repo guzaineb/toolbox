@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../services/api';
 
-export type UserRole = 'ADMIN' | 'EXPERT' | 'PROJECT_OWNER' | 'INCUBATOR_MEMBER';
+export type UserRole = 'EXPERT' | 'PROJECT_OWNER' | 'INCUBATOR_MEMBER';
 
 export interface AuthUser {
   id: string;
@@ -39,10 +39,9 @@ export interface AuthUser {
 }
 
 export const ROLE_ROUTES: Record<string, string> = {
-  ADMIN:             '/dashboard',
-  EXPERT:            '/dashboard/expert',
-  PROJECT_OWNER:     '/dashboard/project-owner',
-  INCUBATOR_MEMBER:  '/dashboard/incubator',
+  EXPERT:            '/dashboard',
+  PROJECT_OWNER:     '/dashboard',
+  INCUBATOR_MEMBER:  '/dashboard',
 };
 
 const DEFAULT_ROUTE = '/dashboard';

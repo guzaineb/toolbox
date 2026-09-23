@@ -36,7 +36,10 @@ export class CoachingAiService {
 
   // ==================== BRIEF AVANT SESSION ====================
 
-  async generateBrief(sessionId: string, userId: string): Promise<CoachingBriefPayload | null> {
+  async generateBrief(
+    sessionId: string,
+    userId: string,
+  ): Promise<CoachingBriefPayload | null> {
     const session = await this.prisma.coachingSession.findUnique({
       where: { id: sessionId },
       include: { assignment: { select: { project_id: true } } },
@@ -60,7 +63,9 @@ export class CoachingAiService {
     });
 
     try {
-      const context = await this.contextBuilder.build(session.assignment.project_id);
+      const context = await this.contextBuilder.build(
+        session.assignment.project_id,
+      );
       const prompt = `Prépare le brief de coaching pour la prochaine session du projet « ${context.projectName} ».
 
 === CONTEXTE PROJET ===
@@ -78,13 +83,15 @@ Contraintes : 2 à 5 éléments par liste ; appuie-toi uniquement sur les donné
 
       const result = await parseWithRetry<CoachingBriefPayload>(
         () =>
-          this.llm.chat(
-            [
-              { role: 'system', content: this.systemPrompt() },
-              { role: 'user', content: prompt },
-            ],
-            { temperature: 0.3, maxTokens: 1800 },
-          ).then((r) => r.content),
+          this.llm
+            .chat(
+              [
+                { role: 'system', content: this.systemPrompt() },
+                { role: 'user', content: prompt },
+              ],
+              { temperature: 0.3, maxTokens: 1800 },
+            )
+            .then((r) => r.content),
         (parsed) => this.validateBrief(parsed),
       );
 
@@ -110,12 +117,17 @@ Contraintes : 2 à 5 éléments par liste ; appuie-toi uniquement sur les donné
 
   // ==================== RÉSUMÉ DE FIN DE SESSION ====================
 
-  async summarizeSession(sessionId: string, userId: string): Promise<SessionSummaryPayload | null> {
+  async summarizeSession(
+    sessionId: string,
+    userId: string,
+  ): Promise<SessionSummaryPayload | null> {
     const session = await this.prisma.coachingSession.findUnique({
       where: { id: sessionId },
       include: {
         assignment: { select: { project_id: true } },
-        recommendations: { select: { title: true, content: true, priority: true } },
+        recommendations: {
+          select: { title: true, content: true, priority: true },
+        },
         actions: { select: { title: true, status: true, deadline: true } },
       },
     });
@@ -127,7 +139,9 @@ Contraintes : 2 à 5 éléments par liste ; appuie-toi uniquement sur les donné
       userId,
     );
 
-    const context = await this.contextBuilder.build(session.assignment.project_id);
+    const context = await this.contextBuilder.build(
+      session.assignment.project_id,
+    );
 
     const notesBlock = [
       session.objective ? `Objectif de session : ${session.objective}` : '',
@@ -161,13 +175,15 @@ N'invente rien : si une information est absente des notes, omets-la.`;
 
     const result = await parseWithRetry<SessionSummaryPayload>(
       () =>
-        this.llm.chat(
-          [
-            { role: 'system', content: this.systemPrompt() },
-            { role: 'user', content: prompt },
-          ],
-          { temperature: 0.3, maxTokens: 1500 },
-        ).then((r) => r.content),
+        this.llm
+          .chat(
+            [
+              { role: 'system', content: this.systemPrompt() },
+              { role: 'user', content: prompt },
+            ],
+            { temperature: 0.3, maxTokens: 1500 },
+          )
+          .then((r) => r.content),
       (parsed) => this.validateSummary(parsed),
     );
 
@@ -189,19 +205,28 @@ Règles : t'appuyer uniquement sur les données fournies, ne jamais inventer, r�
     if (!objective) return null;
     const priorities = Array.isArray(obj.priorities)
       ? obj.priorities
-          .map((p): { title: string; priority: string; detail: string } | null => {
-            if (!p || typeof p !== 'object') return null;
-            const item = p as Record<string, unknown>;
-            const title = asString(item.title);
-            if (!title) return null;
-            const priority = (asString(item.priority) ?? 'MEDIUM').toUpperCase();
-            return {
-              title: title.slice(0, 200),
-              priority: ['LOW', 'MEDIUM', 'HIGH'].includes(priority) ? priority : 'MEDIUM',
-              detail: asString(item.detail)?.slice(0, 400) ?? '',
-            };
-          })
-          .filter((x): x is { title: string; priority: string; detail: string } => x !== null)
+          .map(
+            (p): { title: string; priority: string; detail: string } | null => {
+              if (!p || typeof p !== 'object') return null;
+              const item = p as Record<string, unknown>;
+              const title = asString(item.title);
+              if (!title) return null;
+              const priority = (
+                asString(item.priority) ?? 'MEDIUM'
+              ).toUpperCase();
+              return {
+                title: title.slice(0, 200),
+                priority: ['LOW', 'MEDIUM', 'HIGH'].includes(priority)
+                  ? priority
+                  : 'MEDIUM',
+                detail: asString(item.detail)?.slice(0, 400) ?? '',
+              };
+            },
+          )
+          .filter(
+            (x): x is { title: string; priority: string; detail: string } =>
+              x !== null,
+          )
           .slice(0, 5)
       : [];
     return {
@@ -229,7 +254,10 @@ Règles : t'appuyer uniquement sur les données fournies, ne jamais inventer, r�
 
   private async markFailed(analysisId: string): Promise<void> {
     await this.prisma.aiAnalysis
-      .update({ where: { id: analysisId }, data: { status: 'FAILED', error: 'Réponse IA invalide' } })
+      .update({
+        where: { id: analysisId },
+        data: { status: 'FAILED', error: 'Réponse IA invalide' },
+      })
       .catch(() => undefined);
   }
 }

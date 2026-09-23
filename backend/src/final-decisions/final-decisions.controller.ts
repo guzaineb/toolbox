@@ -74,7 +74,10 @@ export class FinalDecisionsController {
 
   @Post('final-decision-conditions/:id/validate')
   @HttpCode(HttpStatus.OK)
-  validateCondition(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+  validateCondition(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
     return this.finalDecisionsService.validateCondition(id, req.user.id);
   }
 }

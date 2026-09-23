@@ -3,6 +3,16 @@ export interface GbmStepProgress {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED'
 }
 
+export interface GbmStepIssue {
+  stepKey: string
+  title: string
+  relation: 'one-to-one' | 'one-to-many'
+  status: 'EMPTY' | 'INCOMPLETE'
+  detail: string
+  items?: number
+  requiredFields?: string[]
+}
+
 export interface GbmProgress {
   total: number
   completed: number

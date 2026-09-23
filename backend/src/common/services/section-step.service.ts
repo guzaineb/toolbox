@@ -15,9 +15,15 @@ export class SectionStepService {
     return this.projects.findOwnedOrThrow(projectId, userId);
   }
 
-  async markStepProgress(projectId: string, stepKey: string, status: StepStatus = 'COMPLETED') {
+  async markStepProgress(
+    projectId: string,
+    stepKey: string,
+    status: StepStatus = 'COMPLETED',
+  ) {
     await this.prisma.stepProgress.upsert({
-      where: { project_id_step_key: { project_id: projectId, step_key: stepKey } },
+      where: {
+        project_id_step_key: { project_id: projectId, step_key: stepKey },
+      },
       create: {
         project_id: projectId,
         step_key: stepKey,
@@ -39,7 +45,11 @@ export class SectionStepService {
     model: { upsert: (args: any) => Promise<any> },
     projectId: string,
     data: any,
-    options: { allowedFields?: string[]; stepKey?: string; stepStatus?: StepStatus } = {},
+    options: {
+      allowedFields?: string[];
+      stepKey?: string;
+      stepStatus?: StepStatus;
+    } = {},
   ) {
     if (options.allowedFields) {
       data = filterAllowedFields(data, options.allowedFields);
@@ -52,13 +62,20 @@ export class SectionStepService {
     });
 
     if (options.stepKey) {
-      await this.markStepProgress(projectId, options.stepKey, options.stepStatus ?? 'COMPLETED');
+      await this.markStepProgress(
+        projectId,
+        options.stepKey,
+        options.stepStatus ?? 'COMPLETED',
+      );
     }
 
     return record;
   }
 
-  assertMissingAnswers(reponses: Record<string, boolean>, expectedKeys: string[]) {
+  assertMissingAnswers(
+    reponses: Record<string, boolean>,
+    expectedKeys: string[],
+  ) {
     for (const key of expectedKeys) {
       if (reponses[key] === undefined) {
         throw new BadRequestException(`Missing answer for question ${key}`);

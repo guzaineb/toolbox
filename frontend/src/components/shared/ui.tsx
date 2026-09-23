@@ -14,7 +14,7 @@ export function Spinner({ className }: { className?: string }) {
 
 export function LoadingState({ label = 'Chargement…', className }: { label?: string; className?: string }) {
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-[10px] py-[48px] text-ink3', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-[10px] py-[48px] text-ink3', className)} role="status">
       <div className="h-[26px] w-[26px] rounded-full border-[3px] border-moss/20 border-t-moss animate-spin" />
       <span className="text-[12px] font-semibold">{label}</span>
     </div>
@@ -24,7 +24,7 @@ export function LoadingState({ label = 'Chargement…', className }: { label?: s
 // ─────────────────────────────────────────────
 // BADGE
 // ─────────────────────────────────────────────
-type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary'
+type BadgeVariant = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary' | 'violet' | 'orange'
 
 const badgeVariants: Record<BadgeVariant, string> = {
   green:     'bg-moss-light text-moss border border-moss/20',
@@ -32,6 +32,8 @@ const badgeVariants: Record<BadgeVariant, string> = {
   red:       'bg-red-light text-red border border-red/20',
   blue:      'bg-blue-light text-blue border border-blue/18',
   gray:      'bg-ink/[.07] text-ink2 border border-ink/[.15]',
+  violet:    'bg-violet-50 text-violet-700 border border-violet-200',
+  orange:    'bg-orange-50 text-orange-700 border border-orange-200',
   secondary: 'bg-gray-100 text-gray-700 border border-gray-200',
 }
 
@@ -70,7 +72,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const btnBase =
-  'inline-flex items-center gap-[5px] border rounded-lg font-semibold font-dm cursor-pointer transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed tracking-[0.02em] leading-none'
+  'inline-flex items-center gap-[5px] border rounded-lg font-semibold font-dm cursor-pointer transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed tracking-[0.02em] leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss/40'
 
 const btnVariants: Record<BtnVariant, string> = {
   default:   'bg-transparent border-moss/15 text-ink2 hover:bg-moss/5 hover:border-moss/25',
@@ -121,12 +123,14 @@ export function Card({ children, className, onClick }: { children: React.ReactNo
 }
 
 export function CardHeader({
-  icon, title, children, className,
+  icon, title, children, className, titleId,
 }: {
   icon?: React.ReactNode
   title?: string
   children?: React.ReactNode
   className?: string
+  /** Identifiant appliqué au titre — sert de `aria-labelledby` aux modales. */
+  titleId?: string
 }) {
   return (
     <div className={cn('flex items-center justify-between gap-[9px] px-[18px] py-[13px] border-b border-border bg-surface-2', className)}>
@@ -137,7 +141,7 @@ export function CardHeader({
           </div>
         )}
         {title && (
-          <span className="font-syne text-[13px] font-bold text-ink">{title}</span>
+          <span id={titleId} className="font-syne text-[13px] font-bold text-ink">{title}</span>
         )}
       </div>
       {children}
@@ -217,7 +221,7 @@ export function TabNav({
           key={t.id}
           onClick={() => onChange(t.id)}
           className={cn(
-            'font-dm text-[12px] font-semibold px-[14px] py-[7px] rounded-[6px] cursor-pointer border-none transition-all duration-150',
+            'font-dm text-[12px] font-semibold px-[14px] py-[7px] rounded-[6px] cursor-pointer border-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss/40',
             active === t.id
               ? 'bg-surface text-moss shadow-[0_1px_4px_rgba(15,31,22,0.08)]'
               : 'bg-transparent text-ink3',
@@ -295,7 +299,7 @@ export function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) 
       aria-checked={on}
       onClick={onToggle}
       className={cn(
-        'relative w-[34px] h-[19px] rounded-[10px] flex-shrink-0 border-none p-0 cursor-pointer transition-colors duration-200',
+        'relative w-[34px] h-[19px] rounded-[10px] flex-shrink-0 border-none p-0 cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss/40',
         on ? 'bg-moss' : 'bg-moss/18',
       )}
     >
@@ -326,7 +330,7 @@ export function StatBox({ num, label }: { num: string | number; label: string })
 // ─────────────────────────────────────────────
 export function ErrorAlert({ message, className }: { message: string; className?: string }) {
   return (
-    <div className={cn('flex items-center gap-[7px] p-[10px_13px] rounded-[8px] bg-red-light border border-red/18 text-red text-[12px]', className)}>
+    <div role="alert" className={cn('flex items-center gap-[7px] p-[10px_13px] rounded-[8px] bg-red-light border border-red/18 text-red text-[12px]', className)}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
@@ -393,16 +397,5 @@ export function UploadZone({ onClick }: { onClick?: () => void }) {
       <div className="text-[12px] font-semibold text-ink mb-[2px]">Glisser-déposer un fichier</div>
       <div className="text-[11px] text-ink3">PDF, JPG, PNG · Max 10 Mo</div>
     </div>
-  )
-}
-
-// ─────────────────────────────────────────────
-// ADMIN GUARD
-// ─────────────────────────────────────────────
-export function AdminGuard({ className }: { className?: string }) {
-  return (
-    <span className={cn('text-[10px] px-[6px] py-[2px] rounded bg-red-light text-red font-bold ml-[6px] align-middle', className)}>
-      ADMIN
-    </span>
   )
 }

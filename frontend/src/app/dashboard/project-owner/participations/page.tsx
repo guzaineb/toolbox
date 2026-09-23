@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FileText, ChevronRight, X as XIcon, Clock } from 'lucide-react'
-import api from '@/services/api'
+import { FileText, X as XIcon } from 'lucide-react'
+import { projectService } from '@/services/project.service'
 import { cohortService } from '@/services/cohort.service'
 import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui'
 import {
@@ -21,10 +21,10 @@ export default function ParticipationsPage() {
 
   const fetchParticipations = () => {
     setLoading(true)
-    api.get('/projects')
-      .then(async (res) => {
+    projectService.list()
+      .then(async (projects) => {
         const allParticipations: CohortParticipation[] = []
-        for (const project of res.data) {
+        for (const project of projects) {
           const parts = await cohortService.getProjectParticipations(project.id)
           allParticipations.push(...parts)
         }
@@ -41,8 +41,9 @@ export default function ParticipationsPage() {
     try {
       await cohortService.withdrawParticipation(id)
       fetchParticipations()
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Erreur lors du retrait')
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(message ?? 'Erreur lors du retrait')
     } finally {
       setWithdrawingId(null)
     }
@@ -62,7 +63,7 @@ export default function ParticipationsPage() {
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <h1 className="font-syne text-[22px] font-extrabold text-ink mb-[2px]">Mes candidatures</h1>
-      <p className="text-[12px] text-ink3 mb-6">Suivez l'état de vos candidatures aux cohortes</p>
+      <p className="text-[12px] text-ink3 mb-6">Suivez l&apos;état de vos candidatures aux cohortes</p>
 
       {error && <div className="mb-5"><ErrorAlert message={error} /></div>}
 
@@ -72,7 +73,7 @@ export default function ParticipationsPage() {
             <FileText size={24} />
           </div>
           <p className="text-[15px] font-semibold text-ink mb-1">Aucune candidature</p>
-          <p className="text-[12px] text-ink3 mb-6">Vous n'avez pas encore candidaté.</p>
+          <p className="text-[12px] text-ink3 mb-6">Vous n&apos;avez pas encore candidaté.</p>
           <Link href="/dashboard/project-owner/cohorts">
             <Button variant="primary">Voir les cohortes ouvertes</Button>
           </Link>

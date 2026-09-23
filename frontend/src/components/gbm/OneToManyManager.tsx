@@ -3,18 +3,21 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react'
 import { Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { gbmService } from '@/services/gbm.service'
-import { Button, Field, Input, Select, Textarea } from '@/components/shared/ui'
+import { Badge, Button, Field, Input, Select, Textarea } from '@/components/shared/ui'
 import type { GbmFieldConfig } from '@/data/gbm/steps'
+import { missingOneToManyFields } from '@/data/gbm/steps'
 
 interface OneToManyManagerProps {
   projectId: string
   stepId: string
   fields: GbmFieldConfig[]
   onChanged?: () => void
+  onPendingChange?: (hasPending: boolean) => void
 }
 
 export interface OneToManyManagerHandle {
   savePending: () => Promise<boolean>
+  hasPending: () => boolean
 }
 
 type GbmItem = Record<string, unknown>
@@ -37,7 +40,7 @@ function strValue(item: GbmItem, key: string): string {
 }
 
 export const OneToManyManager = forwardRef<OneToManyManagerHandle, OneToManyManagerProps>(
-  function OneToManyManager({ projectId, stepId, fields, onChanged }, ref) {
+  function OneToManyManager({ projectId, stepId, fields, onChanged, onPendingChange }, ref) {
     const [items, setItems] = useState<GbmItem[]>([])
     const [showForm, setShowForm] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -59,6 +62,10 @@ export const OneToManyManager = forwardRef<OneToManyManagerHandle, OneToManyMana
     }, [projectId, stepId])
 
     useEffect(() => { loadItems() }, [loadItems])
+
+    useEffect(() => {
+      onPendingChange?.(showForm)
+    }, [showForm, onPendingChange])
 
     const persistPending = useCallback(async (): Promise<boolean> => {
       if (!showForm) return true
@@ -97,7 +104,7 @@ export const OneToManyManager = forwardRef<OneToManyManagerHandle, OneToManyMana
       }
     }, [showForm, newItem, editingId, fields, projectId, stepId, loadItems, onChanged])
 
-    useImperativeHandle(ref, () => ({ savePending: persistPending }), [persistPending])
+    useImperativeHandle(ref, () => ({ savePending: persistPending, hasPending: () => showForm }), [persistPending, showForm])
 
     const handleSubmit = async () => {
       const ok = await persistPending()
@@ -131,6 +138,7 @@ export const OneToManyManager = forwardRef<OneToManyManagerHandle, OneToManyMana
     }
 
     const primaryFields = fields.filter(f => f.type !== 'checkbox')
+    const incompleteItems = items.filter(item => missingOneToManyFields(stepId, item).length > 0)
 
     if (loading) {
       return (
@@ -168,6 +176,15 @@ export const OneToManyManager = forwardRef<OneToManyManagerHandle, OneToManyMana
                       {primaryFields.slice(2).map(f => strValue(item, f.key)).filter(Boolean).join(' · ')}
                     </div>
                   )}
+                  <div className="mt-1.5">
+                    {missingOneToManyFields(stepId, item).length === 0 ? (
+                      <Badge variant="green">Complet</Badge>
+                    ) : (
+                      <Badge variant="amber">
+                        Incomplet — manque : {missingOneToManyFields(stepId, item).join(', ')}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1.5 items-end flex-shrink-0">
                   <button
@@ -193,6 +210,13 @@ export const OneToManyManager = forwardRef<OneToManyManagerHandle, OneToManyMana
         {items.length === 0 && !showForm && (
           <div className="text-center py-8 text-[13px] text-ink3">
             Aucun élément. Ajoutez-en un pour avancer.
+          </div>
+        )}
+
+        {incompleteItems.length > 0 && (
+          <div className="text-[11px] text-amber-dark bg-amber-light border border-amber/30 rounded-lg px-3 py-2">
+            {incompleteItems.length} élément(s) enregistré(s) en brouillon : la révision GBM exigera au
+            moins un élément complet sur cette étape.
           </div>
         )}
 

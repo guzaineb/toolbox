@@ -30,7 +30,9 @@ describe('AssignmentsService', () => {
   const audit = { log: jest.fn() };
   const messageBuilder = {
     coachAssigned: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
-    evaluationAvailable: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
+    evaluationAvailable: jest
+      .fn()
+      .mockReturnValue({ title: 'T', message: 'M' }),
     coachRemoved: jest.fn().mockReturnValue({ title: 'T', message: 'M' }),
   };
 
@@ -69,7 +71,11 @@ describe('AssignmentsService', () => {
     });
 
     await expect(
-      service.assign('project-1', { expertUserId: 'user-1', role: 'COACH' }, 'admin-1'),
+      service.assign(
+        'project-1',
+        { expertUserId: 'user-1', role: 'COACH' },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
 
     expect(prisma.projectExpertAssignment.create).not.toHaveBeenCalled();
@@ -78,15 +84,73 @@ describe('AssignmentsService', () => {
   it('should reject a duplicate assignment for the same expert/role', async () => {
     access.assertProjectExists.mockResolvedValue(undefined);
     access.assertCanManageCohort.mockResolvedValue(undefined);
-    prisma.user.findUnique.mockResolvedValue({ id: 'expert-1', role: 'EXPERT' });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'expert-1',
+      role: 'EXPERT',
+    });
     prisma.projectExpertAssignment.findUnique.mockResolvedValue({
       id: 'existing-1',
     });
 
     await expect(
-      service.assign('project-1', { expertUserId: 'expert-1', role: 'COACH' }, 'admin-1'),
+      service.assign(
+        'project-1',
+        { expertUserId: 'expert-1', role: 'COACH' },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
 
     expect(prisma.projectExpertAssignment.create).not.toHaveBeenCalled();
+  });
+
+  it('should reject assigning an expert who is already active COACH as JURY', async () => {
+    access.assertProjectExists.mockResolvedValue(undefined);
+    access.assertCanManageCohort.mockResolvedValue(undefined);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'expert-1',
+      role: 'EXPERT',
+    });
+    prisma.projectExpertAssignment.findUnique.mockResolvedValue(null);
+
+    prisma.projectExpertAssignment.findFirst.mockResolvedValue({
+      id: 'coach-assignment-1',
+    });
+
+    await expect(
+      service.assign(
+        'project-1',
+        { expertUserId: 'expert-1', role: 'JURY' },
+        'admin-1',
+      ),
+    ).rejects.toThrow(
+      "Un expert ne peut pas être simultanément coach et jury du même projet afin d'éviter un conflit d'intérêts.",
+    );
+
+    expect(prisma.projectExpertAssignment.create).not.toHaveBeenCalled();
+  });
+
+  it('should reject switching an assignment to JURY when the expert is already active COACH', async () => {
+    access.assertProjectExists.mockResolvedValue(undefined);
+    access.assertCanManageCohort.mockResolvedValue(undefined);
+    prisma.projectExpertAssignment.findUnique.mockResolvedValue({
+      id: 'assignment-1',
+      project_id: 'project-1',
+      expert_user_id: 'expert-1',
+      role: 'COACH',
+      project: { id: 'project-1', name: 'Projet 1' },
+    });
+    prisma.projectExpertAssignment.findFirst.mockResolvedValue({
+      id: 'coach-assignment-1',
+    });
+
+    await expect(
+      service.update(
+        'assignment-1',
+        { role: 'JURY', status: 'ACTIVE' },
+        'admin-1',
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.projectExpertAssignment.update).not.toHaveBeenCalled();
   });
 });

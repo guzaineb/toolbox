@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsNumber, IsObject, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsObject,
+  IsBoolean,
+} from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { ProjectIdParam } from '../../common/dto/project-id.param';
 
@@ -58,4 +64,6 @@ export class UpdateMarketingPlanDto extends PartialType(MarketingPlanDto) {}
 export class UpdateFinancialPlanDto extends PartialType(FinancialPlanDto) {}
 export class UpdateLegalPlanDto extends PartialType(LegalPlanDto) {}
 export class UpdateKpiDto extends PartialType(KpiDto) {}
-export class UpdateExecutiveSummaryDto extends PartialType(ExecutiveSummaryDto) {}
+export class UpdateExecutiveSummaryDto extends PartialType(
+  ExecutiveSummaryDto,
+) {}

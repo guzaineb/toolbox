@@ -11,7 +11,6 @@ datasource db {
 // ENUMS
 // ===========================
 enum UserRole {
-  ADMIN
   EXPERT
   PROJECT_OWNER
   INCUBATOR_MEMBER // anciennement `incubator_membre` (valeur historique, migrée)
@@ -95,6 +94,10 @@ enum DocumentStatus {
   NOT_GENERATED
   GENERATED
   UPDATED
+}
+
+enum BusinessPlanStatus {
+  FINAL
 }
 
 enum ParticipationOrigin {
@@ -369,6 +372,7 @@ model User {
   jurySessionMemberships          JurySessionMember[]        @relation("JuryMemberUser")
   improvementPlansCreated         ImprovementPlan[]          @relation("PlanCreatedBy")
   auditLogs                       AuditLog[]                 @relation("AuditActor")
+  conversations                  Conversation[]
 
   @@map("users")
 }
@@ -589,6 +593,8 @@ model Project {
   owner_id        String
   gbm_reviewed_at DateTime?
   is_gbm_reviewed Boolean  @default(false)
+  business_plan_status BusinessPlanStatus?
+  business_plan_finalized_at DateTime?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
@@ -641,6 +647,9 @@ model Project {
 
   // Documents générés
   generated_documents      GeneratedDocument[]
+  rag_documents            RagDocument[]
+  uploaded_documents       UploadedDocument[]
+  conversations            Conversation[]
 
   // Relations
   step_progresses        StepProgress[]
@@ -745,6 +754,7 @@ model ImprovementObjective {
   updated_at      DateTime                  @updatedAt
 
   plan ImprovementPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  actions CoachingAction[] @relation("ActionImprovementObjective")
 
   @@index([plan_id])
   @@index([status])
@@ -1009,6 +1019,7 @@ model CoachingAction {
   session_id          String?
   assignment_id       String?
   recommendation_id   String?
+  objective_id        String?
   responsible_user_id String?
   related_document_key String?
   title               String
@@ -1027,6 +1038,7 @@ model CoachingAction {
   session       CoachingSession?       @relation(fields: [session_id], references: [id])
   assignment    ProjectExpertAssignment? @relation(fields: [assignment_id], references: [id])
   recommendation CoachingRecommendation? @relation(fields: [recommendation_id], references: [id])
+  objective ImprovementObjective?       @relation("ActionImprovementObjective", fields: [objective_id], references: [id], onDelete: SetNull)
   responsibleUser User?                 @relation("ActionResponsible", fields: [responsible_user_id], references: [id])
   createdBy     User                   @relation("ActionCreatedBy", fields: [created_by], references: [id])
   comments      CoachingComment[]
@@ -1035,6 +1047,7 @@ model CoachingAction {
   @@index([project_id])
   @@index([session_id])
   @@index([assignment_id])
+  @@index([objective_id])
   @@index([status])
   @@index([deadline])
   @@map("coaching_actions")
@@ -1874,6 +1887,61 @@ model GeneratedDocument {
   @@map("generated_documents")
 }
 
+// État d'indexation RAG (ChromaDB) par morceau (chunk) — permet l'indexation incrémentale.
+// Chaque ligne correspond à un chunk déjà indexé (ou à indexer) dans la collection Chroma
+// du projet. Le hash de contenu permet de détecter les changements sans ré-embarquer tout.
+model RagDocument {
+  id            String    @id @default(uuid())
+  project_id    String
+  document_key  String // clé stable de la source (ex: gbm1.idea_initial, bp.executive_summary)
+  chunk_index   Int // index du morceau au sein du document source
+  chroma_id     String // id stable du vecteur dans Chroma (projectId_documentKey_chunkIndex)
+  content_hash  String // hash SHA-256 du contenu du chunk (détection de changement)
+  module        String?
+  section       String?
+  source        String?
+  language      String    @default("fr")
+  page          Int?
+  dimension     Int       @default(384) // dimension du vecteur embarqué (verrouillée)
+  distance_fn   String    @default("cosine")
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, document_key, chunk_index])
+  @@index([project_id, document_key])
+  @@map("rag_documents")
+}
+
+enum UploadedDocumentStatus {
+  PENDING
+  PROCESSING
+  INDEXED
+  FAILED
+}
+
+model UploadedDocument {
+  id            String                 @id @default(uuid())
+  project_id    String
+  owner_id      String
+  filename      String
+  original_name String
+  mime_type     String
+  size          Int
+  status        UploadedDocumentStatus @default(PENDING)
+  error_message String?
+  chunk_count   Int?                   @default(0)
+  created_at    DateTime               @default(now())
+  indexed_at    DateTime?
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([project_id, owner_id])
+  @@map("uploaded_documents")
+}
+
 // ===========================
 // MODULE — Notifications in-app
 // ===========================
@@ -1932,4 +2000,41 @@ model NotificationPreference {
   user User @relation(fields: [user_id], references: [id])
 
   @@map("notification_preferences")
+}
+
+// ===========================
+// MODULE — Mémoire conversationnelle du chatbot
+// ===========================
+
+model Conversation {
+  id         String   @id @default(uuid())
+  project_id String
+  owner_id   String
+  title      String?  // titre auto-généré ou manuel
+  summary    String?  // résumé des anciennes conversations (optionnel)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  project  Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  owner    User      @relation(fields: [owner_id], references: [id])
+  messages Message[]
+
+  @@index([project_id, owner_id])
+  @@index([project_id, created_at])
+  @@map("conversations")
+}
+
+model Message {
+  id              String   @id @default(uuid())
+  conversation_id String
+  role            String   // "user" | "assistant" | "system"
+  content         String
+  sources         Json?    // sources RAG utilisées pour cette réponse
+  context_used    Boolean  @default(false)
+  created_at      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id, created_at])
+  @@map("messages")
 }

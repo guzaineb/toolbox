@@ -11,7 +11,9 @@ describe('IncubatorMembersController', () => {
       providers: [{ provide: IncubatorMembersService, useValue: {} }],
     }).compile();
 
-    controller = module.get<IncubatorMembersController>(IncubatorMembersController);
+    controller = module.get<IncubatorMembersController>(
+      IncubatorMembersController,
+    );
   });
 
   it('should be defined', () => {

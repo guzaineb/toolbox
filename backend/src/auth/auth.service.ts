@@ -1,4 +1,8 @@
-﻿import { Injectable, BadRequestException, UnauthorizedException,} from '@nestjs/common';
+﻿import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcrypt';
@@ -24,7 +28,9 @@ export class AuthService {
 
   async register(registerDto: CreateUserDto) {
     const verificationToken = uuidv4();
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
     const codeExpires = new Date();
     codeExpires.setHours(codeExpires.getHours() + 1);
 
@@ -36,7 +42,9 @@ export class AuthService {
     );
 
     if (!user) {
-      throw new BadRequestException("Erreur lors de la création de l'utilisateur");
+      throw new BadRequestException(
+        "Erreur lors de la création de l'utilisateur",
+      );
     }
     try {
       await this.mailService.sendVerificationEmail(
@@ -48,22 +56,22 @@ export class AuthService {
       console.error('Erreur envoi email:', error);
     }
 
-    const { title, message } = this.messageBuilder.newUserRegistered({ email: user.email });
-    this.eventEmitter.emit(
-      NotificationEvent.NEW_USER_REGISTERED,
-      {
-        event: NotificationEvent.NEW_USER_REGISTERED,
-        recipients: [{ userId: user.id }],
-        title,
-        message,
-        senderId: user.id,
-        resourceType: 'USER',
-        resourceId: user.id,
-      } as NotificationPayload,
-    );
+    const { title, message } = this.messageBuilder.newUserRegistered({
+      email: user.email,
+    });
+    this.eventEmitter.emit(NotificationEvent.NEW_USER_REGISTERED, {
+      event: NotificationEvent.NEW_USER_REGISTERED,
+      recipients: [{ userId: user.id }],
+      title,
+      message,
+      senderId: user.id,
+      resourceType: 'USER',
+      resourceId: user.id,
+    } as NotificationPayload);
 
     return {
-      message: 'Inscription réussie. Veuillez vérifier votre email avec le code reçu.',
+      message:
+        'Inscription réussie. Veuillez vérifier votre email avec le code reçu.',
     };
   }
 
@@ -79,7 +87,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Token de vérification invalide ou déjà utilisé.');
+      throw new BadRequestException(
+        'Token de vérification invalide ou déjà utilisé.',
+      );
     }
 
     await this.prisma.user.update({
@@ -144,7 +154,9 @@ export class AuthService {
     }
 
     const verificationToken = uuidv4();
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
     const codeExpires = new Date();
     codeExpires.setHours(codeExpires.getHours() + 1);
 
@@ -221,51 +233,60 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
-async forgotPassword(email: string): Promise<{ message: string }> {
-  const user = await this.prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return {
+        message:
+          'Si un compte existe, un email de réinitialisation a été envoyé.',
+      };
+    }
+
+    const token = uuidv4();
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        reset_password_token: token,
+        reset_password_expires: expires,
+      },
+    });
+
+    await this.mailService.sendResetPasswordEmail(user.email, token);
+
+    return {
+      message:
+        'Si un compte existe, un email de réinitialisation a été envoyé.',
+    };
   }
 
-  const token = uuidv4();
-  const expires = new Date();
-  expires.setHours(expires.getHours() + 1);
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { reset_password_token: token },
+    });
+    if (!user) {
+      throw new BadRequestException('Token invalide ou expiré.');
+    }
 
-  await this.prisma.user.update({
-    where: { id: user.id },
-    data: {
-      reset_password_token: token,
-      reset_password_expires: expires,
-    },
-  });
+    if (
+      !user.reset_password_expires ||
+      user.reset_password_expires < new Date()
+    ) {
+      throw new BadRequestException('Le token a expiré. Refaites une demande.');
+    }
 
-  await this.mailService.sendResetPasswordEmail(user.email, token);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_hash: hashedPassword,
+        reset_password_token: null,
+        reset_password_expires: null,
+      },
+    });
 
-  return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
-}
-
-async resetPassword(token: string, newPassword: string) {
-  const user = await this.prisma.user.findFirst({
-    where: { reset_password_token: token },
-  });
-  if (!user) {
-    throw new BadRequestException('Token invalide ou expiré.');
+    return { message: 'Mot de passe mis à jour avec succès.' };
   }
-
-  if (!user.reset_password_expires || user.reset_password_expires < new Date()) {
-    throw new BadRequestException('Le token a expiré. Refaites une demande.');
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await this.prisma.user.update({
-    where: { id: user.id },
-    data: {
-      password_hash: hashedPassword,
-      reset_password_token: null,
-      reset_password_expires: null,
-    },
-  });
-
-  return { message: 'Mot de passe mis à jour avec succès.' };
-}
 }

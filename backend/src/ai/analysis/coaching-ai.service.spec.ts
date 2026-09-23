@@ -10,7 +10,11 @@ const VALID_BRIEF = {
   objective: 'Cadrer la stratégie de prix avant le lancement.',
   previousProgress: ['Business plan complété à 80%'],
   priorities: [
-    { title: 'Valider le positionnement prix', priority: 'HIGH', detail: 'impacte la marge' },
+    {
+      title: 'Valider le positionnement prix',
+      priority: 'HIGH',
+      detail: 'impacte la marge',
+    },
     { title: 'Titre sans priorité valide', priority: 'CRITIQUE', detail: '' },
     { description: 'sans titre' },
   ],
@@ -34,7 +38,9 @@ describe('CoachingAiService', () => {
   };
   const llmMock = { chat: jest.fn() };
   const contextMock = { build: jest.fn() };
-  const accessMock = { assertCanManageProjectCoaching: jest.fn().mockResolvedValue(undefined) };
+  const accessMock = {
+    assertCanManageProjectCoaching: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -49,7 +55,10 @@ describe('CoachingAiService', () => {
     }).compile();
     service = module.get<CoachingAiService>(CoachingAiService);
 
-    contextMock.build.mockResolvedValue({ projectName: 'ÉcoPot', contextText: 'Contexte projet' });
+    contextMock.build.mockResolvedValue({
+      projectName: 'ÉcoPot',
+      contextText: 'Contexte projet',
+    });
   });
 
   it('should be defined', () => {
@@ -115,7 +124,9 @@ describe('CoachingAiService', () => {
       });
       prismaMock.aiAnalysis.create.mockRejectedValue(new Error('db down'));
 
-      await expect(service.generateBrief('s3', 'u1')).rejects.toThrow('db down');
+      await expect(service.generateBrief('s3', 'u1')).rejects.toThrow(
+        'db down',
+      );
     });
 
     it('should refuse the brief when the caller cannot manage project coaching', async () => {
@@ -127,7 +138,9 @@ describe('CoachingAiService', () => {
         assignment: { project_id: 'p1' },
       });
 
-      await expect(service.generateBrief('s6', 'u2')).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(service.generateBrief('s6', 'u2')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
       expect(llmMock.chat).not.toHaveBeenCalled();
     });
   });
@@ -146,10 +159,20 @@ describe('CoachingAiService', () => {
         notes: 'Le porteur hésite entre 3 positionnements.',
         decisions: null,
         report: null,
-        recommendations: [{ title: 'Étude concurrence', content: '...', priority: 'HIGH' }],
-        actions: [{ title: 'Rédiger le pricing', status: 'IN_PROGRESS', deadline: new Date() }],
+        recommendations: [
+          { title: 'Étude concurrence', content: '...', priority: 'HIGH' },
+        ],
+        actions: [
+          {
+            title: 'Rédiger le pricing',
+            status: 'IN_PROGRESS',
+            deadline: new Date(),
+          },
+        ],
       });
-      llmMock.chat.mockResolvedValue({ content: JSON.stringify(VALID_SUMMARY) });
+      llmMock.chat.mockResolvedValue({
+        content: JSON.stringify(VALID_SUMMARY),
+      });
 
       const summary = await service.summarizeSession('s4', 'u1');
 

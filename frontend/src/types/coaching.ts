@@ -88,6 +88,10 @@ export interface CoachingSession {
     expertUser?: { id: string; email: string; profile?: { first_name: string; last_name: string } }
   }
   actions?: CoachingAction[]
+  /** Recommandations rattachées à la session (GET coaching/sessions/:id). */
+  recommendations?: CoachingRecommendation[]
+  /** Commentaires de session (GET coaching/sessions/:id). */
+  comments?: CoachingComment[]
 }
 
 export interface CoachingActionResponsible {
@@ -100,6 +104,8 @@ export interface CoachingAction {
   id: string
   project_id: string
   assignment_id?: string
+  /** Objectif du plan d'amélioration lié (D6). */
+  objective_id?: string | null
   /** Responsable métier : porteur, coach ou expert (User). */
   responsible_user_id?: string | null
   /** Livrable concerné (clé des DOCUMENT_DEFINITIONS). */
@@ -121,6 +127,7 @@ export interface CoachingAction {
     expertUser?: CoachingActionResponsible
   }
   responsibleUser?: CoachingActionResponsible
+  objective?: { id: string; title: string } | null
   session?: { id: string; title?: string; scheduled_at: string }
 }
 
@@ -386,6 +393,7 @@ export interface CreateActionDto {
   deadline?: string
   sessionId?: string
   recommendationId?: string
+  objectiveId?: string
   assignmentId?: string
   responsibleUserId?: string
   relatedDocumentKey?: string
@@ -467,11 +475,11 @@ export const COACHING_SESSION_STATUS_LABELS: Record<CoachingSessionStatus, strin
 
 export const COACHING_SESSION_STATUS_COLORS: Record<CoachingSessionStatus, BadgeVariantKey> = {
   SCHEDULED: 'blue',
-  IN_PROGRESS: 'amber',
+  IN_PROGRESS: 'violet',
   COMPLETED: 'green',
-  CANCELLED: 'gray',
-  RESCHEDULED: 'amber',
-  MISSED: 'red',
+  CANCELLED: 'red',
+  RESCHEDULED: 'orange',
+  MISSED: 'gray',
 }
 
 export const ACTION_STATUS_LABELS: Record<CoachingActionStatus, string> = {
@@ -598,4 +606,4 @@ export const EVIDENCE_REVIEW_COLORS: Record<EvidenceReviewStatus, BadgeVariantKe
   REJECTED: 'red',
 }
 
-type BadgeVariantKey = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary'
+type BadgeVariantKey = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'secondary' | 'violet' | 'orange'

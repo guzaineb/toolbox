@@ -33,4 +33,6 @@ export class CostRevenueSummaryDto {
   @IsOptional() @IsBoolean() generated_by_ai?: boolean;
 }
 
-export class UpdateCostRevenueSummaryDto extends PartialType(CostRevenueSummaryDto) {}
+export class UpdateCostRevenueSummaryDto extends PartialType(
+  CostRevenueSummaryDto,
+) {}

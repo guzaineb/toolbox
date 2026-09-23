@@ -35,6 +35,11 @@ export class CreateActionDto {
   @IsString()
   recommendationId?: string;
 
+  /** Objectif du plan d'amélioration lié (fermeture de la boucle D6). */
+  @IsOptional()
+  @IsString()
+  objectiveId?: string;
+
   @IsOptional()
   @IsString()
   assignmentId?: string;

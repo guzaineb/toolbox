@@ -81,20 +81,14 @@ export class CohortExpertsController {
   // === INCUBATEUR — ACCEPTER UNE CANDIDATURE EXPERT ===
   @Post('cohort-experts/:id/approve')
   @HttpCode(HttpStatus.OK)
-  approve(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  approve(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortExpertsService.approveApplication(id, req.user.id);
   }
 
   // === INCUBATEUR — REFUSER UNE CANDIDATURE EXPERT ===
   @Post('cohort-experts/:id/decline')
   @HttpCode(HttpStatus.OK)
-  decline(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  decline(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortExpertsService.declineApplication(id, req.user.id);
   }
 
@@ -106,7 +100,11 @@ export class CohortExpertsController {
     @Query('role') role?: CohortExpertRole,
     @Query('status') status?: CohortExpertStatus,
   ) {
-    return this.cohortExpertsService.findByCohort(cohortId, { role, status }, req.user.id);
+    return this.cohortExpertsService.findByCohort(
+      cohortId,
+      { role, status },
+      req.user.id,
+    );
   }
 
   @Get('cohorts/:cohortId/experts/available')
@@ -116,17 +114,18 @@ export class CohortExpertsController {
     @Query('expertiseAreaId') expertiseAreaId?: string,
     @Query('availability') availability?: string,
   ) {
-    return this.cohortExpertsService.findAvailable(cohortId, {
-      expertiseAreaId,
-      availability,
-    }, req.user.id);
+    return this.cohortExpertsService.findAvailable(
+      cohortId,
+      {
+        expertiseAreaId,
+        availability,
+      },
+      req.user.id,
+    );
   }
 
   @Get('cohort-experts/:id')
-  findOne(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  findOne(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortExpertsService.findOne(id, req.user.id);
   }
 
@@ -141,10 +140,7 @@ export class CohortExpertsController {
 
   @Delete('cohort-experts/:id')
   @HttpCode(HttpStatus.OK)
-  deactivate(
-    @Param('id') id: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  deactivate(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.cohortExpertsService.deactivate(id, req.user.id);
   }
 }

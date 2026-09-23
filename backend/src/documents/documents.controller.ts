@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DocumentsService } from './documents.service';
@@ -35,7 +43,11 @@ export class DocumentsController {
     @Param('projectId') projectId: string,
     @Param('documentKey') documentKey: string,
   ) {
-    return this.docsService.generateDocument(projectId, documentKey, req.user.id);
+    return this.docsService.generateDocument(
+      projectId,
+      documentKey,
+      req.user.id,
+    );
   }
 
   @Post('generate-all')
@@ -53,7 +65,11 @@ export class DocumentsController {
     @Param('documentKey') documentKey: string,
     @Res() res: Response,
   ) {
-    const buffer = await this.pdfService.generate(projectId, documentKey, req.user.id);
+    const buffer = await this.pdfService.generate(
+      projectId,
+      documentKey,
+      req.user.id,
+    );
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${documentKey}-${projectId}.pdf"`,
