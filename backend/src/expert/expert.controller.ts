@@ -1,0 +1,162 @@
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  UseGuards,
+  Req,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
+
+import { CreateExpertDto } from './dto/create-expert.dto';
+import { UpdateExpertDto } from './dto/update-expert.dto';
+import { AddExpertiseDto } from './dto/add-expertise.dto';
+import { UpdateExpertiseLevelDto } from './dto/update-expertise-level.dto';
+import { MatchProjectDto } from './dto/match-project.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { ExpertService } from './expert.service';
+
+@Controller('experts')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class ExpertController {
+  constructor(private readonly service: ExpertService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  create(@Req() req: { user: { id: string } }, @Body() dto: CreateExpertDto) {
+    return this.service.create(req.user.id, dto);
+  }
+
+  @Get('me')
+  findMyProfile(@Req() req: { user: { id: string } }) {
+    return this.service.findByUser(req.user.id);
+  }
+
+  @Patch('me')
+  updateProfile(
+    @Req() req: { user: { id: string } },
+    @Body() dto: UpdateExpertDto,
+  ) {
+    return this.service.upsert(req.user.id, dto);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteProfile(@Req() req: { user: { id: string } }) {
+    return this.service.deleteProfile(req.user.id);
+  }
+
+  @Get('expertise-areas')
+  getAllExpertiseAreas() {
+    return this.service.getAllAreas();
+  }
+
+  @Get('expertise-areas/categories')
+  getExpertiseAreasByCategory() {
+    return this.service.getAreasGroupedByCategory();
+  }
+
+  @Get('me/expertises')
+  getMyExpertises(@Req() req: { user: { id: string } }) {
+    return this.service.getExpertiseWithDetails(req.user.id);
+  }
+
+  @Post('me/expertises')
+  @HttpCode(HttpStatus.CREATED)
+  addExpertise(
+    @Req() req: { user: { id: string } },
+    @Body() dto: AddExpertiseDto,
+  ) {
+    return this.service.addExpertise(req.user.id, dto);
+  }
+
+  @Post('me/expertises/batch')
+  @HttpCode(HttpStatus.CREATED)
+  addMultipleExpertises(
+    @Req() req: { user: { id: string } },
+    @Body() body: { expertises: AddExpertiseDto[] },
+  ) {
+    return this.service.addMultipleExpertise(req.user.id, body.expertises);
+  }
+
+  @Patch('me/expertises/:expertiseAreaId')
+  updateExpertiseLevel(
+    @Req() req: { user: { id: string } },
+    @Param('expertiseAreaId', ParseUUIDPipe) expertiseAreaId: string,
+    @Body() dto: UpdateExpertiseLevelDto,
+  ) {
+    return this.service.updateExpertiseLevel(
+      req.user.id,
+      expertiseAreaId,
+      dto.level,
+      dto.years_of_experience,
+    );
+  }
+
+  @Delete('me/expertises/:expertiseAreaId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeExpertise(
+    @Req() req: { user: { id: string } },
+    @Param('expertiseAreaId', ParseUUIDPipe) expertiseAreaId: string,
+  ) {
+    return this.service.removeExpertise(req.user.id, expertiseAreaId);
+  }
+
+  @Get('me/score')
+  getMyExpertScore(@Req() req: { user: { id: string } }) {
+    return this.service.computeExpertScore(req.user.id);
+  }
+
+  @Get('me/projects/matched')
+  getMatchedProjects(
+    @Req() req: { user: { id: string } },
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.findMatchedProjects(
+      req.user.id,
+      limit ? parseInt(limit) : 10,
+    );
+  }
+
+  @Post('me/match-project')
+  matchWithProject(
+    @Req() req: { user: { id: string } },
+    @Body() dto: MatchProjectDto,
+  ) {
+    return this.service.matchWithProject(req.user.id, dto);
+  }
+
+  @Get(':id')
+  @Roles(UserRole.EXPERT)
+  findOneExpert(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getPublicProfile(id);
+  }
+
+  @Post('recommendations/jury')
+  recommendJury(@Body() body: { projectId: string; limit?: number }) {
+    return this.service.recommendJuryForProject(
+      body.projectId,
+      body.limit || 3,
+    );
+  }
+
+  @Post('recommendations/coachs')
+  recommendCoachs(
+    @Body() body: { cohortId: string; limit?: number; excludeIds?: string[] },
+  ) {
+    return this.service.recommendCoachsForCohort(
+      body.cohortId,
+      body.limit || 3,
+      body.excludeIds || [],
+    );
+  }
+}
