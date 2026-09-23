@@ -13,8 +13,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailService } from './mail/mail.service';
 import { UploadsModule } from './uploads/uploads.module';
-
-
+import { ProjectsModule } from './projects/projects.module';
+import { JourneyModule } from './journey/journey.module';
+import { DocumentsModule } from './documents/documents.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { ProgressModule } from './progress/progress.module';
+import { AiAssistantModule } from './ai-assistant/ai-assistant.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { VersionsModule } from './versions/versions.module';
+import { BmcModule } from './bmc/bmc.module';
+import { SharesModule } from './shares/shares.module';
+import { ExportsModule } from './exports/exports.module';
+import { SectorsModule } from './sectors/sectors.module';
+import { DevelopmentPhasesModule } from './development-phases/development-phases.module';
 
 @Module({
   imports: [
@@ -32,7 +43,13 @@ import { UploadsModule } from './uploads/uploads.module';
       }),
       inject: [ConfigService],
     }),
-    IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule,UploadsModule],
+    IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule,
+    AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule,
+    UploadsModule, ProjectsModule, JourneyModule, DocumentsModule,
+    ReviewsModule, ProgressModule, AiAssistantModule, NotificationsModule,
+    VersionsModule, BmcModule, SharesModule, ExportsModule,
+    SectorsModule, DevelopmentPhasesModule,
+  ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })
