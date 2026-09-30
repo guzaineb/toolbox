@@ -8,7 +8,7 @@ export default function CTA() {
         Rejoignez l'infrastructure digitale de référence en Tunisie.
       </div>
       <a
-        href="#"
+        href="/register"
         className="text-sm font-medium px-6 py-2.5 rounded-md bg-white border border-white text-accent inline-flex items-center gap-2 hover:bg-gray-50 transition-all duration-150"
       >
         Créer un compte gratuit →

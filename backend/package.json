@@ -21,6 +21,8 @@
     "seed": "npm run seed:users && npm run seed:prisma",
     "seed:prisma": "npx ts-node -P tsconfig.json prisma/seed.ts",
     "seed:users": "npx ts-node -P tsconfig.json prisma/seeds/user-seed.ts",
+    "seed:matching": "MATCHING_TEST_DATA=true npm run seed:prisma",
+    "seed:matching:standalone": "npx ts-node -P tsconfig.json -e \"const {seedMatchingTestData}=require('./prisma/seeds/matching-test-data.seed'); seedMatchingTestData().catch(e=>{console.error(e);process.exit(1)})\"",
     "seed:all": "npm run seed"
   },
   "dependencies": {

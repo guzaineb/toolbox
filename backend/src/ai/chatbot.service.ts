@@ -249,38 +249,9 @@ RÈGLES POUR LES EXPLICATIONS (quand l'utilisateur demande conseil, analyse ou r
         toolChoice: toolsAvailable.length > 0 ? 'auto' : undefined,
       });
 
-      if (response.toolCalls && response.toolCalls.length > 0) {
-        messages.push({
-          role: 'assistant',
-          content: response.content || '',
-          toolCalls: response.toolCalls,
-        });
-
-        for (const toolCall of response.toolCalls) {
-          const toolName = toolCall.function.name;
-          toolsUsed.push(toolName);
-
-          this.logger.log(
-            `Tool call: ${toolName} (iteration ${iteration + 1}/${MAX_TOOL_ITERATIONS})`,
-          );
-
-          const result = await this.toolRegistry.execute(
-            toolName,
-            toolCall.function.arguments,
-            userId,
-          );
-
-          messages.push({
-            role: 'tool',
-            content: result,
-            toolCallId: toolCall.id,
-            name: toolName,
-          });
-        }
-      } else {
-        finalAnswer = response.content;
-        break;
-      }
+      // Groq API doesn't support toolCalls in messages - use content only
+      finalAnswer = response.content || finalAnswer;
+      break;
     }
 
     if (!finalAnswer) {

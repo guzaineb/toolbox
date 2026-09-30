@@ -200,27 +200,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const roleItems: NavLinkItem[] = isExpert
     ? [
-        { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert', match: 'exact' },
-        { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert', match: 'prefix' },
-        { href: '/dashboard/expert/matching-projects', label: 'Projets correspondants', icon: Radar, section: 'expert', match: 'prefix' },
-        { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
-        { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
-        { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
-        { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
-        { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
-        { href: '/dashboard/expert/coachings/sessions', label: 'Mes sessions', icon: CalendarClock, section: 'expert', match: 'prefix' },
-      ]
+      { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert', match: 'exact' },
+      { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/matching-projects', label: 'Projets correspondants', icon: Radar, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
+      { href: '/dashboard/expert/coachings/sessions', label: 'Mes sessions', icon: CalendarClock, section: 'expert', match: 'prefix' },
+    ]
     : isProjectOwner
       ? [
-          { href: '/dashboard/project-owner/projects', label: 'Mes projets', icon: FolderKanban, section: 'porteur', match: 'prefix' },
-          { href: '/dashboard/project-owner/participations', label: 'Participations', icon: Calendar, section: 'porteur', match: 'prefix' },
-          { href: '/dashboard/project-owner/cohorts', label: 'Cohortes', icon: Users, section: 'porteur', match: 'prefix' },
-        ]
+        { href: '/dashboard/project-owner/projects', label: 'Mes projets', icon: FolderKanban, section: 'porteur', match: 'prefix' },
+        { href: '/dashboard/project-owner/participations', label: 'Participations', icon: Calendar, section: 'porteur', match: 'prefix' },
+        { href: '/dashboard/project-owner/cohorts', label: 'Cohortes', icon: Users, section: 'porteur', match: 'prefix' },
+      ]
       : isIncubatorMember
         ? [
-            { href: '/dashboard/incubator', label: 'Incubateurs', icon: Factory, section: 'incubator', match: 'prefix' },
-            { href: '/dashboard/incubator/create', label: 'Créer un incubateur', icon: Plus, section: 'incubator', match: 'prefix' },
-          ]
+          { href: '/dashboard/incubator', label: 'Incubateurs', icon: Factory, section: 'incubator', match: 'prefix' },
+          { href: '/dashboard/incubator/create', label: 'Créer un incubateur', icon: Plus, section: 'incubator', match: 'prefix' },
+        ]
         : [];
 
   const accountItems: NavLinkItem[] = [
@@ -236,12 +236,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const projectItems: NavLinkItem[] = projectId
     ? PROJECT_MODULES.map((mod) => ({
-        href: `/dashboard/project-owner/projects/${projectId}${mod.suffix}`,
-        label: mod.label,
-        icon: mod.icon,
-        section: 'project',
-        match: mod.match ?? (mod.suffix === '' ? 'exact' : 'prefix'),
-      }))
+      href: `/dashboard/project-owner/projects/${projectId}${mod.suffix}`,
+      label: mod.label,
+      icon: mod.icon,
+      section: 'project',
+      match: mod.match ?? (mod.suffix === '' ? 'exact' : 'prefix'),
+    }))
     : [];
 
   const navItems = [...baseItems, ...roleItems, ...projectItems, ...accountItems];
@@ -375,11 +375,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       href={`/dashboard/project-owner/projects/${p.id}`}
                       onClick={closeDrawer}
                       aria-current={isCurrent ? 'page' : undefined}
-                      className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
-                        isCurrent
+                      className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${isCurrent
                           ? 'bg-accent/10 text-accent font-medium'
                           : 'text-ink-2 hover:bg-moss-light hover:text-ink'
-                      }`}
+                        }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isCurrent ? 'bg-accent' : 'bg-ink-3 group-hover:bg-moss'}`} />
                       <span className="truncate">{p.name}</span>
@@ -437,8 +436,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <Menu size={20} className="text-ink-2" />
             </button>
             <div className="hidden sm:flex items-center text-sm text-ink-3 min-w-0">
-              <span className="text-[#4b8461] shrink-0">Tool</span>
-              <span className="text-[#c9a84c] shrink-0">Box</span>
+              <span className="text-[#4b8461] shrink-0">Project</span>
+              <span className="text-[#c9a84c] shrink-0">Struct</span>
               <ChevronRight size={14} className="mx-1.5 opacity-50 shrink-0" />
               <span className="capitalize shrink-0">{currentRoleLabel}</span>
               {crumbTail.map((crumb, i) => {

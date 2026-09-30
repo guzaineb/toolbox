@@ -64,10 +64,13 @@ export class ChromaService implements OnModuleDestroy {
     if (this.isInitialized) return;
 
     const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
+    const chromaHost = new URL(chromaUrl).hostname;
+    const chromaPort = new URL(chromaUrl).port || '8000';
     try {
       const { ChromaClient } = await import('chromadb');
       this.client = new ChromaClient({
-        path: chromaUrl,
+        host: chromaHost,
+        port: Number(chromaPort),
       }) as unknown as ChromaClientInstance;
       this.realClient = true;
       this.logger.log(`ChromaService connected at ${chromaUrl}`);

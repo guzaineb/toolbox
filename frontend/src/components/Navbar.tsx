@@ -23,7 +23,7 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen)
+  const toggleMobileMenu = () => setMobileMenuOpen(prev => !prev)
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
   const handleLogin = (e: React.MouseEvent) => {
@@ -47,8 +47,8 @@ export default function Navbar({ isLoggedIn, onLogin, onLogout }: NavbarProps) {
     <>
       <nav className="bg-surface border-b border-border px-4 sm:px-6 h-[60px] flex items-center justify-between sticky top-0 z-50">
         <a href="/" className="font-syne text-lg font-bold text-text flex items-center gap-2 no-underline">
-          <svg viewBox="0 0 120 30" className="h-6 w-auto">
-            <text x="0" y="20" fontFamily="Syne, sans-serif" fontSize="20" fontWeight="700" letterSpacing="0.5">
+          <svg viewBox="0 0 170 35" className="h-6 w-auto">
+            <text x="0" y="30" fontFamily="Syne, sans-serif" fontSize="20" fontWeight="700" letterSpacing="0.5">
               <tspan fill="#a0e0b8">Project</tspan>
               <tspan fill="#c9a84c">Struct</tspan>
             </text>
