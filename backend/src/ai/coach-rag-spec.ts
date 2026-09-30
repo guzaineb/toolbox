@@ -158,7 +158,7 @@ describe('AI Project Coach - RAG Tests', () => {
 
     it('should indicate no relevant document in the answer', async () => {
       const result = await service.ask(PROJECT_ID, USER_ID, 'question');
-      expect(result.answer).toContaucun document pertinent trouvé;
+      expect(result.answer).toContain('aucun document pertinent trouvé');
     });
   });
 

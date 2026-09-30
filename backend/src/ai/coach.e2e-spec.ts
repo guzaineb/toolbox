@@ -107,10 +107,10 @@ describe('AI Project Coach End-to-End', () => {
         ],
       },
       priorities: [
-        { level: 'HIGH', area: 'GBM', description: 'Compléter l'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+        { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
       ],
-      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-      recommendedNextAction: 'Priorité haute : Compléter l'étape 2 - Problèmes et besoins',
+      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+      recommendedNextAction: 'Priorité haute : Compléter l\'étape 2 - Problèmes et besoins',
     });
 
     registryMock.getToolsForPrompt.mockReturnValue([

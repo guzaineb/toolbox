@@ -249,9 +249,33 @@ RÈGLES POUR LES EXPLICATIONS (quand l'utilisateur demande conseil, analyse ou r
         toolChoice: toolsAvailable.length > 0 ? 'auto' : undefined,
       });
 
-      // Groq API doesn't support toolCalls in messages - use content only
-      finalAnswer = response.content || finalAnswer;
-      break;
+      const toolCalls = response.toolCalls;
+
+      if (!toolCalls || toolCalls.length === 0) {
+        finalAnswer = response.content || finalAnswer;
+        break;
+      }
+
+      messages.push({
+        role: 'assistant',
+        content: response.content || '',
+        toolCalls,
+      });
+
+      for (const call of toolCalls) {
+        const output = await this.toolRegistry.execute(
+          call.function.name,
+          call.function.arguments,
+          userId,
+        );
+        toolsUsed.push(call.function.name);
+        messages.push({
+          role: 'tool',
+          content: output,
+          toolCallId: call.id,
+          name: call.function.name,
+        });
+      }
     }
 
     if (!finalAnswer) {
