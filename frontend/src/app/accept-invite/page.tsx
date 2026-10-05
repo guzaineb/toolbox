@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   UserCheck,
-  Shield,
 } from 'lucide-react'
 
 import api from '@/services/api'
@@ -26,6 +25,7 @@ function AcceptInviteContent() {
   const router = useRouter()
 
   const token = searchParams.get('token')
+  const incubatorId = searchParams.get('incubatorId')
 
   const [status, setStatus] = useState<
     'idle' | 'accepting' | 'declining' | 'success' | 'error'
@@ -37,16 +37,19 @@ function AcceptInviteContent() {
     if (!token) {
       setStatus('error')
       setMessage("Token d'invitation manquant")
+    } else if (!incubatorId) {
+      setStatus('error')
+      setMessage("Identifiant d'incubateur manquant")
     }
-  }, [token])
+  }, [token, incubatorId])
 
   const handleAccept = async () => {
-    if (!token) return
+    if (!token || !incubatorId) return
 
     setStatus('accepting')
 
     try {
-      await api.post('/incubators/:incubatorId/members/accept', { token })
+      await api.post(`/incubators/${incubatorId}/members/accept`, { token })
 
       setStatus('success')
       setMessage('Invitation acceptée avec succès !')
@@ -64,12 +67,12 @@ function AcceptInviteContent() {
   }
 
   const handleDecline = async () => {
-    if (!token) return
+    if (!token || !incubatorId) return
 
     setStatus('declining')
 
     try {
-      await api.post('/incubators/:incubatorId/members/decline', { token })
+      await api.post(`/incubators/${incubatorId}/members/decline`, { token })
 
       setStatus('success')
       setMessage('Invitation refusée.')

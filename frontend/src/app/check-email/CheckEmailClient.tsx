@@ -35,11 +35,9 @@ export default function CheckEmailClient() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/verify-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: verificationToken }),
-      });
+      const response = await fetch(
+        `${API_URL}/auth/verify-email?token=${encodeURIComponent(verificationToken)}`
+      );
 
       const data = await response.json();
 
@@ -65,12 +63,22 @@ export default function CheckEmailClient() {
     if (countdown > 0) return;
 
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    await fetch("/api/auth/resend-confirmation", { method: "POST", body: JSON.stringify({ email }) });
-
-    setLoading(false);
-    setCountdown(60);
-    alert("Un nouvel email a été envoyé !");
+    try {
+      const res = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Impossible de renvoyer l'email");
+      setMessage("");
+    } catch (err: any) {
+      setMessage(err.message || "Erreur lors de l'envoi de l'email.");
+      setStatus("error");
+    } finally {
+      setLoading(false);
+      setCountdown(60);
+    }
   };
 
   useEffect(() => {

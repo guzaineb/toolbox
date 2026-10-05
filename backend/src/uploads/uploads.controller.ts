@@ -8,11 +8,11 @@ export class UploadsController {
   @Get(':filename')
   getFile(@Param('filename') filename: string, @Res() res: Response) {
     const filePath = path.join(process.cwd(), 'uploads', filename);
-    
+
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('Fichier non trouvé');
     }
-    
+
     return res.sendFile(filePath);
   }
 }

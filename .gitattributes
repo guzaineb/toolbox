@@ -1,0 +1,5 @@
+# Les scripts exécutés dans les conteneurs (entrypoint backend, deploy.sh)
+# doivent conserver des fins de ligne LF, sinon le shebang est cassé.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf

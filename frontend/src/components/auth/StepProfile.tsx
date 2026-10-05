@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PhoneInput } from '@/components/auth/PhoneInput';
 import { Field, Input, Select, Textarea } from '@/components/shared/ui';
 import { AuthTranslation, Lang } from '@/i18n/auth';
-import { COUNTRIES } from '@/lib/countries ';
+import { COUNTRIES } from '@/lib/countries';
 import { cn } from '@/lib/utils';
 
 interface StepProfileProps {

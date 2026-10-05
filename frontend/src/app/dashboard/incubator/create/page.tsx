@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Building2, Mail, MapPin, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '@/services/api'
 import { Button, Card, ErrorAlert, Field, Input, Select, Textarea, ProgressBar } from '@/components/shared/ui'
-import { COUNTRIES, DEFAULT_COUNTRY, type Country } from '@/lib/countries ' 
+import { COUNTRIES, DEFAULT_COUNTRY, type Country } from '@/lib/countries'
 
 interface CreateIncubatorForm {
   name: string

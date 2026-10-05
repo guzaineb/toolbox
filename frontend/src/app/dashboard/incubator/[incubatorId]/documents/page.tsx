@@ -10,7 +10,7 @@ interface Doc {
   id: string
   document_type: string
   file_url: string
-  verification_status: 'pending' | 'approved' | 'rejected'
+  verification_status: 'PENDING' | 'APPROVED' | 'REJECTED'
   uploaded_at?: string
   uploaded_by_user_id?: string
   rejection_reason?: string
@@ -30,10 +30,10 @@ const DOC_TYPES = [
 ]
 
 const STATUS_BADGE: Record<string, 'amber' | 'green' | 'red'> = {
-  pending: 'amber', approved: 'green', rejected: 'red',
+  PENDING: 'amber', APPROVED: 'green', REJECTED: 'red',
 }
 const STATUS_LABEL: Record<string, string> = {
-  pending: 'En attente', approved: 'Approuvé', rejected: 'Rejeté',
+  PENDING: 'En attente', APPROVED: 'Approuvé', REJECTED: 'Rejeté',
 }
 
 const DOC_ICONS: Record<string, string> = {
@@ -109,7 +109,7 @@ export default function DocumentsPage() {
     }
   }
 
-  const handleVerify = async (docId: string, status: 'approved' | 'rejected', reason?: string) => {
+  const handleVerify = async (docId: string, status: 'APPROVED' | 'REJECTED', reason?: string) => {
     setError(null)
     setVerifyingId(docId)
     try {
@@ -209,14 +209,14 @@ export default function DocumentsPage() {
                       </Button>
                     </div>
 
-                    {doc.verification_status === 'rejected' && doc.rejection_reason && (
+                    {doc.verification_status === 'REJECTED' && doc.rejection_reason && (
                       <div className="mt-3 ml-9 p-3 rounded-lg bg-red-light border border-red/18 text-red text-[12px] flex items-start gap-2">
                         <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                         {doc.rejection_reason}
                       </div>
                     )}
 
-                    {doc.verification_status === 'pending' && (
+                    {doc.verification_status === 'PENDING' && (
                       <div className="flex gap-2 mt-3 ml-9">
                         {rejectingId === doc.id ? (
                           <div className="flex flex-col gap-2 w-full">
@@ -237,7 +237,7 @@ export default function DocumentsPage() {
                                     setError('Veuillez indiquer une raison de rejet')
                                     return
                                   }
-                                  handleVerify(doc.id, 'rejected', rejectReason)
+                                  handleVerify(doc.id, 'REJECTED', rejectReason)
                                 }}
                               >
                                 Confirmer le rejet
@@ -253,7 +253,7 @@ export default function DocumentsPage() {
                               size="sm"
                               variant="primary"
                               loading={isVerifying}
-                              onClick={() => handleVerify(doc.id, 'approved')}
+                              onClick={() => handleVerify(doc.id, 'APPROVED')}
                             >
                               <Check size={12} />
                               Approuver

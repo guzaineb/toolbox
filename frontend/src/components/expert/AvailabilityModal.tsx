@@ -32,7 +32,7 @@ export function AvailabilityModal({
       <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-lg">
         <h3 className="text-lg font-semibold text-ink mb-4">Changer ma disponibilité</h3>
         <div className="space-y-3 mb-6">
-          {(['available', 'busy', 'unavailable'] as const).map((s) => (
+          {(['AVAILABLE', 'BUSY', 'UNAVAILABLE'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatus(s)}

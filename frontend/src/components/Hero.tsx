@@ -10,7 +10,7 @@ export default function Hero() {
         <span className="text-accent">structuré et finançable</span>
       </h1>
       <p className="text-base text-text-2 leading-relaxed max-w-[520px] mx-auto mb-8">
-        ToolBox guide les porteurs de projet étape par étape. Structuration intelligente,
+        ProjectStruct guide les porteurs de projet étape par étape. Structuration intelligente,
         livrables standardisés, décision facilitée pour les incubateurs.
       </p>
       <div className="flex gap-2.5 justify-center flex-wrap">

@@ -1,0 +1,23 @@
+node_modules
+dist
+build
+coverage
+.next
+.git
+.gitignore
+.vscode
+.idea
+
+# Secrets : jamais dans l'image
+.env
+.env.*
+!.env.example
+
+# Tests / docs / logs
+test
+*.log
+*.tsbuildinfo
+README.md
+Dockerfile
+.dockerignore
+new_migration.sql

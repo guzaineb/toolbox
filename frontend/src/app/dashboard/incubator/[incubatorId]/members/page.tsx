@@ -28,12 +28,12 @@ interface Member {
 }
 
 const ROLE_BADGE: Record<string, 'green' | 'blue' | 'amber' | 'gray'> = {
-  admin: 'green', program_manager: 'blue', cohort_manager: 'amber',
-  review_manager: 'blue', member: 'gray', viewer: 'gray',
+  ADMIN: 'green', PROGRAM_MANAGER: 'blue', COHORT_MANAGER: 'amber',
+  REVIEW_MANAGER: 'blue', MEMBER: 'gray', VIEWER: 'gray',
 }
 const ROLE_LABEL: Record<string, string> = {
-  admin: 'Admin', program_manager: 'Program Mgr', cohort_manager: 'Cohort Mgr',
-  review_manager: 'Review Mgr', member: 'Membre', viewer: 'Viewer',
+  ADMIN: 'Admin', PROGRAM_MANAGER: 'Program Mgr', COHORT_MANAGER: 'Cohort Mgr',
+  REVIEW_MANAGER: 'Review Mgr', MEMBER: 'Membre', VIEWER: 'Viewer',
 }
 
 const AVATAR_COLORS = [
@@ -56,7 +56,7 @@ function InviteModal({
   onSuccess: (email: string) => void
 }) {
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState('member')
+  const [role, setRole] = useState('MEMBER')
   const [jobTitle, setJobTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -123,11 +123,11 @@ function InviteModal({
               </Field>
               <Field label="Rôle">
                 <Select value={role} onChange={(e) => setRole(e.target.value)} className="text-base">
-                  <option value="program_manager">Program Manager</option>
-                  <option value="cohort_manager">Cohort Manager</option>
-                  <option value="review_manager">Review Manager</option>
-                  <option value="member">Member</option>
-                  <option value="viewer">Viewer</option>
+                  <option value="PROGRAM_MANAGER">Program Manager</option>
+                  <option value="COHORT_MANAGER">Cohort Manager</option>
+                  <option value="REVIEW_MANAGER">Review Manager</option>
+                  <option value="MEMBER">Member</option>
+                  <option value="VIEWER">Viewer</option>
                 </Select>
               </Field>
               <Field label="Titre du poste">
@@ -220,11 +220,11 @@ function EditMemberModal({
             <Field label="Rôle">
               <Select value={role} onChange={(e) => setRole(e.target.value)} className="text-base">
                 <option value="admin">Admin</option>
-                <option value="program_manager">Program Manager</option>
-                <option value="cohort_manager">Cohort Manager</option>
-                <option value="review_manager">Review Manager</option>
-                <option value="member">Member</option>
-                <option value="viewer">Viewer</option>
+                <option value="PROGRAM_MANAGER">Program Manager</option>
+                <option value="COHORT_MANAGER">Cohort Manager</option>
+                <option value="REVIEW_MANAGER">Review Manager</option>
+                <option value="MEMBER">Member</option>
+                <option value="VIEWER">Viewer</option>
               </Select>
             </Field>
             <Field label="Titre du poste">
@@ -232,8 +232,8 @@ function EditMemberModal({
             </Field>
             <Field label="Statut">
               <Select value={status} onChange={(e) => setStatus(e.target.value)} className="text-base">
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
+                <option value="ACTIVE">Actif</option>
+                <option value="SUSPENDED">Suspendu</option>
               </Select>
             </Field>
 
@@ -418,8 +418,8 @@ export default function MembersPage() {
                     <Badge variant={ROLE_BADGE[m.role] ?? 'gray'}>
                       {ROLE_LABEL[m.role] ?? m.role}
                     </Badge>
-                    <Badge variant={m.status === 'active' ? 'green' : 'gray'}>
-                      {m.status === 'active' ? 'Actif' : 'Inactif'}
+                    <Badge variant={m.status === 'ACTIVE' ? 'green' : 'gray'}>
+                      {m.status === 'ACTIVE' ? 'Actif' : 'Inactif'}
                     </Badge>
 
                     <div className="flex gap-1.5 flex-shrink-0">

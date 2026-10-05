@@ -48,7 +48,7 @@ export function useIncubator(incubatorId?: string) {
     }
   }, [incubatorId]);
 
-  const updateStatus = useCallback(async (status: 'active' | 'suspended') => {
+  const updateStatus = useCallback(async (status: 'ACTIVE' | 'SUSPENDED') => {
     if (!incubatorId) throw new Error('No incubator ID');
     setLoading(true);
     try {
@@ -60,7 +60,7 @@ export function useIncubator(incubatorId?: string) {
     }
   }, [incubatorId]);
 
-  const updateVerification = useCallback(async (verification_status: 'approved' | 'rejected') => {
+  const updateVerification = useCallback(async (verification_status: 'APPROVED' | 'REJECTED') => {
     if (!incubatorId) throw new Error('No incubator ID');
     setLoading(true);
     try {

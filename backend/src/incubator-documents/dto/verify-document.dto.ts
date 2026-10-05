@@ -1,8 +1,8 @@
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class VerifyDocumentDto {
-  @IsIn(['approved', 'rejected'])
-  verification_status: 'approved' | 'rejected';
+  @IsIn(['APPROVED', 'REJECTED'])
+  verification_status: 'APPROVED' | 'REJECTED';
 
   @IsOptional()
   @IsString()

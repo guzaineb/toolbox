@@ -1,96 +1,76 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ProjectOwnerProfile } from './project-owner-profile.entity';
-import { ProjectOwnerSkill } from './project-owner-skill.entity';
-import { ProjectOwnerExperience } from './project-owner-experience.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectOwnerDto } from './dto/create-project-owner.dto';
-import { CreateSkillDto } from './dto/ceate-skill.dto';
-import { CreateExperienceDto } from './dto/create.experience.dto';
+import { CreateSkillDto } from './dto/create-skill.dto';
+import { CreateExperienceDto } from './dto/create-experience.dto';
 
 @Injectable()
 export class ProjectOwnerService {
-  constructor(
-    @InjectRepository(ProjectOwnerProfile)
-    private repo: Repository<ProjectOwnerProfile>,
-    @InjectRepository(ProjectOwnerSkill)
-    private skillRepo: Repository<ProjectOwnerSkill>,
-    @InjectRepository(ProjectOwnerExperience)
-    private experienceRepo: Repository<ProjectOwnerExperience>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateProjectOwnerDto) {
-    const profile = this.repo.create({ user: { id: userId }, ...dto });
-    return this.repo.save(profile);
+    return this.prisma.projectOwnerProfile.create({
+      data: {
+        user_id: userId,
+        ...dto,
+      },
+    });
   }
 
   async findByUser(userId: string) {
-    return this.repo.findOne({
-      where: { user: { id: userId } },
-      relations: ['user', 'user.profile', 'skills', 'experiences'],
+    return this.prisma.projectOwnerProfile.findUnique({
+      where: { user_id: userId },
+      include: {
+        user: { include: { profile: true } },
+        skills: true,
+        experiences: true,
+      },
     });
-  }
-
-  async findById(profileId: string) {
-    const profile = await this.repo.findOne({
-      where: { id: profileId },
-      relations: ['user', 'user.profile', 'skills', 'experiences'],
-    });
-    if (!profile) throw new NotFoundException('Profil porteur introuvable');
-    return profile;
   }
 
   async upsert(userId: string, dto: CreateProjectOwnerDto) {
     const existing = await this.findByUser(userId);
     if (existing) {
-      await this.repo.update({ id: existing.id }, dto);
+      await this.prisma.projectOwnerProfile.update({
+        where: { id: existing.id },
+        data: dto as any,
+      });
       return this.findByUser(userId);
     }
     return this.create(userId, dto);
-  }
-
-  // ─── Admin: list all ──────────────────────────────────────────────────────
-
-  async findAll(page = 1, limit = 20) {
-    const [data, total] = await this.repo.findAndCount({
-      relations: ['user', 'user.profile', 'skills', 'experiences'],
-      order: { created_at: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
-  }
-
-  // Admin patch any profile by id
-  async adminPatch(profileId: string, dto: CreateProjectOwnerDto) {
-    const profile = await this.findById(profileId);
-    await this.repo.update({ id: profile.id }, dto);
-    return this.findById(profileId);
   }
 
   // ─── Skills ───────────────────────────────────────────────────────────────
 
   async addSkill(userId: string, dto: CreateSkillDto) {
     const profile = await this.findByUser(userId);
-    if (!profile) throw new NotFoundException('Créez d\'abord votre profil porteur');
-    const skill = this.skillRepo.create({ ...dto, profile });
-    return this.skillRepo.save(skill);
+    if (!profile)
+      throw new NotFoundException("Créez d'abord votre profil porteur");
+    return this.prisma.projectOwnerSkill.create({
+      data: {
+        skill_name: dto.skill_name,
+        level: dto.level,
+        project_owner_profile_id: profile.id,
+      },
+    });
   }
 
   async getSkills(userId: string) {
     const profile = await this.findByUser(userId);
     if (!profile) return [];
-    return this.skillRepo.find({ where: { profile: { id: profile.id } } });
+    return this.prisma.projectOwnerSkill.findMany({
+      where: { project_owner_profile_id: profile.id },
+    });
   }
 
   async deleteSkill(userId: string, skillId: string) {
     const profile = await this.findByUser(userId);
     if (!profile) throw new NotFoundException('Profil introuvable');
-    const skill = await this.skillRepo.findOne({
-      where: { id: skillId, profile: { id: profile.id } },
+    const skill = await this.prisma.projectOwnerSkill.findFirst({
+      where: { id: skillId, project_owner_profile_id: profile.id },
     });
     if (!skill) throw new NotFoundException('Compétence introuvable');
-    await this.skillRepo.remove(skill);
+    await this.prisma.projectOwnerSkill.delete({ where: { id: skillId } });
     return { deleted: true };
   }
 
@@ -98,28 +78,37 @@ export class ProjectOwnerService {
 
   async addExperience(userId: string, dto: CreateExperienceDto) {
     const profile = await this.findByUser(userId);
-    if (!profile) throw new NotFoundException('Créez d\'abord votre profil porteur');
-    const exp = this.experienceRepo.create({ ...dto, profile });
-    return this.experienceRepo.save(exp);
+    if (!profile)
+      throw new NotFoundException("Créez d'abord votre profil porteur");
+    return this.prisma.projectOwnerExperience.create({
+      data: {
+        title: dto.title,
+        organization: dto.organization,
+        description: dto.description,
+        start_date: dto.start_date,
+        end_date: dto.end_date,
+        project_owner_profile_id: profile.id,
+      },
+    });
   }
 
   async getExperiences(userId: string) {
     const profile = await this.findByUser(userId);
     if (!profile) return [];
-    return this.experienceRepo.find({
-      where: { profile: { id: profile.id } },
-      order: { start_date: 'DESC' },
+    return this.prisma.projectOwnerExperience.findMany({
+      where: { project_owner_profile_id: profile.id },
+      orderBy: { start_date: 'desc' },
     });
   }
 
   async deleteExperience(userId: string, expId: string) {
     const profile = await this.findByUser(userId);
     if (!profile) throw new NotFoundException('Profil introuvable');
-    const exp = await this.experienceRepo.findOne({
-      where: { id: expId, profile: { id: profile.id } },
+    const exp = await this.prisma.projectOwnerExperience.findFirst({
+      where: { id: expId, project_owner_profile_id: profile.id },
     });
     if (!exp) throw new NotFoundException('Expérience introuvable');
-    await this.experienceRepo.remove(exp);
+    await this.prisma.projectOwnerExperience.delete({ where: { id: expId } });
     return { deleted: true };
   }
 }

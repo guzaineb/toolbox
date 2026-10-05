@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../services/api';
 
-export type UserRole = 'admin' | 'expert' | 'project_owner' | 'incubator_membre';
+export type UserRole = 'EXPERT' | 'PROJECT_OWNER' | 'INCUBATOR_MEMBER';
 
 export interface AuthUser {
   id: string;
@@ -39,10 +39,9 @@ export interface AuthUser {
 }
 
 export const ROLE_ROUTES: Record<string, string> = {
-  admin:             '/dashboard',
-  expert:            '/dashboard/expert',
-  project_owner:     '/dashboard/project-owner',
-  incubator_membre:  '/dashboard/incubator',
+  EXPERT:            '/dashboard',
+  PROJECT_OWNER:     '/dashboard',
+  INCUBATOR_MEMBER:  '/dashboard',
 };
 
 const DEFAULT_ROUTE = '/dashboard';
@@ -121,7 +120,7 @@ export function useAuth() {
   const logout = useCallback(() => {
     storage.remove('access_token');
     setUser(null);
-    router.push('/auth/login');
+    router.push('/login');
   }, [router]);
 
   const redirectToDashboard = useCallback(

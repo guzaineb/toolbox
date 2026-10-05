@@ -1,0 +1,909 @@
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+import { StepStatus } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { AiService } from '../ai/ai.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from '../events/notification-event.enum';
+import { NotificationPayload } from '../events/notification-payload.interface';
+import { NotificationMessageBuilder } from '../events/notification-message-builder';
+import { SectionStepService } from '../common/services/section-step.service';
+import { ModuleAccessService } from '../common/services/module-access.service';
+import { GBM_STEPS, getStepConfig, StepConfig } from './step-config';
+import { ALL_STEPS } from './step-registry';
+import { getOneToManyRule, isValidOneToManyItem } from './step-validation';
+import { extractJson } from '../ai/analysis/ai-json.util';
+
+/** Détail d'une étape GBM insuffisante pour la révision (D3). */
+export interface GbmStepIssue {
+  stepKey: string;
+  title: string;
+  relation: 'one-to-one' | 'one-to-many';
+  status: 'EMPTY' | 'INCOMPLETE';
+  detail: string;
+  items?: number;
+  requiredFields?: string[];
+}
+
+@Injectable()
+export class GbmService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sections: SectionStepService,
+    private readonly access: ModuleAccessService,
+    private readonly ai: AiService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly messageBuilder: NotificationMessageBuilder,
+  ) {}
+
+  private getModel(config: StepConfig) {
+    const model = (this.prisma as any)[config.model];
+    if (!model) throw new BadRequestException(`Unknown model: ${config.model}`);
+    return model;
+  }
+
+  async getStepData(projectId: string, stepKey: string, userId: string) {
+    await this.access.assertCanAccessProject(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+
+    if (config.relation === 'one-to-many') {
+      return this.getMany(projectId, config);
+    }
+    return this.getOne(projectId, config);
+  }
+
+  private async getOne(projectId: string, config: StepConfig) {
+    const model = this.getModel(config);
+    const record = await model.findUnique({ where: { project_id: projectId } });
+    return record || {};
+  }
+
+  private async getMany(projectId: string, config: StepConfig) {
+    const model = this.getModel(config);
+    return model.findMany({
+      where: { project_id: projectId },
+      orderBy: { created_at: 'asc' },
+    });
+  }
+
+  async updateStep(
+    projectId: string,
+    stepKey: string,
+    data: any,
+    userId: string,
+  ) {
+    await this.sections.ensureOwnership(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+    if (config.relation !== 'one-to-one') {
+      throw new BadRequestException(
+        `Step ${stepKey} is one-to-many. Use add/list/delete endpoints.`,
+      );
+    }
+
+    const model = this.getModel(config);
+    const filteredData = this.filterStepFields(config, data);
+
+    const record = await model.upsert({
+      where: { project_id: projectId },
+      create: { project_id: projectId, ...filteredData },
+      update: filteredData,
+    });
+
+    const hasContent = Object.values(filteredData).some(
+      (value) => value !== undefined && value !== null && value !== '',
+    );
+    if (hasContent) {
+      await this.sections.markStepComplete(projectId, stepKey);
+    } else {
+      await this.sections.markStepProgress(projectId, stepKey, 'NOT_STARTED');
+    }
+
+    if (config.aiGenerated) {
+      await this.generateAiSummary(projectId, stepKey, record);
+    }
+
+    return record;
+  }
+
+  async addStepItem(
+    projectId: string,
+    stepKey: string,
+    data: any,
+    userId: string,
+  ) {
+    await this.sections.ensureOwnership(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+    if (config.relation !== 'one-to-many') {
+      throw new BadRequestException(
+        `Step ${stepKey} is one-to-one. Use PATCH to update.`,
+      );
+    }
+
+    const model = this.getModel(config);
+    const filteredData = this.filterStepFields(config, data);
+    const item = await model.create({
+      data: { project_id: projectId, ...filteredData },
+    });
+
+    await this.syncStepStatus(projectId, stepKey);
+
+    return item;
+  }
+
+  async listStepItems(projectId: string, stepKey: string, userId: string) {
+    await this.access.assertCanAccessProject(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+
+    return this.getMany(projectId, config);
+  }
+
+  async updateStepItem(
+    projectId: string,
+    stepKey: string,
+    itemId: string,
+    data: any,
+    userId: string,
+  ) {
+    await this.sections.ensureOwnership(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+    if (config.relation !== 'one-to-many') {
+      throw new BadRequestException(
+        `Step ${stepKey} is one-to-one. Use PATCH to update.`,
+      );
+    }
+
+    const model = this.getModel(config);
+    const item = await model.findFirst({
+      where: { id: itemId, project_id: projectId },
+    });
+    if (!item) throw new NotFoundException('Item not found');
+
+    const filteredData = this.filterStepFields(config, data);
+    const updated = await model.update({
+      where: { id: itemId },
+      data: filteredData,
+    });
+
+    await this.syncStepStatus(projectId, stepKey);
+
+    return updated;
+  }
+
+  async deleteStepItem(
+    projectId: string,
+    stepKey: string,
+    itemId: string,
+    userId: string,
+  ) {
+    await this.sections.ensureOwnership(projectId, userId);
+    const config = getStepConfig(stepKey);
+    if (!config) throw new BadRequestException(`Invalid step: ${stepKey}`);
+    if (config.relation !== 'one-to-many') {
+      throw new BadRequestException(`Cannot delete from a one-to-one step`);
+    }
+
+    const model = this.getModel(config);
+    const item = await model.findFirst({
+      where: { id: itemId, project_id: projectId },
+    });
+    if (!item) throw new NotFoundException('Item not found');
+
+    await model.delete({ where: { id: itemId } });
+
+    await this.syncStepStatus(projectId, stepKey);
+
+    return { deleted: true };
+  }
+
+  private async syncStepStatus(projectId: string, stepKey: string) {
+    const config = getStepConfig(stepKey);
+    if (!config) return;
+
+    if (config.relation === 'one-to-many') {
+      // D3 : un one-to-many n'est COMPLETED que s'il contient ≥1 élément valide ;
+      // des éléments présents mais incomplets => IN_PROGRESS ; 0 élément => NOT_STARTED.
+      const items = await this.findOneToManyItems(projectId, config);
+      if (items.length === 0) {
+        await this.sections.markStepProgress(projectId, stepKey, 'NOT_STARTED');
+      } else if (this.anyValidOneToMany(stepKey, items)) {
+        await this.sections.markStepComplete(projectId, stepKey);
+      } else {
+        await this.sections.markStepProgress(projectId, stepKey, 'IN_PROGRESS');
+      }
+      return;
+    }
+
+    const model = this.getModel(config);
+    const count = await model.count({ where: { project_id: projectId } });
+
+    if (count === 0) {
+      await this.sections.markStepProgress(projectId, stepKey, 'NOT_STARTED');
+    } else {
+      await this.sections.markStepComplete(projectId, stepKey);
+    }
+  }
+
+  private async findOneToManyItems(
+    projectId: string,
+    config: StepConfig,
+  ): Promise<any[]> {
+    const model = this.getModel(config);
+    return model.findMany({ where: { project_id: projectId } });
+  }
+
+  private anyValidOneToMany(stepKey: string, items: any[]): boolean {
+    const rule = getOneToManyRule(stepKey);
+    if (!rule) return false;
+    return items.some((item) => isValidOneToManyItem(stepKey, item));
+  }
+
+  /**
+   * Étapes GBM obligatoires pour considérer le GBM « suffisamment complet »
+   * (les 15 étapes one-to-one non générées par IA + les 5 étapes one-to-many,
+   * chacune devant contenir ≥1 élément valide — aligné avec reviewGbm, D3).
+   * Réutilisé par le gating Business Plan (D7) et les documents.
+   */
+  async getMissingRequiredSteps(projectId: string): Promise<StepConfig[]> {
+    const required = [
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-one' && !s.aiGenerated),
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-many'),
+    ];
+    const missing: StepConfig[] = [];
+    for (const step of required) {
+      const hasValidContent = await this.stepHasValidContent(projectId, step);
+      if (!hasValidContent) missing.push(step);
+    }
+    return missing;
+  }
+
+  /** Vrai si une étape requise contient du contenu réel (champ non vide pour un one-to-one,
+   *  ≥1 élément valide pour un one-to-many). */
+  private async stepHasValidContent(
+    projectId: string,
+    step: StepConfig,
+  ): Promise<boolean> {
+    const model = this.getModel(step);
+
+    if (step.relation === 'one-to-many') {
+      const items = await this.findOneToManyItems(projectId, step);
+      return this.anyValidOneToMany(step.stepKey, items);
+    }
+
+    const record = await model.findUnique({ where: { project_id: projectId } });
+    if (!record) return false;
+    const allowed = this.getAllowedFields(step.model);
+    return allowed.some((key) => {
+      const value = record[key];
+      if (typeof value === 'string') return value.trim() !== '';
+      return value !== undefined && value !== null && value !== '';
+    });
+  }
+
+  /** Vrai si toutes les étapes GBM obligatoires sont remplies (D7). */
+  async isGbmReady(projectId: string): Promise<boolean> {
+    return (await this.getMissingRequiredSteps(projectId)).length === 0;
+  }
+
+  /** Détail des étapes GBM insuffisantes pour la révision (aligné sur
+   *  getMissingRequiredSteps, mais avec un diagnostic exploitable par le porteur). */
+  private async getReviewIssues(projectId: string): Promise<GbmStepIssue[]> {
+    const required = [
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-one' && !s.aiGenerated),
+      ...GBM_STEPS.filter((s) => s.relation === 'one-to-many'),
+    ];
+    const issues: GbmStepIssue[] = [];
+    for (const step of required) {
+      const issue = await this.getStepIssue(projectId, step);
+      if (issue) issues.push(issue);
+    }
+    return issues;
+  }
+
+  private async getStepIssue(
+    projectId: string,
+    step: StepConfig,
+  ): Promise<GbmStepIssue | null> {
+    if (step.relation === 'one-to-many') {
+      const items = await this.findOneToManyItems(projectId, step);
+      if (this.anyValidOneToMany(step.stepKey, items)) return null;
+
+      const rule = getOneToManyRule(step.stepKey);
+      const requiredFields = rule
+        ? [
+            rule.idLabel,
+            ...(rule.allOf ?? []).map((f) => f.label),
+            ...(rule.anyOf?.length
+              ? [rule.anyOf.map((f) => f.label).join(' ou ')]
+              : []),
+          ]
+        : undefined;
+
+      return items.length === 0
+        ? {
+            stepKey: step.stepKey,
+            title: step.title,
+            relation: 'one-to-many',
+            status: 'EMPTY',
+            detail:
+              'Aucun élément ajouté : ajoutez au moins un élément complet.',
+            items: 0,
+            requiredFields,
+          }
+        : {
+            stepKey: step.stepKey,
+            title: step.title,
+            relation: 'one-to-many',
+            status: 'INCOMPLETE',
+            detail: `${items.length} élément(s) présent(s), mais aucun ne satisfait les champs requis.`,
+            items: items.length,
+            requiredFields,
+          };
+    }
+
+    if (await this.stepHasValidContent(projectId, step)) return null;
+    return {
+      stepKey: step.stepKey,
+      title: step.title,
+      relation: 'one-to-one',
+      status: 'EMPTY',
+      detail: 'Étape non remplie : renseignez au moins un champ.',
+    };
+  }
+
+  async reviewGbm(projectId: string, userId: string) {
+    await this.sections.ensureOwnership(projectId, userId);
+
+    const issues = await this.getReviewIssues(projectId);
+
+    if (issues.length > 0) {
+      throw new BadRequestException({
+        message: 'Complétez toutes les étapes GBM avant la révision',
+        missingSteps: issues,
+      });
+    }
+
+    const reviewedAt = new Date();
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        gbm_reviewed_at: reviewedAt,
+        is_gbm_reviewed: true,
+      },
+    });
+
+    const { title, message } = this.messageBuilder.stepCompleted();
+    this.eventEmitter.emit(NotificationEvent.STEP_COMPLETED, {
+      event: NotificationEvent.STEP_COMPLETED,
+      recipients: [{ userId }],
+      title,
+      message,
+      link: `/project-owner/projects/${projectId}/gbm`,
+      senderId: userId,
+      resourceType: 'PROJECT',
+      resourceId: projectId,
+    } as NotificationPayload);
+
+    return { message: 'GBM review completed', gbm_reviewed_at: reviewedAt };
+  }
+
+  async getProgress(projectId: string, userId: string) {
+    await this.access.assertCanAccessProject(projectId, userId);
+
+    const steps = await this.prisma.stepProgress.findMany({
+      where: { project_id: projectId },
+      select: { step_key: true, status: true },
+    });
+
+    const gbmSteps = GBM_STEPS.map((s) => s.stepKey);
+    const projectSteps = steps.filter((s) => gbmSteps.includes(s.step_key));
+
+    const total = gbmSteps.length;
+    const completed = projectSteps.filter(
+      (s) => s.status === 'COMPLETED',
+    ).length;
+    const inProgress = projectSteps.filter(
+      (s) => s.status === 'IN_PROGRESS',
+    ).length;
+    const blocked = projectSteps.filter((s) => s.status === 'BLOCKED').length;
+    const notStarted = projectSteps.filter(
+      (s) => s.status === 'NOT_STARTED' || !s.status,
+    ).length;
+
+    const phaseBreakdown = [1, 2, 3, 4, 5].map((phase) => {
+      const phaseStepKeys = GBM_STEPS.filter((s) => s.phase === phase).map(
+        (s) => s.stepKey,
+      );
+      const phaseSteps = projectSteps.filter((s) =>
+        phaseStepKeys.includes(s.step_key),
+      );
+      const phaseTotal = phaseStepKeys.length;
+      const phaseCompleted = phaseSteps.filter(
+        (s) => s.status === 'COMPLETED',
+      ).length;
+      return {
+        phase,
+        total: phaseTotal,
+        completed: phaseCompleted,
+        percentage:
+          phaseTotal > 0 ? Math.round((phaseCompleted / phaseTotal) * 100) : 0,
+      };
+    });
+
+    return {
+      total,
+      completed,
+      inProgress,
+      blocked,
+      notStarted,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+      phases: phaseBreakdown,
+      steps: projectSteps.filter((s) => gbmSteps.includes(s.step_key)),
+    };
+  }
+
+  async initializeProjectSteps(projectId: string, userId: string) {
+    await this.sections.ensureOwnership(projectId, userId);
+
+    const operations = ALL_STEPS.map((step) =>
+      this.prisma.stepProgress.upsert({
+        where: {
+          project_id_step_key: {
+            project_id: projectId,
+            step_key: step.stepKey,
+          },
+        },
+        create: {
+          project_id: projectId,
+          step_key: step.stepKey,
+          status: StepStatus.NOT_STARTED,
+        },
+        update: {},
+      }),
+    );
+
+    await this.prisma.$transaction(operations);
+    return { initialized: true, count: ALL_STEPS.length };
+  }
+
+  private filterStepFields(config: StepConfig, data: any): any {
+    const allowedFields = this.getAllowedFields(config.model);
+    const filtered: any = {};
+    for (const key of Object.keys(data)) {
+      if (allowedFields.includes(key)) {
+        filtered[key] = data[key];
+      }
+    }
+    return filtered;
+  }
+
+  private getAllowedFields(modelName: string): string[] {
+    const fieldMap: Record<string, string[]> = {
+      // Phase 1
+      ideaSketch: ['idea_initial', 'product_service', 'customers', 'partners'],
+      problemsNeeds: [
+        'environmental_challenges',
+        'social_challenges',
+        'customer_needs',
+        'team_motivations',
+      ],
+      pestel: [
+        'political_what',
+        'political_how',
+        'economic_what',
+        'economic_how',
+        'social_what',
+        'social_how',
+        'technological_what',
+        'technological_how',
+        'environmental_what',
+        'environmental_how',
+        'legal_what',
+        'legal_how',
+      ],
+      objective: [
+        'environmental_problems',
+        'environmental_objectives',
+        'social_problems',
+        'social_objectives',
+        'customer_problems',
+        'customer_objectives',
+        'team_problems',
+        'team_objectives',
+      ],
+      missionVision: ['mission', 'vision', 'values'],
+      contextSummary: ['summary_text', 'generated_by_ai'],
+
+      // Phase 2
+      stakeholder: [
+        'name',
+        'role',
+        'interest',
+        'influence',
+        'engagement_strategy',
+      ],
+      stakeholderMap: ['stakeholder_name', 'contribution', 'reward'],
+      customerSegment: [
+        'segment_name',
+        'description',
+        'pains',
+        'gains',
+        'functions',
+      ],
+      valueProposition: [
+        'environmental_value',
+        'social_value',
+        'pain_relievers',
+        'gain_creators',
+        'products_services',
+        'value_added',
+        'innovation_value',
+      ],
+      testDiscovery: [
+        'hypothesis',
+        'test_method',
+        'results',
+        'learnings',
+        'validated',
+      ],
+      valuePropositionPivot: [
+        'initial_assumptions',
+        'test_results',
+        'pivot_decision',
+        'new_value_proposition',
+      ],
+      customerRelationsChannel: [
+        'customer_relationships',
+        'channels',
+        'distribution_strategy',
+      ],
+      customerJourney: [
+        'stage_name',
+        'touchpoints',
+        'customer_emotions',
+        'improvement_ideas',
+      ],
+      keyActivitiesResource: [
+        'key_activities',
+        'key_resources',
+        'strategic_partners',
+      ],
+      ecoDesign: [
+        'equipe_eco',
+        'projet_eco',
+        'contexte_eco',
+        'vision_durable',
+        'cycle_de_vie',
+        'performance_eco',
+        'strategies_eco',
+        'plan_action_eco',
+      ],
+      ecoDesignResult: ['eco_results', 'performance_analysis', 'improvements'],
+      summaryActivity: [
+        'activities_summary',
+        'key_achievements',
+        'next_steps',
+        'generated_by_ai',
+      ],
+      costStructure: [
+        'fixed_costs',
+        'variable_costs',
+        'cost_drivers',
+        'breakeven_analysis',
+      ],
+      revenueStream: [
+        'revenue_sources',
+        'pricing_strategy',
+        'revenue_projections',
+      ],
+      costRevenueSummary: [
+        'cost_summary',
+        'revenue_summary',
+        'financial_health',
+        'generated_by_ai',
+      ],
+
+      // Phase 3
+      testPreparation: [
+        'test_objectives',
+        'test_method',
+        'success_criteria',
+        'resources_needed',
+        'timeline',
+      ],
+
+      // Phase 4
+      indicator: [
+        'environmental_kpis',
+        'social_kpis',
+        'economic_kpis',
+        'measurement_method',
+        'review_frequency',
+      ],
+
+      // Phase 5
+      swotAnalysis: ['strengths', 'weaknesses', 'opportunities', 'threats'],
+    };
+    return fieldMap[modelName] || [];
+  }
+
+  private async generateAiSummary(
+    projectId: string,
+    stepKey: string,
+    record: any,
+  ) {
+    try {
+      const context = await this.buildAiContext(projectId, stepKey);
+      const summary = await this.ai.generateSummary(
+        projectId,
+        stepKey,
+        context,
+      );
+
+      const config = getStepConfig(stepKey);
+      if (!config) return;
+
+      const model = this.getModel(config);
+      await model.update({
+        where: { id: record.id },
+        data: this.buildSummaryData(stepKey, summary),
+      });
+
+      await this.prisma.aiInteraction.create({
+        data: {
+          project_id: projectId,
+          step_key: stepKey,
+          prompt: `Génération du résumé pour ${stepKey} avec les données complètes du projet`,
+          response: summary,
+          model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+        },
+      });
+    } catch (error) {
+      // AI generation is non-blocking; log and continue
+    }
+  }
+
+  private async buildAiContext(
+    projectId: string,
+    stepKey: string,
+  ): Promise<Record<string, any>> {
+    const base = { project_id: projectId };
+
+    switch (stepKey) {
+      case 'gbm_6': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            idea_sketch: true,
+            problems_needs: true,
+            pestel: true,
+            objective: true,
+            mission_vision: true,
+          },
+        });
+        return {
+          ...base,
+          idea_sketch: data?.idea_sketch || {},
+          problems_needs: data?.problems_needs || {},
+          pestel: data?.pestel || {},
+          objective: data?.objective || {},
+          mission_vision: data?.mission_vision || {},
+        };
+      }
+
+      case 'gbm_15': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            key_activities_resource: true,
+            eco_design: true,
+            eco_design_result: true,
+            stakeholder: true,
+            customer_segment: true,
+            value_proposition: true,
+          },
+        });
+        return {
+          ...base,
+          key_activities_resource: data?.key_activities_resource || {},
+          eco_design: data?.eco_design || {},
+          eco_design_result: data?.eco_design_result || {},
+          stakeholder: data?.stakeholder || [],
+          customer_segment: data?.customer_segment || [],
+          value_proposition: data?.value_proposition || {},
+        };
+      }
+
+      case 'gbm_18': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            cost_structure: true,
+            revenue_stream: true,
+          },
+        });
+        return {
+          ...base,
+          cost_structure: data?.cost_structure || {},
+          revenue_stream: data?.revenue_stream || {},
+        };
+      }
+
+      case 'gbm_21': {
+        const data = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            idea_sketch: true,
+            problems_needs: true,
+            pestel: true,
+            objective: true,
+            mission_vision: true,
+            stakeholder: true,
+            customer_segment: true,
+            value_proposition: true,
+            test_discovery: true,
+            key_activities_resource: true,
+            eco_design: true,
+            cost_structure: true,
+            revenue_stream: true,
+          },
+        });
+        return {
+          ...base,
+          idea_sketch: data?.idea_sketch || {},
+          problems_needs: data?.problems_needs || {},
+          pestel: data?.pestel || {},
+          objective: data?.objective || {},
+          mission_vision: data?.mission_vision || {},
+          stakeholder: data?.stakeholder || [],
+          customer_segment: data?.customer_segment || [],
+          value_proposition: data?.value_proposition || {},
+          test_discovery: data?.test_discovery || [],
+          key_activities_resource: data?.key_activities_resource || {},
+          eco_design: data?.eco_design || {},
+          cost_structure: data?.cost_structure || {},
+          revenue_stream: data?.revenue_stream || {},
+        };
+      }
+
+      default:
+        return base;
+    }
+  }
+
+  private tryParseJson(text: string): Record<string, any> | null {
+    const parsed = extractJson(text);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, any>;
+    }
+    return null;
+  }
+
+  /** Présente un texte IA non-JSON de façon lisible : si la sortie ressemble à
+   * du JSON tronqué (accollades non fermées), on réécrit les lignes
+   * "clé": "valeur" en "clé : valeur" pour éviter d'afficher du JSON brut. */
+  private cleanTextBlob(text: string): string {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      const inner = trimmed.replace(/^[{[][\s\S]*?/, '').replace(/[}\]]$/, '');
+      const lines = inner
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && l !== ',' && l !== '');
+      return lines
+        .map((l) =>
+          l.replace(
+            /^"([^"]+)"\s*:\s*"?(.*?)"?\s*,?$/,
+            '$1 : $2',
+          ),
+        )
+        .join('\n');
+    }
+    return trimmed;
+  }
+
+  /** Convertit une valeur issue du JSON IA en texte lisible (liste à puces pour les
+   * tableaux, lignes "clé : valeur" pour les objets, jamais de "{\"...\":\"...\"}"
+   * affiché à l'écran). */
+  private jsonValueToText(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean')
+      return String(value);
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => {
+          if (typeof item === 'string') return `- ${item}`;
+          if (item && typeof item === 'object') {
+            const lines = Object.entries(item as Record<string, unknown>)
+              .map(([k, v]) => `${k}: ${String(v ?? '')}`)
+              .join(', ');
+            return `- ${lines}`;
+          }
+          return `- ${String(item)}`;
+        })
+        .join('\n');
+    }
+    if (typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([k, v]) => `${k} : ${this.jsonValueToText(v)}`)
+        .join('\n');
+    }
+    return String(value);
+  }
+
+  private buildSummaryData(stepKey: string, summary: string): any {
+    const base = { generated_by_ai: true };
+    switch (stepKey) {
+      case 'gbm_6':
+        return { ...base, summary_text: summary };
+      case 'gbm_15':
+      case 'gbm_18': {
+        const allowed =
+          stepKey === 'gbm_15'
+            ? ['activities_summary', 'key_achievements', 'next_steps']
+            : ['cost_summary', 'revenue_summary', 'financial_health'];
+        const parsed = this.tryParseJson(summary);
+        if (parsed) {
+          const data: Record<string, any> = { ...base };
+          for (const key of allowed) {
+            if (parsed[key] !== undefined)
+              data[key] = this.jsonValueToText(parsed[key]);
+          }
+          if (Object.keys(data).length > 1) return data;
+          // Objet JSON valide mais aux clés non attendues : on répartit les
+          // valeurs restantes dans le premier champ plutôt que d'afficher du
+          // JSON brut.
+          const values = Object.values(parsed).filter(
+            (v) => v !== undefined && v !== null && v !== '',
+          );
+          if (values.length > 0) {
+            data[allowed[0]] = values
+              .map((v) => this.jsonValueToText(v))
+              .filter((v) => v !== '')
+              .join('\n\n');
+            return data;
+          }
+        }
+        return stepKey === 'gbm_15'
+          ? { ...base, activities_summary: this.cleanTextBlob(summary) }
+          : { ...base, cost_summary: this.cleanTextBlob(summary) };
+      }
+      case 'gbm_21': {
+        const allowed = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+        const parsed = this.tryParseJson(summary);
+        if (parsed) {
+          const data: Record<string, any> = {};
+          for (const key of allowed) {
+            if (parsed[key] !== undefined)
+              data[key] = this.jsonValueToText(parsed[key]);
+          }
+          if (Object.keys(data).length > 0) return data;
+          const values = Object.values(parsed).filter(
+            (v) => v !== undefined && v !== null && v !== '',
+          );
+          if (values.length >= 2) {
+            data.strengths = this.jsonValueToText(values[0]);
+            data.opportunities = this.jsonValueToText(values[1]);
+            if (values[2] !== undefined)
+              data.weaknesses = this.jsonValueToText(values[2]);
+            if (values[3] !== undefined)
+              data.threats = this.jsonValueToText(values[3]);
+            return data;
+          }
+        }
+        return { strengths: this.cleanTextBlob(summary) };
+      }
+      default:
+        return {};
+    }
+  }
+}

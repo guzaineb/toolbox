@@ -9,16 +9,16 @@ import LeftPanel from "@/components/auth/LeftPanel";
 import RightPanel from "@/components/auth/RightPanel";
 import { cn } from "@/lib/utils";
 import { AuthTranslation, authTranslations, Lang } from "@/i18n/auth";
-import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/lib/countries ";
+import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/lib/countries";
 import { StepIndicator } from "@/components/auth/StepIndicator";
 import { StepAccount } from "@/components/auth/StepAccount";
 import { StepProfile } from "@/components/auth/StepProfile";
 import { StepRole } from "@/components/auth/StepRole";
 import { BtnMain, BtnSecondary, FormLink } from "@/components/auth/FormElements";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-interface FormData {
+interface RegistrationFormData {
   firstName: string;
   lastName: string;
   email: string;
@@ -46,7 +46,7 @@ export default function RegisterPage(): React.ReactElement {
   const [serverError, setServerError] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("fr");
   const t = authTranslations[lang] as AuthTranslation;
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: "",
     lastName: "",
     email: "",
@@ -87,7 +87,7 @@ export default function RegisterPage(): React.ReactElement {
     return hasLen && hasUp && hasLo && hasNum && hasSp;
   }, []);
 
-  const handleChange = (field: keyof FormData, value: string | Country): void => {
+  const handleChange = (field: keyof RegistrationFormData, value: string | Country): void => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field as string]) setErrors(prev => ({ ...prev, [field as string]: "" }));
   };
@@ -211,7 +211,7 @@ export default function RegisterPage(): React.ReactElement {
         dial_code: formData.selectedCountry.dialCode,
         city: formData.city ,
         address: formData.address,
-        preferredLanguage: formData.preferredLanguage ,
+        preferredLanguage: formData.preferredLanguage?.toUpperCase() ,
         bio: formData.bio ,
         linkedin: formData.linkedin ,
       },

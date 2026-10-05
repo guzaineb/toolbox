@@ -1,7 +1,7 @@
 "use client";
 
 import { Lang } from "@/i18n/auth";
-import { COUNTRIES, Country, DEFAULT_COUNTRY } from "@/lib/countries ";
+import { COUNTRIES, Country, DEFAULT_COUNTRY } from "@/lib/countries";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 

@@ -1,11 +1,11 @@
 import { IsIn } from 'class-validator';
 
 export class UpdateStatusDto {
-  @IsIn(['active', 'suspended'])
-  status: 'active' | 'suspended';
+  @IsIn(['ACTIVE', 'SUSPENDED'])
+  status: 'ACTIVE' | 'SUSPENDED';
 }
 
 export class UpdateVerificationDto {
-  @IsIn(['approved', 'rejected'])
-  verification_status: 'approved' | 'rejected';
+  @IsIn(['APPROVED', 'REJECTED'])
+  verification_status: 'APPROVED' | 'REJECTED';
 }

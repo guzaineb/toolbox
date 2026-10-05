@@ -204,9 +204,11 @@ export default function ExpertMatchingPage() {
             <Button variant="secondary" onClick={resetMatch} fullWidth>
               Nouvelle recherche
             </Button>
-            <Button variant="primary" fullWidth>
-              Voir les projets correspondants
-            </Button>
+            <Link href="/dashboard/expert/matching-projects" className="flex-1">
+              <Button variant="primary" fullWidth>
+                Voir les projets correspondants
+              </Button>
+            </Link>
           </div>
         </div>
       )}

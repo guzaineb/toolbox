@@ -1,4 +1,4 @@
-export type AvailabilityStatus = 'available' | 'busy' | 'unavailable';
+export type AvailabilityStatus = 'AVAILABLE' | 'BUSY' | 'UNAVAILABLE';
 
 export type ExpertiseLevel =
   | 'junior'
@@ -119,6 +119,53 @@ export interface ProjectMatch {
   };
 }
 
+export interface ExpertRecommendation {
+  expert: ExpertProfile;
+  score: number;
+  skillsMatch: {
+    matched: number;
+    required: number;
+    score: number;
+  };
+  experienceMatch: {
+    years: number;
+    required: number;
+    score: number;
+  };
+  availability: AvailabilityStatus;
+  explanation: string;
+}
+
+export interface MatchedProject {
+  project: {
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+  cohort: {
+    id: string;
+    name: string;
+  } | null;
+  requirements: {
+    requiredAreas: string[];
+    requiredAreaNames: string[];
+    minYearsExperience: number;
+  };
+  score: number;
+  skillsMatch: {
+    matched: number;
+    required: number;
+    score: number;
+  };
+  experienceMatch: {
+    years: number;
+    required: number;
+    score: number;
+  };
+  availability: AvailabilityStatus;
+  explanation: string;
+}
+
 /* =========================================================
    DTOs
 ========================================================= */
@@ -191,9 +238,9 @@ export const AVAILABILITY_LABELS: Record<
   AvailabilityStatus,
   string
 > = {
-  available: 'Disponible',
-  busy: 'Occupé(e)',
-  unavailable: 'Indisponible',
+  AVAILABLE: 'Disponible',
+  BUSY: 'Occupé(e)',
+  UNAVAILABLE: 'Indisponible',
 };
 
 export const LEVEL_LABELS: Record<
@@ -214,11 +261,11 @@ export const AVAILABILITY_BG_COLORS: Record<
   AvailabilityStatus,
   string
 > = {
-  available: 'bg-green-100 text-green-800',
+  AVAILABLE: 'bg-green-100 text-green-800',
 
-  busy: 'bg-yellow-100 text-yellow-800',
+  BUSY: 'bg-yellow-100 text-yellow-800',
 
-  unavailable: 'bg-red-100 text-red-800',
+  UNAVAILABLE: 'bg-red-100 text-red-800',
 };
 
 export const LEVEL_COLORS: Record<
@@ -246,7 +293,7 @@ export const EXPERTISE_LEVELS: ExpertiseLevel[] = [
 ];
 
 export const AVAILABILITY_STATUSES: AvailabilityStatus[] = [
-  'available',
-  'busy',
-  'unavailable',
+  'AVAILABLE',
+  'BUSY',
+  'UNAVAILABLE',
 ];

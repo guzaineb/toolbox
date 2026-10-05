@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { IncubatorsModule } from './incubators/incubators.module';
@@ -9,31 +11,81 @@ import { UsersModule } from './users/users.module';
 import { ExpertModule } from './expert/expert.module';
 import { ProjectOwnerModule } from './project-owner/project-owner.module';
 import { ProfilesModule } from './profiles/profiles.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MailService } from './mail/mail.service';
+import { ConfigModule } from '@nestjs/config';
+import { EventsModule } from './events/events.module';
 import { UploadsModule } from './uploads/uploads.module';
-
-
+import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
+import { ProjectsModule } from './projects/projects.module';
+import { GbmModule } from './gbm/gbm.module';
+import { BusinessPlanModule } from './business-plan/business-plan.module';
+import { EcoDesignModule } from './eco-design/eco-design.module';
+import { FundingModule } from './funding/funding.module';
+import { MarketModule } from './market/market.module';
+import { ImpactModule } from './impact/impact.module';
+import { SwotModule } from './swot/swot.module';
+import { DocumentsModule } from './documents/documents.module';
+import { CohortsModule } from './cohorts/cohorts.module';
+import { CohortParticipationsModule } from './cohort-participations/cohort-participations.module';
+import { CohortExpertsModule } from './cohort-experts/cohort-experts.module';
+import { EvaluationsModule } from './evaluations/evaluations.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AuditModule } from './audit/audit.module';
+import { AssignmentsModule } from './assignments/assignments.module';
+import { CoachingModule } from './coaching/coaching.module';
+import { FinalDecisionsModule } from './final-decisions/final-decisions.module';
+import { JuriesModule } from './juries/juries.module';
+import { MaturityModule } from './maturity/maturity.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        // 30/min par défaut dans NestJS : trop bas pour une app réelle
+        // (le frontend dépasse largement ce quota en quelques secondes).
+        limit: Number(process.env.RATE_LIMIT_PER_MINUTE) || 600,
+      },
+    ]),
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST'),
-        port: +config.get('DB_PORT'),
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
-      }),
-      inject: [ConfigService],
-    }),
-    IncubatorsModule, IncubatorMembersModule, IncubatorDocumentsModule, AuthModule, UsersModule, ProfilesModule, ProjectOwnerModule, ExpertModule,UploadsModule],
+    PrismaModule,
+    CommonModule,
+    IncubatorsModule,
+    IncubatorMembersModule,
+    IncubatorDocumentsModule,
+    AuthModule,
+    UsersModule,
+    ProfilesModule,
+    ProjectOwnerModule,
+    ExpertModule,
+    UploadsModule,
+    ProjectsModule,
+    GbmModule,
+    BusinessPlanModule,
+    EcoDesignModule,
+    FundingModule,
+    MarketModule,
+    ImpactModule,
+    SwotModule,
+    DocumentsModule,
+    CohortsModule,
+    CohortParticipationsModule,
+    CohortExpertsModule,
+    EvaluationsModule,
+    NotificationsModule,
+    EventsModule,
+    AuditModule,
+    AssignmentsModule,
+    CoachingModule,
+    FinalDecisionsModule,
+    JuriesModule,
+    MaturityModule,
+    DashboardModule,
+    AiModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, MailService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule { }
+export class AppModule {}

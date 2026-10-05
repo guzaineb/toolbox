@@ -16,8 +16,8 @@ import {
 interface Incubator {
   id: string;
   name: string;
-  status: 'active' | 'suspended';
-  verification_status: 'pending' | 'approved' | 'rejected';
+  status: 'ACTIVE' | 'SUSPENDED';
+  verification_status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export default function IncubatorSettingsPage() {
@@ -71,21 +71,21 @@ export default function IncubatorSettingsPage() {
       'status',
       () =>
         api.patch(`/incubators/${incubatorId}/status`, {
-          status: incubator?.status === 'active' ? 'suspended' : 'active',
+          status: incubator?.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE',
         }),
-      incubator?.status === 'active'
+      incubator?.status === 'ACTIVE'
         ? 'Incubateur suspendu'
         : 'Incubateur réactivé'
     );
 
-  const setVerification = (v: 'approved' | 'rejected') =>
+  const setVerification = (v: 'APPROVED' | 'REJECTED') =>
     doAction(
       'verification',
       () =>
         api.patch(`/incubators/${incubatorId}/verification`, {
           verification_status: v,
         }),
-      v === 'approved' ? 'Incubateur approuvé' : 'Incubateur rejeté'
+      v === 'APPROVED' ? 'Incubateur approuvé' : 'Incubateur rejeté'
     );
 
   const deleteIncubator = () =>
@@ -149,24 +149,24 @@ export default function IncubatorSettingsPage() {
               <div className="text-sm font-medium text-ink">
                 Statut actuel :{' '}
                 <Badge
-                  variant={incubator.status === 'active' ? 'green' : 'gray'}
+                  variant={incubator.status === 'ACTIVE' ? 'green' : 'gray'}
                 >
-                  {incubator.status === 'active' ? 'Actif' : 'Suspendu'}
+                  {incubator.status === 'ACTIVE' ? 'Actif' : 'Suspendu'}
                 </Badge>
               </div>
               <p className="text-xs text-ink3">
-                {incubator.status === 'active'
+                {incubator.status === 'ACTIVE'
                   ? "Suspendre rend l'incubateur invisible pour les porteurs de projet."
                   : "Réactiver rend l'incubateur visible et actif."}
               </p>
             </div>
             <Button
-              variant={incubator.status === 'active' ? 'default' : 'primary'}
+              variant={incubator.status === 'ACTIVE' ? 'default' : 'primary'}
               loading={loadingAction === 'status'}
               onClick={toggleStatus}
               className="flex-shrink-0"
             >
-              {incubator.status === 'active' ? 'Suspendre' : 'Réactiver'}
+              {incubator.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver'}
             </Button>
           </div>
         </div>
@@ -183,16 +183,16 @@ export default function IncubatorSettingsPage() {
             <span className="text-sm font-medium text-ink">Statut :</span>
             <Badge
               variant={
-                incubator.verification_status === 'approved'
+                incubator.verification_status === 'APPROVED'
                   ? 'green'
-                  : incubator.verification_status === 'rejected'
+                  : incubator.verification_status === 'REJECTED'
                   ? 'red'
                   : 'amber'
               }
             >
-              {incubator.verification_status === 'approved'
+              {incubator.verification_status === 'APPROVED'
                 ? 'Approuvé'
-                : incubator.verification_status === 'rejected'
+                : incubator.verification_status === 'REJECTED'
                 ? 'Rejeté'
                 : 'En attente'}
             </Badge>
@@ -206,15 +206,15 @@ export default function IncubatorSettingsPage() {
             <Button
               variant="primary"
               loading={loadingAction === 'verification-approved'}
-              onClick={() => setVerification('approved')}
-              disabled={incubator.verification_status === 'approved'}
+              onClick={() => setVerification('APPROVED')}
+              disabled={incubator.verification_status === 'APPROVED'}
             >
               Approuver
             </Button>
             <Button
               loading={loadingAction === 'verification-rejected'}
-              onClick={() => setVerification('rejected')}
-              disabled={incubator.verification_status === 'rejected'}
+              onClick={() => setVerification('REJECTED')}
+              disabled={incubator.verification_status === 'REJECTED'}
             >
               Rejeter
             </Button>
