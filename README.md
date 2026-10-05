@@ -330,53 +330,154 @@ Le système génère automatiquement des résumés à partir des données insér
 - Docker et Docker Compose
 - Node.js 20+ (pour développement sans Docker)
 
-### Avec Docker
+### Avec Docker (déproduction)
+
+L'orchestration repose sur 4 services : `db` (PostgreSQL), `api` (NestJS),
+`web` (Next.js standalone) et `nginx` (unique service exposé sur l'hôte).
+La base et l'API ne sont **pas** publiées sur l'hôte : tout passe par Nginx.
+
+```
+Navigateur ──HTTP──▶ nginx :80 ─┬── /api/*       ──▶ api:3000
+                                 ├── /uploads/*   ──▶ api:3000
+                                 ├── /socket.io/  ──▶ api:3000
+                                 └── /            ──▶ web:3000
+```
 
 ```bash
-# Cloner le dépôt
-git clone <url-du-depot>
-cd toolbox
+# 1. Configuration
+cp .env.example .env
+chmod 600 .env
 
-# Configurer les variables d'environnement backend
-cp backend/.env.example backend/.env
-# Éditer backend/.env avec vos clés (JWT_SECRET, GROQ_API_KEY, etc.)
+# Générer les secrets (uniquement hexadécimal : DATABASE_PASSWORD est injecté
+# tel quel dans DATABASE_URL, donc aucun caractère '@', ':', '/' ou '%')
+sed -i "s|^DATABASE_PASSWORD=.*|DATABASE_PASSWORD=$(openssl rand -hex 48)|" .env
+sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -hex 48)|" .env
 
-# Lancer les services
-docker-compose up -d
+# Renseigner aussi : FRONTEND_URL, GROQ_API_KEY, SMTP_USER, SMTP_PASS
 
-# L'API est accessible sur http://localhost:3020
-# Le frontend est accessible sur http://localhost:3021
+# 2. Démarrage (migrations Prisma appliquées automatiquement au boot de l'API)
+bash deploy.sh up        # ou : docker compose up -d --build
+
+# 3. Vérification
+# /health n'est pas exposé publiquement : on interroge l'API depuis le réseau interne.
+docker compose exec api curl -fsS http://127.0.0.1:3000/health
+#   => {"status":"ok","database":"up",...}
+
+docker compose ps               # tous les services doivent être "healthy"
+docker compose logs -f api
 ```
+
+L'application est accessible sur `http://<IP-DU-SERVEUR>` (port modifiable via
+`HTTP_PORT` dans `.env`).
+
+Chemins exposés par Nginx :
+
+| URL | Service | Exemple |
+|-----|---------|---------|
+| `/` | Frontend Next.js | `http://<IP>/dashboard` |
+| `/api/*` | API REST (préfixe retiré) | `http://<IP>/api/auth/login` |
+| `/socket.io/*` | WebSocket Socket.IO | `http://<IP>/socket.io/?EIO=4&transport=polling` |
+| `/uploads/*` | Fichiers téléversés | `http://<IP>/uploads/<fichier>` |
+
+Le port `80` est le seul ouvert sur l'hôte : ni PostgreSQL (5432) ni l'API
+(3000) ni le frontend (3000) ne sont exposés.
+
+Le script `deploy.sh` regroupe les opérations courantes :
+
+```bash
+bash deploy.sh up         # build + démarrage
+bash deploy.sh update     # rebuild + recréation des conteneurs
+bash deploy.sh down       # arrêt (les volumes sont conservés)
+bash deploy.sh logs       # logs de tous les services
+bash deploy.sh restart    # redémarrage
+bash deploy.sh status     # état des services
+```
+
+#### Données persistantes
+
+| Volume | Contenu |
+|--------|---------|
+| `toolbox_pgdata` | Base PostgreSQL (migrations + données) |
+| `toolbox_uploads` | Fichiers téléversés par les utilisateurs |
+
+#### Seed de démonstration
+
+`SEED_ON_START=false` (défaut) : seules les migrations sont appliquées.
+Passer à `true` puis `bash deploy.sh update` pour charger les utilisateurs de
+démonstration. **À laisser désactivé en production.**
+
+#### RAG / ChromaDB
+
+ChromaDB n'est pas inclus dans `docker-compose.yml`. Sans `CHROMA_URL`, un
+client mock est utilisé : les résumés IA fonctionnent, mais la recherche
+sémantique est indisponible. Pour l'activer, renseignez `CHROMA_URL` avec
+l'URL d'une instance ChromaDB existante.
+
+Avec `EMBEDDING_PROVIDER=local` (défaut), `@xenova/transformers` télécharge le
+modèle d'embeddings depuis huggingface.co **au premier appel IA** (~90 Mo, cache
+écrit dans le conteneur). Sur un serveur sans accès sortant à huggingface.co,
+préférez `EMBEDDING_PROVIDER=api` avec `EMBEDDINGS_API_URL` vers un service
+d'embeddings interne.
+
+#### HTTPS
+
+Aucun certificat n'est configuré (l'accès se fait par IP). Les identifiants
+circulent donc en clair. Pour passer en HTTPS, il faut un nom de domaine :
+décommentez le port `443` dans `docker-compose.yml`, montez le certificat dans
+`nginx/default.conf` et renseignez `FRONTEND_URL` en `https://`.
 
 ### Sans Docker (développement)
 
 ```bash
+# Base de données locale
+docker run -d --name toolbox-pg -p 5432:5432 \
+  -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=db-toolbox postgres:15-alpine
+
 # Backend
 cd backend
 cp .env.example .env
 npm install
-npm run seed
-npm run start:dev
+npx prisma migrate deploy   # ou: npm run seed pour les données de démo
+npm run start:dev            # http://localhost:3000
 
 # Frontend (dans un autre terminal)
 cd frontend
 npm install
-npm run dev
+npm run dev              # http://localhost:3001
 ```
 
-### Variables d'environnement (backend/.env)
+En développement, le frontend appelle l'API via `frontend/.env` :
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+Le socket Socket.IO en déduit automatiquement l'origine de l'API
+(`NEXT_PUBLIC_SOCKET_URL` peut être surchargé explicitement). En production,
+`NEXT_PUBLIC_API_URL=/api` : tout est same-origin derrière Nginx.
+
+### Variables d'environnement
+
+`backend/.env` (développement) — voir `backend/.env.example`.
 
 | Variable | Description |
 |----------|-------------|
+| `HOST` / `PORT` | Interface et port d'écoute de l'API (`0.0.0.0:3000`) |
 | `DATABASE_URL` | URL de connexion PostgreSQL |
+| `UPLOADS_DIR` | Dossier des fichiers téléversés |
+| `CORS_ORIGINS` | Origines autorisées, séparées par des virgules (vide = toutes) |
+| `RATE_LIMIT_PER_MINUTE` | Requêtes/minute/IP (défaut : 600) |
 | `JWT_SECRET` | Clé secrète pour les tokens JWT |
 | `JWT_EXPIRES_IN` | Durée de validité du token (ex: `1d`) |
 | `MAIL_HOST`/`MAIL_PORT`/`SMTP_USER`/`SMTP_PASS` | Configuration SMTP |
 | `FRONTEND_URL` | URL du frontend (pour les liens dans les emails) |
 | `GROQ_API_KEY` | Clé API Groq pour l'IA |
 | `GROQ_MODEL` | Modèle LLM (défaut: `llama-3.3-70b-versatile`) |
-| `CHROMA_URL` | URL de ChromaDB |
-| `EMBEDDINGS_API_URL` | URL de l'API d'embeddings |
+| `EMBEDDING_PROVIDER` | `local` (transformers embarqué) ou `api` |
+| `CHROMA_URL` | URL de ChromaDB (vide = RAG désactivé) |
+
+`.env` à la racine (production, voir `.env.example`) en reprend l'essentiel et
+pilote `docker-compose.yml`.
 
 ---
 

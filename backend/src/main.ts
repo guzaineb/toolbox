@@ -4,15 +4,18 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useWebSocketAdapter(new IoAdapter(app));
+  app.enableShutdownHooks();
 
-  // Chemin absolu vers le dossier uploads
-  const uploadsPath = join(process.cwd(), 'uploads');
+  // Chemin absolu vers le dossier uploads (volume Docker en production)
+  const uploadsPath = process.env.UPLOADS_DIR
+    ? resolve(process.env.UPLOADS_DIR)
+    : join(process.cwd(), 'uploads');
 
   // Créer le dossier s'il n'existe pas
   if (!fs.existsSync(uploadsPath)) {
@@ -25,13 +28,18 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  const port = parseInt(process.env.PORT ?? '3000', 10);
+  const host = process.env.HOST ?? '0.0.0.0';
+
   console.log(`📁 Serving static files from: ${uploadsPath}`);
-  console.log(
-    `🌐 Access files at: http://localhost:${process.env.PORT ?? 3000}/uploads/`,
-  );
+
+  const allowedOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
 
   app.enableCors({
-    origin: true,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -39,9 +47,8 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(
-    `🚀 Server running on http://localhost:${process.env.PORT ?? 3000}`,
-  );
+  await app.listen(port, host);
+  console.log(`🚀 Server running on http://${host}:${port}`);
+  console.log(`🌐 Access files at: http://${host}:${port}/uploads/`);
 }
-bootstrap();
+void bootstrap();

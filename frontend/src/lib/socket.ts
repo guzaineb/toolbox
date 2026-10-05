@@ -1,6 +1,17 @@
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// En production derrière Nginx, on laisse vide : le socket se connecte sur la
+// même origine que la page (path /socket.io), Nginx le relaie vers l'API.
+// En développement, on retombe sur l'origine de NEXT_PUBLIC_API_URL si elle
+// est absolue (ex. http://localhost:3000), sinon sur l'origine courante.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const SOCKET_URL =
+  process.env.NEXT_PUBLIC_SOCKET_URL ||
+  (API_URL.startsWith('http') ? new URL(API_URL).origin : '');
+
+// Namespace côté API : /notifications (ne pas préfixer par /api).
+const SOCKET_NAMESPACE = '/notifications';
+const SOCKET_PATH = '/socket.io';
 
 let socket: Socket | null = null;
 
@@ -11,7 +22,8 @@ export function getSocket(): Socket | null {
     const token = localStorage.getItem('access_token');
     if (!token) return null;
 
-    socket = io(`${SOCKET_URL}/notifications`, {
+    socket = io(`${SOCKET_URL}${SOCKET_NAMESPACE}`, {
+      path: SOCKET_PATH,
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,

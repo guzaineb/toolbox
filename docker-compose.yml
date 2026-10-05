@@ -1,59 +1,158 @@
+name: toolbox
+
 services:
+  # ------------------------------------------------------------------
+  # Base de données
+  # ------------------------------------------------------------------
   db:
-    image: postgres:15
+    image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DATABASE_USER:-postgres}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-admin}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD est obligatoire dans .env}
       POSTGRES_DB: ${DATABASE_NAME:-toolbox}
+      # Volume persistant : /var/lib/postgresql/data est un chemin standard
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - toolbox_pgdata:/var/lib/postgresql/data
     networks:
       - toolbox_net
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-toolbox}
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
+    # Non exposé sur l'hôte : accessible uniquement depuis le réseau Docker.
+    expose:
+      - "5432"
 
+  # ------------------------------------------------------------------
+  # API NestJS
+  # ------------------------------------------------------------------
   api:
-    build: ./backend
+    build:
+      context: ./backend
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - ./backend/.env
     environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOST: 0.0.0.0
+      UPLOADS_DIR: /app/uploads
+
       DB_HOST: db
-      DB_PORT: 5432
+      DB_PORT: "5432"
       DB_USER: ${DATABASE_USER:-postgres}
-      DB_PASSWORD: ${DATABASE_PASSWORD:-admin}
+      DB_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD est obligatoire dans .env}
       DB_NAME: ${DATABASE_NAME:-toolbox}
-      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-admin}@db:5432/${DATABASE_NAME:-toolbox}?schema=public
+      # DATABASE_PASSWORD doit rester alphanumérique (openssl rand -hex 48) :
+      # il est injecté sans échappement dans l'URL ci-dessous.
+      DATABASE_URL: "postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD}@db:5432/${DATABASE_NAME:-toolbox}?schema=public&connection_limit=10"
+
+      # Limitation de débit (défaut NestJS : 30/min, trop bas)
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-600}
+
+      # Seed de démonstration au démarrage (migrations toujours appliquées)
+      SEED_ON_START: ${SEED_ON_START:-false}
+      DB_WAIT_RETRIES: "60"
+      DB_WAIT_INTERVAL: "2000"
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est obligatoire dans .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+
+      # Email
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: "${MAIL_FROM:-ProjectStruct <noreply@toolbox.com>}"
+      MAIL_SECURE: ${MAIL_SECURE:-false}
+
+      # URL publique du frontend (liens dans les emails)
+      FRONTEND_URL: ${FRONTEND_URL:-http://91.134.139.163}
+      # Origines autorisées (vide = tout, utile derrière Nginx same-origin)
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+
+      # IA
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+
+      # Embeddings / RAG
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-Xenova/all-MiniLM-L6-v2}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-384}
+      EMBEDDINGS_API_URL: ${EMBEDDINGS_API_URL:-}
+      CHROMA_URL: ${CHROMA_URL:-}
+      CHROMA_COLLECTION: ${CHROMA_COLLECTION:-project_summaries}
+      RAG_DISTANCE_THRESHOLD: ${RAG_DISTANCE_THRESHOLD:-0.4}
+      RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-800}
+      RAG_CHUNK_OVERLAP: ${RAG_CHUNK_OVERLAP:-150}
+    volumes:
+      - toolbox_uploads:/app/uploads
     networks:
       - toolbox_net
-    ports:
-      - "3020:3000"
-    restart: unless-stopped
-    command: >
-      sh -c "node wait-for-db.js && npx prisma migrate deploy && npm run seed && npm run start:prod"
+    expose:
+      - "3000"
+    # Pas de `ports` : l'API n'est joignable que via Nginx.
 
+  # ------------------------------------------------------------------
+  # Frontend Next.js (standalone)
+  # ------------------------------------------------------------------
   web:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3020
+        # Chemin relatif : même image valable pour toute IP / tout domaine.
+        NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
     networks:
       - toolbox_net
-    ports:
-      - "3021:3000"
+    expose:
+      - "3000"
+
+  # ------------------------------------------------------------------
+  # Reverse proxy Nginx (seul service exposé sur l'hôte)
+  # ------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      # Décommentez si vous installez un certificat TLS et une IP en 443 :
+      # - "${HTTPS_PORT:-443}:443"
+    networks:
+      - toolbox_net
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   toolbox_pgdata:
+  toolbox_uploads:
 
 networks:
   toolbox_net:
-    external: true
+    driver: bridge

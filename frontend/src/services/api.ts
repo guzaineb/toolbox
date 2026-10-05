@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-// ✅ Vérifiez que NEXT_PUBLIC_API_URL est défini dans .env.local
-// NEXT_PUBLIC_API_URL=http://localhost:3001
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// En production derrière Nginx : "/api" (même origine, pas de CORS, build
+// réutilisable quelle que soit l'IP/domaine). En développement : URL absolue
+// de l'API Nest (NEXT_PUBLIC_API_URL=http://localhost:3000 dans frontend/.env).
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const api = axios.create({
   baseURL: BASE_URL,

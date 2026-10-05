@@ -41,10 +41,14 @@ import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 30,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        // 30/min par défaut dans NestJS : trop bas pour une app réelle
+        // (le frontend dépasse largement ce quota en quelques secondes).
+        limit: Number(process.env.RATE_LIMIT_PER_MINUTE) || 600,
+      },
+    ]),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     CommonModule,
@@ -82,9 +86,6 @@ import { AiModule } from './ai/ai.module';
     AiModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

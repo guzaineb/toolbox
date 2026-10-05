@@ -1,28 +1,46 @@
-const { Client } = require('pg');
+const net = require('net');
+
+const host = process.env.DB_HOST || 'db';
+const port = parseInt(process.env.DB_PORT || '5432', 10);
+const maxRetries = parseInt(process.env.DB_WAIT_RETRIES || '60', 10);
+const retryInterval = parseInt(process.env.DB_WAIT_INTERVAL || '1000', 10);
+
+function tryConnect() {
+  return new Promise((resolve, reject) => {
+    const socket = net.connect({ host, port });
+    socket.setTimeout(2000);
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve();
+    });
+    socket.once('timeout', () => {
+      socket.destroy();
+      reject(new Error('timeout'));
+    });
+    socket.once('error', (err) => {
+      socket.destroy();
+      reject(err);
+    });
+  });
+}
 
 async function waitForDB() {
-  const maxRetries = 30;
-  const retryInterval = 1000; 
-
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const client = new Client({
-        host: process.env.DB_HOST || 'db',
-        port: parseInt(process.env.DB_PORT || '5432'),
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'admin',
-        database: process.env.DB_NAME || 'toolbox',
-      });
-      await client.connect();
-      await client.end();
-      console.log('✅ Database is ready');
+      await tryConnect();
+      console.log(`✅ Database is ready (${host}:${port})`);
       return;
-    } catch (err) {
+    } catch {
       console.log(`⏳ Waiting for database... (${i + 1}/${maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, retryInterval));
+      await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
   }
   throw new Error('Database not ready after maximum retries');
 }
 
-waitForDB().then(() => process.exit(0));
+waitForDB()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
