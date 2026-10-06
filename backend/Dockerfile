@@ -52,7 +52,7 @@ RUN apt-get update \
 
 # Utilisateur non-root
 RUN groupadd --system --gid 1001 nodejs \
-    && useradd --system --uid 1001 --gid nodejs api
+    && useradd --system --uid 1001 --gid nodejs nodejs
 
 COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=build     --chown=nodejs:nodejs /app/dist         ./dist

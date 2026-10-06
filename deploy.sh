@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 #  Déploiement ProjectStruct sur le serveur (Docker Compose)
-#  Usage : ./deploy.sh [up|down|logs|restart|update|status]
+#  Usage : ./deploy.sh [up|down|logs|restart|update|status|repair-db]
 # ============================================================
 set -euo pipefail
 
