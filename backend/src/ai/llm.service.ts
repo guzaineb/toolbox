@@ -50,7 +50,7 @@ export class LlmService {
 
         const body: Record<string, unknown> = {
           model,
-          messages,
+          messages: this.toWireMessages(messages),
           temperature,
           max_tokens: maxTokens,
         };
@@ -118,6 +118,39 @@ export class LlmService {
       `Groq API call failed after 3 attempts: ${lastError!.message}`,
     );
     throw lastError;
+  }
+
+  /**
+   * Convertit les messages internes (camelCase) au format attendu par l'API
+   * OpenAI/Groq (snake_case). Sans cette conversion, un message assistant
+   * contenant des appels d'outils est rejeté en 400
+   * (`property 'toolCalls' is unsupported`).
+   */
+  private toWireMessages(messages: LlmMessage[]): Record<string, unknown>[] {
+    return messages.map((message) => {
+      if (message.role === 'tool') {
+        return {
+          role: 'tool',
+          content: message.content,
+          tool_call_id: message.toolCallId,
+          ...(message.name ? { name: message.name } : {}),
+        };
+      }
+
+      if (
+        message.role === 'assistant' &&
+        message.toolCalls &&
+        message.toolCalls.length > 0
+      ) {
+        return {
+          role: 'assistant',
+          content: message.content || null,
+          tool_calls: message.toolCalls,
+        };
+      }
+
+      return { role: message.role, content: message.content };
+    });
   }
 
   private fallbackResponse(messages: LlmMessage[]): LlmResponse {

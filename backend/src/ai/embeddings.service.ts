@@ -2,6 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EMBEDDING_CONFIG, EMBEDDING_DIMENSION } from './rag/rag-config';
 
 /**
+ * Forme minimale d'un Tensor @xenova/transformers pour la couche d'embeddings.
+ * `data` est un tableau PLAT (voir `generateLocal`).
+ */
+type LocalTensor = {
+  tolist?: () => number[][];
+  dims?: number[];
+  data?: ArrayLike<number>;
+};
+
+/**
  * Service d'embedding — UNE seule configuration (modèle + dimension) verrouillée.
  *
  * Pour éviter toute incohérence de dimension (ex: bge-m3=1024 vs all-MiniLM=384),
@@ -87,16 +97,28 @@ export class EmbeddingsService {
       );
     }
 
-    const results = await this.localExtractor(texts, {
+    const results = (await this.localExtractor(texts, {
       pooling: 'mean',
       normalize: true,
-    });
+    })) as LocalTensor | null;
 
-    // all-MiniLM-L6-v2 : shape [n, 384]
-    const arr = Array.isArray(results) ? results : results.data;
-    return Array.from(arr).map((row: any) =>
-      Array.isArray(row) ? (row as number[]) : Array.from(row),
-    );
+    // La pipeline renvoie un Tensor de dims [n, EMBEDDING_DIMENSION] dont
+    // `.data` est un Float32Array PLAT. Le traiter comme un tableau de lignes
+    // produisait des vecteurs vides (dimension 0). `tolist()` restitue une
+    // ligne de dimension 384 par texte.
+    if (results && typeof results.tolist === 'function') {
+      return results.tolist();
+    }
+
+    const dims: number[] = results?.dims ?? [];
+    const flat: number[] = Array.from(results?.data ?? []);
+    const rows = dims[0] ?? texts.length;
+    const cols = dims[1] ?? (rows > 0 ? Math.floor(flat.length / rows) : 0);
+    const vectors: number[][] = [];
+    for (let i = 0; i < rows; i++) {
+      vectors.push(flat.slice(i * cols, (i + 1) * cols));
+    }
+    return vectors;
   }
 
   private async initLocalEmbeddings(): Promise<void> {
