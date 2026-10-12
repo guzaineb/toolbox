@@ -84,7 +84,9 @@ async function flush() {
 }
 
 async function waitFor(assert: () => void) {
-  const deadline = Date.now() + 2000
+  // Délai large : sous charge (CI, runners partagés) la résolution de la
+  // requête react-query + re-render peut dépasser 2 s → évite les flakes.
+  const deadline = Date.now() + 8000
   for (;;) {
     await flush()
     try {
