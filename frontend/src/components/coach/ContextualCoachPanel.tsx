@@ -15,7 +15,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { askCoach } from '@/services/coach.service'
-import { cn } from '@/lib/utils'
+import { cn, getErrorMessage } from '@/lib/utils'
 import type { ChatbotAskResult, ModuleContext } from '@/types/coach'
 
 interface ContextualCoachPanelProps {
@@ -136,7 +136,7 @@ export default function ContextualCoachPanel({
         const res = await askCoach(projectId, action.question, { moduleContext: buildContext() })
         setResult(res)
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+        const msg = getErrorMessage(err)
         setError(msg)
       } finally {
         setLoading(false)
@@ -157,7 +157,7 @@ export default function ContextualCoachPanel({
       setResult(res)
       setCustomQuestion('')
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+      const msg = getErrorMessage(err)
       setError(msg)
     } finally {
       setLoading(false)

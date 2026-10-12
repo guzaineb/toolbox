@@ -1,25 +1,20 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { MessageSquare, ChevronDown, Plus, AlertTriangle } from 'lucide-react'
+import { MessageSquare, ChevronDown, Plus } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
-import DocumentUploader from './DocumentUploader'
 import {
   askCoach,
-  indexProject,
-  listDocuments,
   listConversations,
   listConversationMessages,
-  getRagHealth,
 } from '@/services/coach.service'
+import { getErrorMessage } from '@/lib/utils'
 import type {
   ChatMessage as ChatMessageType,
   ChatSource,
-  UploadedDocument,
   Conversation,
   ConversationMessage,
-  RagHealthResult,
 } from '@/types/coach'
 
 interface CoachChatProps {
@@ -38,12 +33,9 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showUpload, setShowUpload] = useState(false)
-  const [documents, setDocuments] = useState<UploadedDocument[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showConversationList, setShowConversationList] = useState(false)
-  const [ragHealth, setRagHealth] = useState<RagHealthResult | null>(null)
   const [ragStatusMap, setRagStatusMap] = useState<Record<number, 'RAG_AVAILABLE' | 'RAG_UNAVAILABLE' | 'NO_RELEVANT_CONTEXT'>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const loadedRef = useRef(false)
@@ -59,24 +51,6 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
-
-  const loadDocuments = useCallback(async () => {
-    try {
-      const result = await listDocuments(projectId)
-      setDocuments(result.documents)
-    } catch {
-      // silent
-    }
-  }, [projectId])
-
-  const loadRagHealth = useCallback(async () => {
-    try {
-      const result = await getRagHealth(projectId)
-      setRagHealth(result)
-    } catch {
-      setRagHealth(null)
-    }
-  }, [projectId])
 
   const loadConversationMessages = useCallback(
     async (conversationId: string) => {
@@ -145,7 +119,6 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
 
     const init = async () => {
       setInitialLoading(true)
-      await Promise.all([loadDocuments(), loadRagHealth()])
       const convs = await loadConversations()
 
       if (convs.length > 0) {
@@ -177,7 +150,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
     }
 
     init()
-  }, [loadDocuments, loadRagHealth, loadConversations, loadConversationMessages, projectId])
+  }, [loadConversations, loadConversationMessages, projectId])
 
   const handleSend = useCallback(
     async (question: string) => {
@@ -212,12 +185,8 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         } else if (activeConversationId) {
           await loadConversations()
         }
-
-        if (result.ragStatus === 'RAG_UNAVAILABLE') {
-          await loadRagHealth()
-        }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+        const msg = getErrorMessage(err)
         setError(msg)
         setMessages((prev) => [
           ...prev,
@@ -227,7 +196,7 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         setLoading(false)
       }
     },
-    [projectId, activeConversationId, loadConversations, loadRagHealth],
+    [projectId, activeConversationId, loadConversations],
   )
 
   const handleRetry = useCallback(() => {
@@ -249,18 +218,6 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
   const handleStartStep = useCallback(() => {
     handleSend('Commencer cette étape : décrivez-moi la prochaine action à réaliser')
   }, [handleSend])
-
-  const handleIndex = useCallback(async () => {
-    try {
-      setLoading(true)
-      await indexProject(projectId)
-      await loadDocuments()
-    } catch {
-      // silent
-    } finally {
-      setLoading(false)
-    }
-  }, [projectId, loadDocuments])
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId)
 
@@ -320,21 +277,6 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
           )}
         </div>
       </div>
-
-      {/* RAG status banner */}
-      {ragHealth && ragHealth.overall === 'degraded' && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-amber-light/30 border-b border-amber/15 text-[10px] font-dm text-amber-dark">
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-          <span>
-            {!ragHealth.embeddings.available
-              ? `Embeddings indisponibles${ragHealth.embeddings.reason ? ` (${ragHealth.embeddings.reason})` : ''}.`
-              : !ragHealth.chroma.available
-                ? `ChromaDB indisponible${ragHealth.chroma.reason ? ` (${ragHealth.chroma.reason})` : ''}.`
-                : 'La recherche documentaire est indisponible.'}
-            {' '}Les réponses du coach se basent sur les données structurées du projet.
-          </span>
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
@@ -406,25 +348,9 @@ const CoachChat = forwardRef<CoachChatHandle, CoachChatProps>(({ projectId }, re
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Upload panel */}
-      {showUpload && (
-        <div className="px-4 py-2 border-t border-ink/[.08]">
-          <DocumentUploader
-            projectId={projectId}
-            documents={documents}
-            onUploaded={loadDocuments}
-            onIndex={handleIndex}
-          />
-        </div>
-      )}
-
       {/* Input */}
       <div className="px-4 py-2.5 border-t border-ink/[.08]">
-        <ChatInput
-          onSend={handleSend}
-          onUploadClick={() => setShowUpload(!showUpload)}
-          loading={loading}
-        />
+        <ChatInput onSend={handleSend} loading={loading} />
       </div>
     </div>
   )

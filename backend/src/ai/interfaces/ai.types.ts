@@ -47,6 +47,21 @@ export interface LlmResponse {
   };
 }
 
+/**
+ * Erreur levée quand le fournisseur LLM répond 429 (quota / débit dépassé).
+ * Permet au contrôleur de renvoyer un vrai 429 au client au lieu d'un 500,
+ * et de respecter le délai `retry-after` indiqué par le fournisseur.
+ */
+export class LlmRateLimitError extends Error {
+  readonly retryAfterMs?: number;
+
+  constructor(message: string, retryAfterMs?: number) {
+    super(message);
+    this.name = 'LlmRateLimitError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
 export interface RagDocument {
   id: string;
   content: string;

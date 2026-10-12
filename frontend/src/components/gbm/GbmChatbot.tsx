@@ -5,7 +5,7 @@ import { Bot, Loader2, RefreshCw, Send, Sparkles, User } from 'lucide-react'
 import { askCoach, indexProject } from '@/services/coach.service'
 import type { ChatMessage } from '@/types/coach'
 import { Button } from '@/components/shared/ui'
-import { cn } from '@/lib/utils'
+import { cn, getErrorMessage } from '@/lib/utils'
 
 interface GbmChatbotProps {
   projectId: string
@@ -69,10 +69,10 @@ export function GbmChatbot({ projectId }: GbmChatbotProps) {
       const result = await askCoach(projectId, question, { conversationHistory: history })
       const answer = result?.answer ?? 'Désolé, je n’ai pas pu formuler de réponse.'
       setMessages(prev => [...prev, { role: 'assistant', content: answer }])
-    } catch {
+    } catch (err) {
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: 'Le service IA est temporairement indisponible. Réessayez dans quelques instants, ou écrivez la réponse vous-même dans les étapes.' },
+        { role: 'assistant', content: `${getErrorMessage(err)} Vous pouvez aussi rédiger la réponse vous-même dans les étapes.` },
       ])
     } finally {
       setLoading(false)

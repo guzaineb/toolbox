@@ -2,18 +2,16 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { Send, Paperclip, Loader2 } from 'lucide-react'
+import { Send, Loader2 } from 'lucide-react'
 import { Button } from '@/components/shared/ui'
 
 export default function ChatInput({
   onSend,
-  onUploadClick,
   loading,
   disabled,
   className,
 }: {
   onSend: (message: string) => void
-  onUploadClick?: () => void
   loading?: boolean
   disabled?: boolean
   className?: string
@@ -55,17 +53,6 @@ export default function ChatInput({
         className,
       )}
     >
-      {onUploadClick && (
-        <button
-          onClick={onUploadClick}
-          disabled={disabled}
-          className="p-1.5 rounded-lg hover:bg-ink/[.04] transition-colors text-ink3 hover:text-ink2 disabled:opacity-40"
-          title="Joindre un document"
-        >
-          <Paperclip className="w-4 h-4" />
-        </button>
-      )}
-
       <textarea
         ref={textareaRef}
         value={value}

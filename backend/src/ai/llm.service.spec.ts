@@ -1,5 +1,5 @@
 import { LlmService } from './llm.service';
-import { LlmMessage } from './interfaces/ai.types';
+import { LlmMessage, LlmRateLimitError } from './interfaces/ai.types';
 
 describe('LlmService', () => {
   let service: LlmService;
@@ -95,5 +95,47 @@ describe('LlmService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(result.model).toBe('fallback');
     expect(result.content).toContain('Mode dégradé');
+  });
+
+  it('respecte le retry-after de Groq (429) et remonte une LlmRateLimitError', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests',
+      headers: new Headers({ 'retry-after': '0' }),
+      text: () => Promise.resolve('{"error":{"code":"rate_limit_exceeded"}}'),
+    });
+    (global as unknown as { fetch: typeof fetch }).fetch =
+      fetchMock as unknown as typeof fetch;
+
+    await expect(
+      service.chat([{ role: 'user', content: 'salut' }]),
+    ).rejects.toBeInstanceOf(LlmRateLimitError);
+    // 4 tentatives malgré le 429 (le délai retry-after: 0 évite d'attendre).
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('déduit le délai de réessai depuis le corps et les en-têtes Groq', () => {
+    const parse = (headers: Headers, body: string): number | undefined =>
+      (
+        service as unknown as {
+          parseRetryDelayMs: (h: Headers, b: string) => number | undefined;
+        }
+      ).parseRetryDelayMs(headers, body);
+
+    // Corps type Groq : « Please try again in 24.03s ».
+    expect(parse(new Headers(), 'Please try again in 24.03s')).toBe(24030);
+
+    // En-tête x-ratelimit-reset-tokens (secondes).
+    expect(
+      parse(new Headers({ 'x-ratelimit-reset-tokens': '7.66s' }), ''),
+    ).toBe(7660);
+
+    // Durées composées « 1m2.5s » et « 60ms ».
+    expect(parse(new Headers(), 'try again in 1m2.5s')).toBe(62500);
+    expect(parse(new Headers(), 'try again in 60ms')).toBe(60);
+
+    // Aucune durée reconnaissable → undefined (repli exponentiel).
+    expect(parse(new Headers(), 'rate limit reached')).toBeUndefined();
   });
 });

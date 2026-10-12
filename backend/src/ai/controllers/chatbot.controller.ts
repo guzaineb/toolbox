@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ModuleAccessService } from '../../common/services/module-access.service';
 import { ChatbotService } from '../chatbot.service';
 import { ChatbotAskDto, ChatbotIndexDto } from '../dto/chatbot.dto';
+import { LlmRateLimitError } from '../interfaces/ai.types';
 
 type RequestUser = { user: { id: string } };
 
@@ -42,6 +43,18 @@ export class ChatbotController {
       );
       return { success: true, data: result };
     } catch (error) {
+      if (error instanceof LlmRateLimitError) {
+        throw new HttpException(
+          {
+            success: false,
+            code: 'RATE_LIMIT',
+            message:
+              "Le service d'IA est temporairement saturé (quota atteint). Réessayez dans quelques instants.",
+          },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+
       const message = error instanceof Error ? error.message : String(error);
       throw new HttpException(
         { success: false, message },

@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RefreshCw, MessageSquare, FileText, BarChart3, Lightbulb } from 'lucide-react'
-import { getProjectState, listDocuments, indexProject } from '@/services/coach.service'
-import type { ProjectState, Priority, UploadedDocument } from '@/types/coach'
+import { RefreshCw, MessageSquare, BarChart3, Lightbulb } from 'lucide-react'
+import { getProjectState } from '@/services/coach.service'
+import type { ProjectState, Priority } from '@/types/coach'
 import { resolveModuleRoute } from '@/lib/resolve-module-route'
 import {
   ProjectHealthCard,
@@ -14,11 +14,10 @@ import {
   MissingInfoPanel,
   RecommendationCard,
   CoachChat,
-  DocumentUploader,
 } from '@/components/coach'
-import { LoadingState, Button, ErrorAlert } from '@/components/shared/ui'
+import { LoadingState, Button } from '@/components/shared/ui'
 
-type DashboardTab = 'overview' | 'chat' | 'documents' | 'analysis'
+type DashboardTab = 'overview' | 'chat' | 'analysis'
 
 export default function CoachPage() {
   const params = useParams()
@@ -29,34 +28,6 @@ export default function CoachPage() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
   const chatRef = useRef<{ sendMessage: (msg: string) => void } | null>(null)
-  const [documents, setDocuments] = useState<UploadedDocument[]>([])
-  const [docsLoading, setDocsLoading] = useState(false)
-  const [docsError, setDocsError] = useState<string | null>(null)
-
-  const loadDocuments = useCallback(async () => {
-    try {
-      setDocsLoading(true)
-      setDocsError(null)
-      const result = await listDocuments(projectId, 1, 50)
-      setDocuments(result?.documents ?? [])
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur de chargement des documents'
-      setDocsError(msg)
-    } finally {
-      setDocsLoading(false)
-    }
-  }, [projectId])
-
-  const handleReindex = useCallback(async () => {
-    try {
-      setDocsError(null)
-      await indexProject(projectId)
-      await loadDocuments()
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de la réindexation"
-      setDocsError(msg)
-    }
-  }, [projectId, loadDocuments])
 
   const fetchState = useCallback(async () => {
     try {
@@ -75,12 +46,6 @@ export default function CoachPage() {
   useEffect(() => {
     fetchState()
   }, [fetchState])
-
-  useEffect(() => {
-    if (activeTab === 'documents') {
-      void loadDocuments()
-    }
-  }, [activeTab, loadDocuments])
 
   const handleStartAction = useCallback(
     (action: string, priority?: Priority | null) => {
@@ -159,7 +124,6 @@ export default function CoachPage() {
   const tabs: { key: DashboardTab; label: string; icon: typeof MessageSquare }[] = [
     { key: 'overview', label: "Vue d'ensemble", icon: BarChart3 },
     { key: 'chat', label: 'Coach IA', icon: MessageSquare },
-    { key: 'documents', label: 'Documents', icon: FileText },
     { key: 'analysis', label: 'Diagnostic', icon: Lightbulb },
   ]
 
@@ -300,29 +264,6 @@ export default function CoachPage() {
         </div>
       )}
 
-      {activeTab === 'documents' && (
-        <div className="rounded-[12px] border border-ink/[.08] bg-white p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="w-4 h-4 text-moss" />
-            <h2 className="text-[13px] font-bold text-ink font-syne">Documents du projet</h2>
-          </div>
-          <p className="text-[11px] text-ink3 font-dm mb-4">
-            Gérez les documents indexés pour améliorer les réponses du coach.
-          </p>
-          {docsError && <ErrorAlert message={docsError} />}
-          {docsLoading ? (
-            <LoadingState label="Chargement des documents…" />
-          ) : (
-            <DocumentUploader
-              projectId={projectId}
-              documents={documents}
-              onUploaded={() => void loadDocuments()}
-              onIndex={() => void handleReindex()}
-            />
-          )}
-        </div>
-      )}
-
       {activeTab === 'analysis' && state && (
         <div className="space-y-4">
           <div className="rounded-[12px] border border-ink/[.08] bg-white p-6">
@@ -395,8 +336,8 @@ export default function CoachPage() {
             </h2>
             <div className="space-y-3 text-[11px] text-ink2 font-dm leading-relaxed">
               <p>
-                Le coach IA analyse votre projet en croisant les données de vos étapes GBM,
-                vos documents uploadés et les conversations précédentes.
+                Le coach IA analyse votre projet en croisant les données de vos étapes GBM
+                et les conversations précédentes.
               </p>
               <p>
                 <strong className="text-ink">Analyse déterministe :</strong> Calcul du score de santé,
