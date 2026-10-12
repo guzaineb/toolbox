@@ -46,7 +46,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system --gid 1001 nodejs \
-    && useradd --system --uid 1001 --gid nodejs web
+    && useradd --system --uid 1001 --gid nodejs nodejs
 
 # Le serveur standalone embarque uniquement les fichiers traces par Next.js
 COPY --from=builder --chown=nodejs:nodejs /app/.next/standalone ./
