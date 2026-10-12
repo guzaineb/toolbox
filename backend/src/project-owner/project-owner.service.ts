@@ -85,8 +85,10 @@ export class ProjectOwnerService {
         title: dto.title,
         organization: dto.organization,
         description: dto.description,
-        start_date: dto.start_date,
-        end_date: dto.end_date,
+        // `<input type="date">` envoie "YYYY-MM-DD" : Prisma exige un
+        // DateTime complet, on convertit donc explicitement en Date.
+        start_date: dto.start_date ? new Date(dto.start_date) : null,
+        end_date: dto.end_date ? new Date(dto.end_date) : null,
         project_owner_profile_id: profile.id,
       },
     });

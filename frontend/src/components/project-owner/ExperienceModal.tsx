@@ -23,7 +23,14 @@ export function ExperienceModal({ onAdd, onClose, saving }: ExperienceModalProps
     if (!form.title.trim() || !form.organization.trim()) return;
     setLocalSaving(true);
     try {
-      await onAdd(form);
+      // Ne pas envoyer les champs optionnels vides : le backend rejetterait
+      // "" sur les dates (`@IsDateString()`).
+      await onAdd({
+        ...form,
+        description: form.description || undefined,
+        start_date: form.start_date || undefined,
+        end_date: form.end_date || undefined,
+      });
       // Réinitialiser
       setForm({ title: '', organization: '', description: '', start_date: '', end_date: '' });
       onClose();
