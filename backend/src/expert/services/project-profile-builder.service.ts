@@ -31,7 +31,9 @@ export class ProjectProfileBuilder {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async buildProjectRequirements(projectId: string): Promise<ProjectRequirements> {
+  async buildProjectRequirements(
+    projectId: string,
+  ): Promise<ProjectRequirements> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: this.projectLoadInclude(),
@@ -66,7 +68,9 @@ export class ProjectProfileBuilder {
 
     return {
       requiredAreas: scored.slice(0, maxAreas).map((entry) => entry.area.id),
-      requiredAreaNames: scored.slice(0, maxAreas).map((entry) => entry.area.name),
+      requiredAreaNames: scored
+        .slice(0, maxAreas)
+        .map((entry) => entry.area.name),
       minYearsExperience,
     };
   }
@@ -88,7 +92,12 @@ export class ProjectProfileBuilder {
       project?.name,
       project?.description,
       summary?.summary_text,
-      [idea?.idea_initial, idea?.product_service, idea?.customers, idea?.partners]
+      [
+        idea?.idea_initial,
+        idea?.product_service,
+        idea?.customers,
+        idea?.partners,
+      ]
         .filter(Boolean)
         .join(' '),
       [needs?.environmental_challenges, needs?.social_challenges]

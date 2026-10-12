@@ -88,9 +88,9 @@ describe("CoachingService — politique d'accès aux sessions", () => {
       prisma.project.findUnique.mockResolvedValue({ owner_id: 'u-owner' });
       prisma.coachingSession.findMany.mockResolvedValue([]);
 
-      await expect(service.findSessionsByProject('p-1', 'u-outside')).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        service.findSessionsByProject('p-1', 'u-outside'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.coachingSession.findMany).not.toHaveBeenCalled();
     });
 

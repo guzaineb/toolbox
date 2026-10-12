@@ -61,7 +61,10 @@ describe('ProjectAnalyzer', () => {
     it('étape gbm_1 complétée avec données : gbm_1 dans completedSteps', () => {
       const project = emptyProject();
       project.step_progresses = [{ step_key: 'gbm_1', status: 'COMPLETED' }];
-      project.idea_sketch = { idea_initial: 'Mon idée', product_service: 'Un produit' };
+      project.idea_sketch = {
+        idea_initial: 'Mon idée',
+        product_service: 'Un produit',
+      };
       const result = analyzer.analyzeCompleteness(project as any);
       expect(result.gbm.completed).toBe(1);
       const gbm1 = result.gbm.steps.find((s) => s.stepKey === 'gbm_1');
@@ -98,7 +101,16 @@ describe('ProjectAnalyzer', () => {
     });
 
     it('8 étapes GBM sur 24 complétées (gbm_1..gbm_9) : calcule le bon pourcentage', () => {
-      const keys = ['gbm_1','gbm_2','gbm_3','gbm_4','gbm_5','gbm_6','gbm_7a','gbm_7b'];
+      const keys = [
+        'gbm_1',
+        'gbm_2',
+        'gbm_3',
+        'gbm_4',
+        'gbm_5',
+        'gbm_6',
+        'gbm_7a',
+        'gbm_7b',
+      ];
       const steps = keys.map((k) => ({ step_key: k, status: 'COMPLETED' }));
       const result = analyzer.analyzeProgress({ step_progresses: steps });
       expect(result.gbmPercentage).toBe(Math.round((8 / 24) * 100));
@@ -191,9 +203,16 @@ describe('ProjectAnalyzer', () => {
 
     it('SWOT forces sans faiblesses → incohérence MEDIUM', () => {
       const project = emptyProject();
-      project.swot_analysis = { strengths: 'Forces', weaknesses: null, opportunities: null, threats: null };
+      project.swot_analysis = {
+        strengths: 'Forces',
+        weaknesses: null,
+        opportunities: null,
+        threats: null,
+      };
       const issues = analyzer.detectInconsistencies(project as any);
-      expect(issues.some((i) => i.description.includes('faiblesses'))).toBe(true);
+      expect(issues.some((i) => i.description.includes('faiblesses'))).toBe(
+        true,
+      );
     });
 
     it('coûts définis mais revenus absents → incohérence MEDIUM', () => {
@@ -209,7 +228,9 @@ describe('ProjectAnalyzer', () => {
       project.business_plan_status = 'FINAL';
       project.financial_plan = null;
       const issues = analyzer.detectInconsistencies(project as any);
-      expect(issues.some((i) => i.severity === 'HIGH' && i.area === 'Business Plan')).toBe(true);
+      expect(
+        issues.some((i) => i.severity === 'HIGH' && i.area === 'Business Plan'),
+      ).toBe(true);
     });
   });
 

@@ -151,7 +151,12 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'Explique cette étape',
         undefined,
-        { module: 'GBM', section: 'Idée initiale', step: 'gbm_1', context: 'ideaSketch: Solar farm' },
+        {
+          module: 'GBM',
+          section: 'Idée initiale',
+          step: 'gbm_1',
+          context: 'ideaSketch: Solar farm',
+        },
       );
     });
 
@@ -174,7 +179,12 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'Analyse ma réponse',
         undefined,
-        { module: 'BUSINESS_PLAN', section: '2.1 Gestion', step: undefined, context: undefined },
+        {
+          module: 'BUSINESS_PLAN',
+          section: '2.1 Gestion',
+          step: undefined,
+          context: undefined,
+        },
       );
     });
 
@@ -218,7 +228,12 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'Quelles infos manquent ?',
         undefined,
-        { module: 'MARKET', section: 'Positionnement', step: undefined, context: undefined },
+        {
+          module: 'MARKET',
+          section: 'Positionnement',
+          step: undefined,
+          context: undefined,
+        },
       );
     });
 
@@ -241,7 +256,12 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'Prochaine étape ?',
         undefined,
-        { module: 'FUNDING', section: 'Questionnaire de maturité', step: undefined, context: undefined },
+        {
+          module: 'FUNDING',
+          section: 'Questionnaire de maturité',
+          step: undefined,
+          context: undefined,
+        },
       );
     });
 
@@ -264,7 +284,12 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'Améliore mon rapport',
         undefined,
-        { module: 'IMPACT', section: 'Rapport', step: undefined, context: undefined },
+        {
+          module: 'IMPACT',
+          section: 'Rapport',
+          step: undefined,
+          context: undefined,
+        },
       );
     });
 
@@ -287,7 +312,12 @@ describe('ChatbotController (sécurité BOLA / IDOR)', () => {
         'user-1',
         'Incohérences ?',
         undefined,
-        { module: 'ECO_DESIGN', section: 'Configurer le cycle de vie', step: undefined, context: undefined },
+        {
+          module: 'ECO_DESIGN',
+          section: 'Configurer le cycle de vie',
+          step: undefined,
+          context: undefined,
+        },
       );
     });
   });

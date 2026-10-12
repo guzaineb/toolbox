@@ -128,12 +128,30 @@ describe('NotificationsService', () => {
           type: NotificationType.INVITATION_RECEIVED,
           title: 'Invitation',
           message: 'You are invited',
-          link: '/cohorts/123',
+          link: '/dashboard/expert/cohorts',
           sender_id: null,
           priority: NotificationPriority.MEDIUM,
           resource_type: null,
           resource_id: null,
         },
+      });
+    });
+
+    it('should normalize a legacy link to an existing dashboard route', async () => {
+      prisma.notification.create.mockResolvedValue({});
+
+      await service.create(
+        'user-1',
+        NotificationType.NEW_EVALUATION,
+        'Nouvelle évaluation',
+        'Vous avez une nouvelle évaluation',
+        '/project-owner/projects/p1/coaching',
+      );
+
+      expect(prisma.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          link: '/dashboard/project-owner/projects/p1/coachings',
+        }),
       });
     });
 
@@ -158,7 +176,7 @@ describe('NotificationsService', () => {
           type: NotificationType.NEW_EVALUATION,
           title: 'Nouvelle évaluation',
           message: 'Vous avez une nouvelle évaluation',
-          link: '/evaluations/123',
+          link: '/dashboard/expert/evaluations',
           sender_id: 'sender-1',
           priority: NotificationPriority.HIGH,
           resource_type: ResourceType.EVALUATION,

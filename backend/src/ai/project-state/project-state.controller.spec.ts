@@ -44,7 +44,7 @@ describe('ProjectStateController (sécurité BOLA / IDOR)', () => {
   });
 
   describe('GET /ai/project-state/:projectId', () => {
-    it('propriétaire autorisé : vérifie l\'accès puis délègue au service', async () => {
+    it("propriétaire autorisé : vérifie l'accès puis délègue au service", async () => {
       const mockState = {
         projectId: '11111111-1111-1111-1111-111111111111',
         projectName: 'Mon projet',
@@ -79,7 +79,7 @@ describe('ProjectStateController (sécurité BOLA / IDOR)', () => {
       expect(result).toEqual({ data: mockState });
     });
 
-    it('l\'identité vient de req.user, jamais d\'un userId envoyé par le client', async () => {
+    it("l'identité vient de req.user, jamais d'un userId envoyé par le client", async () => {
       accessMock.assertCanAccessProject.mockResolvedValue(undefined);
       projectStateMock.getProjectState.mockResolvedValue({ projectId: 'x' });
 
@@ -94,7 +94,7 @@ describe('ProjectStateController (sécurité BOLA / IDOR)', () => {
       );
     });
 
-    it('utilisateur non propriétaire / sans accès : rejeté 403, le service n\'est pas appelé', async () => {
+    it("utilisateur non propriétaire / sans accès : rejeté 403, le service n'est pas appelé", async () => {
       accessMock.assertCanAccessProject.mockRejectedValue(
         new ForbiddenException('Accès refusé à ce projet'),
       );
@@ -108,7 +108,7 @@ describe('ProjectStateController (sécurité BOLA / IDOR)', () => {
       expect(projectStateMock.getProjectState).not.toHaveBeenCalled();
     });
 
-    it('projectId inexistant : rejeté 404 (NotFound du check d\'accès)', async () => {
+    it("projectId inexistant : rejeté 404 (NotFound du check d'accès)", async () => {
       accessMock.assertCanAccessProject.mockRejectedValue(
         new NotFoundException('Projet introuvable'),
       );
@@ -138,7 +138,7 @@ describe('ProjectStateController (sécurité BOLA / IDOR)', () => {
       expect(result).toEqual({ data: { projectId: 'x' } });
     });
 
-    it('membre d\'un incubateur : autorisé via assertCanAccessProject', async () => {
+    it("membre d'un incubateur : autorisé via assertCanAccessProject", async () => {
       accessMock.assertCanAccessProject.mockResolvedValue(undefined);
       projectStateMock.getProjectState.mockResolvedValue({ projectId: 'x' });
 

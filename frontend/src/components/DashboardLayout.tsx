@@ -82,7 +82,7 @@ const PROJECT_MODULES: { suffix: string; label: string; icon: LucideIcon; match?
 ];
 
 const SECTION_LABELS: Record<string, string> = {
-  overview: 'Vue d\u2019ensemble',
+  overview: 'Vue d ensemble',
   expert: 'Expertise',
   porteur: 'Mes projets',
   incubator: 'Incubateur',

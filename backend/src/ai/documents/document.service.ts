@@ -1,11 +1,19 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ModuleAccessService } from '../../common/services/module-access.service';
 import { EmbeddingsService } from '../embeddings.service';
 import { ChromaService } from '../chroma.service';
 import { ChunkerService } from '../rag/chunker.service';
 import { TextExtractionService } from './text-extraction.service';
-import { EMBEDDING_DIMENSION, EMBEDDING_DISTANCE_FUNCTION } from '../rag/rag-config';
+import {
+  EMBEDDING_DIMENSION,
+  EMBEDDING_DISTANCE_FUNCTION,
+} from '../rag/rag-config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -48,10 +56,15 @@ export class DocumentService {
     await this.access.assertCanAccessProject(projectId, ownerId);
 
     if (file.size > MAX_FILE_SIZE) {
-      throw new ForbiddenException(`Fichier trop volumineux (max ${MAX_FILE_SIZE / 1024 / 1024}MB)`);
+      throw new ForbiddenException(
+        `Fichier trop volumineux (max ${MAX_FILE_SIZE / 1024 / 1024}MB)`,
+      );
     }
 
-    if (!this.textExtractor.isSupported(file.mimetype) && !this.textExtractor.isSupportedByExtension(file.originalname)) {
+    if (
+      !this.textExtractor.isSupported(file.mimetype) &&
+      !this.textExtractor.isSupportedByExtension(file.originalname)
+    ) {
       throw new ForbiddenException(
         'Format non supporté. Formats acceptés: PDF, DOCX, TXT, MD',
       );
@@ -86,7 +99,9 @@ export class DocumentService {
       },
     });
 
-    this.logger.log(`Document uploaded: ${document.id} (${file.originalname}) for project ${projectId}`);
+    this.logger.log(
+      `Document uploaded: ${document.id} (${file.originalname}) for project ${projectId}`,
+    );
 
     // Indexation automatique : extraction du texte, chunking, embeddings, ChromaDB.
     // L'utilisateur n'a pas à appeler un endpoint d'indexation séparé.
@@ -112,7 +127,11 @@ export class DocumentService {
     };
   }
 
-  async indexDocument(documentId: string, projectId: string, ownerId: string): Promise<{ chunksIndexed: number }> {
+  async indexDocument(
+    documentId: string,
+    projectId: string,
+    ownerId: string,
+  ): Promise<{ chunksIndexed: number }> {
     await this.access.assertCanAccessProject(projectId, ownerId);
 
     const document = await this.prisma.uploadedDocument.findUnique({
@@ -123,10 +142,12 @@ export class DocumentService {
       throw new NotFoundException('Document introuvable');
     }
     if (document.project_id !== projectId) {
-      throw new ForbiddenException('Ce document n\'appartient pas à ce projet');
+      throw new ForbiddenException("Ce document n'appartient pas à ce projet");
     }
     if (document.owner_id !== ownerId) {
-      throw new ForbiddenException('Vous n\'êtes pas autorisé à indexer ce document');
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à indexer ce document",
+      );
     }
 
     await this.prisma.uploadedDocument.update({
@@ -140,12 +161,18 @@ export class DocumentService {
         throw new Error('Fichier physique introuvable sur le serveur');
       }
 
-      const extracted = await this.textExtractor.extract(filepath, document.mime_type);
+      const extracted = await this.textExtractor.extract(
+        filepath,
+        document.mime_type,
+      );
 
       if (!extracted.text || extracted.text.trim().length < 10) {
         await this.prisma.uploadedDocument.update({
           where: { id: documentId },
-          data: { status: 'FAILED', error_message: 'Contenu texte insuffisant ou vide' },
+          data: {
+            status: 'FAILED',
+            error_message: 'Contenu texte insuffisant ou vide',
+          },
         });
         return { chunksIndexed: 0 };
       }
@@ -201,7 +228,9 @@ export class DocumentService {
       return { chunksIndexed: chunks.length };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Indexing failed for document ${documentId}: ${message}`);
+      this.logger.error(
+        `Indexing failed for document ${documentId}: ${message}`,
+      );
 
       await this.prisma.uploadedDocument.update({
         where: { id: documentId },
@@ -212,7 +241,11 @@ export class DocumentService {
     }
   }
 
-  async deleteDocument(documentId: string, projectId: string, ownerId: string): Promise<void> {
+  async deleteDocument(
+    documentId: string,
+    projectId: string,
+    ownerId: string,
+  ): Promise<void> {
     await this.access.assertCanAccessProject(projectId, ownerId);
 
     const document = await this.prisma.uploadedDocument.findUnique({
@@ -223,10 +256,12 @@ export class DocumentService {
       throw new NotFoundException('Document introuvable');
     }
     if (document.project_id !== projectId) {
-      throw new ForbiddenException('Ce document n\'appartient pas à ce projet');
+      throw new ForbiddenException("Ce document n'appartient pas à ce projet");
     }
     if (document.owner_id !== ownerId) {
-      throw new ForbiddenException('Vous n\'êtes pas autorisé à supprimer ce document');
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à supprimer ce document",
+      );
     }
 
     const documentKey = `upload.${documentId}`;
@@ -255,7 +290,11 @@ export class DocumentService {
     this.logger.log(`Document ${documentId} deleted from project ${projectId}`);
   }
 
-  async reindexDocument(documentId: string, projectId: string, ownerId: string): Promise<{ chunksIndexed: number }> {
+  async reindexDocument(
+    documentId: string,
+    projectId: string,
+    ownerId: string,
+  ): Promise<{ chunksIndexed: number }> {
     await this.access.assertCanAccessProject(projectId, ownerId);
 
     const document = await this.prisma.uploadedDocument.findUnique({
@@ -266,10 +305,12 @@ export class DocumentService {
       throw new NotFoundException('Document introuvable');
     }
     if (document.project_id !== projectId) {
-      throw new ForbiddenException('Ce document n\'appartient pas à ce projet');
+      throw new ForbiddenException("Ce document n'appartient pas à ce projet");
     }
     if (document.owner_id !== ownerId) {
-      throw new ForbiddenException('Vous n\'êtes pas autorisé à réindexer ce document');
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à réindexer ce document",
+      );
     }
 
     const documentKey = `upload.${documentId}`;
@@ -332,7 +373,11 @@ export class DocumentService {
     };
   }
 
-  async getById(documentId: string, projectId: string, ownerId: string): Promise<UploadedDocumentResult> {
+  async getById(
+    documentId: string,
+    projectId: string,
+    ownerId: string,
+  ): Promise<UploadedDocumentResult> {
     await this.access.assertCanAccessProject(projectId, ownerId);
 
     const document = await this.prisma.uploadedDocument.findUnique({
@@ -343,10 +388,12 @@ export class DocumentService {
       throw new NotFoundException('Document introuvable');
     }
     if (document.project_id !== projectId) {
-      throw new ForbiddenException('Ce document n\'appartient pas à ce projet');
+      throw new ForbiddenException("Ce document n'appartient pas à ce projet");
     }
     if (document.owner_id !== ownerId) {
-      throw new ForbiddenException('Vous n\'êtes pas autorisé à voir ce document');
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à voir ce document",
+      );
     }
 
     return {

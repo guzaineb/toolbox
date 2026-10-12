@@ -100,11 +100,13 @@ export class ConversationService {
     });
 
     if (!conversation) {
-      throw new NotFoundException(`Conversation introuvable: ${conversationId}`);
+      throw new NotFoundException(
+        `Conversation introuvable: ${conversationId}`,
+      );
     }
     if (conversation.project_id !== projectId) {
       throw new NotFoundException(
-        'Cette conversation n\'appartient pas à ce projet',
+        "Cette conversation n'appartient pas à ce projet",
       );
     }
     await this.verifyProjectAccess(projectId, userId);

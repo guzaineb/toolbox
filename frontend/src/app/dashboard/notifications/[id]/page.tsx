@@ -15,6 +15,7 @@ import {
 import { Badge, Button, Card, ErrorAlert } from '@/components/shared/ui';
 import { useNotificationDetail, useMarkAsRead, useArchiveNotification, useRestoreNotification, useDeleteNotification, notificationKeys } from '@/hooks/useNotifications';
 import { cn, formatDate } from '@/lib/utils';
+import { resolveNotificationLink } from '@/lib/resolve-notification-link';
 
 const iconMap: Record<string, React.ReactNode> = {
   FilePlus: <Bell size={20} />,
@@ -165,7 +166,7 @@ export default function NotificationDetailPage() {
 
           <div className="flex items-center gap-2 border-t border-border pt-4">
             {notification.link && (
-              <Link href={notification.link} className="mr-auto">
+              <Link href={resolveNotificationLink(notification.link) ?? '/dashboard'} className="mr-auto">
                 <Button variant="primary" size="sm">
                   <LinkIcon size={14} />
                   Voir la ressource

@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { TextExtractionService } from './text-extraction.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -69,13 +73,28 @@ describe('DocumentService', () => {
 
   const chunkerMock = {
     chunk: jest.fn().mockReturnValue([
-      { id: 'chunk-0', content: 'chunk content 0', chunkIndex: 0, totalChunks: 2, contentHash: 'hash0' },
-      { id: 'chunk-1', content: 'chunk content 1', chunkIndex: 1, totalChunks: 2, contentHash: 'hash1' },
+      {
+        id: 'chunk-0',
+        content: 'chunk content 0',
+        chunkIndex: 0,
+        totalChunks: 2,
+        contentHash: 'hash0',
+      },
+      {
+        id: 'chunk-1',
+        content: 'chunk content 1',
+        chunkIndex: 1,
+        totalChunks: 2,
+        contentHash: 'hash1',
+      },
     ]),
   };
 
   const textExtractorMock = {
-    extract: jest.fn().mockResolvedValue({ text: 'Extracted text content for testing', pageCount: 1 }),
+    extract: jest.fn().mockResolvedValue({
+      text: 'Extracted text content for testing',
+      pageCount: 1,
+    }),
     isSupported: jest.fn().mockReturnValue(true),
     isSupportedByExtension: jest.fn().mockReturnValue(true),
   };
@@ -111,10 +130,25 @@ describe('DocumentService', () => {
       { id: `${PROJECT_ID}_upload.${DOC_ID}_0`, metadata: {} },
     ]);
     chunkerMock.chunk.mockReturnValue([
-      { id: 'chunk-0', content: 'chunk content 0', chunkIndex: 0, totalChunks: 2, contentHash: 'hash0' },
-      { id: 'chunk-1', content: 'chunk content 1', chunkIndex: 1, totalChunks: 2, contentHash: 'hash1' },
+      {
+        id: 'chunk-0',
+        content: 'chunk content 0',
+        chunkIndex: 0,
+        totalChunks: 2,
+        contentHash: 'hash0',
+      },
+      {
+        id: 'chunk-1',
+        content: 'chunk content 1',
+        chunkIndex: 1,
+        totalChunks: 2,
+        contentHash: 'hash1',
+      },
     ]);
-    textExtractorMock.extract.mockResolvedValue({ text: 'Extracted text content for testing', pageCount: 1 });
+    textExtractorMock.extract.mockResolvedValue({
+      text: 'Extracted text content for testing',
+      pageCount: 1,
+    });
     textExtractorMock.isSupported.mockReturnValue(true);
     textExtractorMock.isSupportedByExtension.mockReturnValue(true);
 
@@ -148,7 +182,10 @@ describe('DocumentService', () => {
 
       const result = await service.upload(PROJECT_ID, USER_ID, mockFile as any);
 
-      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(PROJECT_ID, USER_ID);
+      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(
+        PROJECT_ID,
+        USER_ID,
+      );
       expect(prismaMock.uploadedDocument.create).toHaveBeenCalled();
       expect(result.status).toBe('INDEXED');
     });
@@ -158,7 +195,10 @@ describe('DocumentService', () => {
     it('extracts text, chunks, embeds, and stores in ChromaDB', async () => {
       const result = await service.indexDocument(DOC_ID, PROJECT_ID, USER_ID);
 
-      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(PROJECT_ID, USER_ID);
+      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(
+        PROJECT_ID,
+        USER_ID,
+      );
       expect(textExtractorMock.extract).toHaveBeenCalled();
       expect(chunkerMock.chunk).toHaveBeenCalled();
       expect(embeddingsMock.generate).toHaveBeenCalled();
@@ -190,7 +230,9 @@ describe('DocumentService', () => {
     });
 
     it('handles extraction failure gracefully', async () => {
-      textExtractorMock.extract.mockRejectedValue(new Error('Extraction failed'));
+      textExtractorMock.extract.mockRejectedValue(
+        new Error('Extraction failed'),
+      );
 
       const result = await service.indexDocument(DOC_ID, PROJECT_ID, USER_ID);
 

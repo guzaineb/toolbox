@@ -108,7 +108,9 @@ export class ProjectAnalyzer {
     const completed = steps.filter((s) => s.status === 'COMPLETED').length;
     const total = steps.length;
 
-    const bpCompleted = BP_SECTIONS.filter((key) => nonEmpty(project[key])).length;
+    const bpCompleted = BP_SECTIONS.filter((key) =>
+      nonEmpty(project[key]),
+    ).length;
 
     const transversal: Record<string, boolean> = {};
     for (const key of TRANSVERSAL_AREAS) {
@@ -217,45 +219,67 @@ export class ProjectAnalyzer {
     const missing: string[] = [];
 
     if (!nonEmpty(project.idea_sketch?.idea_initial))
-      missing.push("Idée initiale non définie (gbm_1)");
+      missing.push('Idée initiale non définie (gbm_1)');
     if (!nonEmpty(project.problems_needs?.customer_needs))
-      missing.push("Besoins clients non identifiés (gbm_2)");
-    if (!nonEmpty(project.pestel?.political_what) && !nonEmpty(project.pestel?.economic_what) && !nonEmpty(project.pestel?.social_what) && !nonEmpty(project.pestel?.technological_what) && !nonEmpty(project.pestel?.environmental_what) && !nonEmpty(project.pestel?.legal_what))
-      missing.push("Analyse PESTEL incomplète (gbm_3)");
-    if (!nonEmpty(project.objective?.environmental_objectives) && !nonEmpty(project.objective?.social_objectives) && !nonEmpty(project.objective?.customer_objectives) && !nonEmpty(project.objective?.team_objectives))
-      missing.push("Objectifs non fixés (gbm_4)");
+      missing.push('Besoins clients non identifiés (gbm_2)');
+    if (
+      !nonEmpty(project.pestel?.political_what) &&
+      !nonEmpty(project.pestel?.economic_what) &&
+      !nonEmpty(project.pestel?.social_what) &&
+      !nonEmpty(project.pestel?.technological_what) &&
+      !nonEmpty(project.pestel?.environmental_what) &&
+      !nonEmpty(project.pestel?.legal_what)
+    )
+      missing.push('Analyse PESTEL incomplète (gbm_3)');
+    if (
+      !nonEmpty(project.objective?.environmental_objectives) &&
+      !nonEmpty(project.objective?.social_objectives) &&
+      !nonEmpty(project.objective?.customer_objectives) &&
+      !nonEmpty(project.objective?.team_objectives)
+    )
+      missing.push('Objectifs non fixés (gbm_4)');
     if (!nonEmpty(project.mission_vision?.mission))
-      missing.push("Mission non définie (gbm_5)");
+      missing.push('Mission non définie (gbm_5)');
     if (!nonEmpty(project.value_proposition?.products_services))
-      missing.push("Proposition de valeur incomplète (gbm_9)");
+      missing.push('Proposition de valeur incomplète (gbm_9)');
     if (nonEmptyCount(project.customer_segment) === 0)
-      missing.push("Aucun segment client identifié (gbm_8)");
-    if (!hasAnyField(project.key_activities_resource, [
-      'key_activities', 'key_resources',
-    ]))
-      missing.push("Activités et ressources non définies (gbm_13)");
+      missing.push('Aucun segment client identifié (gbm_8)');
+    if (
+      !hasAnyField(project.key_activities_resource, [
+        'key_activities',
+        'key_resources',
+      ])
+    )
+      missing.push('Activités et ressources non définies (gbm_13)');
     if (!hasAnyField(project.cost_structure, ['fixed_costs', 'variable_costs']))
-      missing.push("Structure des coûts non renseignée (gbm_16)");
-    if (!hasAnyField(project.revenue_stream, [
-      'revenue_sources', 'pricing_strategy',
-    ]))
-      missing.push("Flux de revenus non définis (gbm_17)");
+      missing.push('Structure des coûts non renseignée (gbm_16)');
+    if (
+      !hasAnyField(project.revenue_stream, [
+        'revenue_sources',
+        'pricing_strategy',
+      ])
+    )
+      missing.push('Flux de revenus non définis (gbm_17)');
     if (!nonEmpty(project.financial_plan?.point_depart))
-      missing.push("Plan financier absent (bp_financial_plan)");
+      missing.push('Plan financier absent (bp_financial_plan)');
     if (!nonEmpty(project.legal_plan?.statut_juridique))
-      missing.push("Statut juridique non défini (bp_legal_plan)");
-    if (!hasAnyField(project.indicator, [
-      'environmental_kpis', 'social_kpis', 'economic_kpis',
-    ]))
-      missing.push("Indicateurs KPIs non renseignés (gbm_20)");
+      missing.push('Statut juridique non défini (bp_legal_plan)');
+    if (
+      !hasAnyField(project.indicator, [
+        'environmental_kpis',
+        'social_kpis',
+        'economic_kpis',
+      ])
+    )
+      missing.push('Indicateurs KPIs non renseignés (gbm_20)');
     if (!nonEmpty(project.eco_design?.vision_durable))
-      missing.push("Vision durable non définie (gbm_14a)");
+      missing.push('Vision durable non définie (gbm_14a)');
     if (!nonEmpty(project.impact_measure?.methode_mesure))
       missing.push("Méthode de mesure d'impact non définie (impact)");
     if (!nonEmpty(project.market_access?.positionnement))
-      missing.push("Positionnement marché non défini (market_access)");
+      missing.push('Positionnement marché non défini (market_access)');
     if (!nonEmpty(project.swot_analysis?.strengths))
-      missing.push("Analyse SWOT absente (gbm_21)");
+      missing.push('Analyse SWOT absente (gbm_21)');
 
     return missing;
   }
@@ -287,15 +311,13 @@ export class ProjectAnalyzer {
     if (stepDone('gbm_1') && !nonEmpty(project.idea_sketch?.idea_initial)) {
       issues.push({
         area: 'GBM',
-        description: "Étape gbm_1 marquée complétée mais l'idée initiale est vide",
+        description:
+          "Étape gbm_1 marquée complétée mais l'idée initiale est vide",
         severity: 'HIGH',
       });
     }
 
-    if (
-      stepDone('gbm_5') &&
-      !nonEmpty(project.mission_vision?.mission)
-    ) {
+    if (stepDone('gbm_5') && !nonEmpty(project.mission_vision?.mission)) {
       issues.push({
         area: 'GBM',
         description: 'Étape gbm_5 marquée complétée mais la mission est vide',
@@ -324,25 +346,20 @@ export class ProjectAnalyzer {
       });
     }
 
-    if (
-      nonEmpty(project.eco_design) &&
-      !nonEmpty(project.eco_design_result)
-    ) {
+    if (nonEmpty(project.eco_design) && !nonEmpty(project.eco_design_result)) {
       issues.push({
         area: 'Éco-conception',
-        description: "Éco-conception initialisée mais résultats absents",
+        description: 'Éco-conception initialisée mais résultats absents',
         severity: 'LOW',
       });
     }
 
     const segmentsCount = nonEmptyCount(project.customer_segment);
-    if (
-      segmentsCount === 0 &&
-      stepDone('gbm_9')
-    ) {
+    if (segmentsCount === 0 && stepDone('gbm_9')) {
       issues.push({
         area: 'Clients',
-        description: 'Proposition de valeur définie mais aucun segment client identifié',
+        description:
+          'Proposition de valeur définie mais aucun segment client identifié',
         severity: 'HIGH',
       });
     }
@@ -353,15 +370,13 @@ export class ProjectAnalyzer {
     ) {
       issues.push({
         area: 'Finances',
-        description: 'Étape gbm_16 marquée complétée mais structure des coûts vide',
+        description:
+          'Étape gbm_16 marquée complétée mais structure des coûts vide',
         severity: 'HIGH',
       });
     }
 
-    if (
-      nonEmpty(project.cost_structure) &&
-      !nonEmpty(project.revenue_stream)
-    ) {
+    if (nonEmpty(project.cost_structure) && !nonEmpty(project.revenue_stream)) {
       issues.push({
         area: 'Finances',
         description: 'Coûts définis mais flux de revenus absents',
@@ -402,15 +417,40 @@ export class ProjectAnalyzer {
     consistencyPenalty: number;
   }): HealthScore {
     const categories = [
-      { label: 'Avancement', score: data.progressPercentage, maxScore: 100, weight: 0.30 },
-      { label: 'Maturité', score: data.maturityScore, maxScore: 100, weight: 0.25 },
-      { label: 'SWOT', score: Math.round(data.swotBalance * 100), maxScore: 100, weight: 0.15 },
-      { label: 'Coaching', score: Math.round(data.coachingEngagement * 100), maxScore: 100, weight: 0.15 },
-      { label: 'Cohérence', score: Math.max(0, 100 - data.consistencyPenalty), maxScore: 100, weight: 0.15 },
+      {
+        label: 'Avancement',
+        score: data.progressPercentage,
+        maxScore: 100,
+        weight: 0.3,
+      },
+      {
+        label: 'Maturité',
+        score: data.maturityScore,
+        maxScore: 100,
+        weight: 0.25,
+      },
+      {
+        label: 'SWOT',
+        score: Math.round(data.swotBalance * 100),
+        maxScore: 100,
+        weight: 0.15,
+      },
+      {
+        label: 'Coaching',
+        score: Math.round(data.coachingEngagement * 100),
+        maxScore: 100,
+        weight: 0.15,
+      },
+      {
+        label: 'Cohérence',
+        score: Math.max(0, 100 - data.consistencyPenalty),
+        maxScore: 100,
+        weight: 0.15,
+      },
     ];
 
     const overall = Math.round(
-      categories.reduce((sum, c) => sum + (c.score * c.weight), 0),
+      categories.reduce((sum, c) => sum + c.score * c.weight, 0),
     );
 
     return { overall: Math.max(0, Math.min(100, overall)), categories };
@@ -458,7 +498,8 @@ export class ProjectAnalyzer {
       priorities.push({
         level: 'HIGH',
         area: 'Avancement',
-        description: "Progression globale faible — focus sur les étapes GBM fondamentales",
+        description:
+          'Progression globale faible — focus sur les étapes GBM fondamentales',
         impact: 70,
       });
     }
@@ -467,7 +508,8 @@ export class ProjectAnalyzer {
       priorities.push({
         level: 'MEDIUM',
         area: 'Maturité',
-        description: 'Maturité faible malgré un avancement correct — approfondissement nécessaire',
+        description:
+          'Maturité faible malgré un avancement correct — approfondissement nécessaire',
         impact: 60,
       });
     }
@@ -476,7 +518,8 @@ export class ProjectAnalyzer {
       priorities.push({
         level: 'MEDIUM',
         area: 'Évaluation',
-        description: 'Aucune évaluation jury soumise — solliciter un retour expert',
+        description:
+          'Aucune évaluation jury soumise — solliciter un retour expert',
         impact: 55,
       });
     }
@@ -485,7 +528,8 @@ export class ProjectAnalyzer {
       priorities.push({
         level: 'LOW',
         area: 'Coaching',
-        description: 'Aucune action de coaching active — envisager un accompagnement',
+        description:
+          'Aucune action de coaching active — envisager un accompagnement',
         impact: 30,
       });
     }
@@ -494,36 +538,113 @@ export class ProjectAnalyzer {
     return priorities;
   }
 
-  private stepHasData(
-    stepKey: string,
-    project: Record<string, any>,
-  ): boolean {
+  private stepHasData(stepKey: string, project: Record<string, any>): boolean {
     switch (stepKey) {
-      case 'gbm_1': return nonEmpty(project.idea_sketch?.idea_initial) || nonEmpty(project.idea_sketch?.product_service);
-      case 'gbm_2': return hasAnyField(project.problems_needs, ['environmental_challenges', 'social_challenges', 'customer_needs', 'team_motivations']);
-      case 'gbm_3': return hasAnyField(project.pestel, ['political_what', 'economic_what', 'social_what', 'technological_what', 'environmental_what', 'legal_what']);
-      case 'gbm_4': return hasAnyField(project.objective, ['environmental_objectives', 'social_objectives', 'customer_objectives', 'team_objectives']);
-      case 'gbm_5': return nonEmpty(project.mission_vision?.mission) || nonEmpty(project.mission_vision?.vision);
-      case 'gbm_6': return nonEmpty(project.context_summary?.summary_text);
-      case 'gbm_7a': return nonEmptyCount(project.stakeholder) > 0;
-      case 'gbm_7b': return nonEmptyCount(project.stakeholder_map) > 0;
-      case 'gbm_8': return nonEmptyCount(project.customer_segment) > 0;
-      case 'gbm_9': return hasAnyField(project.value_proposition, ['products_services', 'value_added', 'environmental_value']);
-      case 'gbm_10': return nonEmptyCount(project.test_discovery) > 0;
-      case 'gbm_11': return hasAnyField(project.value_proposition_pivot, ['pivot_decision', 'new_value_proposition']);
-      case 'gbm_12a': return hasAnyField(project.customer_relations_channel, ['channels', 'customer_relationships']);
-      case 'gbm_12b': return nonEmptyCount(project.customer_journey) > 0;
-      case 'gbm_13': return hasAnyField(project.key_activities_resource, ['key_activities', 'key_resources']);
-      case 'gbm_14a': return nonEmpty(project.eco_design?.vision_durable) || nonEmpty(project.eco_design?.equipe_eco);
-      case 'gbm_14b': return nonEmpty(project.eco_design_result?.eco_results);
-      case 'gbm_15': return nonEmpty(project.summary_activity?.activities_summary);
-      case 'gbm_16': return hasAnyField(project.cost_structure, ['fixed_costs', 'variable_costs']);
-      case 'gbm_17': return hasAnyField(project.revenue_stream, ['revenue_sources', 'pricing_strategy']);
-      case 'gbm_18': return nonEmpty(project.cost_revenue_summary?.cost_summary);
-      case 'gbm_19': return hasAnyField(project.test_preparation, ['test_objectives', 'test_method']);
-      case 'gbm_20': return hasAnyField(project.indicator, ['environmental_kpis', 'social_kpis', 'economic_kpis']);
-      case 'gbm_21': return nonEmpty(project.swot_analysis?.strengths) || nonEmpty(project.swot_analysis?.weaknesses);
-      default: return false;
+      case 'gbm_1':
+        return (
+          nonEmpty(project.idea_sketch?.idea_initial) ||
+          nonEmpty(project.idea_sketch?.product_service)
+        );
+      case 'gbm_2':
+        return hasAnyField(project.problems_needs, [
+          'environmental_challenges',
+          'social_challenges',
+          'customer_needs',
+          'team_motivations',
+        ]);
+      case 'gbm_3':
+        return hasAnyField(project.pestel, [
+          'political_what',
+          'economic_what',
+          'social_what',
+          'technological_what',
+          'environmental_what',
+          'legal_what',
+        ]);
+      case 'gbm_4':
+        return hasAnyField(project.objective, [
+          'environmental_objectives',
+          'social_objectives',
+          'customer_objectives',
+          'team_objectives',
+        ]);
+      case 'gbm_5':
+        return (
+          nonEmpty(project.mission_vision?.mission) ||
+          nonEmpty(project.mission_vision?.vision)
+        );
+      case 'gbm_6':
+        return nonEmpty(project.context_summary?.summary_text);
+      case 'gbm_7a':
+        return nonEmptyCount(project.stakeholder) > 0;
+      case 'gbm_7b':
+        return nonEmptyCount(project.stakeholder_map) > 0;
+      case 'gbm_8':
+        return nonEmptyCount(project.customer_segment) > 0;
+      case 'gbm_9':
+        return hasAnyField(project.value_proposition, [
+          'products_services',
+          'value_added',
+          'environmental_value',
+        ]);
+      case 'gbm_10':
+        return nonEmptyCount(project.test_discovery) > 0;
+      case 'gbm_11':
+        return hasAnyField(project.value_proposition_pivot, [
+          'pivot_decision',
+          'new_value_proposition',
+        ]);
+      case 'gbm_12a':
+        return hasAnyField(project.customer_relations_channel, [
+          'channels',
+          'customer_relationships',
+        ]);
+      case 'gbm_12b':
+        return nonEmptyCount(project.customer_journey) > 0;
+      case 'gbm_13':
+        return hasAnyField(project.key_activities_resource, [
+          'key_activities',
+          'key_resources',
+        ]);
+      case 'gbm_14a':
+        return (
+          nonEmpty(project.eco_design?.vision_durable) ||
+          nonEmpty(project.eco_design?.equipe_eco)
+        );
+      case 'gbm_14b':
+        return nonEmpty(project.eco_design_result?.eco_results);
+      case 'gbm_15':
+        return nonEmpty(project.summary_activity?.activities_summary);
+      case 'gbm_16':
+        return hasAnyField(project.cost_structure, [
+          'fixed_costs',
+          'variable_costs',
+        ]);
+      case 'gbm_17':
+        return hasAnyField(project.revenue_stream, [
+          'revenue_sources',
+          'pricing_strategy',
+        ]);
+      case 'gbm_18':
+        return nonEmpty(project.cost_revenue_summary?.cost_summary);
+      case 'gbm_19':
+        return hasAnyField(project.test_preparation, [
+          'test_objectives',
+          'test_method',
+        ]);
+      case 'gbm_20':
+        return hasAnyField(project.indicator, [
+          'environmental_kpis',
+          'social_kpis',
+          'economic_kpis',
+        ]);
+      case 'gbm_21':
+        return (
+          nonEmpty(project.swot_analysis?.strengths) ||
+          nonEmpty(project.swot_analysis?.weaknesses)
+        );
+      default:
+        return false;
     }
   }
 }

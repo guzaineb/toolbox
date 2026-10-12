@@ -53,7 +53,8 @@ describe('ChunkerService', () => {
     const modified = base.replace('Phrase deux', 'Phrase CHANGÉE');
     const modChunks = service.chunk('p1', 'k', modified);
 
-    const hashes = (cs: { contentHash: string }[]) => cs.map((c) => c.contentHash);
+    const hashes = (cs: { contentHash: string }[]) =>
+      cs.map((c) => c.contentHash);
     expect(hashes(modChunks)).not.toEqual(hashes(baseChunks));
   });
 

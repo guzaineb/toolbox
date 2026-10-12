@@ -169,7 +169,7 @@ export class ChromaService implements OnModuleDestroy {
                 };
               }
               const sorted = filtered
-                .map((d, i) => ({ ...d, index: d.id, distance: 0.3 + (i * 0.1) }))
+                .map((d, i) => ({ ...d, index: d.id, distance: 0.3 + i * 0.1 }))
                 .sort((a, b) => a.distance - b.distance)
                 .slice(0, nResults);
               return {

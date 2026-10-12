@@ -1,4 +1,7 @@
-import { ConsistencyChecker, ConsistencyInput } from './consistency-checker.service';
+import {
+  ConsistencyChecker,
+  ConsistencyInput,
+} from './consistency-checker.service';
 
 function emptyProject(): ConsistencyInput {
   return {
@@ -47,7 +50,7 @@ describe('ConsistencyChecker', () => {
   });
 
   describe('Projet "Bien-être durable" — projet sain', () => {
-    it('pas d\'incohérence si toutes les données sont cohérentes', () => {
+    it("pas d'incohérence si toutes les données sont cohérentes", () => {
       const p = emptyProject();
       p.step_progresses = [
         { step_key: 'gbm_1', status: 'COMPLETED' },
@@ -62,8 +65,14 @@ describe('ConsistencyChecker', () => {
         value_added: 'Réduction du stress de 30%',
       };
       p.customer_segment = [{ segment_name: 'PME tech' }];
-      p.cost_structure = { fixed_costs: '10000', variable_costs: '500/mission' };
-      p.revenue_stream = { revenue_sources: 'Abonnement', pricing_strategy: '200€/mois' };
+      p.cost_structure = {
+        fixed_costs: '10000',
+        variable_costs: '500/mission',
+      };
+      p.revenue_stream = {
+        revenue_sources: 'Abonnement',
+        pricing_strategy: '200€/mois',
+      };
       p.financial_plan = { point_depart: 'Apport personnel 20k€' };
       p.legal_plan = { statut_juridique: 'SAS' };
       p.swot_analysis = {
@@ -119,7 +128,9 @@ describe('ConsistencyChecker', () => {
 
     it('SWOT incomplet (faiblesses + menaces absentes)', () => {
       const result = checker.check(p);
-      const swotIssues = result.inconsistencies.filter((i) => i.area === 'SWOT');
+      const swotIssues = result.inconsistencies.filter(
+        (i) => i.area === 'SWOT',
+      );
       expect(swotIssues.length).toBeGreaterThanOrEqual(2);
       expect(swotIssues.every((i) => i.severity === 'MEDIUM')).toBe(true);
     });
@@ -127,8 +138,8 @@ describe('ConsistencyChecker', () => {
     it('coût défini sans revenus → MEDIUM', () => {
       p.revenue_stream = null;
       const result = checker.check(p);
-      const finIssues = result.inconsistencies.filter(
-        (i) => i.description.includes('revenus absents'),
+      const finIssues = result.inconsistencies.filter((i) =>
+        i.description.includes('revenus absents'),
       );
       expect(finIssues).toHaveLength(1);
       expect(finIssues[0].severity).toBe('MEDIUM');
@@ -137,8 +148,8 @@ describe('ConsistencyChecker', () => {
     it('mission définie mais proposition de valeur absente', () => {
       p.value_proposition = { products_services: '', value_added: '' };
       const result = checker.check(p);
-      const cohIssues = result.inconsistencies.filter(
-        (i) => i.description.includes('proposition de valeur absente'),
+      const cohIssues = result.inconsistencies.filter((i) =>
+        i.description.includes('proposition de valeur absente'),
       );
       expect(cohIssues).toHaveLength(1);
       expect(cohIssues[0].severity).toBe('MEDIUM');
@@ -171,8 +182,8 @@ describe('ConsistencyChecker', () => {
       p.legal_plan = { statut_juridique: 'SARL' };
 
       const result = checker.check(p);
-      const mgmtIssue = result.inconsistencies.find(
-        (i) => i.description.includes('plan de gestion absent'),
+      const mgmtIssue = result.inconsistencies.find((i) =>
+        i.description.includes('plan de gestion absent'),
       );
       expect(mgmtIssue).toBeDefined();
       expect(mgmtIssue!.severity).toBe('HIGH');
@@ -204,8 +215,8 @@ describe('ConsistencyChecker', () => {
       p.financial_plan = { point_depart: 'OK' };
 
       const result = checker.check(p);
-      const fundIssues = result.inconsistencies.filter(
-        (i) => i.description.includes('besoins financiers non quantifiés'),
+      const fundIssues = result.inconsistencies.filter((i) =>
+        i.description.includes('besoins financiers non quantifiés'),
       );
       expect(fundIssues).toHaveLength(1);
       expect(fundIssues[0].severity).toBe('HIGH');
@@ -232,8 +243,8 @@ describe('ConsistencyChecker', () => {
       p.indicator = { environmental_kpis: 'CO2' };
 
       const result = checker.check(p);
-      const impactIssues = result.inconsistencies.filter(
-        (i) => i.description.includes('méthode de mesure absente'),
+      const impactIssues = result.inconsistencies.filter((i) =>
+        i.description.includes('méthode de mesure absente'),
       );
       expect(impactIssues).toHaveLength(1);
       expect(impactIssues[0].severity).toBe('MEDIUM');
@@ -260,8 +271,8 @@ describe('ConsistencyChecker', () => {
       p.market_access = { positionnement: 'Premium' };
 
       const result = checker.check(p);
-      const mktIssues = result.inconsistencies.filter(
-        (i) => i.description.includes('analyse marché absente'),
+      const mktIssues = result.inconsistencies.filter((i) =>
+        i.description.includes('analyse marché absente'),
       );
       expect(mktIssues).toHaveLength(1);
       expect(mktIssues[0].severity).toBe('MEDIUM');

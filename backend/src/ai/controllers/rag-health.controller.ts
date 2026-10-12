@@ -18,10 +18,7 @@ export class RagHealthController {
   ) {}
 
   @Get('health')
-  async health(
-    @Query('projectId') projectId: string,
-    @Req() req: RequestUser,
-  ) {
+  async health(@Query('projectId') projectId: string, @Req() req: RequestUser) {
     await this.access.assertCanAccessProject(projectId, req.user.id);
 
     const [chromaHealth, embeddingsHealth, indexedCount] = await Promise.all([

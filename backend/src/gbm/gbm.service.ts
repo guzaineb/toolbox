@@ -799,12 +799,7 @@ export class GbmService {
         .map((l) => l.trim())
         .filter((l) => l && l !== ',' && l !== '');
       return lines
-        .map((l) =>
-          l.replace(
-            /^"([^"]+)"\s*:\s*"?(.*?)"?\s*,?$/,
-            '$1 : $2',
-          ),
-        )
+        .map((l) => l.replace(/^"([^"]+)"\s*:\s*"?(.*?)"?\s*,?$/, '$1 : $2'))
         .join('\n');
     }
     return trimmed;

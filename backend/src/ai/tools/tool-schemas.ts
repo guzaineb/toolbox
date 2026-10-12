@@ -226,7 +226,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -241,7 +245,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -256,7 +264,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -271,7 +283,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -286,7 +302,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -301,7 +321,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -316,7 +340,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -331,7 +359,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -346,7 +378,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -361,7 +397,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },
@@ -376,7 +416,11 @@ export const TOOL_DEFINITIONS = [
       parameters: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', format: 'uuid', description: 'UUID du projet' },
+          projectId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'UUID du projet',
+          },
         },
         required: ['projectId'],
       },

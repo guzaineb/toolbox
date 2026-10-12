@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException, HttpException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  NotFoundException,
+  HttpException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ModuleAccessService } from '../../common/services/module-access.service';
 import { ConversationController } from './conversation.controller';
@@ -69,7 +73,13 @@ describe('ConversationController', () => {
     it('returns conversations for authorized user + project', async () => {
       conversationServiceMock.listByProject.mockResolvedValue({
         conversations: [
-          { id: 'conv-1', title: 'Test', messageCount: 3, lastMessageAt: new Date(), createdAt: new Date() },
+          {
+            id: 'conv-1',
+            title: 'Test',
+            messageCount: 3,
+            lastMessageAt: new Date(),
+            createdAt: new Date(),
+          },
         ],
         total: 1,
       });
@@ -97,7 +107,12 @@ describe('ConversationController', () => {
 
     it('rejects missing projectId', async () => {
       await expect(
-        controller.listByProject(undefined as any, undefined, undefined, req('user-1')),
+        controller.listByProject(
+          undefined as any,
+          undefined,
+          undefined,
+          req('user-1'),
+        ),
       ).rejects.toThrow(HttpException);
     });
 
@@ -159,8 +174,22 @@ describe('ConversationController', () => {
     it('returns messages for authorized user + conversation', async () => {
       messageServiceMock.getMessages.mockResolvedValue({
         messages: [
-          { id: 'msg-1', role: 'user', content: 'Hello', sources: null, contextUsed: false, createdAt: new Date() },
-          { id: 'msg-2', role: 'assistant', content: 'Hi there', sources: null, contextUsed: true, createdAt: new Date() },
+          {
+            id: 'msg-1',
+            role: 'user',
+            content: 'Hello',
+            sources: null,
+            contextUsed: false,
+            createdAt: new Date(),
+          },
+          {
+            id: 'msg-2',
+            role: 'assistant',
+            content: 'Hi there',
+            sources: null,
+            contextUsed: true,
+            createdAt: new Date(),
+          },
         ],
         total: 2,
         page: 1,
@@ -193,7 +222,13 @@ describe('ConversationController', () => {
 
     it('rejects missing projectId', async () => {
       await expect(
-        controller.getMessages('conv-1', undefined as any, undefined, undefined, req('user-1')),
+        controller.getMessages(
+          'conv-1',
+          undefined as any,
+          undefined,
+          undefined,
+          req('user-1'),
+        ),
       ).rejects.toThrow(HttpException);
     });
 
@@ -216,7 +251,9 @@ describe('ConversationController', () => {
 
     it('conversation not found (cross-project) returns 404', async () => {
       messageServiceMock.getMessages.mockRejectedValue(
-        new NotFoundException('Cette conversation n\'appartient pas à ce projet'),
+        new NotFoundException(
+          "Cette conversation n'appartient pas à ce projet",
+        ),
       );
 
       await expect(

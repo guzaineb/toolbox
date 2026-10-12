@@ -167,58 +167,58 @@ describe('ConversationService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-  describe('getOrCreateActive', () => {
-    it('crée une conversation si la dernière a des messages', async () => {
-      mockProjectAccess('proj-a', 'user-1');
-      prismaMock.conversation.findFirst.mockResolvedValue({
-        id: 'conv-existing',
-        title: null,
-        created_at: new Date(),
-        _count: { messages: 5 },
-      });
-      prismaMock.conversation.create.mockResolvedValue({
-        id: 'conv-new',
-        title: null,
-        created_at: new Date(),
+    describe('getOrCreateActive', () => {
+      it('crée une conversation si la dernière a des messages', async () => {
+        mockProjectAccess('proj-a', 'user-1');
+        prismaMock.conversation.findFirst.mockResolvedValue({
+          id: 'conv-existing',
+          title: null,
+          created_at: new Date(),
+          _count: { messages: 5 },
+        });
+        prismaMock.conversation.create.mockResolvedValue({
+          id: 'conv-new',
+          title: null,
+          created_at: new Date(),
+        });
+
+        const result = await service.getOrCreateActive('proj-a', 'user-1');
+        expect(result.id).toBe('conv-new');
       });
 
-      const result = await service.getOrCreateActive('proj-a', 'user-1');
-      expect(result.id).toBe('conv-new');
+      it('réutilise une conversation vide existante', async () => {
+        prismaMock.project.findUnique.mockResolvedValue({
+          id: 'proj-a',
+          owner_id: 'user-1',
+        });
+        prismaMock.conversation.findFirst.mockResolvedValue({
+          id: 'conv-empty',
+          title: null,
+          created_at: new Date(),
+          _count: { messages: 0 },
+        });
+
+        const result = await service.getOrCreateActive('proj-a', 'user-1');
+        expect(result.id).toBe('conv-empty');
+        expect(prismaMock.conversation.create).not.toHaveBeenCalled();
+      });
+
+      it("crée une nouvelle conversation si aucune n'existe", async () => {
+        prismaMock.project.findUnique.mockResolvedValue({
+          id: 'proj-a',
+          owner_id: 'user-1',
+        });
+        prismaMock.conversation.findFirst.mockResolvedValue(null);
+        prismaMock.conversation.create.mockResolvedValue({
+          id: 'conv-new',
+          title: null,
+          created_at: new Date(),
+        });
+
+        const result = await service.getOrCreateActive('proj-a', 'user-1');
+        expect(result.id).toBe('conv-new');
+      });
     });
-
-    it('réutilise une conversation vide existante', async () => {
-      prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-a',
-        owner_id: 'user-1',
-      });
-      prismaMock.conversation.findFirst.mockResolvedValue({
-        id: 'conv-empty',
-        title: null,
-        created_at: new Date(),
-        _count: { messages: 0 },
-      });
-
-      const result = await service.getOrCreateActive('proj-a', 'user-1');
-      expect(result.id).toBe('conv-empty');
-      expect(prismaMock.conversation.create).not.toHaveBeenCalled();
-    });
-
-    it('crée une nouvelle conversation si aucune n\'existe', async () => {
-      prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-a',
-        owner_id: 'user-1',
-      });
-      prismaMock.conversation.findFirst.mockResolvedValue(null);
-      prismaMock.conversation.create.mockResolvedValue({
-        id: 'conv-new',
-        title: null,
-        created_at: new Date(),
-      });
-
-      const result = await service.getOrCreateActive('proj-a', 'user-1');
-      expect(result.id).toBe('conv-new');
-    });
-  });
   });
 
   describe('Pagination', () => {
@@ -250,7 +250,7 @@ describe('ConversationService', () => {
       prismaMock.conversation.findMany.mockResolvedValue([
         {
           id: 'conv-today',
-          title: 'Aujourd\'hui',
+          title: "Aujourd'hui",
           created_at: now,
           messages: [{ created_at: now }],
           _count: { messages: 2 },
@@ -312,7 +312,13 @@ describe('ConversationService', () => {
     it('deux utilisateurs ont des conversations séparées dans le même projet', async () => {
       mockProjectAccess('proj-a', 'user-1');
       prismaMock.conversation.findMany.mockResolvedValue([
-        { id: 'conv-u1', title: null, created_at: new Date(), messages: [], _count: { messages: 2 } },
+        {
+          id: 'conv-u1',
+          title: null,
+          created_at: new Date(),
+          messages: [],
+          _count: { messages: 2 },
+        },
       ]);
       prismaMock.conversation.count.mockResolvedValue(1);
 
@@ -321,7 +327,13 @@ describe('ConversationService', () => {
       expect(result1.conversations[0].id).toBe('conv-u1');
 
       prismaMock.conversation.findMany.mockResolvedValue([
-        { id: 'conv-u2', title: null, created_at: new Date(), messages: [], _count: { messages: 4 } },
+        {
+          id: 'conv-u2',
+          title: null,
+          created_at: new Date(),
+          messages: [],
+          _count: { messages: 4 },
+        },
       ]);
       prismaMock.conversation.count.mockResolvedValue(1);
 
@@ -348,17 +360,17 @@ describe('ConversationService', () => {
   });
 
   describe('Inexistant', () => {
-    it('lance une erreur si le projet n\'existe pas', async () => {
+    it("lance une erreur si le projet n'existe pas", async () => {
       accessMock.assertCanAccessProject.mockRejectedValue(
         new NotFoundException('Projet introuvable'),
       );
 
-      await expect(
-        service.create('proj-unknown', 'user-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.create('proj-unknown', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it('lance une erreur si la conversation n\'existe pas', async () => {
+    it("lance une erreur si la conversation n'existe pas", async () => {
       prismaMock.conversation.findUnique.mockResolvedValue(null);
 
       await expect(

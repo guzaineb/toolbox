@@ -144,7 +144,9 @@ describe('Recommandations projet (e2e)', () => {
       { name: 'Marketing', category: 'Croissance' },
       { name: 'Stratégie', category: 'Management' },
     ]) {
-      const existing = await prisma.expertiseArea.findFirst({ where: { name } });
+      const existing = await prisma.expertiseArea.findFirst({
+        where: { name },
+      });
       if (!existing) {
         const created = await prisma.expertiseArea.create({
           data: { name, category },

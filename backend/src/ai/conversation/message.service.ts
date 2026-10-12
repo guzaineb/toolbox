@@ -119,12 +119,13 @@ export class MessageService {
       select: { role: true, content: true },
     });
 
-    return messages.reverse() as { role: 'user' | 'assistant'; content: string }[];
+    return messages.reverse() as {
+      role: 'user' | 'assistant';
+      content: string;
+    }[];
   }
 
-  async getMessageCount(
-    conversationId: string,
-  ): Promise<number> {
+  async getMessageCount(conversationId: string): Promise<number> {
     return this.prisma.message.count({
       where: { conversation_id: conversationId },
     });
@@ -205,11 +206,13 @@ export class MessageService {
     });
 
     if (!conversation) {
-      throw new NotFoundException(`Conversation introuvable: ${conversationId}`);
+      throw new NotFoundException(
+        `Conversation introuvable: ${conversationId}`,
+      );
     }
     if (conversation.project_id !== projectId) {
       throw new NotFoundException(
-        'Cette conversation n\'appartient pas à ce projet',
+        "Cette conversation n'appartient pas à ce projet",
       );
     }
     await this.access.assertCanAccessProject(projectId, userId);

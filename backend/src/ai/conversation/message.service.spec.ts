@@ -149,7 +149,7 @@ describe('MessageService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('l\'historique est isolé par conversation', async () => {
+    it("l'historique est isolé par conversation", async () => {
       mockConversationAccess('conv-1', 'proj-a', 'user-1');
       prismaMock.message.findMany.mockResolvedValue([
         { role: 'assistant', content: 'Réponse A' },
@@ -167,12 +167,7 @@ describe('MessageService', () => {
         { role: 'assistant', content: 'Réponse 3' },
       ]);
 
-      const history = await service.getHistory(
-        'conv-1',
-        'proj-a',
-        'user-1',
-        2,
-      );
+      const history = await service.getHistory('conv-1', 'proj-a', 'user-1', 2);
       expect(prismaMock.message.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 2 }),
       );
@@ -194,7 +189,13 @@ describe('MessageService', () => {
       ]);
       prismaMock.message.count.mockResolvedValue(25);
 
-      const result = await service.getMessages('conv-1', 'proj-a', 'user-1', 1, 10);
+      const result = await service.getMessages(
+        'conv-1',
+        'proj-a',
+        'user-1',
+        1,
+        10,
+      );
       expect(result.total).toBe(25);
       expect(result.hasMore).toBe(true);
       expect(result.messages).toHaveLength(1);
@@ -211,7 +212,13 @@ describe('MessageService', () => {
       ]);
       prismaMock.message.count.mockResolvedValue(15);
 
-      const result = await service.getMessages('conv-1', 'proj-a', 'user-1', 2, 10);
+      const result = await service.getMessages(
+        'conv-1',
+        'proj-a',
+        'user-1',
+        2,
+        10,
+      );
       expect(result.hasMore).toBe(false);
     });
   });
@@ -231,7 +238,7 @@ describe('MessageService', () => {
       });
     });
 
-    it('supprime tous les messages d\'une conversation', async () => {
+    it("supprime tous les messages d'une conversation", async () => {
       mockConversationAccess('conv-1', 'proj-a', 'user-1');
       prismaMock.message.deleteMany.mockResolvedValue({ count: 15 });
 
@@ -243,7 +250,7 @@ describe('MessageService', () => {
       expect(count).toBe(15);
     });
 
-    it('ne peut pas supprimer un message d\'une autre conversation', async () => {
+    it("ne peut pas supprimer un message d'une autre conversation", async () => {
       mockConversationAccess('conv-1', 'proj-a', 'user-1');
       prismaMock.message.findUnique.mockResolvedValue({
         id: 'msg-1',

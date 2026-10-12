@@ -56,8 +56,18 @@ export type Inconsistency = {
 };
 
 export type CompletenessResult = {
-  gbm: { completed: number; total: number; percentage: number; steps: StepInfo[] };
-  businessPlan: { completed: number; total: number; percentage: number; sections: string[] };
+  gbm: {
+    completed: number;
+    total: number;
+    percentage: number;
+    steps: StepInfo[];
+  };
+  businessPlan: {
+    completed: number;
+    total: number;
+    percentage: number;
+    sections: string[];
+  };
   transversal: Record<string, boolean>;
 };
 

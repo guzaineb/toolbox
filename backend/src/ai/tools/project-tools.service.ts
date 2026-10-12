@@ -142,7 +142,7 @@ export class ProjectToolsService {
       },
       {
         name: 'getProjectProgress',
-        description: "Avancement du projet",
+        description: 'Avancement du projet',
         inputSchema: ToolInputSchema,
         outputSchema: ProjectProgressOutputSchema,
         handler: this.getProjectProgress.bind(this),

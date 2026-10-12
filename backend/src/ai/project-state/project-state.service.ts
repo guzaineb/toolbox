@@ -4,13 +4,18 @@ import { MaturityScoreService } from '../../maturity/maturity-score.service';
 import { ProjectAnalyzer } from './project-analyzer.service';
 import { ConsistencyChecker } from './consistency-checker.service';
 import { ProjectHealthService } from './project-health.service';
-import { ProjectState, Priority, MaturityLevel, PriorityModule } from './project-state.types';
+import {
+  ProjectState,
+  Priority,
+  MaturityLevel,
+  PriorityModule,
+} from './project-state.types';
 
 const WEIGHTS = {
-  completeness: 0.30,
+  completeness: 0.3,
   progress: 0.25,
   coherence: 0.25,
-  maturity: 0.20,
+  maturity: 0.2,
 };
 
 const PROJECT_INCLUDE = {
@@ -82,7 +87,9 @@ export class ProjectStateService {
     const progress = this.analyzer.analyzeProgress({
       step_progresses: project.step_progresses,
     });
-    const maturityLevel = this.analyzer.analyzeMaturity(maturityResult.globalScore);
+    const maturityLevel = this.analyzer.analyzeMaturity(
+      maturityResult.globalScore,
+    );
     const missingData = this.analyzer.detectMissingData(project as any);
 
     const consistencyInput = {
@@ -152,7 +159,8 @@ export class ProjectStateService {
       incompleteSteps,
     );
 
-    const currentPriority = enrichedPriorities.length > 0 ? enrichedPriorities[0] : null;
+    const currentPriority =
+      enrichedPriorities.length > 0 ? enrichedPriorities[0] : null;
     const recommendedNextAction = this.buildRecommendedAction(
       currentPriority,
       incompleteSteps,
@@ -173,10 +181,30 @@ export class ProjectStateService {
       healthScore: {
         overall: healthDiagnostic.score,
         categories: [
-          { label: 'Complétude', score: healthDiagnostic.completenessScore, maxScore: 100, weight: WEIGHTS.completeness },
-          { label: 'Avancement', score: healthDiagnostic.progressScore, maxScore: 100, weight: WEIGHTS.progress },
-          { label: 'Cohérence', score: healthDiagnostic.coherenceScore, maxScore: 100, weight: WEIGHTS.coherence },
-          { label: 'Maturité', score: healthDiagnostic.maturityScore, maxScore: 100, weight: WEIGHTS.maturity },
+          {
+            label: 'Complétude',
+            score: healthDiagnostic.completenessScore,
+            maxScore: 100,
+            weight: WEIGHTS.completeness,
+          },
+          {
+            label: 'Avancement',
+            score: healthDiagnostic.progressScore,
+            maxScore: 100,
+            weight: WEIGHTS.progress,
+          },
+          {
+            label: 'Cohérence',
+            score: healthDiagnostic.coherenceScore,
+            maxScore: 100,
+            weight: WEIGHTS.coherence,
+          },
+          {
+            label: 'Maturité',
+            score: healthDiagnostic.maturityScore,
+            maxScore: 100,
+            weight: WEIGHTS.maturity,
+          },
         ],
       },
       priorities: enrichedPriorities,
@@ -186,40 +214,49 @@ export class ProjectStateService {
   }
 
   private async fetchCoachingData(projectId: string) {
-    const [actionsCount, activeActionsCount, sessionsCount, completedSessionsCount, recommendationsCount, doneRecommendationsCount, evaluationsCount] =
-      await Promise.all([
-        this.prisma.coachingAction.count({ where: { project_id: projectId } }),
-        this.prisma.coachingAction.count({
-          where: {
-            project_id: projectId,
-            status: { in: ['PENDING', 'IN_PROGRESS'] },
-          },
-        }),
-        this.prisma.coachingSession.count({
-          where: { assignment: { project_id: projectId } },
-        }),
-        this.prisma.coachingSession.count({
-          where: {
-            assignment: { project_id: projectId },
-            status: 'COMPLETED',
-          },
-        }),
-        this.prisma.coachingRecommendation.count({
-          where: { project_id: projectId },
-        }),
-        this.prisma.coachingRecommendation.count({
-          where: { project_id: projectId, status: 'DONE' },
-        }),
-        this.prisma.evaluation.count({
-          where: { project_id: projectId, status: 'SUBMITTED' },
-        }),
-      ]);
+    const [
+      actionsCount,
+      activeActionsCount,
+      sessionsCount,
+      completedSessionsCount,
+      recommendationsCount,
+      doneRecommendationsCount,
+      evaluationsCount,
+    ] = await Promise.all([
+      this.prisma.coachingAction.count({ where: { project_id: projectId } }),
+      this.prisma.coachingAction.count({
+        where: {
+          project_id: projectId,
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+        },
+      }),
+      this.prisma.coachingSession.count({
+        where: { assignment: { project_id: projectId } },
+      }),
+      this.prisma.coachingSession.count({
+        where: {
+          assignment: { project_id: projectId },
+          status: 'COMPLETED',
+        },
+      }),
+      this.prisma.coachingRecommendation.count({
+        where: { project_id: projectId },
+      }),
+      this.prisma.coachingRecommendation.count({
+        where: { project_id: projectId, status: 'DONE' },
+      }),
+      this.prisma.evaluation.count({
+        where: { project_id: projectId, status: 'SUBMITTED' },
+      }),
+    ]);
 
     const actionRate = actionsCount > 0 ? activeActionsCount / actionsCount : 0;
     const sessionRate =
       sessionsCount > 0 ? completedSessionsCount / sessionsCount : 0;
     const recommendationRate =
-      recommendationsCount > 0 ? doneRecommendationsCount / recommendationsCount : 0;
+      recommendationsCount > 0
+        ? doneRecommendationsCount / recommendationsCount
+        : 0;
     const engagement = (actionRate + sessionRate + recommendationRate) / 3;
 
     return {
@@ -254,14 +291,19 @@ export class ProjectStateService {
 
   private extractStrengths(
     project: Record<string, any>,
-    completeness: { gbm: { percentage: number }; businessPlan: { percentage: number } },
+    completeness: {
+      gbm: { percentage: number };
+      businessPlan: { percentage: number };
+    },
   ): string[] {
     const strengths: string[] = [];
 
     if (completeness.gbm.percentage >= 70)
       strengths.push(`GBM bien avancé (${completeness.gbm.percentage}%)`);
     if (completeness.businessPlan.percentage >= 50)
-      strengths.push(`Business Plan partiellement complété (${completeness.businessPlan.percentage}%)`);
+      strengths.push(
+        `Business Plan partiellement complété (${completeness.businessPlan.percentage}%)`,
+      );
 
     if (nonEmpty(project.mission_vision?.mission))
       strengths.push('Mission définie');
@@ -278,9 +320,13 @@ export class ProjectStateService {
     if (nonEmpty(project.financial_plan?.point_depart))
       strengths.push('Plan financier renseigné');
     if (project.test_discovery && project.test_discovery.length > 0)
-      strengths.push(`${project.test_discovery.length} test(s) de validation réalisé(s)`);
+      strengths.push(
+        `${project.test_discovery.length} test(s) de validation réalisé(s)`,
+      );
     if (project.customer_segment && project.customer_segment.length >= 2)
-      strengths.push(`${project.customer_segment.length} segments clients identifiés`);
+      strengths.push(
+        `${project.customer_segment.length} segments clients identifiés`,
+      );
 
     return strengths;
   }
@@ -329,7 +375,7 @@ export class ProjectStateService {
       return `Compléter les données manquantes (${missingData.length} élément(s))`;
     }
 
-    return 'Le projet est bien structuré — poursuivre l\'accompagnement';
+    return "Le projet est bien structuré — poursuivre l'accompagnement";
   }
 
   private enrichPrioritiesWithRouting(
@@ -390,7 +436,7 @@ export class ProjectStateService {
       lower.includes('impact') ||
       lower.includes('environnement') ||
       lower.includes('social') ||
-      lower.includes('kpi') && lower.includes('environnement')
+      (lower.includes('kpi') && lower.includes('environnement'))
     ) {
       return 'IMPACT';
     }
@@ -408,10 +454,7 @@ export class ProjectStateService {
     ) {
       return 'EVALUATION';
     }
-    if (
-      lower.includes('coaching') ||
-      lower.includes('accompagnement')
-    ) {
+    if (lower.includes('coaching') || lower.includes('accompagnement')) {
       return 'COACHING';
     }
     if (lower.includes('données manquantes')) {

@@ -29,7 +29,10 @@ export interface LlmOptions {
   temperature?: number;
   maxTokens?: number;
   tools?: LlmTool[];
-  toolChoice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+  toolChoice?:
+    | 'auto'
+    | 'none'
+    | { type: 'function'; function: { name: string } };
 }
 
 export interface LlmResponse {

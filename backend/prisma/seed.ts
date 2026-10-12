@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { seedStepTemplates, seedDemoProject } from './seeds/step-templates.seed';
+import { seedDemoScenario } from './seeds/demo-scenario.seed';
 import { seedMatchingTestData } from './seeds/matching-test-data.seed';
 
 const prisma = new PrismaClient();
 
 async function seedNotificationPreferences() {
-  console.log('\n📦 Step 3/3: Seed notification preferences for all users');
+  console.log('\n📦 Step 4/5: Seed notification preferences for all users');
 
   const users = await prisma.user.findMany({
     select: { id: true, email: true },
@@ -31,21 +32,24 @@ async function main() {
   console.log('\n🌱 Prisma Seed — ProjectStruct Sprint 2');
   console.log('========================================\n');
 
-  console.log('📦 Step 1/4: Create demo project (if none exists)');
+  console.log('📦 Step 1/5: Seed demo scenario (users, cohorts, projects, coaching, evaluations)');
+  await seedDemoScenario(prisma);
+
+  console.log('\n📦 Step 2/5: Create demo project (if none exists)');
   await seedDemoProject(prisma);
 
-  console.log('\n📦 Step 2/4: Initialize step_progress templates');
+  console.log('\n📦 Step 3/5: Initialize step_progress templates');
   await seedStepTemplates(prisma);
 
   await seedNotificationPreferences();
 
-  // Step 4: Matching test data (only if MATCHING_TEST_DATA=true or --matching flag)
+  // Step 5: Matching test data (only if MATCHING_TEST_DATA=true or --matching flag)
   const includeMatching = process.env.MATCHING_TEST_DATA === 'true' || process.argv.includes('--matching');
   if (includeMatching) {
-    console.log('\n📦 Step 4/4: Seed matching test data');
+    console.log('\n📦 Step 5/5: Seed matching test data');
     await seedMatchingTestData();
   } else {
-    console.log('\n📦 Step 4/4: Matching test data skipped (set MATCHING_TEST_DATA=true or pass --matching)');
+    console.log('\n📦 Step 5/5: Matching test data skipped (set MATCHING_TEST_DATA=true or pass --matching)');
   }
 
   console.log('\n📦 Verify');

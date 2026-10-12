@@ -23,9 +23,25 @@ describe('ChatbotService (tool loop + memory)', () => {
   const ragMock = {
     query: jest.fn().mockResolvedValue({
       status: 'RAG_AVAILABLE',
-      documents: [{ id: 'doc-1', content: 'RAG content', metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' } }],
+      documents: [
+        {
+          id: 'doc-1',
+          content: 'RAG content',
+          metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' },
+        },
+      ],
       distances: [0.3],
-      sources: [{ id: 'doc-1', documentKey: 'gbm1', module: 'gbm', section: 'idea', page: 1, chunkIndex: 0, score: 0.7 }],
+      sources: [
+        {
+          id: 'doc-1',
+          documentKey: 'gbm1',
+          module: 'gbm',
+          section: 'idea',
+          page: 1,
+          chunkIndex: 0,
+          score: 0.7,
+        },
+      ],
     }),
   };
 
@@ -39,13 +55,33 @@ describe('ChatbotService (tool loop + memory)', () => {
       projectName: 'Test Project',
       maturityLevel: 'DEVELOPING',
       overallProgress: 45,
-      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
-      incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problèmes', phase: 1, status: 'NOT_STARTED', hasData: false }],
+      completedSteps: [
+        {
+          stepKey: 'gbm_1',
+          title: 'Idée',
+          phase: 1,
+          status: 'COMPLETED',
+          hasData: true,
+        },
+      ],
+      incompleteSteps: [
+        {
+          stepKey: 'gbm_2',
+          title: 'Problèmes',
+          phase: 1,
+          status: 'NOT_STARTED',
+          hasData: false,
+        },
+      ],
       missingInformation: ['Décrire les problèmes', 'Identifier les besoins'],
       strengths: ['Mission définie'],
       weakAreas: ['GBM très peu avancé'],
       inconsistencies: [
-        { area: 'GBM étape 1', description: 'Étape marquée complète mais donnée vide', severity: 'HIGH' },
+        {
+          area: 'GBM étape 1',
+          description: 'Étape marquée complète mais donnée vide',
+          severity: 'HIGH',
+        },
       ],
       healthScore: {
         overall: 52,
@@ -57,11 +93,32 @@ describe('ChatbotService (tool loop + memory)', () => {
         ],
       },
       priorities: [
-        { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-        { level: 'MEDIUM', area: 'Données manquantes', description: '2 informations essentielles manquantes', impact: 50, module: 'GENERAL' },
+        {
+          level: 'HIGH',
+          area: 'GBM',
+          description: "Compléter l'étape 2 - Problèmes et besoins",
+          impact: 75,
+          module: 'GBM',
+          stepKey: 'gbm_2',
+        },
+        {
+          level: 'MEDIUM',
+          area: 'Données manquantes',
+          description: '2 informations essentielles manquantes',
+          impact: 50,
+          module: 'GENERAL',
+        },
       ],
-      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-      recommendedNextAction: 'Priorité haute : Compléter l\'étape 2 - Problèmes et besoins',
+      currentPriority: {
+        level: 'HIGH',
+        area: 'GBM',
+        description: "Compléter l'étape 2 - Problèmes et besoins",
+        impact: 75,
+        module: 'GBM',
+        stepKey: 'gbm_2',
+      },
+      recommendedNextAction:
+        "Priorité haute : Compléter l'étape 2 - Problèmes et besoins",
     }),
   };
 
@@ -80,13 +137,22 @@ describe('ChatbotService (tool loop + memory)', () => {
 
   const registryMock = {
     getToolsForPrompt: jest.fn().mockReturnValue([
-      { type: 'function', function: { name: 'getGBM', description: 'Get GBM data', parameters: {} } },
+      {
+        type: 'function',
+        function: {
+          name: 'getGBM',
+          description: 'Get GBM data',
+          parameters: {},
+        },
+      },
     ]),
     execute: jest.fn(),
   };
 
   const conversationServiceMock = {
-    getOrCreateActive: jest.fn().mockResolvedValue({ id: CONV_ID, title: null, createdAt: new Date() }),
+    getOrCreateActive: jest
+      .fn()
+      .mockResolvedValue({ id: CONV_ID, title: null, createdAt: new Date() }),
   };
 
   const messageServiceMock = {
@@ -109,25 +175,63 @@ describe('ChatbotService (tool loop + memory)', () => {
 
     ragMock.query.mockResolvedValue({
       status: 'RAG_AVAILABLE',
-      documents: [{ id: 'doc-1', content: 'RAG content', metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' } }],
+      documents: [
+        {
+          id: 'doc-1',
+          content: 'RAG content',
+          metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' },
+        },
+      ],
       distances: [0.3],
-      sources: [{ id: 'doc-1', documentKey: 'gbm1', module: 'gbm', section: 'idea', page: 1, chunkIndex: 0, score: 0.7 }],
+      sources: [
+        {
+          id: 'doc-1',
+          documentKey: 'gbm1',
+          module: 'gbm',
+          section: 'idea',
+          page: 1,
+          chunkIndex: 0,
+          score: 0.7,
+        },
+      ],
     });
 
-    contextBuilderMock.build.mockResolvedValue({ contextText: 'Coaching context' });
+    contextBuilderMock.build.mockResolvedValue({
+      contextText: 'Coaching context',
+    });
 
     projectStateMock.getProjectState.mockResolvedValue({
       projectId: PROJECT_ID,
       projectName: 'Test Project',
       maturityLevel: 'DEVELOPING',
       overallProgress: 45,
-      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
-      incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problèmes', phase: 1, status: 'NOT_STARTED', hasData: false }],
+      completedSteps: [
+        {
+          stepKey: 'gbm_1',
+          title: 'Idée',
+          phase: 1,
+          status: 'COMPLETED',
+          hasData: true,
+        },
+      ],
+      incompleteSteps: [
+        {
+          stepKey: 'gbm_2',
+          title: 'Problèmes',
+          phase: 1,
+          status: 'NOT_STARTED',
+          hasData: false,
+        },
+      ],
       missingInformation: ['Décrire les problèmes', 'Identifier les besoins'],
       strengths: ['Mission définie'],
       weakAreas: ['GBM très peu avancé'],
       inconsistencies: [
-        { area: 'GBM étape 1', description: 'Étape marquée complète mais donnée vide', severity: 'HIGH' },
+        {
+          area: 'GBM étape 1',
+          description: 'Étape marquée complète mais donnée vide',
+          severity: 'HIGH',
+        },
       ],
       healthScore: {
         overall: 52,
@@ -139,11 +243,32 @@ describe('ChatbotService (tool loop + memory)', () => {
         ],
       },
       priorities: [
-        { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-        { level: 'MEDIUM', area: 'Données manquantes', description: '2 informations essentielles manquantes', impact: 50, module: 'GENERAL' },
+        {
+          level: 'HIGH',
+          area: 'GBM',
+          description: "Compléter l'étape 2 - Problèmes et besoins",
+          impact: 75,
+          module: 'GBM',
+          stepKey: 'gbm_2',
+        },
+        {
+          level: 'MEDIUM',
+          area: 'Données manquantes',
+          description: '2 informations essentielles manquantes',
+          impact: 50,
+          module: 'GENERAL',
+        },
       ],
-      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-      recommendedNextAction: 'Priorité haute : Compléter l\'étape 2 - Problèmes et besoins',
+      currentPriority: {
+        level: 'HIGH',
+        area: 'GBM',
+        description: "Compléter l'étape 2 - Problèmes et besoins",
+        impact: 75,
+        module: 'GBM',
+        stepKey: 'gbm_2',
+      },
+      recommendedNextAction:
+        "Priorité haute : Compléter l'étape 2 - Problèmes et besoins",
     });
 
     prismaMock.project.findUnique.mockResolvedValue({
@@ -156,10 +281,21 @@ describe('ChatbotService (tool loop + memory)', () => {
     });
 
     registryMock.getToolsForPrompt.mockReturnValue([
-      { type: 'function', function: { name: 'getGBM', description: 'Get GBM data', parameters: {} } },
+      {
+        type: 'function',
+        function: {
+          name: 'getGBM',
+          description: 'Get GBM data',
+          parameters: {},
+        },
+      },
     ]);
 
-    conversationServiceMock.getOrCreateActive.mockResolvedValue({ id: CONV_ID, title: null, createdAt: new Date() });
+    conversationServiceMock.getOrCreateActive.mockResolvedValue({
+      id: CONV_ID,
+      title: null,
+      createdAt: new Date(),
+    });
     messageServiceMock.getHistory.mockResolvedValue([]);
     messageServiceMock.addMessage.mockResolvedValue({});
 
@@ -192,17 +328,38 @@ describe('ChatbotService (tool loop + memory)', () => {
 
   describe('ask - basic flow (no tool calls)', () => {
     it('creates conversation, persists messages, returns result with toolsUsed', async () => {
-      const result = await service.ask(PROJECT_ID, USER_ID, 'What is my project?');
+      const result = await service.ask(
+        PROJECT_ID,
+        USER_ID,
+        'What is my project?',
+      );
 
-      expect(conversationServiceMock.getOrCreateActive).toHaveBeenCalledWith(PROJECT_ID, USER_ID);
-      expect(messageServiceMock.getHistory).toHaveBeenCalledWith(CONV_ID, PROJECT_ID, USER_ID, 6);
+      expect(conversationServiceMock.getOrCreateActive).toHaveBeenCalledWith(
+        PROJECT_ID,
+        USER_ID,
+      );
+      expect(messageServiceMock.getHistory).toHaveBeenCalledWith(
+        CONV_ID,
+        PROJECT_ID,
+        USER_ID,
+        6,
+      );
 
       expect(messageServiceMock.addMessage).toHaveBeenCalledTimes(2);
       expect(messageServiceMock.addMessage).toHaveBeenNthCalledWith(
-        1, CONV_ID, PROJECT_ID, USER_ID, 'user', 'What is my project?',
+        1,
+        CONV_ID,
+        PROJECT_ID,
+        USER_ID,
+        'user',
+        'What is my project?',
       );
       expect(messageServiceMock.addMessage).toHaveBeenNthCalledWith(
-        2, CONV_ID, PROJECT_ID, USER_ID, 'assistant',
+        2,
+        CONV_ID,
+        PROJECT_ID,
+        USER_ID,
+        'assistant',
         'Here is my answer about your project',
         expect.any(Array),
         true,
@@ -234,7 +391,11 @@ describe('ChatbotService (tool loop + memory)', () => {
         .mockResolvedValueOnce({
           content: '',
           toolCalls: [
-            { id: 'call-1', type: 'function', function: { name: 'getGBM', arguments: '{"projectId":"proj"}' } },
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: 'getGBM', arguments: '{"projectId":"proj"}' },
+            },
           ],
           finishReason: 'tool_calls',
         })
@@ -244,9 +405,15 @@ describe('ChatbotService (tool loop + memory)', () => {
           finishReason: 'stop',
         });
 
-      registryMock.execute.mockResolvedValue(JSON.stringify({ ideaSketch: { idea_initial: 'Solar' } }));
+      registryMock.execute.mockResolvedValue(
+        JSON.stringify({ ideaSketch: { idea_initial: 'Solar' } }),
+      );
 
-      const result = await service.ask(PROJECT_ID, USER_ID, 'What are my GBM data?');
+      const result = await service.ask(
+        PROJECT_ID,
+        USER_ID,
+        'What are my GBM data?',
+      );
 
       expect(registryMock.execute).toHaveBeenCalledWith(
         'getGBM',
@@ -258,7 +425,10 @@ describe('ChatbotService (tool loop + memory)', () => {
 
       const secondCallMessages = llmMock.chat.mock.calls[1][0];
       expect(secondCallMessages).toContainEqual(
-        expect.objectContaining({ role: 'tool', content: expect.stringContaining('ideaSketch') }),
+        expect.objectContaining({
+          role: 'tool',
+          content: expect.stringContaining('ideaSketch'),
+        }),
       );
 
       expect(result.answer).toBe('Based on the GBM data, your project has...');
@@ -269,7 +439,11 @@ describe('ChatbotService (tool loop + memory)', () => {
       llmMock.chat.mockResolvedValue({
         content: '',
         toolCalls: [
-          { id: 'call-1', type: 'function', function: { name: 'getGBM', arguments: '{}' } },
+          {
+            id: 'call-1',
+            type: 'function',
+            function: { name: 'getGBM', arguments: '{}' },
+          },
         ],
         finishReason: 'tool_calls',
       });
@@ -279,14 +453,18 @@ describe('ChatbotService (tool loop + memory)', () => {
       const result = await service.ask(PROJECT_ID, USER_ID, 'question');
 
       expect(llmMock.chat).toHaveBeenCalledTimes(4);
-      expect(result.answer).toContain("pas pu générer de réponse finale");
+      expect(result.answer).toContain('pas pu générer de réponse finale');
     });
 
     it('returns fallback answer when max iterations exhausted', async () => {
       llmMock.chat.mockResolvedValue({
         content: '',
         toolCalls: [
-          { id: 'call-1', type: 'function', function: { name: 'getGBM', arguments: '{}' } },
+          {
+            id: 'call-1',
+            type: 'function',
+            function: { name: 'getGBM', arguments: '{}' },
+          },
         ],
         finishReason: 'tool_calls',
       });
@@ -294,7 +472,7 @@ describe('ChatbotService (tool loop + memory)', () => {
       registryMock.execute.mockResolvedValue(JSON.stringify({ ok: true }));
 
       const result = await service.ask(PROJECT_ID, USER_ID, 'q');
-      expect(result.answer).toContain("pas pu générer de réponse finale");
+      expect(result.answer).toContain('pas pu générer de réponse finale');
     });
   });
 
@@ -362,7 +540,17 @@ describe('ChatbotService (tool loop + memory)', () => {
         status: 'RAG_AVAILABLE',
         documents: [{ id: 'd1', content: 'text', metadata: {} }],
         distances: [0.2],
-        sources: [{ id: 'd1', documentKey: 'k', module: 'm', section: 's', source: 'src', chunkIndex: 0, score: 0.8 }],
+        sources: [
+          {
+            id: 'd1',
+            documentKey: 'k',
+            module: 'm',
+            section: 's',
+            source: 'src',
+            chunkIndex: 0,
+            score: 0.8,
+          },
+        ],
       });
 
       const result = await service.ask(PROJECT_ID, USER_ID, 'question');
@@ -384,7 +572,9 @@ describe('ChatbotService (tool loop + memory)', () => {
     });
 
     it('handles conversation service failure', async () => {
-      conversationServiceMock.getOrCreateActive.mockRejectedValue(new Error('DB error'));
+      conversationServiceMock.getOrCreateActive.mockRejectedValue(
+        new Error('DB error'),
+      );
 
       await expect(
         service.ask(PROJECT_ID, USER_ID, 'question'),
@@ -448,15 +638,15 @@ describe('ChatbotService (tool loop + memory)', () => {
 
   describe('ask - projectId validation', () => {
     it('rejects empty projectId', async () => {
-      await expect(
-        service.ask('', USER_ID, 'question'),
-      ).rejects.toThrow('projectId is required');
+      await expect(service.ask('', USER_ID, 'question')).rejects.toThrow(
+        'projectId is required',
+      );
     });
 
     it('rejects whitespace-only projectId', async () => {
-      await expect(
-        service.ask('   ', USER_ID, 'question'),
-      ).rejects.toThrow('projectId is required');
+      await expect(service.ask('   ', USER_ID, 'question')).rejects.toThrow(
+        'projectId is required',
+      );
     });
   });
 
@@ -464,9 +654,16 @@ describe('ChatbotService (tool loop + memory)', () => {
     it('userId comes from server, not from request body', async () => {
       await service.ask(PROJECT_ID, 'server-user', 'question');
 
-      expect(conversationServiceMock.getOrCreateActive).toHaveBeenCalledWith(PROJECT_ID, 'server-user');
+      expect(conversationServiceMock.getOrCreateActive).toHaveBeenCalledWith(
+        PROJECT_ID,
+        'server-user',
+      );
       expect(messageServiceMock.addMessage).toHaveBeenCalledWith(
-        CONV_ID, PROJECT_ID, 'server-user', expect.anything(), expect.anything(),
+        CONV_ID,
+        PROJECT_ID,
+        'server-user',
+        expect.anything(),
+        expect.anything(),
       );
     });
   });
@@ -486,7 +683,9 @@ describe('ChatbotService (tool loop + memory)', () => {
       expect(systemMsg.content).toContain('Section : Idée initiale');
       expect(systemMsg.content).toContain('Étape : gbm_1');
       expect(systemMsg.content).toContain('ideaSketch: Solar farm');
-      expect(systemMsg.content).toContain('Concentre ta réponse sur cette section');
+      expect(systemMsg.content).toContain(
+        'Concentre ta réponse sur cette section',
+      );
     });
 
     it('includes module context for BUSINESS_PLAN', async () => {
@@ -540,7 +739,9 @@ describe('ChatbotService (tool loop + memory)', () => {
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('Module actuel : ECO_DESIGN');
-      expect(systemMsg.content).toContain('Section : Configurer le cycle de vie');
+      expect(systemMsg.content).toContain(
+        'Section : Configurer le cycle de vie',
+      );
     });
 
     it('omits CONTEXTE MODULE block when no module context provided', async () => {
@@ -559,7 +760,9 @@ describe('ChatbotService (tool loop + memory)', () => {
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('expliquer');
-      expect(systemMsg.content).toContain('identifier les informations manquantes');
+      expect(systemMsg.content).toContain(
+        'identifier les informations manquantes',
+      );
       expect(systemMsg.content).toContain('détecter les incohérences');
       expect(systemMsg.content).toContain('suggérer des améliorations');
       expect(systemMsg.content).toContain('analyser la réponse');
@@ -596,7 +799,9 @@ describe('ChatbotService (tool loop + memory)', () => {
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('[HIGH]');
       expect(systemMsg.content).toContain('[MEDIUM]');
-      expect(systemMsg.content).toContain('GBM étape 1 : Étape marquée complète mais donnée vide');
+      expect(systemMsg.content).toContain(
+        'GBM étape 1 : Étape marquée complète mais donnée vide',
+      );
     });
 
     it('includes priorities with impact scores from deterministic engine', async () => {
@@ -605,7 +810,9 @@ describe('ChatbotService (tool loop + memory)', () => {
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('impact 75/100');
       expect(systemMsg.content).toContain('impact 50/100');
-      expect(systemMsg.content).toContain('Compléter l\'étape 2 - Problèmes et besoins');
+      expect(systemMsg.content).toContain(
+        "Compléter l'étape 2 - Problèmes et besoins",
+      );
     });
 
     it('includes current priority and recommended next action', async () => {
@@ -613,7 +820,9 @@ describe('ChatbotService (tool loop + memory)', () => {
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('Priorité courante : [HIGH] GBM');
-      expect(systemMsg.content).toContain('Recommandation : Priorité haute : Compléter l\'étape 2');
+      expect(systemMsg.content).toContain(
+        "Recommandation : Priorité haute : Compléter l'étape 2",
+      );
     });
 
     it('includes strengths and weak areas from deterministic engine', async () => {
@@ -621,7 +830,9 @@ describe('ChatbotService (tool loop + memory)', () => {
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('Forces : Mission définie');
-      expect(systemMsg.content).toContain('Points faibles : GBM très peu avancé');
+      expect(systemMsg.content).toContain(
+        'Points faibles : GBM très peu avancé',
+      );
     });
 
     it('includes incomplete steps and missing information', async () => {
@@ -639,7 +850,7 @@ describe('ChatbotService (tool loop + memory)', () => {
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('RÈGLES POUR LES EXPLICATIONS');
       expect(systemMsg.content).toContain('Observation');
-      expect(systemMsg.content).toContain('Pourquoi c\'est important');
+      expect(systemMsg.content).toContain("Pourquoi c'est important");
       expect(systemMsg.content).toContain('Action recommandée');
       expect(systemMsg.content).toContain('Comment faire');
       expect(systemMsg.content).toContain('Étape suivante');
@@ -659,12 +870,16 @@ describe('ChatbotService (tool loop + memory)', () => {
     });
 
     it('gracefully falls back when ProjectStateService fails', async () => {
-      projectStateMock.getProjectState.mockRejectedValue(new Error('DB timeout'));
+      projectStateMock.getProjectState.mockRejectedValue(
+        new Error('DB timeout'),
+      );
 
       const result = await service.ask(PROJECT_ID, USER_ID, 'question');
 
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
-      expect(systemMsg.content).toContain('analyse déterministe du projet est temporairement indisponible');
+      expect(systemMsg.content).toContain(
+        'analyse déterministe du projet est temporairement indisponible',
+      );
       expect(result).toBeDefined();
     });
 

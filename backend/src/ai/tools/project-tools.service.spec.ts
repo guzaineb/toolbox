@@ -61,15 +61,49 @@ const mockProjectState = {
   projectName: 'Test Project',
   maturityLevel: 'DEVELOPING' as const,
   overallProgress: 45,
-  completedSteps: [{ stepKey: 'gbm_1', title: 'Idea', phase: 1, status: 'COMPLETED', hasData: true }],
-  incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problems', phase: 1, status: 'IN_PROGRESS', hasData: false }],
+  completedSteps: [
+    {
+      stepKey: 'gbm_1',
+      title: 'Idea',
+      phase: 1,
+      status: 'COMPLETED',
+      hasData: true,
+    },
+  ],
+  incompleteSteps: [
+    {
+      stepKey: 'gbm_2',
+      title: 'Problems',
+      phase: 1,
+      status: 'IN_PROGRESS',
+      hasData: false,
+    },
+  ],
   missingInformation: ['PESTEL analysis incomplete'],
   strengths: ['Strong mission'],
   weakAreas: ['Financial planning'],
-  inconsistencies: [{ area: 'finances', description: 'Costs without revenue', severity: 'HIGH' }],
+  inconsistencies: [
+    {
+      area: 'finances',
+      description: 'Costs without revenue',
+      severity: 'HIGH',
+    },
+  ],
   healthScore: { overall: 55, categories: [] },
-  priorities: [{ level: 'HIGH', area: 'finances', description: 'Complete financial plan', impact: 20 }],
-  currentPriority: { level: 'HIGH', area: 'finances', description: 'Complete financial plan', impact: 20 },
+  priorities: [
+    {
+      level: 'HIGH',
+      area: 'finances',
+      description: 'Complete financial plan',
+      impact: 20,
+    },
+  ],
+  currentPriority: {
+    level: 'HIGH',
+    area: 'finances',
+    description: 'Complete financial plan',
+    impact: 20,
+  },
   recommendedNextAction: 'Complete the financial plan section',
 };
 
@@ -94,7 +128,9 @@ describe('ProjectToolsService', () => {
 
   const consistencyCheckerMock = {
     check: jest.fn().mockReturnValue({
-      inconsistencies: [{ area: 'finances', description: 'Missing revenue', severity: 'HIGH' }],
+      inconsistencies: [
+        { area: 'finances', description: 'Missing revenue', severity: 'HIGH' },
+      ],
       score: 75,
       totalChecks: 10,
       passedChecks: 8,
@@ -157,9 +193,17 @@ describe('ProjectToolsService', () => {
 
   it('should register all 11 tools in the registry', () => {
     const expectedTools = [
-      'getProjectState', 'getProjectProgress', 'getGBM', 'getBusinessPlan',
-      'getMarket', 'getFinancing', 'getImpact', 'getEcoDesign',
-      'detectInconsistencies', 'calculateHealthScore', 'getNextBestAction',
+      'getProjectState',
+      'getProjectProgress',
+      'getGBM',
+      'getBusinessPlan',
+      'getMarket',
+      'getFinancing',
+      'getImpact',
+      'getEcoDesign',
+      'detectInconsistencies',
+      'calculateHealthScore',
+      'getNextBestAction',
     ];
     for (const name of expectedTools) {
       expect(registry.hasTool(name)).toBe(true);
@@ -206,7 +250,10 @@ describe('ProjectToolsService', () => {
       const parsed = JSON.parse(result);
       expect(parsed.projectId).toBe(PROJECT_ID);
       expect(parsed.maturityLevel).toBe('DEVELOPING');
-      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(PROJECT_ID, USER_ID);
+      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(
+        PROJECT_ID,
+        USER_ID,
+      );
     });
   });
 
@@ -232,9 +279,15 @@ describe('ProjectToolsService', () => {
         USER_ID,
       );
       const parsed = JSON.parse(result);
-      expect(parsed.ideaSketch).toEqual({ idea_initial: 'Solar energy for rural areas' });
-      expect(parsed.problemsNeeds).toEqual({ customer_needs: 'Access to clean energy' });
-      expect(parsed.pestel).toEqual({ political_what: 'Supportive regulations' });
+      expect(parsed.ideaSketch).toEqual({
+        idea_initial: 'Solar energy for rural areas',
+      });
+      expect(parsed.problemsNeeds).toEqual({
+        customer_needs: 'Access to clean energy',
+      });
+      expect(parsed.pestel).toEqual({
+        political_what: 'Supportive regulations',
+      });
       expect(parsed.stepProgresses).toEqual([
         { stepKey: 'gbm_1', status: 'COMPLETED' },
         { stepKey: 'gbm_2', status: 'IN_PROGRESS' },
@@ -252,8 +305,12 @@ describe('ProjectToolsService', () => {
       );
       const parsed = JSON.parse(result);
       expect(parsed.financialPlan).toEqual({ seuil_rentabilite: 50000 });
-      expect(parsed.marketingPlan).toEqual({ analyse_marche: 'Growing market' });
-      expect(parsed.executiveSummary).toEqual({ resume_executif: 'Strong solar business' });
+      expect(parsed.marketingPlan).toEqual({
+        analyse_marche: 'Growing market',
+      });
+      expect(parsed.executiveSummary).toEqual({
+        resume_executif: 'Strong solar business',
+      });
     });
   });
 
@@ -265,8 +322,12 @@ describe('ProjectToolsService', () => {
         USER_ID,
       );
       const parsed = JSON.parse(result);
-      expect(parsed.marketAccess).toEqual({ positionnement: 'Premium eco brand' });
-      expect(parsed.customerSegment).toEqual({ segment_name: 'Rural households' });
+      expect(parsed.marketAccess).toEqual({
+        positionnement: 'Premium eco brand',
+      });
+      expect(parsed.customerSegment).toEqual({
+        segment_name: 'Rural households',
+      });
     });
   });
 
@@ -278,8 +339,13 @@ describe('ProjectToolsService', () => {
         USER_ID,
       );
       const parsed = JSON.parse(result);
-      expect(parsed.costStructure).toEqual({ fixed_costs: '10000', variable_costs: '500 per unit' });
-      expect(parsed.fundingAssessment).toEqual({ strategie_levee_fonds: 'Seed round' });
+      expect(parsed.costStructure).toEqual({
+        fixed_costs: '10000',
+        variable_costs: '500 per unit',
+      });
+      expect(parsed.fundingAssessment).toEqual({
+        strategie_levee_fonds: 'Seed round',
+      });
     });
   });
 
@@ -291,7 +357,9 @@ describe('ProjectToolsService', () => {
         USER_ID,
       );
       const parsed = JSON.parse(result);
-      expect(parsed.impactMeasure).toEqual({ methode_mesure: 'LCA methodology' });
+      expect(parsed.impactMeasure).toEqual({
+        methode_mesure: 'LCA methodology',
+      });
       expect(parsed.indicator).toEqual({ environmental_kpis: 'CO2 avoided' });
     });
   });
@@ -304,8 +372,12 @@ describe('ProjectToolsService', () => {
         USER_ID,
       );
       const parsed = JSON.parse(result);
-      expect(parsed.ecoDesign).toEqual({ projet_eco: 'Low-carbon solar design' });
-      expect(parsed.ecoDesignResult).toEqual({ eco_results: '30% emission reduction' });
+      expect(parsed.ecoDesign).toEqual({
+        projet_eco: 'Low-carbon solar design',
+      });
+      expect(parsed.ecoDesignResult).toEqual({
+        eco_results: '30% emission reduction',
+      });
     });
   });
 
@@ -351,7 +423,9 @@ describe('ProjectToolsService', () => {
         USER_ID,
       );
       const parsed = JSON.parse(result);
-      expect(parsed.recommendedNextAction).toBe('Complete the financial plan section');
+      expect(parsed.recommendedNextAction).toBe(
+        'Complete the financial plan section',
+      );
       expect(parsed.currentPriority.level).toBe('HIGH');
       expect(parsed.priorities).toHaveLength(1);
       expect(parsed.incompleteSteps).toHaveLength(1);
@@ -366,7 +440,10 @@ describe('ProjectToolsService', () => {
         'real-user-id',
       );
 
-      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(PROJECT_ID, 'real-user-id');
+      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(
+        PROJECT_ID,
+        'real-user-id',
+      );
     });
   });
 });

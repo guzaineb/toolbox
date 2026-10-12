@@ -23,7 +23,10 @@ export class TextExtractionService {
   async extract(filePath: string, mimeType: string): Promise<ExtractedText> {
     const ext = path.extname(filePath).toLowerCase();
 
-    if (!SUPPORTED_MIME_TYPES.includes(mimeType as any) && !SUPPORTED_EXTENSIONS.includes(ext as any)) {
+    if (
+      !SUPPORTED_MIME_TYPES.includes(mimeType as any) &&
+      !SUPPORTED_EXTENSIONS.includes(ext as any)
+    ) {
       throw new BadRequestException(
         `Format non supporté: ${mimeType} (${ext}). Formats acceptés: PDF, DOCX, TXT, MD`,
       );
@@ -35,7 +38,8 @@ export class TextExtractionService {
       }
 
       if (
-        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        mimeType ===
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
         ext === '.docx'
       ) {
         return this.extractDocx(filePath);

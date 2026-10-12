@@ -61,7 +61,9 @@ describe('ToolRegistry', () => {
       });
 
       const tools = registry.getToolsForPrompt();
-      expect(tools.every((t) => t.function.name === 'getProjectState')).toBe(true);
+      expect(tools.every((t) => t.function.name === 'getProjectState')).toBe(
+        true,
+      );
     });
   });
 
@@ -95,7 +97,11 @@ describe('ToolRegistry', () => {
         handler: async () => ({ ok: true }),
       });
 
-      const result = await registry.execute('testTool', '{"projectId":"bad"}', 'user-1');
+      const result = await registry.execute(
+        'testTool',
+        '{"projectId":"bad"}',
+        'user-1',
+      );
       const parsed = JSON.parse(result);
       expect(parsed.error).toContain('Paramètres invalides');
     });
@@ -117,7 +123,10 @@ describe('ToolRegistry', () => {
       );
       const parsed = JSON.parse(result);
 
-      expect(handler).toHaveBeenCalledWith({ projectId: 'proj-123' }, 'user-456');
+      expect(handler).toHaveBeenCalledWith(
+        { projectId: 'proj-123' },
+        'user-456',
+      );
       expect(parsed).toEqual({ result: 'success' });
     });
 

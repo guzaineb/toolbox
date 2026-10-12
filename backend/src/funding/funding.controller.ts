@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FundingService } from './funding.service';
-import { ProjectIdParam, SubmitQuestionnaireDto, UpdateFundingDto } from './dto/funding.dto';
+import {
+  ProjectIdParam,
+  SubmitQuestionnaireDto,
+  UpdateFundingDto,
+} from './dto/funding.dto';
 
 @Controller('projects/:projectId/funding')
 @UseGuards(JwtAuthGuard)

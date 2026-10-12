@@ -78,25 +78,64 @@ describe('AI Project Coach End-to-End', () => {
 
     ragMock.query.mockResolvedValue({
       status: 'RAG_AVAILABLE' as const,
-      documents: [{ id: 'doc-1', content: 'RAG content', metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' } }],
+      documents: [
+        {
+          id: 'doc-1',
+          content: 'RAG content',
+          metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' },
+        },
+      ],
       distances: [0.3],
-      sources: [{ id: 'doc-1', documentKey: 'gbm1', module: 'gbm', section: 'idea', page: 1, chunkIndex: 0, score: 0.7 }],
+      sources: [
+        {
+          id: 'doc-1',
+          documentKey: 'gbm1',
+          module: 'gbm',
+          section: 'idea',
+          page: 1,
+          chunkIndex: 0,
+          score: 0.7,
+        },
+      ],
     });
 
-    contextBuilderMock.build.mockResolvedValue({ contextText: 'Coaching context', projectName: 'Project A' });
+    contextBuilderMock.build.mockResolvedValue({
+      contextText: 'Coaching context',
+      projectName: 'Project A',
+    });
 
     projectStateMock.getProjectState.mockResolvedValue({
       projectId: PROJECT_ID,
       projectName: 'Project A',
       maturityLevel: 'DEVELOPING',
       overallProgress: 45,
-      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
-      incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problèmes', phase: 1, status: 'NOT_STARTED', hasData: false }],
+      completedSteps: [
+        {
+          stepKey: 'gbm_1',
+          title: 'Idée',
+          phase: 1,
+          status: 'COMPLETED',
+          hasData: true,
+        },
+      ],
+      incompleteSteps: [
+        {
+          stepKey: 'gbm_2',
+          title: 'Problèmes',
+          phase: 1,
+          status: 'NOT_STARTED',
+          hasData: false,
+        },
+      ],
       missingInformation: ['Décrire les problèmes', 'Identifier les besoins'],
       strengths: ['Mission définie'],
       weakAreas: ['GBM très peu avancé'],
       inconsistencies: [
-        { area: 'GBM étape 1', description: 'Étape marquée complète mais donnée vide', severity: 'HIGH' },
+        {
+          area: 'GBM étape 1',
+          description: 'Étape marquée complète mais donnée vide',
+          severity: 'HIGH',
+        },
       ],
       healthScore: {
         overall: 52,
@@ -107,17 +146,43 @@ describe('AI Project Coach End-to-End', () => {
         ],
       },
       priorities: [
-        { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
+        {
+          level: 'HIGH',
+          area: 'GBM',
+          description: "Compléter l'étape 2 - Problèmes et besoins",
+          impact: 75,
+          module: 'GBM',
+          stepKey: 'gbm_2',
+        },
       ],
-      currentPriority: { level: 'HIGH', area: 'GBM', description: 'Compléter l\'étape 2 - Problèmes et besoins', impact: 75, module: 'GBM', stepKey: 'gbm_2' },
-      recommendedNextAction: 'Priorité haute : Compléter l\'étape 2 - Problèmes et besoins',
+      currentPriority: {
+        level: 'HIGH',
+        area: 'GBM',
+        description: "Compléter l'étape 2 - Problèmes et besoins",
+        impact: 75,
+        module: 'GBM',
+        stepKey: 'gbm_2',
+      },
+      recommendedNextAction:
+        "Priorité haute : Compléter l'étape 2 - Problèmes et besoins",
     });
 
     registryMock.getToolsForPrompt.mockReturnValue([
-      { type: 'function', function: { name: 'getGBM', description: 'Get GBM data', parameters: {} } },
+      {
+        type: 'function',
+        function: {
+          name: 'getGBM',
+          description: 'Get GBM data',
+          parameters: {},
+        },
+      },
     ]);
 
-    conversationServiceMock.getOrCreateActive.mockResolvedValue({ id: CONV_ID, title: null, createdAt: new Date() });
+    conversationServiceMock.getOrCreateActive.mockResolvedValue({
+      id: CONV_ID,
+      title: null,
+      createdAt: new Date(),
+    });
     messageServiceMock.getHistory.mockResolvedValue([]);
     messageServiceMock.addMessage.mockResolvedValue({});
 
@@ -144,16 +209,25 @@ describe('AI Project Coach End-to-End', () => {
     await service.ask(PROJECT_ID, USER_ID, 'What is my project?');
 
     // 3. Backend verifies ownership (prisma finds the project)
-    expect(prismaMock.project.findUnique).toHaveBeenCalledWith({ where: { id: PROJECT_ID } });
+    expect(prismaMock.project.findUnique).toHaveBeenCalledWith({
+      where: { id: PROJECT_ID },
+    });
 
     // 4. Project Intelligence Snapshot is generated
     // Verified by projectStateMock.getProjectState being called
 
     // 5. RAG is queried if available
-    expect(ragMock.query).toHaveBeenCalledWith(PROJECT_ID, 'What is my project?', 5);
+    expect(ragMock.query).toHaveBeenCalledWith(
+      PROJECT_ID,
+      'What is my project?',
+      5,
+    );
 
     // 6. Conversation history is loaded
-    expect(conversationServiceMock.getOrCreateActive).toHaveBeenCalledWith(PROJECT_ID, USER_ID);
+    expect(conversationServiceMock.getOrCreateActive).toHaveBeenCalledWith(
+      PROJECT_ID,
+      USER_ID,
+    );
 
     // 7. LLM receives the correct context (module, section, step, deterministic analysis)
     const systemMsg = llmMock.chat.mock.calls[0][0][0];
@@ -164,17 +238,31 @@ describe('AI Project Coach End-to-End', () => {
     expect(systemMsg.content).toContain('NOMBRE DE MOTS MAXIMUM');
 
     // 8. Assistant responds
-    const result = await service.ask(PROJECT_ID, USER_ID, 'What is my project?');
+    const result = await service.ask(
+      PROJECT_ID,
+      USER_ID,
+      'What is my project?',
+    );
     expect(result.answer).toBeDefined();
     expect(result.conversationId).toBe(CONV_ID);
 
     // 9. Message is persisted
     expect(messageServiceMock.addMessage).toHaveBeenCalledTimes(2); // user + assistant
     expect(messageServiceMock.addMessage).toHaveBeenNthCalledWith(
-      1, CONV_ID, PROJECT_ID, USER_ID, 'user', 'What is my project?',
+      1,
+      CONV_ID,
+      PROJECT_ID,
+      USER_ID,
+      'user',
+      'What is my project?',
     );
     expect(messageServiceMock.addMessage).toHaveBeenNthCalledWith(
-      2, CONV_ID, PROJECT_ID, USER_ID, 'assistant', result.answer,
+      2,
+      CONV_ID,
+      PROJECT_ID,
+      USER_ID,
+      'assistant',
+      result.answer,
     );
 
     // 10. Next Best Action is displayed (verified through deterministic block in system prompt)
@@ -197,7 +285,12 @@ describe('AI Project Coach End-to-End', () => {
     await service.ask(PROJECT_ID, USER_ID, 'Second question');
 
     // Verify DB history was used (not fresh conversation)
-    expect(messageServiceMock.getHistory).toHaveBeenCalledWith(CONV_ID, PROJECT_ID, USER_ID, 6);
+    expect(messageServiceMock.getHistory).toHaveBeenCalledWith(
+      CONV_ID,
+      PROJECT_ID,
+      USER_ID,
+      6,
+    );
     expect(llmMock.chat.mock.calls[1][0]).toContain('First question');
   });
 

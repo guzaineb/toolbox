@@ -56,11 +56,7 @@ export class AssignmentsService {
       );
     }
 
-    await this.assertNoRoleConflict(
-      projectId,
-      dto.expertUserId,
-      dto.role,
-    );
+    await this.assertNoRoleConflict(projectId, dto.expertUserId, dto.role);
 
     const assignment = await this.prisma.projectExpertAssignment.create({
       data: {

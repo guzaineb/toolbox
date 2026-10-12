@@ -67,10 +67,175 @@ async function verify() {
   );
   checks.push({ name: 'Expert profiles without user', result: `${(expertNoUser[0] as any).c}` });
 
+  // 11. Coaching sessions without assignment
+  const csOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM coaching_sessions cs LEFT JOIN project_expert_assignments a ON cs.assignment_id=a.id WHERE a.id IS NULL`
+  );
+  checks.push({ name: 'Coaching sessions without assignment', result: `${(csOrphan[0] as any).c}` });
+
+  // 12. Invalid coaching session statuses
+  const csInvalid = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM coaching_sessions WHERE status NOT IN ('SCHEDULED','IN_PROGRESS','COMPLETED','CANCELLED','RESCHEDULED','MISSED')`
+  );
+  checks.push({ name: 'Invalid coaching session statuses', result: `${(csInvalid[0] as any).c}` });
+
+  // 13. Coaching actions without project or creator
+  const caOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM coaching_actions ca LEFT JOIN projects p ON ca.project_id=p.id LEFT JOIN users u ON ca.created_by=u.id WHERE p.id IS NULL OR u.id IS NULL`
+  );
+  checks.push({ name: 'Coaching actions orphan (project/creator)', result: `${(caOrphan[0] as any).c}` });
+
+  // 14. Orphan action evidences
+  const evOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM action_evidences e LEFT JOIN coaching_actions ca ON e.action_id=ca.id WHERE ca.id IS NULL`
+  );
+  checks.push({ name: 'Orphan action evidences', result: `${(evOrphan[0] as any).c}` });
+
+  // 15. Coaching comments without author
+  const ccOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM coaching_comments c LEFT JOIN users u ON c.author_id=u.id WHERE u.id IS NULL`
+  );
+  checks.push({ name: 'Coaching comments without author', result: `${(ccOrphan[0] as any).c}` });
+
+  // 16. Evaluation scores outside criterion bounds
+  const scoreRange = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM evaluation_scores s JOIN evaluation_criteria c ON s.criterion_id=c.id WHERE s.score < 0 OR s.score > c.max_score`
+  );
+  checks.push({ name: 'Evaluation scores outside [0, max_score]', result: `${(scoreRange[0] as any).c}` });
+
+  // 17. Published templates whose criteria weights != 100
+  const weightSum = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM (SELECT t.id FROM evaluation_templates t JOIN evaluation_criteria c ON c.template_id=t.id WHERE t.published = true GROUP BY t.id HAVING abs(sum(c.weight) - 100) > 0.5) x`
+  );
+  checks.push({ name: 'Published templates with weight sum != 100', result: `${(weightSum[0] as any).c}` });
+
+  // 18. Published templates without locked_at
+  const notLocked = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM evaluation_templates WHERE published = true AND locked_at IS NULL`
+  );
+  checks.push({ name: 'Published templates without locked_at', result: `${(notLocked[0] as any).c}` });
+
+  // 19. Submitted evaluations without score
+  const subNoScore = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM evaluations WHERE status='SUBMITTED' AND score IS NULL`
+  );
+  checks.push({ name: 'Submitted evaluations without score', result: `${(subNoScore[0] as any).c}` });
+
+  // 20. Submitted evaluations with missing criteria scores
+  const subIncomplete = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM evaluations e JOIN evaluation_templates t ON e.template_id=t.id
+     WHERE e.status='SUBMITTED'
+       AND (SELECT count(*) FROM evaluation_scores s WHERE s.evaluation_id=e.id)
+           <> (SELECT count(*) FROM evaluation_criteria cr WHERE cr.template_id=t.id)`
+  );
+  checks.push({ name: 'Submitted evaluations with missing criterion scores', result: `${(subIncomplete[0] as any).c}` });
+
+  // 21. Orphan evaluation assignments
+  const eaOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM evaluation_assignments a
+     LEFT JOIN cohorts co ON a.cohort_id=co.id
+     LEFT JOIN projects p ON a.project_id=p.id
+     LEFT JOIN users u ON a.jury_user_id=u.id
+     WHERE co.id IS NULL OR p.id IS NULL OR u.id IS NULL`
+  );
+  checks.push({ name: 'Orphan evaluation assignments', result: `${(eaOrphan[0] as any).c}` });
+
+  // 22. Orphan jury sessions
+  const jsOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM jury_sessions j
+     LEFT JOIN projects p ON j.project_id=p.id
+     LEFT JOIN cohorts co ON j.cohort_id=co.id
+     LEFT JOIN users u ON j.created_by=u.id
+     WHERE p.id IS NULL OR co.id IS NULL OR u.id IS NULL`
+  );
+  checks.push({ name: 'Orphan jury sessions', result: `${(jsOrphan[0] as any).c}` });
+
+  // 23. Invalid jury session statuses
+  const jsInvalid = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM jury_sessions WHERE status NOT IN ('DRAFT','OPEN','DELIBERATION','CLOSED')`
+  );
+  checks.push({ name: 'Invalid jury session statuses', result: `${(jsInvalid[0] as any).c}` });
+
+  // 24. Orphan final decisions
+  const fdOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM final_decisions d
+     LEFT JOIN projects p ON d.project_id=p.id
+     LEFT JOIN cohorts co ON d.cohort_id=co.id
+     LEFT JOIN users u ON d.decided_by=u.id
+     WHERE p.id IS NULL OR co.id IS NULL OR u.id IS NULL`
+  );
+  checks.push({ name: 'Orphan final decisions', result: `${(fdOrphan[0] as any).c}` });
+
+  // 25. Orphan decision conditions
+  const condOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM final_decision_conditions c LEFT JOIN final_decisions d ON c.decision_id=d.id WHERE d.id IS NULL`
+  );
+  checks.push({ name: 'Orphan decision conditions', result: `${(condOrphan[0] as any).c}` });
+
+  // 26. Orphan jury session members
+  const jmOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM jury_session_members m
+     LEFT JOIN jury_sessions j ON m.jury_session_id=j.id
+     LEFT JOIN users u ON m.member_user_id=u.id
+     WHERE j.id IS NULL OR u.id IS NULL`
+  );
+  checks.push({ name: 'Orphan jury session members', result: `${(jmOrphan[0] as any).c}` });
+
+  // 27. Generated documents without project or invalid status
+  const gdInvalid = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM generated_documents g LEFT JOIN projects p ON g.project_id=p.id
+     WHERE p.id IS NULL OR g.status NOT IN ('NOT_GENERATED','GENERATED','UPDATED')`
+  );
+  checks.push({ name: 'Generated documents orphan/invalid status', result: `${(gdInvalid[0] as any).c}` });
+
+  // 28. Orphan notifications
+  const notifOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM notifications n LEFT JOIN users u ON n.user_id=u.id WHERE u.id IS NULL`
+  );
+  checks.push({ name: 'Orphan notifications', result: `${(notifOrphan[0] as any).c}` });
+
+  // 29. Orphan step progress
+  const spOrphan = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM step_progress s LEFT JOIN projects p ON s.project_id=p.id WHERE p.id IS NULL`
+  );
+  checks.push({ name: 'Orphan step progress', result: `${(spOrphan[0] as any).c}` });
+
+  // 30. Demo accounts that cannot sign in
+  const demoBroken = await prisma.$queryRawUnsafe<number>(
+    `SELECT count(*)::int as c FROM users WHERE email LIKE '%@projectstruct.demo'
+     AND (is_verified = false OR is_active = false OR profile_id IS NULL
+          OR role IS NULL OR role NOT IN ('EXPERT','PROJECT_OWNER','INCUBATOR_MEMBER'))`
+  );
+  checks.push({ name: 'Demo accounts unusable (unverified/inactive/no profile)', result: `${(demoBroken[0] as any).c}` });
+
   // Print results
   for (const check of checks) {
     const status = check.result === '0' ? '✅' : '❌';
     console.log(`  ${status} ${check.name}: ${check.result}`);
+  }
+
+  // Expected minimums (demo scenario must be present)
+  const minimums: { name: string; count: number; min: number }[] = [
+    { name: 'coaching_sessions', count: await prisma.coachingSession.count(), min: 8 },
+    { name: 'coaching_actions', count: await prisma.coachingAction.count(), min: 8 },
+    { name: 'action_evidences', count: await prisma.actionEvidence.count(), min: 3 },
+    { name: 'coaching_recommendations', count: await prisma.coachingRecommendation.count(), min: 4 },
+    { name: 'evaluation_templates', count: await prisma.evaluationTemplate.count(), min: 2 },
+    { name: 'evaluation_criteria', count: await prisma.evaluationCriterion.count(), min: 8 },
+    { name: 'evaluation_scores', count: await prisma.evaluationScore.count(), min: 20 },
+    { name: 'evaluation_assignments', count: await prisma.evaluationAssignment.count(), min: 5 },
+    { name: 'evaluations', count: await prisma.evaluation.count(), min: 5 },
+    { name: 'jury_sessions', count: await prisma.jurySession.count(), min: 3 },
+    { name: 'final_decisions', count: await prisma.finalDecision.count(), min: 3 },
+    { name: 'generated_documents', count: await prisma.generatedDocument.count(), min: 5 },
+    { name: 'notifications', count: await prisma.notification.count(), min: 10 },
+    { name: 'step_progress', count: await prisma.stepProgress.count(), min: 34 },
+  ];
+
+  console.log('\n=== DEMO SCENARIO PRESENCE ===');
+  for (const m of minimums) {
+    const status = m.count >= m.min ? '✅' : '❌';
+    console.log(`  ${status} ${m.name}: ${m.count} (expected >= ${m.min})`);
   }
 
   // Summary counts
@@ -91,6 +256,28 @@ async function verify() {
     coachingSessions: await prisma.coachingSession.count(),
     recommendations: await prisma.coachingRecommendation.count(),
     assignments: await prisma.projectExpertAssignment.count(),
+    coachSessions: await prisma.coachingSession.count(),
+    coachActions: await prisma.coachingAction.count(),
+    actionEvidences: await prisma.actionEvidence.count(),
+    coachComments: await prisma.coachingComment.count(),
+    coachRecommendations: await prisma.coachingRecommendation.count(),
+    evaluationTemplates: await prisma.evaluationTemplate.count(),
+    evaluationCriteria: await prisma.evaluationCriterion.count(),
+    evaluationScores: await prisma.evaluationScore.count(),
+    evaluationAssignments: await prisma.evaluationAssignment.count(),
+    jurySessions: await prisma.jurySession.count(),
+    juryMembers: await prisma.jurySessionMember.count(),
+    finalDecisions: await prisma.finalDecision.count(),
+    decisionConditions: await prisma.finalDecisionCondition.count(),
+    generatedDocuments: await prisma.generatedDocument.count(),
+    incubators: await prisma.incubator.count(),
+    incubatorMembers: await prisma.incubatorMember.count(),
+    incubatorDocuments: await prisma.incubatorDocument.count(),
+    notifications: await prisma.notification.count(),
+    aiAnalyses: await prisma.aiAnalysis.count(),
+    improvementPlans: await prisma.improvementPlan.count(),
+    conversations: await prisma.conversation.count(),
+    messages: await prisma.message.count(),
   };
 
   console.log('\n=== FINAL COUNTS ===');

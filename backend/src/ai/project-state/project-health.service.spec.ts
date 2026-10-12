@@ -91,7 +91,10 @@ describe('ProjectHealthService', () => {
       };
       ci.customer_segment = [{ segment_name: 'PME' }];
       ci.cost_structure = { fixed_costs: '10000' };
-      ci.revenue_stream = { revenue_sources: 'Abonnement', pricing_strategy: '200€' };
+      ci.revenue_stream = {
+        revenue_sources: 'Abonnement',
+        pricing_strategy: '200€',
+      };
       ci.financial_plan = { point_depart: 'Apport' };
       ci.legal_plan = { statut_juridique: 'SAS' };
       ci.swot_analysis = {
@@ -212,9 +215,9 @@ describe('ProjectHealthService', () => {
       });
 
       expect(result.coherenceScore).toBeLessThan(80);
-      expect(
-        result.weakAreas.some((w) => w.includes('incohérence')),
-      ).toBe(true);
+      expect(result.weakAreas.some((w) => w.includes('incohérence'))).toBe(
+        true,
+      );
     });
   });
 
@@ -240,10 +243,7 @@ describe('ProjectHealthService', () => {
 
       const expectedCompleteness = Math.round(80 * 0.5 + 60 * 0.3 + 100 * 0.2);
       const expected = Math.round(
-        expectedCompleteness * 0.3 +
-          70 * 0.25 +
-          100 * 0.25 +
-          60 * 0.2,
+        expectedCompleteness * 0.3 + 70 * 0.25 + 100 * 0.25 + 60 * 0.2,
       );
       expect(result.score).toBe(expected);
     });
@@ -299,9 +299,7 @@ describe('ProjectHealthService', () => {
         weakAreas: [],
       });
 
-      expect(
-        result.strengths.some((s) => s.includes('Complétude')),
-      ).toBe(true);
+      expect(result.strengths.some((s) => s.includes('Complétude'))).toBe(true);
     });
 
     it('complétude < 40 ajoute une faiblesse', () => {
@@ -323,9 +321,7 @@ describe('ProjectHealthService', () => {
         weakAreas: [],
       });
 
-      expect(
-        result.weakAreas.some((w) => w.includes('Complétude')),
-      ).toBe(true);
+      expect(result.weakAreas.some((w) => w.includes('Complétude'))).toBe(true);
     });
   });
 });

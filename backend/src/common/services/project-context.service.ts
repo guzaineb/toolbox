@@ -1835,8 +1835,7 @@ export class ProjectContextService {
     return Object.entries(obj)
       .filter(([, lines]) => lines && lines.length > 0)
       .map(
-        ([key, lines]) =>
-          `${key} :\n${lines.map((l) => `- ${l}`).join('\n')}`,
+        ([key, lines]) => `${key} :\n${lines.map((l) => `- ${l}`).join('\n')}`,
       )
       .join('\n\n');
   }

@@ -75,9 +75,7 @@ export class ChatbotService {
     );
 
     const effectiveHistory =
-      historyFromDb.length > 0
-        ? historyFromDb
-        : (conversationHistory ?? []);
+      historyFromDb.length > 0 ? historyFromDb : (conversationHistory ?? []);
 
     await this.messageService.addMessage(
       conversation.id,
@@ -87,33 +85,35 @@ export class ChatbotService {
       question,
     );
 
-    const [ragOutcome, project, coachingContext, projectState] = await Promise.all([
-      this.rag.query(projectId, question, 5).catch((error) => {
-        const message = error instanceof Error ? error.message : String(error);
-        this.logger.warn(
-          `RAG query failed pour le projet ${projectId}: ${message}`,
-        );
-        return {
-          status: 'RAG_UNAVAILABLE' as RagStatus,
-          documents: [] as RagDocument[],
-          distances: [] as number[],
-          sources: [] as never[],
-          reason: message,
-        };
-      }),
-      this.prisma.project.findUnique({
-        where: { id: projectId },
-        include: {
-          context_summary: true,
-          summary_activity: true,
-          executive_summary: true,
-          mission_vision: true,
-          value_proposition: true,
-        },
-      }),
-      this.contextBuilder.build(projectId).catch(() => null),
-      this.projectStateService.getProjectState(projectId).catch(() => null),
-    ]);
+    const [ragOutcome, project, coachingContext, projectState] =
+      await Promise.all([
+        this.rag.query(projectId, question, 5).catch((error) => {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          this.logger.warn(
+            `RAG query failed pour le projet ${projectId}: ${message}`,
+          );
+          return {
+            status: 'RAG_UNAVAILABLE' as RagStatus,
+            documents: [] as RagDocument[],
+            distances: [] as number[],
+            sources: [] as never[],
+            reason: message,
+          };
+        }),
+        this.prisma.project.findUnique({
+          where: { id: projectId },
+          include: {
+            context_summary: true,
+            summary_activity: true,
+            executive_summary: true,
+            mission_vision: true,
+            value_proposition: true,
+          },
+        }),
+        this.contextBuilder.build(projectId).catch(() => null),
+        this.projectStateService.getProjectState(projectId).catch(() => null),
+      ]);
 
     const contextParts: string[] = [];
     let ragUsed = false;
@@ -174,7 +174,8 @@ export class ChatbotService {
     const toolsAvailable = this.toolRegistry.getToolsForPrompt();
     const toolsUsed: string[] = [];
 
-    const projectName = project?.name ?? coachingContext?.projectName ?? 'Projet';
+    const projectName =
+      project?.name ?? coachingContext?.projectName ?? 'Projet';
 
     const moduleContextBlock = moduleContext?.module
       ? `\nCONTEXTE MODULE :
@@ -186,7 +187,8 @@ L'utilisateur travaille ACTUELLEMENT sur ce module. Concentre ta réponse sur ce
 Pour les actions suggérées, propose des actions adaptées à ce module (expliquer, identifier les informations manquantes, détecter les incohérences, suggérer des améliorations, analyser la réponse, indiquer la prochaine étape).`
       : '';
 
-    const deterministicBlock = this.buildDeterministicAnalysisBlock(projectState);
+    const deterministicBlock =
+      this.buildDeterministicAnalysisBlock(projectState);
 
     const systemMessage = {
       role: 'system' as const,
@@ -230,7 +232,11 @@ RÈGLES POUR LES EXPLICATIONS (quand l'utilisateur demande conseil, analyse ou r
       content: string;
       toolCallId?: string;
       name?: string;
-      toolCalls?: { id: string; type: 'function'; function: { name: string; arguments: string } }[];
+      toolCalls?: {
+        id: string;
+        type: 'function';
+        function: { name: string; arguments: string };
+      }[];
     }[] = [systemMessage];
 
     for (const msg of effectiveHistory) {
@@ -326,11 +332,9 @@ RÈGLES POUR LES EXPLICATIONS (quand l'utilisateur demande conseil, analyse ou r
     return { documentsIndexed: result.total };
   }
 
-  private buildDeterministicAnalysisBlock(
-    state: ProjectState | null,
-  ): string {
+  private buildDeterministicAnalysisBlock(state: ProjectState | null): string {
     if (!state) {
-      return '\n[NOTE] L\'analyse déterministe du projet est temporairement indisponible. Réponds à partir du contexte disponible.';
+      return "\n[NOTE] L'analyse déterministe du projet est temporairement indisponible. Réponds à partir du contexte disponible.";
     }
 
     const parts: string[] = [
@@ -357,7 +361,8 @@ RÈGLES POUR LES EXPLICATIONS (quand l'utilisateur demande conseil, analyse ou r
 
     if (state.priorities.length > 0) {
       const priorityLines = state.priorities.map(
-        (p) => `  - [${p.level}] ${p.area} (impact ${p.impact}/100) : ${p.description}${p.module ? ` → module ${p.module}` : ''}`,
+        (p) =>
+          `  - [${p.level}] ${p.area} (impact ${p.impact}/100) : ${p.description}${p.module ? ` → module ${p.module}` : ''}`,
       );
       parts.push(`Priorités :\n${priorityLines.join('\n')}`);
     }

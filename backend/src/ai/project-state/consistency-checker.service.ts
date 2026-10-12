@@ -101,7 +101,8 @@ export class ConsistencyChecker {
     if (stepDone('gbm_1') && !nonEmpty(p.idea_sketch?.idea_initial)) {
       issues.push({
         area: 'GBM',
-        description: "Étape gbm_1 marquée complétée mais l'idée initiale est vide",
+        description:
+          "Étape gbm_1 marquée complétée mais l'idée initiale est vide",
         severity: 'HIGH',
       });
     }
@@ -118,7 +119,8 @@ export class ConsistencyChecker {
     ) {
       issues.push({
         area: 'Finances',
-        description: 'Étape gbm_16 marquée complétée mais structure des coûts vide',
+        description:
+          'Étape gbm_16 marquée complétée mais structure des coûts vide',
         severity: 'HIGH',
       });
     }
@@ -341,8 +343,7 @@ export class ConsistencyChecker {
     ) {
       issues.push({
         area: 'Impact',
-        description:
-          'Indicateurs KPI définis mais méthode de mesure absente',
+        description: 'Indicateurs KPI définis mais méthode de mesure absente',
         severity: 'MEDIUM',
       });
     }

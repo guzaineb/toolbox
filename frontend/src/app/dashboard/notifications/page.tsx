@@ -39,6 +39,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 import { cn, getRelativeTime } from '@/lib/utils'
+import { resolveNotificationLink } from '@/lib/resolve-notification-link'
 import {
   useNotificationsInfinite,
   useUnreadCount,
@@ -178,7 +179,7 @@ function NotificationCard({
         <div className="flex items-center gap-1 flex-shrink-0">
           {notification.link && (
             <Link
-              href={notification.link}
+              href={resolveNotificationLink(notification.link) ?? '/dashboard'}
               className="p-1.5 rounded-lg hover:bg-moss-light text-ink3 hover:text-moss transition-colors"
               title="Voir la ressource"
             >
@@ -286,8 +287,9 @@ export default function NotificationsPage() {
 
   const handleCardClick = (notification: Notification) => {
     if (!notification.is_read) markAsReadMut.mutate(notification.id)
-    if (notification.link) {
-      window.location.href = notification.link
+    const link = resolveNotificationLink(notification.link)
+    if (link) {
+      window.location.href = link
     }
   }
 

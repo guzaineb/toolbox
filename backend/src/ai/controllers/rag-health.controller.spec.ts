@@ -67,7 +67,10 @@ describe('RagHealthController', () => {
     it('returns healthy status when both embeddings and chroma are available', async () => {
       const result = await controller.health('proj-1', req('user-1'));
 
-      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith('proj-1', 'user-1');
+      expect(accessMock.assertCanAccessProject).toHaveBeenCalledWith(
+        'proj-1',
+        'user-1',
+      );
       expect(chromaMock.health).toHaveBeenCalled();
       expect(embeddingsMock.health).toHaveBeenCalled();
       expect(ragMock.countIndexed).toHaveBeenCalledWith('proj-1');
@@ -80,7 +83,10 @@ describe('RagHealthController', () => {
     });
 
     it('returns degraded status when chroma is unavailable', async () => {
-      chromaMock.health.mockResolvedValue({ available: false, reason: 'Chroma down' });
+      chromaMock.health.mockResolvedValue({
+        available: false,
+        reason: 'Chroma down',
+      });
 
       const result = await controller.health('proj-1', req('user-1'));
 
@@ -90,7 +96,10 @@ describe('RagHealthController', () => {
     });
 
     it('returns degraded status when embeddings are unavailable', async () => {
-      embeddingsMock.health.mockResolvedValue({ available: false, reason: 'No model' });
+      embeddingsMock.health.mockResolvedValue({
+        available: false,
+        reason: 'No model',
+      });
 
       const result = await controller.health('proj-1', req('user-1'));
 
@@ -100,8 +109,14 @@ describe('RagHealthController', () => {
     });
 
     it('returns degraded status when both are unavailable', async () => {
-      chromaMock.health.mockResolvedValue({ available: false, reason: 'Chroma down' });
-      embeddingsMock.health.mockResolvedValue({ available: false, reason: 'No model' });
+      chromaMock.health.mockResolvedValue({
+        available: false,
+        reason: 'Chroma down',
+      });
+      embeddingsMock.health.mockResolvedValue({
+        available: false,
+        reason: 'No model',
+      });
 
       const result = await controller.health('proj-1', req('user-1'));
 

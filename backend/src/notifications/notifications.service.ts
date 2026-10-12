@@ -7,6 +7,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
+import { resolveAppLink } from './notification-link.util';
 
 type FindAllParams = {
   unreadOnly?: boolean;
@@ -61,7 +62,7 @@ export class NotificationsService {
         type,
         title,
         message,
-        link,
+        link: resolveAppLink(link),
         sender_id: senderId ?? null,
         priority: priority ?? NotificationPriority.MEDIUM,
         resource_type: resourceType ?? null,
@@ -90,7 +91,7 @@ export class NotificationsService {
       type,
       title,
       message,
-      link,
+      link: resolveAppLink(link),
       sender_id: senderId ?? null,
       priority: priority ?? NotificationPriority.MEDIUM,
       resource_type: resourceType ?? null,

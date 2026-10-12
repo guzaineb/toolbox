@@ -75,18 +75,20 @@ describe('ChromaService', () => {
   describe('addDocuments - health guard', () => {
     it('throws when ChromaDB is unavailable', async () => {
       await expect(
-        service.addDocuments('proj', [
-          { id: 'd1', content: 'c', metadata: {} },
-        ], [[0.1]]),
+        service.addDocuments(
+          'proj',
+          [{ id: 'd1', content: 'c', metadata: {} }],
+          [[0.1]],
+        ),
       ).rejects.toThrow('ChromaDB indisponible');
     });
   });
 
   describe('deleteDocuments - health guard', () => {
     it('throws when ChromaDB is unavailable', async () => {
-      await expect(
-        service.deleteDocuments('proj', ['d1']),
-      ).rejects.toThrow('ChromaDB indisponible');
+      await expect(service.deleteDocuments('proj', ['d1'])).rejects.toThrow(
+        'ChromaDB indisponible',
+      );
     });
   });
 

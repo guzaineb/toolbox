@@ -129,12 +129,30 @@ describe('AI Coach Security - User Isolation', () => {
 
     ragMock.query.mockResolvedValue({
       status: 'RAG_AVAILABLE' as const,
-      documents: [{ id: 'doc-1', content: 'RAG content', metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' } }],
+      documents: [
+        {
+          id: 'doc-1',
+          content: 'RAG content',
+          metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' },
+        },
+      ],
       distances: [0.3],
-      sources: [{ id: 'doc-1', documentKey: 'gbm1', module: 'gbm', section: 'idea', page: 1, chunkIndex: 0, score: 0.7 }],
+      sources: [
+        {
+          id: 'doc-1',
+          documentKey: 'gbm1',
+          module: 'gbm',
+          section: 'idea',
+          page: 1,
+          chunkIndex: 0,
+          score: 0.7,
+        },
+      ],
     });
 
-    contextBuilderMock.build.mockResolvedValue({ contextText: 'Coaching context' });
+    contextBuilderMock.build.mockResolvedValue({
+      contextText: 'Coaching context',
+    });
 
     // Project A state
     projectStateMockA.getProjectState.mockResolvedValue({
@@ -142,8 +160,24 @@ describe('AI Coach Security - User Isolation', () => {
       projectName: 'Project A',
       maturityLevel: 'DEVELOPING',
       overallProgress: 45,
-      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
-      incompleteSteps: [{ stepKey: 'gbm_2', title: 'Problèmes', phase: 1, status: 'NOT_STARTED', hasData: false }],
+      completedSteps: [
+        {
+          stepKey: 'gbm_1',
+          title: 'Idée',
+          phase: 1,
+          status: 'COMPLETED',
+          hasData: true,
+        },
+      ],
+      incompleteSteps: [
+        {
+          stepKey: 'gbm_2',
+          title: 'Problèmes',
+          phase: 1,
+          status: 'NOT_STARTED',
+          hasData: false,
+        },
+      ],
       missingInformation: ['Décrire les problèmes'],
       strengths: ['Mission définie'],
       weakAreas: ['GBM très peu avancé'],
@@ -167,8 +201,24 @@ describe('AI Coach Security - User Isolation', () => {
       projectName: 'Project B',
       maturityLevel: 'INITIAL',
       overallProgress: 15,
-      completedSteps: [{ stepKey: 'gbm_1', title: 'Idée', phase: 1, status: 'COMPLETED', hasData: true }],
-      incompleteSteps: [{ stepKey: 'gbm_3', title: 'Test', phase: 2, status: 'NOT_STARTED', hasData: false }],
+      completedSteps: [
+        {
+          stepKey: 'gbm_1',
+          title: 'Idée',
+          phase: 1,
+          status: 'COMPLETED',
+          hasData: true,
+        },
+      ],
+      incompleteSteps: [
+        {
+          stepKey: 'gbm_3',
+          title: 'Test',
+          phase: 2,
+          status: 'NOT_STARTED',
+          hasData: false,
+        },
+      ],
       missingInformation: ['Configurer le cycle de vie'],
       strengths: [],
       weakAreas: [],
@@ -186,7 +236,11 @@ describe('AI Coach Security - User Isolation', () => {
       recommendedNextAction: '',
     });
 
-    conversationServiceMock.getOrCreateActive.mockResolvedValue({ id: CONV_ID, title: null, createdAt: new Date() });
+    conversationServiceMock.getOrCreateActive.mockResolvedValue({
+      id: CONV_ID,
+      title: null,
+      createdAt: new Date(),
+    });
     messageServiceMock.getHistory.mockResolvedValue([]);
     messageServiceMock.addMessage.mockResolvedValue({});
 
@@ -196,7 +250,11 @@ describe('AI Coach Security - User Isolation', () => {
 
   describe('User A can access Project A only', () => {
     it('should allow User A to access Project A', async () => {
-      const result = await serviceA.ask(PROJECT_ID_A, USER_ID, 'Question about Project A');
+      const result = await serviceA.ask(
+        PROJECT_ID_A,
+        USER_ID,
+        'Question about Project A',
+      );
       expect(result.answer).toBeDefined();
       expect(result.conversationId).toBeDefined();
     });
@@ -208,7 +266,11 @@ describe('AI Coach Security - User Isolation', () => {
     });
 
     it('should not leak Project B data when User A asks about Project A', async () => {
-      const result = await serviceA.ask(PROJECT_ID_A, USER_ID, 'What is the maturity level?');
+      const result = await serviceA.ask(
+        PROJECT_ID_A,
+        USER_ID,
+        'What is the maturity level?',
+      );
       expect(result.answer).toContain('Project A');
       // Should NOT contain Project B data
       expect(result.answer).not.toContain('Project B');
@@ -217,7 +279,11 @@ describe('AI Coach Security - User Isolation', () => {
 
   describe('User B can access Project B only', () => {
     it('should allow User B to access Project B', async () => {
-      const result = await serviceB.ask(PROJECT_ID_B, USER_ID, 'Question about Project B');
+      const result = await serviceB.ask(
+        PROJECT_ID_B,
+        USER_ID,
+        'Question about Project B',
+      );
       expect(result.answer).toBeDefined();
     });
 
@@ -228,7 +294,11 @@ describe('AI Coach Security - User Isolation', () => {
     });
 
     it('should not leak Project A data when User B asks about Project B', async () => {
-      const result = await serviceB.ask(PROJECT_ID_B, USER_ID, 'What is the maturity level?');
+      const result = await serviceB.ask(
+        PROJECT_ID_B,
+        USER_ID,
+        'What is the maturity level?',
+      );
       expect(result.answer).toContain('Project B');
       expect(result.answer).not.toContain('Project A');
     });
@@ -250,7 +320,11 @@ describe('AI Coach Security - User Isolation', () => {
 
   describe('RAG document isolation', () => {
     it('User A should only see Project A RAG documents', async () => {
-      const result = await serviceA.ask(PROJECT_ID_A, USER_ID, 'Question about docs');
+      const result = await serviceA.ask(
+        PROJECT_ID_A,
+        USER_ID,
+        'Question about docs',
+      );
       // RAG documents should be from Project A only
       expect(result.sources).toBeDefined();
       if (result.sources.length > 0) {
@@ -259,7 +333,11 @@ describe('AI Coach Security - User Isolation', () => {
     });
 
     it('User B should only see Project B RAG documents', async () => {
-      const result = await serviceB.ask(PROJECT_ID_B, USER_ID, 'Question about docs');
+      const result = await serviceB.ask(
+        PROJECT_ID_B,
+        USER_ID,
+        'Question about docs',
+      );
       expect(result.sources).toBeDefined();
       if (result.sources.length > 0) {
         expect(result.sources[0].module).toBe('gbm');

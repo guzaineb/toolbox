@@ -69,7 +69,11 @@ describe('AI Project Coach - RAG Tests', () => {
       value_proposition: null,
     });
 
-    conversationServiceMock.getOrCreateActive.mockResolvedValue({ id: 'conv-123', title: null, createdAt: new Date() });
+    conversationServiceMock.getOrCreateActive.mockResolvedValue({
+      id: 'conv-123',
+      title: null,
+      createdAt: new Date(),
+    });
     messageServiceMock.getHistory.mockResolvedValue([]);
     messageServiceMock.addMessage.mockResolvedValue({});
 
@@ -94,9 +98,25 @@ describe('AI Project Coach - RAG Tests', () => {
     beforeEach(() => {
       ragMock.query.mockResolvedValue({
         status: 'RAG_AVAILABLE' as const,
-        documents: [{ id: 'doc-1', content: 'Relevant content', metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' } }],
+        documents: [
+          {
+            id: 'doc-1',
+            content: 'Relevant content',
+            metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' },
+          },
+        ],
         distances: [0.3],
-        sources: [{ id: 'doc-1', documentKey: 'gbm1', module: 'gbm', section: 'idea', page: 1, chunkIndex: 0, score: 0.8 }],
+        sources: [
+          {
+            id: 'doc-1',
+            documentKey: 'gbm1',
+            module: 'gbm',
+            section: 'idea',
+            page: 1,
+            chunkIndex: 0,
+            score: 0.8,
+          },
+        ],
       });
     });
 
@@ -166,9 +186,25 @@ describe('AI Project Coach - RAG Tests', () => {
     beforeEach(() => {
       ragMock.query.mockResolvedValue({
         status: 'RAG_AVAILABLE' as const,
-        documents: [{ id: 'doc-1', content: 'Test doc', metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' } }],
+        documents: [
+          {
+            id: 'doc-1',
+            content: 'Test doc',
+            metadata: { document_key: 'gbm1', module: 'gbm', section: 'idea' },
+          },
+        ],
         distances: [0.3],
-        sources: [{ id: 'doc-1', documentKey: 'gbm1', module: 'gbm', section: 'idea', page: 1, chunkIndex: 0, score: 0.9 }],
+        sources: [
+          {
+            id: 'doc-1',
+            documentKey: 'gbm1',
+            module: 'gbm',
+            section: 'idea',
+            page: 1,
+            chunkIndex: 0,
+            score: 0.9,
+          },
+        ],
       });
     });
 
@@ -186,7 +222,9 @@ describe('AI Project Coach - RAG Tests', () => {
       const systemMsg = llmMock.chat.mock.calls[0][0][0];
       expect(systemMsg.content).toContain('ANALYSE DÉTERMINISTE DU PROJET');
       expect(systemMsg.content).toContain('DOCUMENTS PERTINENTS');
-      expect(systemMsg.content).toContain('--- DOCUMENTS PERTINENTS (de votre projet) ---');
+      expect(systemMsg.content).toContain(
+        '--- DOCUMENTS PERTINENTS (de votre projet) ---',
+      );
     });
   });
 });

@@ -224,9 +224,14 @@ ACTIVITÉS CLÉS : ${fmt(kar.key_activities)}
 RESSOURCES CLÉS : ${fmt(kar.key_resources)}
 ÉCOCONCEPTION — RÉSULTATS : ${fmt(context.eco_design_result?.eco_results)}
 
-Résultats des tests : ${Array.isArray(context.test_discovery) && context.test_discovery.length > 0
-  ? context.test_discovery.map((t: any) => `${t.hypothesis || ''} — ${t.results || ''}`).join('\n')
-  : 'Non renseigné'}
+Résultats des tests : ${
+          Array.isArray(context.test_discovery) &&
+          context.test_discovery.length > 0
+            ? context.test_discovery
+                .map((t: any) => `${t.hypothesis || ''} — ${t.results || ''}`)
+                .join('\n')
+            : 'Non renseigné'
+        }
 
 COÛTS FIXES : ${fmt(context.cost_structure?.fixed_costs)}
 COÛTS VARIABLES : ${fmt(context.cost_structure?.variable_costs)}
@@ -247,7 +252,8 @@ Chaque valeur est un texte concis en puces, sans clés imbriquées.`;
         const fmtDeep = (v: any): string => {
           if (v === null || v === undefined) return 'Non renseigné';
           if (typeof v === 'string') return v || 'Non renseigné';
-          if (Array.isArray(v)) return v.map((i) => `- ${fmtDeep(i)}`).join('\n');
+          if (Array.isArray(v))
+            return v.map((i) => `- ${fmtDeep(i)}`).join('\n');
           if (typeof v === 'object')
             return Object.entries(v)
               .map(([k, val]) => `- ${k} : ${fmtDeep(val)}`)
@@ -343,7 +349,8 @@ Le résumé doit refléter UNIQUEMENT les données fournies ci-dessus. Si une do
         const fmtDeep = (v: any): string => {
           if (v === null || v === undefined) return 'Non renseigné';
           if (typeof v === 'string') return v || 'Non renseigné';
-          if (Array.isArray(v)) return v.map((i) => `- ${fmtDeep(i)}`).join('\n');
+          if (Array.isArray(v))
+            return v.map((i) => `- ${fmtDeep(i)}`).join('\n');
           if (typeof v === 'object')
             return Object.entries(v)
               .map(([k, val]) => `- ${k} : ${fmtDeep(val)}`)

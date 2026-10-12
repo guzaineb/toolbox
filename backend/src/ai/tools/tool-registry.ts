@@ -26,16 +26,16 @@ export class ToolRegistry {
 
   getToolsForPrompt(): LlmTool[] {
     const registeredNames = new Set(this.tools.keys());
-    return TOOL_DEFINITIONS
-      .filter((def) => registeredNames.has(def.function.name))
-      .map((def) => ({
-        type: 'function' as const,
-        function: {
-          name: def.function.name,
-          description: def.function.description,
-          parameters: def.function.parameters,
-        },
-      }));
+    return TOOL_DEFINITIONS.filter((def) =>
+      registeredNames.has(def.function.name),
+    ).map((def) => ({
+      type: 'function' as const,
+      function: {
+        name: def.function.name,
+        description: def.function.description,
+        parameters: def.function.parameters,
+      },
+    }));
   }
 
   async execute(
@@ -53,17 +53,26 @@ export class ToolRegistry {
     try {
       parsedArgs = JSON.parse(argsJson);
     } catch {
-      return JSON.stringify({ error: `Arguments invalides (JSON mal formé) pour ${name}` });
+      return JSON.stringify({
+        error: `Arguments invalides (JSON mal formé) pour ${name}`,
+      });
     }
 
     const inputValidation = definition.inputSchema.safeParse(parsedArgs);
     if (!inputValidation.success) {
-      const errors = inputValidation.error.issues.map((e) => e.message).join(', ');
-      return JSON.stringify({ error: `Paramètres invalides pour ${name}: ${errors}` });
+      const errors = inputValidation.error.issues
+        .map((e) => e.message)
+        .join(', ');
+      return JSON.stringify({
+        error: `Paramètres invalides pour ${name}: ${errors}`,
+      });
     }
 
     try {
-      const result = await definition.handler(inputValidation.data as { projectId: string }, userId);
+      const result = await definition.handler(
+        inputValidation.data as { projectId: string },
+        userId,
+      );
 
       const outputValidation = definition.outputSchema.safeParse(result);
       if (!outputValidation.success) {

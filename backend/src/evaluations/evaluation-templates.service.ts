@@ -32,7 +32,7 @@ export class EvaluationTemplatesService {
 
     const cohort = await this.prisma.cohort.findUnique({
       where: { id: cohortId },
-      select: { name: true },
+      select: { name: true, incubator_id: true },
     });
     if (!cohort) throw new NotFoundException('Cohorte introuvable');
 
@@ -76,7 +76,7 @@ export class EvaluationTemplatesService {
         recipients: members.map((id) => ({ userId: id })),
         title,
         message,
-        link: `/incubator/cohorts/${cohortId}/evaluations`,
+        link: `/incubator/${cohort.incubator_id}/cohorts/${cohortId}`,
         senderId: userId,
         resourceType: ResourceType.EVALUATION,
         resourceId: template.id,

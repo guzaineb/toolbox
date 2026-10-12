@@ -61,7 +61,7 @@ function DashboardHeader({ firstName, role }: { firstName?: string; role: UserRo
       <h1 className="font-syne text-[24px] font-bold text-ink mb-1">
         {`Bonjour, ${firstName || 'Utilisateur'} 👋`}
       </h1>
-      <p className="text-[13px] text-ink2">{labels[role as UserRole] ?? 'Bienvenue sur ToolBox'}</p>
+      <p className="text-[13px] text-ink2">{labels[role as UserRole] ?? 'Bienvenue sur ProjectStruct'}</p>
     </div>
   )
 }

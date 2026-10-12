@@ -42,7 +42,12 @@ function fileFilter(
   if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`Type de fichier non supporté: ${file.mimetype}. Autorisés: PDF, DOCX, TXT, MD`), false);
+    cb(
+      new Error(
+        `Type de fichier non supporté: ${file.mimetype}. Autorisés: PDF, DOCX, TXT, MD`,
+      ),
+      false,
+    );
   }
 }
 
@@ -88,11 +93,18 @@ export class DocumentController {
     await this.access.assertCanAccessProject(dto.projectId, req.user.id);
 
     try {
-      const result = await this.documentService.upload(dto.projectId, req.user.id, file);
+      const result = await this.documentService.upload(
+        dto.projectId,
+        req.user.id,
+        file,
+      );
       return { success: true, data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      const status =
+        error instanceof HttpException
+          ? error.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
       throw new HttpException({ success: false, message }, status);
     }
   }
@@ -110,7 +122,10 @@ export class DocumentController {
       return { success: true, data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      const status =
+        error instanceof HttpException
+          ? error.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
       throw new HttpException({ success: false, message }, status);
     }
   }
@@ -128,7 +143,10 @@ export class DocumentController {
       return { success: true, data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      const status =
+        error instanceof HttpException
+          ? error.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
       throw new HttpException({ success: false, message }, status);
     }
   }
@@ -142,11 +160,18 @@ export class DocumentController {
     await this.access.assertCanAccessProject(projectId, req.user.id);
 
     try {
-      await this.documentService.deleteDocument(documentId, projectId, req.user.id);
+      await this.documentService.deleteDocument(
+        documentId,
+        projectId,
+        req.user.id,
+      );
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      const status =
+        error instanceof HttpException
+          ? error.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
       throw new HttpException({ success: false, message }, status);
     }
   }
@@ -170,7 +195,10 @@ export class DocumentController {
       return { success: true, data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new HttpException({ success: false, message }, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        { success: false, message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -183,11 +211,18 @@ export class DocumentController {
     await this.access.assertCanAccessProject(projectId, req.user.id);
 
     try {
-      const result = await this.documentService.getById(documentId, projectId, req.user.id);
+      const result = await this.documentService.getById(
+        documentId,
+        projectId,
+        req.user.id,
+      );
       return { success: true, data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      const status =
+        error instanceof HttpException
+          ? error.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
       throw new HttpException({ success: false, message }, status);
     }
   }

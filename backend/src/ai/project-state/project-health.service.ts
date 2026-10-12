@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ProjectAnalyzer } from './project-analyzer.service';
-import { ConsistencyChecker, ConsistencyInput } from './consistency-checker.service';
+import {
+  ConsistencyChecker,
+  ConsistencyInput,
+} from './consistency-checker.service';
 import { HealthDiagnostic, Inconsistency } from './project-state.types';
 
 type HealthInput = {
@@ -22,10 +25,10 @@ type HealthInput = {
 };
 
 const WEIGHTS = {
-  completeness: 0.30,
+  completeness: 0.3,
   progress: 0.25,
   coherence: 0.25,
-  maturity: 0.20,
+  maturity: 0.2,
 };
 
 @Injectable()
@@ -83,9 +86,9 @@ export class ProjectHealthService {
     businessPlan: { percentage: number };
     transversal: Record<string, boolean>;
   }): number {
-    const gbmWeight = 0.50;
-    const bpWeight = 0.30;
-    const transWeight = 0.20;
+    const gbmWeight = 0.5;
+    const bpWeight = 0.3;
+    const transWeight = 0.2;
 
     const transversalValues = Object.values(completeness.transversal);
     const transversalPct =
@@ -113,14 +116,10 @@ export class ProjectHealthService {
   ): string[] {
     const strengths = [...existingStrengths];
 
-    if (completeness >= 70)
-      strengths.push('Complétude globale solide');
-    if (progress >= 60)
-      strengths.push('Avancement GBM satisfaisant');
-    if (coherence >= 80)
-      strengths.push('Aucune incohérence majeure détectée');
-    if (maturity >= 60)
-      strengths.push('Maturité du projet avancée');
+    if (completeness >= 70) strengths.push('Complétude globale solide');
+    if (progress >= 60) strengths.push('Avancement GBM satisfaisant');
+    if (coherence >= 80) strengths.push('Aucune incohérence majeure détectée');
+    if (maturity >= 60) strengths.push('Maturité du projet avancée');
 
     return strengths;
   }

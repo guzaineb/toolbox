@@ -102,9 +102,7 @@ export class ExpertScoringService {
   buildMatchExplanation(match: ProjectMatch, expert: any): string {
     const { skillsMatch, experienceMatch } = match.details;
     const ratio =
-      skillsMatch.required > 0
-        ? skillsMatch.matched / skillsMatch.required
-        : 0;
+      skillsMatch.required > 0 ? skillsMatch.matched / skillsMatch.required : 0;
 
     let base: string;
     if (ratio >= 0.75) {
@@ -127,9 +125,13 @@ export class ExpertScoringService {
     }
     const years = expert?.years_of_experience || 0;
     if (years >= experienceMatch.required) {
-      parts.push(`${years} ans d'expérience (minimum ${experienceMatch.required} exigé)`);
+      parts.push(
+        `${years} ans d'expérience (minimum ${experienceMatch.required} exigé)`,
+      );
     } else {
-      parts.push(`expérience de ${years} ans (minimum ${experienceMatch.required} exigé)`);
+      parts.push(
+        `expérience de ${years} ans (minimum ${experienceMatch.required} exigé)`,
+      );
     }
     if (match.details.availabilityBonus) {
       parts.push('disponible immédiatement');
