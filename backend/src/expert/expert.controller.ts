@@ -31,17 +31,20 @@ export class ExpertController {
   constructor(private readonly service: ExpertService) {}
 
   @Post()
+  @Roles(UserRole.EXPERT)
   @HttpCode(HttpStatus.CREATED)
   create(@Req() req: { user: { id: string } }, @Body() dto: CreateExpertDto) {
     return this.service.create(req.user.id, dto);
   }
 
   @Get('me')
+  @Roles(UserRole.EXPERT)
   findMyProfile(@Req() req: { user: { id: string } }) {
     return this.service.findByUser(req.user.id);
   }
 
   @Patch('me')
+  @Roles(UserRole.EXPERT)
   updateProfile(
     @Req() req: { user: { id: string } },
     @Body() dto: UpdateExpertDto,
@@ -50,6 +53,7 @@ export class ExpertController {
   }
 
   @Delete('me')
+  @Roles(UserRole.EXPERT)
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteProfile(@Req() req: { user: { id: string } }) {
     return this.service.deleteProfile(req.user.id);
@@ -66,11 +70,13 @@ export class ExpertController {
   }
 
   @Get('me/expertises')
+  @Roles(UserRole.EXPERT)
   getMyExpertises(@Req() req: { user: { id: string } }) {
     return this.service.getExpertiseWithDetails(req.user.id);
   }
 
   @Post('me/expertises')
+  @Roles(UserRole.EXPERT)
   @HttpCode(HttpStatus.CREATED)
   addExpertise(
     @Req() req: { user: { id: string } },
@@ -80,6 +86,7 @@ export class ExpertController {
   }
 
   @Post('me/expertises/batch')
+  @Roles(UserRole.EXPERT)
   @HttpCode(HttpStatus.CREATED)
   addMultipleExpertises(
     @Req() req: { user: { id: string } },
@@ -89,6 +96,7 @@ export class ExpertController {
   }
 
   @Patch('me/expertises/:expertiseAreaId')
+  @Roles(UserRole.EXPERT)
   updateExpertiseLevel(
     @Req() req: { user: { id: string } },
     @Param('expertiseAreaId', ParseUUIDPipe) expertiseAreaId: string,
@@ -103,6 +111,7 @@ export class ExpertController {
   }
 
   @Delete('me/expertises/:expertiseAreaId')
+  @Roles(UserRole.EXPERT)
   @HttpCode(HttpStatus.NO_CONTENT)
   removeExpertise(
     @Req() req: { user: { id: string } },
@@ -112,11 +121,13 @@ export class ExpertController {
   }
 
   @Get('me/score')
+  @Roles(UserRole.EXPERT)
   getMyExpertScore(@Req() req: { user: { id: string } }) {
     return this.service.computeExpertScore(req.user.id);
   }
 
   @Get('me/projects/matched')
+  @Roles(UserRole.EXPERT)
   getMatchedProjects(
     @Req() req: { user: { id: string } },
     @Query('limit') limit?: string,
@@ -128,6 +139,7 @@ export class ExpertController {
   }
 
   @Post('me/match-project')
+  @Roles(UserRole.EXPERT)
   matchWithProject(
     @Req() req: { user: { id: string } },
     @Body() dto: MatchProjectDto,
@@ -136,12 +148,13 @@ export class ExpertController {
   }
 
   @Get(':id')
-  @Roles(UserRole.EXPERT)
+  @Roles(UserRole.EXPERT, UserRole.INCUBATOR_MEMBER)
   findOneExpert(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getPublicProfile(id);
   }
 
   @Post('recommendations/jury')
+  @Roles(UserRole.EXPERT, UserRole.INCUBATOR_MEMBER)
   recommendJury(@Body() body: { projectId: string; limit?: number }) {
     return this.service.recommendJuryForProject(
       body.projectId,
@@ -150,6 +163,7 @@ export class ExpertController {
   }
 
   @Post('recommendations/coachs')
+  @Roles(UserRole.EXPERT, UserRole.INCUBATOR_MEMBER)
   recommendCoachs(
     @Body() body: { cohortId: string; limit?: number; excludeIds?: string[] },
   ) {

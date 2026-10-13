@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Building2, Users, FileCheck, ChevronRight, Settings, Info,
+  Building2, Users, FileCheck, ChevronRight, Settings, Info, Sparkles,
 } from 'lucide-react'
 import api from '@/services/api'
 import { Badge, Button, Card, CardHeader, ProgressBar } from '@/components/shared/ui'
@@ -152,6 +152,9 @@ export default function IncubatorDetailPage() {
           </Link>
             <Link href={`/dashboard/incubator/${incubatorId}/cohorts`}>
             <Button variant="ghost" size="sm"><FileCheck size={13} />Cohorts </Button>
+          </Link>
+          <Link href={`/dashboard/incubator/${incubatorId}/recommendations`}>
+            <Button variant="ghost" size="sm"><Sparkles size={13} /> Recommandations</Button>
           </Link>
           <Link href={`/dashboard/incubator/${incubatorId}/edit`}>
             <Button variant="primary" size="sm"><Settings size={13} /> Paramètres</Button>

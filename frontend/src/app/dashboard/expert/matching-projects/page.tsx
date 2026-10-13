@@ -52,7 +52,7 @@ export default function MatchedProjectsPage() {
           className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
         >
           <Target className="w-4 h-4" />
-          Recommandations IA
+          Recommandations
         </Link>
       </div>
 

@@ -147,7 +147,7 @@ function buildBreadcrumb(pathname: string, projectName?: string): Crumb[] | null
       cohorts: 'Cohortes',
       evaluations: 'Évaluations',
       coachings: 'Coachings',
-      recommendations: 'Recommandations IA',
+      recommendations: 'Recommandations',
       'mon-coaching': 'Mon coaching',
     };
     if (labels[parts[1]]) {
@@ -204,7 +204,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/matching-projects', label: 'Projets correspondants', icon: Radar, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
-      { href: '/dashboard/expert/recommendations', label: 'Recommandations IA', icon: Sparkles, section: 'expert', match: 'prefix' },
+      { href: '/dashboard/expert/recommendations', label: 'Recommandations', icon: Sparkles, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },

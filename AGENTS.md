@@ -18,6 +18,8 @@ Backend:
 - `npm run build` (`nest build`); `npm run start:prod` runs `node dist/src/main`
 - `npm test` — jest; one suite: `npx jest gbm.service`. `npm run test:e2e` requires a **real PostgreSQL**; unit suites are DB-mocked and need none.
 - `npm run seed` (= `seed:users` + `seed:prisma`); `npm run demo:reset` = `migrate reset --force` + seed + verify
+- **Tout** (données de démo **et** jeu de test matching + vérification) : `npm run seed:all` (= `seed:users` + `seed:matching` = `seed:prisma --matching` + `verify:demo`). Base neuve complète : `npm run demo:reset:all`. Les seeds sont idempotents (IDs déterministes/`upsert`) et rejouables ; `seed:matching` saute si des comptes `@test.com` existent déjà.
+- `npm run verify:matching` (algorithme de matching) n'est pas un seed : vérification autonome.
 
 Frontend:
 - `npm run dev` — dev server on **:3001** (`next dev -p 3001 -H 0.0.0.0`)
