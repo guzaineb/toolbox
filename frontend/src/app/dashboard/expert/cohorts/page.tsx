@@ -53,11 +53,7 @@ function AvailableCohorts({ onRoleSelect }: { onRoleSelect: (cohortId: string, r
             className="pl-9"
           />
         </div>
-        <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-          <option value="">Tous les rôles</option>
-          <option value="JURY">Jury</option>
-          <option value="COACH">Coach</option>
-        </Select>
+
       </div>
 
       <div className="space-y-[10px]">
