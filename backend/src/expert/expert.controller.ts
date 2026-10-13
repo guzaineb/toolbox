@@ -21,7 +21,7 @@ import { UpdateExpertiseLevelDto } from './dto/update-expertise-level.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
+import { AvailabilityStatus, UserRole } from '@prisma/client';
 import { ExpertService } from './expert.service';
 
 @Controller('experts')
@@ -56,6 +56,39 @@ export class ExpertController {
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteProfile(@Req() req: { user: { id: string } }) {
     return this.service.deleteProfile(req.user.id);
+  }
+
+  /**
+   * Annuaire des experts de la plateforme (consultation par les incubateurs).
+   */
+  @Get()
+  @Roles(UserRole.INCUBATOR_MEMBER)
+  findAll(
+    @Query('q') q?: string,
+    @Query('expertiseAreaId') expertiseAreaId?: string,
+    @Query('availability') availability?: AvailabilityStatus,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.findAll({
+      q,
+      expertiseAreaId,
+      availability,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  /**
+   * Recherche d'experts (autocomplétion pour inviter un expert dans une cohorte).
+   */
+  @Get('search')
+  @Roles(UserRole.INCUBATOR_MEMBER, UserRole.EXPERT)
+  search(@Query('q') q?: string, @Query('limit') limit?: string) {
+    return this.service.searchUsers(
+      q ?? '',
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('expertise-areas')

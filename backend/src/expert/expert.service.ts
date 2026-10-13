@@ -7,9 +7,12 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  AvailabilityStatus,
   ExpertiseArea,
   CohortStatus,
   ParticipationStatus,
+  Prisma,
+  UserRole,
 } from '@prisma/client';
 import { ExpertScoringService } from './services/expert-scoring.service';
 import { ExpertRecommendationService } from './services/expert-recommendation.service';
@@ -21,6 +24,17 @@ import { PublicExpertProfileDto } from './dto/public-expert-profile.dto';
 import { NotificationEvent } from '../events/notification-event.enum';
 import { NotificationPayload } from '../events/notification-payload.interface';
 import { NotificationMessageBuilder } from '../events/notification-message-builder';
+
+/**
+ * Profil expert avec ses relations, tel que renvoyé par l'annuaire. Inclut le
+ * compte `user` (identité seule) pour résoudre le nom de l'expert.
+ */
+type ExpertProfileWithRelations = Prisma.ExpertProfileGetPayload<{
+  include: {
+    user: { include: { profile: true } };
+    expertiseConnections: { include: { expertiseArea: true } };
+  };
+}>;
 
 @Injectable()
 export class ExpertService {
@@ -87,6 +101,199 @@ export class ExpertService {
     });
     if (!profile) throw new NotFoundException(`Expert #${id} introuvable.`);
     return profile;
+  }
+
+  /**
+   * Annuaire des experts inscrits sur la plateforme, consultable par les
+   * incubateurs. Filtres : recherche plein texte (`q`), domaine d'expertise et
+   * disponibilité. Réponse paginée.
+   */
+  async findAll(
+    filters: {
+      q?: string;
+      expertiseAreaId?: string;
+      availability?: string;
+      page?: number;
+      limit?: number;
+    } = {},
+  ) {
+    const page = filters.page && filters.page > 0 ? filters.page : 1;
+    const limit =
+      filters.limit && filters.limit > 0 ? Math.min(50, filters.limit) : 12;
+
+    const where: Prisma.ExpertProfileWhereInput = {};
+
+    const availability =
+      filters.availability &&
+      (Object.values(AvailabilityStatus) as string[]).includes(
+        filters.availability,
+      )
+        ? (filters.availability as AvailabilityStatus)
+        : undefined;
+    if (availability) where.availability_status = availability;
+
+    if (filters.expertiseAreaId) {
+      where.expertiseConnections = {
+        some: { expertise_area_id: filters.expertiseAreaId },
+      };
+    }
+
+    const q = filters.q?.trim();
+    if (q) {
+      where.OR = [
+        { headline: { contains: q, mode: 'insensitive' } },
+        { bio: { contains: q, mode: 'insensitive' } },
+        { organization: { contains: q, mode: 'insensitive' } },
+        { position: { contains: q, mode: 'insensitive' } },
+        {
+          user: {
+            is: {
+              OR: [
+                { email: { contains: q, mode: 'insensitive' } },
+                {
+                  profile: {
+                    is: {
+                      OR: [
+                        { first_name: { contains: q, mode: 'insensitive' } },
+                        { last_name: { contains: q, mode: 'insensitive' } },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        {
+          expertiseConnections: {
+            some: {
+              expertiseArea: { name: { contains: q, mode: 'insensitive' } },
+            },
+          },
+        },
+      ];
+    }
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.expertProfile.findMany({
+        where,
+        include: {
+          user: { include: { profile: true } },
+          expertiseConnections: { include: { expertiseArea: true } },
+        },
+        orderBy: { availability_status: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.expertProfile.count({ where }),
+    ]);
+
+    return {
+      items: items.map((profile) => this.toPublicExpert(profile)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Vue publique d'un profil expert : n'expose jamais les champs sensibles du
+   * compte (`password_hash`, jetons de vérification, de réinitialisation…).
+   */
+  private toPublicExpert(profile: ExpertProfileWithRelations) {
+    return {
+      id: profile.id,
+      headline: profile.headline,
+      bio: profile.bio,
+      organization: profile.organization,
+      position: profile.position,
+      years_of_experience: profile.years_of_experience,
+      linkedin_url: profile.linkedin_url,
+      availability_status: profile.availability_status,
+      user: profile.user
+        ? {
+            id: profile.user.id,
+            email: profile.user.email,
+            profile: profile.user.profile
+              ? {
+                  first_name: profile.user.profile.first_name,
+                  last_name: profile.user.profile.last_name,
+                }
+              : undefined,
+          }
+        : undefined,
+      expertiseConnections: (profile.expertiseConnections ?? []).map(
+        (connection) => ({
+          id: connection.id,
+          level: connection.level,
+          years_of_experience: connection.years_of_experience,
+          expertiseArea: connection.expertiseArea
+            ? {
+                id: connection.expertiseArea.id,
+                name: connection.expertiseArea.name,
+                category: connection.expertiseArea.category,
+              }
+            : undefined,
+        }),
+      ),
+    };
+  }
+
+  /**
+   * Recherche d'utilisateurs experts pour l'autocomplétion (invitation d'un
+   * expert dans une cohorte) : identité + profil expert, jamais le mot de passe.
+   */
+  async searchUsers(query: string, limit = 10) {
+    const q = query?.trim();
+    if (!q) return [];
+
+    return this.prisma.user.findMany({
+      where: {
+        role: UserRole.EXPERT,
+        expertProfile: { isNot: null },
+        OR: [
+          { email: { contains: q, mode: 'insensitive' } },
+          {
+            profile: {
+              is: { first_name: { contains: q, mode: 'insensitive' } },
+            },
+          },
+          {
+            profile: {
+              is: { last_name: { contains: q, mode: 'insensitive' } },
+            },
+          },
+          {
+            expertProfile: {
+              is: { headline: { contains: q, mode: 'insensitive' } },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        email: true,
+        profile: { select: { first_name: true, last_name: true } },
+        expertProfile: {
+          select: {
+            id: true,
+            headline: true,
+            availability_status: true,
+            expertiseConnections: {
+              select: {
+                id: true,
+                level: true,
+                expertiseArea: {
+                  select: { id: true, name: true, category: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+      take: limit > 0 ? Math.min(25, limit) : 10,
+    });
   }
 
   async upsert(userId: string, dto: UpdateExpertDto) {

@@ -9,6 +9,8 @@ import {
   ExpertScore,
   ExpertRecommendation,
   AssignableProject,
+  ExpertDirectoryFilters,
+  ExpertDirectoryPage,
 } from '@/types/expert';
 
 class ExpertService {
@@ -97,6 +99,26 @@ class ExpertService {
 
   async getMyScore(): Promise<ExpertScore> {
     const response = await api.get('/experts/me/score');
+    return response.data;
+  }
+
+  // ==================== ANNUAIRE ====================
+
+  /**
+   * Liste paginée des experts inscrits sur la plateforme, avec leurs domaines
+   * d'expertise. Réservé aux incubateurs (découverte avant invitation).
+   */
+  async listExperts(
+    filters: ExpertDirectoryFilters = {},
+  ): Promise<ExpertDirectoryPage> {
+    const params: Record<string, string | number> = {};
+    if (filters.q?.trim()) params.q = filters.q.trim();
+    if (filters.expertiseAreaId) params.expertiseAreaId = filters.expertiseAreaId;
+    if (filters.availability) params.availability = filters.availability;
+    if (filters.page) params.page = filters.page;
+    if (filters.limit) params.limit = filters.limit;
+
+    const response = await api.get('/experts', { params });
     return response.data;
   }
 

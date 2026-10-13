@@ -1,3 +1,5 @@
+import type { Paginated } from './pagination';
+
 export type AvailabilityStatus = 'AVAILABLE' | 'BUSY' | 'UNAVAILABLE';
 
 export type ExpertiseLevel =
@@ -134,6 +136,21 @@ export interface AssignableProject {
     name: string;
   } | null;
 }
+
+/* =========================================================
+   ANNUAIRE (consultation par les incubateurs)
+========================================================= */
+
+export interface ExpertDirectoryFilters {
+  q?: string;
+  expertiseAreaId?: string;
+  availability?: AvailabilityStatus;
+  page?: number;
+  limit?: number;
+}
+
+/** Page d'annuaire des experts (`GET /experts`). */
+export type ExpertDirectoryPage = Paginated<ExpertProfile>;
 
 /* =========================================================
    DTOs
