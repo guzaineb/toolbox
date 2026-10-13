@@ -199,7 +199,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ? [
       { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert', match: 'exact' },
       { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
-      { href: '/dashboard/expert/recommendations', label: 'Recommandations', icon: Sparkles, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/mon-coaching', label: 'Mon coaching', icon: HeartHandshake, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/coachings', label: 'Coachings', icon: Presentation, section: 'expert', match: 'exact' },
