@@ -42,6 +42,30 @@ export class ProjectProfileBuilder {
     return this.deriveProjectRequirements(project);
   }
 
+  /**
+   * Charge le projet et renvoie à la fois ses exigences (règles) et le texte
+   * brut de référence. Ce texte sert de requête pour la similarité sémantique
+   * (embeddings) entre le projet et les profils experts.
+   */
+  async loadProjectContext(
+    projectId: string,
+  ): Promise<{ requirements: ProjectRequirements; text: string }> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: this.projectLoadInclude(),
+    });
+    if (!project) throw new NotFoundException('Projet introuvable');
+
+    const segments = this.extractProjectText(project);
+    return {
+      requirements: await this.deriveRequirementsFromText(
+        segments,
+        this.minYearsFor(project?.funding_assessment),
+      ),
+      text: segments.join('\n'),
+    };
+  }
+
   /** Dérive les exigences à partir d'une entité projet déjà chargée. */
   async deriveProjectRequirements(project: any): Promise<ProjectRequirements> {
     return this.deriveRequirementsFromText(
@@ -106,7 +130,9 @@ export class ProjectProfileBuilder {
     ].filter(Boolean);
   }
 
-  private minYearsFor(funding?: { phase_maturite?: string }): number {
+  private minYearsFor(
+    funding?: { phase_maturite?: string | null } | null,
+  ): number {
     return this.MIN_YEARS_BY_PHASE[funding?.phase_maturite || ''] ?? 2;
   }
 

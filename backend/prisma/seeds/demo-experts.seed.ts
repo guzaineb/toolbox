@@ -1611,16 +1611,16 @@ const COACHING_SESSIONS: CoachingSessionDef[] = [
 // SEED FUNCTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function seedMatchingTestData(): Promise<void> {
-  console.log('\n🧪 Matching Test Data Seed');
-  console.log('===========================\n');
+export async function seedDemoExperts(): Promise<void> {
+  console.log('\n🧑‍🔧 Demo Experts & Projects Seed');
+  console.log('=================================\n');
 
-  // Check if matching test data already exists
+  // Check if demo experts data already exists
   const existingOwners = await prisma.user.count({
     where: { email: { contains: '@test.com' } },
   });
   if (existingOwners > 0) {
-    console.log('  ⏩ Matching test data already exists. Skipping.');
+    console.log('  ⏩ Demo experts data already exists. Skipping.');
     return;
   }
 
@@ -2065,14 +2065,14 @@ export async function seedMatchingTestData(): Promise<void> {
   console.log(`  Funding Assessments: ${counts.fundingAssessments}`);
 
   console.log('\n========================================');
-  console.log('✅ Matching test data seed completed!\n');
+  console.log('✅ Demo experts seed completed!\n');
 }
 
 // Run if executed directly
 if (require.main === module) {
-  seedMatchingTestData()
+  seedDemoExperts()
     .catch((e) => {
-      console.error('❌ Matching test data seed failed:', e);
+      console.error('❌ Demo experts seed failed:', e);
       process.exit(1);
     })
     .finally(async () => {

@@ -446,9 +446,9 @@ function ExpertDashboard({ role }: { role: UserRole }) {
             <EmptyState
               icon={<Briefcase size={36} />}
               title="Aucun projet assigné"
-              message="Consultez le matching pour découvrir les projets qui correspondent à vos expertises."
-              ctaLabel="Voir le matching"
-              ctaHref="/dashboard/expert/matching"
+              message="Explorez les cohortes ouvertes pour proposer votre expertise aux projets accompagnés."
+              ctaLabel="Voir les cohortes"
+              ctaHref="/dashboard/expert/cohorts"
             />
           ) : (
             d.projects.map((p) => (

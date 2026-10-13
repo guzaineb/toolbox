@@ -6,10 +6,13 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
-import { ExpertiseArea, CohortStatus } from '@prisma/client';
+import {
+  ExpertiseArea,
+  CohortStatus,
+  ParticipationStatus,
+} from '@prisma/client';
 import { ExpertScoringService } from './services/expert-scoring.service';
 import { ExpertRecommendationService } from './services/expert-recommendation.service';
-import { ProjectProfileBuilder } from './services/project-profile-builder.service';
 import { CreateExpertDto } from './dto/create-expert.dto';
 import { UpdateExpertDto } from './dto/update-expert.dto';
 import { AddExpertiseDto } from './dto/add-expertise.dto';
@@ -26,7 +29,6 @@ export class ExpertService {
     private eventEmitter: EventEmitter2,
     private scoringService: ExpertScoringService,
     private recommendationService: ExpertRecommendationService,
-    private readonly profileBuilder: ProjectProfileBuilder,
     private readonly messageBuilder: NotificationMessageBuilder,
   ) {}
 
@@ -303,19 +305,6 @@ export class ExpertService {
     return this.scoringService.computeExpertScore(profile, expertises);
   }
 
-  async matchWithProject(
-    userId: string,
-    requirements: { requiredAreas: string[]; minYearsExperience: number },
-  ) {
-    const profile = await this.findByUserOrFail(userId);
-    const expertises = await this.getExpertiseWithDetails(userId);
-    return this.scoringService.matchWithProject(
-      profile,
-      expertises,
-      requirements,
-    );
-  }
-
   async getPublicProfile(id: string) {
     const profile: any = await this.findById(id);
 
@@ -368,52 +357,36 @@ export class ExpertService {
   }
 
   /**
-   * Projets candidats au coaching d'un expert : projets appartenant à une
-   * cohorte ouverte ou en cours, scorés vis-à-vis du profil de l'expert.
+   * Projets éligibles à une affectation d'expert (juré) : projets acceptés
+   * dans une cohorte ouverte ou en cours. Renvoie une simple liste, sans
+   * classement — la notation des experts face au projet est réalisée par
+   * `ExpertRecommendationService` (score sémantique).
    */
-  async findMatchedProjects(userId: string, limit: number = 10) {
-    const expert = await this.findByUserOrFail(userId);
-    const expertises = await this.getExpertiseWithDetails(userId);
-
+  async findAssignableProjects(limit: number = 50) {
     const participations = await this.prisma.cohortParticipation.findMany({
       where: {
+        status: ParticipationStatus.ACCEPTED,
         cohort: {
           status: { in: [CohortStatus.OPEN, CohortStatus.IN_PROGRESS] },
         },
       },
       include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            context_summary: true,
-            idea_sketch: true,
-            problems_needs: true,
-            funding_assessment: true,
-          },
-        },
+        project: { select: { id: true, name: true, description: true } },
         cohort: { select: { id: true, name: true } },
       },
       orderBy: { created_at: 'desc' },
-      take: 100,
+      take: 200,
     });
 
     const seen = new Set<string>();
-    const results: any[] = [];
+    const results: Array<{
+      project: { id: string; name: string; description: string | null };
+      cohort: { id: string; name: string } | null;
+    }> = [];
 
     for (const participation of participations) {
       if (seen.has(participation.project_id)) continue;
       seen.add(participation.project_id);
-
-      const requirements = await this.profileBuilder.deriveProjectRequirements(
-        participation.project,
-      );
-      const match = this.scoringService.matchWithProject(
-        expert,
-        expertises,
-        requirements,
-      );
 
       results.push({
         project: {
@@ -422,25 +395,14 @@ export class ExpertService {
           description: participation.project.description,
         },
         cohort: participation.cohort
-          ? {
-              id: participation.cohort.id,
-              name: participation.cohort.name,
-            }
+          ? { id: participation.cohort.id, name: participation.cohort.name }
           : null,
-        requirements: {
-          requiredAreas: requirements.requiredAreas,
-          requiredAreaNames: requirements.requiredAreaNames,
-          minYearsExperience: requirements.minYearsExperience,
-        },
-        score: match.matchPercentage,
-        skillsMatch: match.details.skillsMatch,
-        experienceMatch: match.details.experienceMatch,
-        availability: expert.availability_status,
-        explanation: this.scoringService.buildMatchExplanation(match, expert),
       });
+
+      if (results.length >= limit) break;
     }
 
-    return results.sort((a, b) => b.score - a.score).slice(0, limit);
+    return results;
   }
   private getDefaultInclude(): any {
     return {

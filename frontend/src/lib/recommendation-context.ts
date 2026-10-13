@@ -6,7 +6,6 @@ export interface RecommendationContextOption {
   label: string;
   cohortId: string;
   cohortName?: string;
-  score?: number;
 }
 
 /**

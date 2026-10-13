@@ -7,9 +7,8 @@ import {
   AddExpertiseDto,
   ExpertiseArea,
   ExpertScore,
-  ProjectMatch,
   ExpertRecommendation,
-  MatchedProject,
+  AssignableProject,
 } from '@/types/expert';
 
 class ExpertService {
@@ -94,23 +93,24 @@ class ExpertService {
     await api.delete(`/experts/me/expertises/${expertiseAreaId}`);
   }
 
-  // ==================== IA / SCORING ====================
+  // ==================== SCORE ====================
 
   async getMyScore(): Promise<ExpertScore> {
     const response = await api.get('/experts/me/score');
     return response.data;
   }
 
-  async matchWithProject(requiredAreas: string[], minYearsExperience: number): Promise<ProjectMatch> {
-    const response = await api.post('/experts/me/match-project', {
-      requiredAreas,
-      minYearsExperience,
-    });
-    return response.data;
-  }
+  // ==================== AFFECTATION & RECOMMANDATIONS ====================
 
-  async getMatchedProjects(limit: number = 10): Promise<MatchedProject[]> {
-    const response = await api.get(`/experts/me/projects/matched?limit=${limit}`);
+  /**
+   * Projets éligibles à une affectation de juré (cohortes ouvertes ou en
+   * cours). Liste brute : le classement des experts est fait au moment de la
+   * recommandation.
+   */
+  async getAssignableProjects(limit: number = 50): Promise<AssignableProject[]> {
+    const response = await api.get('/experts/me/assignable-projects', {
+      params: { limit },
+    });
     return response.data;
   }
 

@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { seedStepTemplates, seedDemoProject } from './seeds/step-templates.seed';
 import { seedDemoScenario } from './seeds/demo-scenario.seed';
-import { seedMatchingTestData } from './seeds/matching-test-data.seed';
+import { seedDemoExperts } from './seeds/demo-experts.seed';
 
 const prisma = new PrismaClient();
 
@@ -43,13 +43,13 @@ async function main() {
 
   await seedNotificationPreferences();
 
-  // Step 5: Matching test data (only if MATCHING_TEST_DATA=true or --matching flag)
-  const includeMatching = process.env.MATCHING_TEST_DATA === 'true' || process.argv.includes('--matching');
-  if (includeMatching) {
-    console.log('\n📦 Step 5/5: Seed matching test data');
-    await seedMatchingTestData();
+  // Step 5: Demo experts & projects (only if DEMO_EXPERTS=true or --experts flag)
+  const includeDemoExperts = process.env.DEMO_EXPERTS === 'true' || process.argv.includes('--experts');
+  if (includeDemoExperts) {
+    console.log('\n📦 Step 5/5: Seed demo experts & projects');
+    await seedDemoExperts();
   } else {
-    console.log('\n📦 Step 5/5: Matching test data skipped (set MATCHING_TEST_DATA=true or pass --matching)');
+    console.log('\n📦 Step 5/5: Demo experts & projects skipped (set DEMO_EXPERTS=true or pass --experts)');
   }
 
   console.log('\n📦 Verify');

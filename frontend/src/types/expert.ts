@@ -70,7 +70,7 @@ export interface ExpertProfile {
 }
 
 /* =========================================================
-   SCORE & MATCHING
+   SCORE & RECOMMANDATIONS
 ========================================================= */
 
 export interface ExpertScore {
@@ -99,29 +99,11 @@ export interface ExpertScore {
   };
 }
 
-export interface ProjectMatch {
-  matchPercentage: number;
-
-  details: {
-    skillsMatch: {
-      matched: number;
-      required: number;
-      score: number;
-    };
-
-    experienceMatch: {
-      years: number;
-      required: number;
-      score: number;
-    };
-
-    availabilityBonus?: number;
-  };
-}
-
 export interface ExpertRecommendation {
   expert: ExpertProfile;
   score: number;
+  /** Moteur de score : similarité sémantique (ML) ou repli sur les règles. */
+  scoringMethod?: 'SEMANTIC' | 'RULES';
   skillsMatch: {
     matched: number;
     required: number;
@@ -136,7 +118,12 @@ export interface ExpertRecommendation {
   explanation: string;
 }
 
-export interface MatchedProject {
+/**
+ * Projet éligible à une affectation d'expert (juré) : projet accepté dans une
+ * cohorte ouverte ou en cours. Aucun score ici — le classement des experts est
+ * calculé par le moteur de recommandation.
+ */
+export interface AssignableProject {
   project: {
     id: string;
     name: string;
@@ -146,24 +133,6 @@ export interface MatchedProject {
     id: string;
     name: string;
   } | null;
-  requirements: {
-    requiredAreas: string[];
-    requiredAreaNames: string[];
-    minYearsExperience: number;
-  };
-  score: number;
-  skillsMatch: {
-    matched: number;
-    required: number;
-    score: number;
-  };
-  experienceMatch: {
-    years: number;
-    required: number;
-    score: number;
-  };
-  availability: AvailabilityStatus;
-  explanation: string;
 }
 
 /* =========================================================

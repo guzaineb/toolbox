@@ -18,7 +18,6 @@ import { CreateExpertDto } from './dto/create-expert.dto';
 import { UpdateExpertDto } from './dto/update-expert.dto';
 import { AddExpertiseDto } from './dto/add-expertise.dto';
 import { UpdateExpertiseLevelDto } from './dto/update-expertise-level.dto';
-import { MatchProjectDto } from './dto/match-project.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -126,25 +125,10 @@ export class ExpertController {
     return this.service.computeExpertScore(req.user.id);
   }
 
-  @Get('me/projects/matched')
+  @Get('me/assignable-projects')
   @Roles(UserRole.EXPERT)
-  getMatchedProjects(
-    @Req() req: { user: { id: string } },
-    @Query('limit') limit?: string,
-  ) {
-    return this.service.findMatchedProjects(
-      req.user.id,
-      limit ? parseInt(limit) : 10,
-    );
-  }
-
-  @Post('me/match-project')
-  @Roles(UserRole.EXPERT)
-  matchWithProject(
-    @Req() req: { user: { id: string } },
-    @Body() dto: MatchProjectDto,
-  ) {
-    return this.service.matchWithProject(req.user.id, dto);
+  getAssignableProjects(@Query('limit') limit?: string) {
+    return this.service.findAssignableProjects(limit ? parseInt(limit) : 50);
   }
 
   @Get(':id')

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Settings, Plus, X, TrendingUp, Users, Award,
-  Calendar, Briefcase, Target, Clock, Star, Edit3, CheckCircle, AlertCircle,
+  Calendar, Briefcase, Sparkles, Clock, Star, Edit3, CheckCircle, AlertCircle,
   ClipboardCheck, HeartHandshake
 } from 'lucide-react';
 import { Button, Card } from '@/components/shared/ui';
@@ -173,10 +173,10 @@ export default function ExpertDashboardPage() {
               Suivi coaching
             </Button>
           </Link>
-          <Link href="/dashboard/expert/matching">
+          <Link href="/dashboard/expert/recommendations">
             <Button variant="secondary" size="sm">
-              <Target className="w-4 h-4 mr-2" />
-              Matching projets
+              <Sparkles className="w-4 h-4 mr-2" />
+              Recommandations
             </Button>
           </Link>
           <Link href="/dashboard/expert/edit">

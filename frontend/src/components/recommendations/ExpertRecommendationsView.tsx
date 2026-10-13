@@ -73,8 +73,8 @@ function ExpertRecommendationsContent({
 
   const hasContext = selectedType === 'jury' ? !!projectId : !!cohortId;
 
-  // Contexte : projets correspondant au profil (expert) ou projets acceptés
-  // dans les cohortes de l'incubateur (incubateur).
+  // Contexte : projets éligibles à une affectation de juré (expert) ou projets
+  // acceptés dans les cohortes de l'incubateur (incubateur).
   useEffect(() => {
     (async () => {
       setContextsLoading(true);
@@ -82,7 +82,7 @@ function ExpertRecommendationsContent({
       try {
         if (isExpertMode) {
           const [projects, cohorts] = await Promise.all([
-            expertService.getMatchedProjects(10),
+            expertService.getAssignableProjects(),
             cohortService.getOpenCohorts().catch(() => []),
           ]);
           setProjectOptions(
@@ -91,7 +91,6 @@ function ExpertRecommendationsContent({
               label: entry.project.name,
               cohortId: entry.cohort?.id ?? '',
               cohortName: entry.cohort?.name,
-              score: entry.score,
             })),
           );
           setCohortOptions(cohorts || []);
@@ -220,6 +219,19 @@ function ExpertRecommendationsContent({
               <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">
                 #{index + 1}
               </span>
+              {rec.scoringMethod && (
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                    rec.scoringMethod === 'SEMANTIC'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                  }`}
+                >
+                  {rec.scoringMethod === 'SEMANTIC'
+                    ? 'Score IA (embeddings)'
+                    : 'Score par règles'}
+                </span>
+              )}
             </div>
             <p className="text-sm text-gray-500 mb-2">
               {displayName}
@@ -329,7 +341,7 @@ function ExpertRecommendationsContent({
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Recommandations</h1>
         <p className="text-gray-600 mt-1">
-          Experts recommandés à partir des exigences réelles du contexte sélectionné
+          Experts classés automatiquement selon le contexte sélectionné
         </p>
       </div>
 
@@ -378,7 +390,7 @@ function ExpertRecommendationsContent({
           projectOptions.length === 0 ? (
             <p className="text-sm text-gray-500">
               {isExpertMode
-                ? 'Aucun projet en cohorte ouverte ou en cours ne correspond pour le moment à votre profil.'
+                ? 'Aucun projet accepté dans une cohorte ouverte ou en cours pour le moment.'
                 : 'Aucun projet accepté dans les cohortes de cet incubateur pour le moment.'}
             </p>
           ) : (
@@ -398,7 +410,6 @@ function ExpertRecommendationsContent({
                 <option key={option.id} value={option.id}>
                   {option.label}
                   {option.cohortName ? ` (${option.cohortName})` : ''}
-                  {option.score !== undefined ? ` — correspondance ${option.score}%` : ''}
                 </option>
               ))}
             </select>

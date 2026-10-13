@@ -51,8 +51,7 @@
 - Profil détaillé (headline, bio, organisation, expérience)
 - Domaines d'expertise (36 domaines dans 7 catégories)
 - **Scoring IA** : score calculé selon expérience, diversité, niveaux, disponibilité
-- **Matching** avec projets : recommandation automatique basée sur les compétences
-- **Recommandations** : jury pour projet, coachs pour cohorte
+- **Recommandations IA** : experts classés par similarité sémantique (embeddings) entre le projet ou la cohorte et le profil, explication générée par LLM et repli automatique sur le scoring par règles — jury pour projet, coachs pour cohorte
 
 ---
 
@@ -106,7 +105,7 @@ backend/src/
 ├── business-plan/   # Plan d'affaires (6 sections + génération IA du résumé exécutif)
 ├── config/          # Configuration (mail, frontend URL)
 ├── eco-design/      # Éco-conception (5 phases)
-├── expert/          # Experts (profils, scoring, matching, recommandations)
+├── expert/          # Experts (profils, scoring, recommandations)
 ├── funding/         # Accès au financement (questionnaire de maturité, scoring)
 ├── gbm/             # Green Business Model (20 étapes, 4 phases, export BMC PDF)
 ├── impact/          # Mesure d'impact (KPIs, écart, rapport IA)
@@ -189,7 +188,7 @@ backend/src/
 | GET | `/experts` | Lister les experts (filtres) |
 | GET | `/experts/expertise-areas` | Domaines d'expertise |
 | GET | `/experts/me/score` | Mon score expert |
-| POST | `/experts/me/match-project` | Matching avec un projet |
+| GET | `/experts/me/assignable-projects` | Projets éligibles à une affectation de juré |
 | GET | `/experts/analytics/top-experts` | Top experts |
 | POST | `/experts/recommendations/jury` | Recommander un jury |
 | POST | `/experts/recommendations/coachs` | Recommander des coachs |
@@ -241,7 +240,7 @@ frontend/src/
 │   ├── register/page.tsx         # Inscription (3 étapes)
 │   ├── auth/                     # Email vérification, reset password
 │   ├── dashboard/                # Tableau de bord, profil, admin
-│   ├── expert/                   # Dashboard expert, création, matching
+│   ├── expert/                   # Dashboard expert, création, recommandations
 │   ├── incubator/                # Gestion des incubateurs
 │   └── project-owner/            # Dashboard porteur, projets, modules
 │       └── projects/[projectId]/

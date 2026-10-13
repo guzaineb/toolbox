@@ -51,7 +51,7 @@ export const DEMO_USERS: DemoUserSpec[] = [
     firstName: 'Karim',
     lastName: 'Haddad',
     role: 'INCUBATOR_MEMBER',
-    bio: "Responsable de programme d'incubation. Pilote l'accueil, le matching expert-projet et le suivi des cohortes.",
+    bio: "Responsable de programme d'incubation. Pilote l'accueil, l'affectation des experts aux projets et le suivi des cohortes.",
     country: 'Tunisie',
     city: 'Tunis',
   },

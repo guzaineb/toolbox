@@ -29,7 +29,6 @@ import {
   FileText,
   HeartHandshake,
   CheckCircle2,
-  Radar,
   Sparkles,
   CalendarClock,
 } from 'lucide-react';
@@ -142,8 +141,6 @@ function buildBreadcrumb(pathname: string, projectName?: string): Crumb[] | null
 
   if (parts[0] === 'expert') {
     const labels: Record<string, string> = {
-      matching: 'Matching projets',
-      'matching-projects': 'Projets correspondants',
       cohorts: 'Cohortes',
       evaluations: 'Évaluations',
       coachings: 'Coachings',
@@ -201,8 +198,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const roleItems: NavLinkItem[] = isExpert
     ? [
       { href: '/dashboard/expert', label: 'Profile Expert', icon: GraduationCap, section: 'expert', match: 'exact' },
-      { href: '/dashboard/expert/matching', label: 'Matching projets', icon: Target, section: 'expert', match: 'prefix' },
-      { href: '/dashboard/expert/matching-projects', label: 'Projets correspondants', icon: Radar, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/cohorts', label: 'Cohortes', icon: Users, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/recommendations', label: 'Recommandations', icon: Sparkles, section: 'expert', match: 'prefix' },
       { href: '/dashboard/expert/evaluations', label: 'Évaluations', icon: ClipboardCheck, section: 'expert', match: 'prefix' },
